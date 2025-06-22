@@ -1,0 +1,9 @@
+# boiler plate, filled it automatically
+@PACKAGE_INIT@
+
+# include the exported targets, all the important stuff
+include("${CMAKE_CURRENT_LIST_DIR}/CandiaTargets.cmake")
+
+# set custom variables to be used in other projects' cmake files
+set(CANDIA_INCLUDE_DIRS "${CMAKE_CURRENT_LIST_DIR}/../../../include")
+set(CANDIA_LIBRARIES Candia::candia Candia::hplog)

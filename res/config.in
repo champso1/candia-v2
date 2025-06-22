@@ -1,0 +1,75 @@
+####################################################################################################
+#
+# Candia (2) configuration file
+#
+# - lines starting with a hash (#) are treated as comments and are ignored
+# - try to avoid extra spaces before/after the equals sign
+# - some variables have sensible defaults inside the program, so are initially commented out here;
+#   uncommenting overrides the default
+#
+####################################################################################################
+
+# ----- grid definitions -----
+num_grid_points=801
+
+
+# ----- integration parameters -----
+# number of gauss-legendre points to use for the numerical integration
+num_gauss_points=30
+
+# number of points to use for interpolation on either side of the evaluation point
+num_interp=4
+
+# number of total iterations to do for the logarithmic summation
+num_iterations=15
+
+
+# ----- output parameters -----
+# output file name
+#outfile_name=out.dat
+
+# tabulated energy values: list of energies at which to output evolved PDF values
+# + comma separated list of numbers
+# NOTE: must be in increasing order
+# NOTE: ensure that the list ends with a comma
+qtab=100.0,
+
+
+# ----- evolution parameters -----
+
+# perturbative order: 
+# - 0 = LO
+#   1 = NLO
+#   2 = NNLO
+order=1
+
+# non-singlet solution type: whether to solve non-singlet sector using the exact or truncated ansatz;
+#                            singlet sector must be done via the truncated method
+# - 0 = exact
+#   1 = truncated
+nonsinglet_solution_type=0
+
+# truncation index: number of terms to truncate to in solving singlet sector
+# NOTE: cannot be less than the perturbative order
+trunc_index=2
+
+# input model: which initial conditions to use
+# - 0 = Les Houches toy model
+#   1 = LHAPDF pdf
+# NOTE: if using an LHAPDF pdf, ensure to set the setname/number correctly
+input_model=0
+
+# LHAPDF pdf: setname and member number for the pdf of choice
+# NOTE: these settings are ignored unless `input_model=1`
+LHAPDF_setname=cteq6l1
+LHAPDF_setnum=0
+
+# scale ratio: the ratio of renormalization scale (squared) to factorization scale (squared)
+#              to maintain throughout the evolution
+scale_ratio=1.0
+
+# flavor scheme: variable or fixed flavor number scheme; invokes matching conditions
+#                for couplings at values of mu_f equal to quark masses
+# - 0 = fixed
+#   1 = variable
+flavor_scheme=1
