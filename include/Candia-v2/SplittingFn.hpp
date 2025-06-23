@@ -43,11 +43,11 @@ namespace Candia2
 		///@{
 		/** @brief Returns nf (a copy)
 		 */
-		inline uint Nf() const { return _nf; }
+		inline static uint Nf() { return _nf; }
 
 		/** @brief Returns a non-const reference to @a nf
 		 */
-		inline uint& Nf() { return _nf; }
+		inline static void UpdateNf(const uint nf) { _nf = nf; }
 		///@}
 
 		/** @name Kernel components

@@ -12,3 +12,4 @@ setup.sh
 
 install
 build
+build-win

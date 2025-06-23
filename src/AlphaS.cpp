@@ -6,7 +6,7 @@
 #include <numeric>
 
 namespace Candia2
-{
+{	
 	static void __assert_nf(const uint nf)
 	{
 		if (nf >= 8)
@@ -199,6 +199,12 @@ namespace Candia2
 			k4 = h*BetaFn(a + k3);
 			
 			a += (k1/6.0) + (k2/3.0) + (k3/3.0) + (k4/6.0);
+		}
+
+		if (a > 1.0)
+		{
+			std::cerr << "[ALPHAS] Evaluate(): Error has occurred: Qi=" << Qi << ", Qf=" << Qf << ", alpha0=" << alpha0 << '\n';
+			exit(1);
 		}
 
 		return a;

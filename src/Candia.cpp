@@ -12,9 +12,11 @@
 namespace Candia2
 {
 
-	DGLAPSolver::DGLAPSolver(Grid const& grid, AlphaS const& alpha_s, const double Qf)
-		: _grid(grid), _alpha_s(alpha_s), _order(alpha_s.Order()), _Qf(Qf),
-		  _nfi(3), _nff(6)
+	DGLAPSolver::DGLAPSolver(const uint order, Grid const& grid, const double Qf,
+							 std::shared_ptr<Distribution> initial_dist)
+		: _order(order),  _grid(grid), _Qf(Qf),
+		  _alpha_s(order, initial_dist->Q0(), initial_dist->Alpha0(), initial_dist->Masses()),
+		  _dist(initial_dist)
 	{	
 		// reserve space in all the coefficient arrays
 		std::cerr << "[DGLAP] Reserving space in coefficient arrays...\n";
@@ -146,6 +148,15 @@ namespace Candia2
 		_P3nss = std::make_shared<P3nss>();
 
 		std::cerr << "[DGLAP] Done creating splitting function pointers.\n";
+
+		SetInitialConditions();
+
+	    _nfi = _dist->Nfi();
+		_nff = 6;
+		while (_dist->Masses(_nff) > _Qf)
+		{
+			_nff--;
+		}
 	}
 
 	DGLAPSolver::~DGLAPSolver()
@@ -155,7 +166,7 @@ namespace Candia2
 
 
 
-	void DGLAPSolver::SetInitialConditions(std::shared_ptr<Distribution> dist)
+	void DGLAPSolver::SetInitialConditions()
 	{
 		std::cerr << "[DGLAP] Setting initial conditions...\n";
 	   
@@ -163,9 +174,9 @@ namespace Candia2
 		for (uint k=0; k<_grid.Size(); k++)
 		{
 			double x = _grid[k];
-			_S[0][0][0][k] = dist->xg(x);
-			_S[0][1][0][k] = dist->xuv(x) + 2.0*dist->xub(x)
-				+ dist->xdv(x) + 2.0*dist->xdb(x) + 2.0*dist->xs(x);
+			_S[0][0][0][k] = _dist->xg(x);
+			_S[0][1][0][k] = _dist->xuv(x) + 2.0*_dist->xub(x)
+				+ _dist->xdv(x) + 2.0*_dist->xdb(x) + 2.0*_dist->xs(x);
 		}
 	    
 		switch (_order)
@@ -175,11 +186,11 @@ namespace Candia2
 				for (uint k=0; k<_grid.Size(); k++)
 				{
 					double x = _grid[k];
-					_A[7][0][k] = dist->xub(x);
-					_A[1][0][k] = dist->xuv(x) + _A[7][0][k];
-					_A[8][0][k] = dist->xdb(x);
-					_A[2][0][k] = dist->xdv(x) + _A[8][0][k];
-					_A[3][0][k] = _A[9][0][k] = dist->xs(x);
+					_A[7][0][k] = _dist->xub(x);
+					_A[1][0][k] = _dist->xuv(x) + _A[7][0][k];
+					_A[8][0][k] = _dist->xdb(x);
+					_A[2][0][k] = _dist->xdv(x) + _A[8][0][k];
+					_A[3][0][k] = _A[9][0][k] = _dist->xs(x);
 				}
 			} break;
 			case 1:
@@ -187,11 +198,11 @@ namespace Candia2
 				for (uint k=0; k<_grid.Size(); k++)
 				{
 					double x = _grid[k];
-					_B[7][0][0][k] = dist->xub(x);
-					_B[1][0][0][k] = dist->xuv(x) + _B[7][0][0][k];
-					_B[8][0][0][k] = dist->xdb(x);
-					_B[2][0][0][k] = dist->xdv(x) + _B[8][0][0][k];
-					_B[3][0][0][k] = _B[9][0][0][k] = dist->xs(x);
+					_B[7][0][0][k] = _dist->xub(x);
+					_B[1][0][0][k] = _dist->xuv(x) + _B[7][0][0][k];
+					_B[8][0][0][k] = _dist->xdb(x);
+					_B[2][0][0][k] = _dist->xdv(x) + _B[8][0][0][k];
+					_B[3][0][0][k] = _B[9][0][0][k] = _dist->xs(x);
 				}
 			} break;
 			case 2:
@@ -199,11 +210,11 @@ namespace Candia2
 				for (uint k=0; k<_grid.Size(); k++)
 				{
 					double x = _grid[k];
-					_C[7][0][0][0][k] = dist->xub(x);
-					_C[1][0][0][0][k] = dist->xuv(x) + _C[7][0][0][0][k];
-					_C[8][0][0][0][k] = dist->xdb(x);
-					_C[2][0][0][0][k] = dist->xdv(x) + _C[8][0][0][0][k];
-					_C[3][0][0][0][k] = _C[9][0][0][0][k] = dist->xs(x);
+					_C[7][0][0][0][k] = _dist->xub(x);
+					_C[1][0][0][0][k] = _dist->xuv(x) + _C[7][0][0][0][k];
+					_C[8][0][0][0][k] = _dist->xdb(x);
+					_C[2][0][0][0][k] = _dist->xdv(x) + _C[8][0][0][0][k];
+					_C[3][0][0][0][k] = _C[9][0][0][0][k] = _dist->xs(x);
 				}
 			} break;
 			case 3:
@@ -211,11 +222,11 @@ namespace Candia2
 				for (uint k=0; k<_grid.Size(); k++)
 				{
 					double x = _grid[k];
-					_D[7][0][0][0][0][k] = dist->xub(x);
-					_D[1][0][0][0][0][k] = dist->xuv(x) + _D[7][0][0][0][0][k];
-					_D[8][0][0][0][0][k] = dist->xdb(x);
-					_D[2][0][0][0][0][k] = dist->xdv(x) + _D[8][0][0][0][0][k];
-					_D[3][0][0][0][0][k] = _D[9][0][0][0][0][k] = dist->xs(x);
+					_D[7][0][0][0][0][k] = _dist->xub(x);
+					_D[1][0][0][0][0][k] = _dist->xuv(x) + _D[7][0][0][0][0][k];
+					_D[8][0][0][0][0][k] = _dist->xdb(x);
+					_D[2][0][0][0][0][k] = _dist->xdv(x) + _D[8][0][0][0][0][k];
+					_D[3][0][0][0][0][k] = _D[9][0][0][0][0][k] = _dist->xs(x);
 				}
 
 			} break;
@@ -272,6 +283,7 @@ namespace Candia2
 	{
 		for (_nf=_nfi; ; _nf++)
 		{
+			
 			std::cerr << "[DGLAP] Setting nf=" << _nf << '\n';
 			SetupCoefficients();
 
@@ -281,6 +293,7 @@ namespace Candia2
 
 			// update all values
 			_alpha_s.Update(_nf);
+			SplittingFunction::UpdateNf(_nf);
 			_alpha0 = _alpha_s.Post(_nf);
 			_alpha1 = _alpha_s.Pre(_nf+1);
 			std::cerr << "[DGLAP] Alpha_s: " << _alpha0 << " --> " << _alpha1 << '\n';
@@ -315,7 +328,7 @@ namespace Candia2
 
 
 
-	void DGLAPSolver::OutputDataFile(const std::string &filepath)
+	void DGLAPSolver::OutputDataFileNew(std::string const& filepath)
 	{
 		std::ofstream file(filepath);
 		if (!file)
@@ -337,6 +350,18 @@ namespace Candia2
 		file.close();
 
 		std::cerr << "[DGLAP] OutputDataFile(): Successfully saved data to file '" << filepath << "'\n";
+	}
+
+	void DGLAPSolver::OutputDataFileOld(std::string const& filepath)
+	{
+		FILE* outfile = fopen(filepath.c_str(), "w");
+		for (uint k=0; k<_grid.Size(); k++) {
+			fprintf(outfile, "%15.9lf", _grid.At(k));
+			for (uint j=0; j<=12; j++)
+				fprintf(outfile, "  %15.9lf", _F[j][k]);
+			fprintf(outfile, "\n");
+		}
+		fclose(outfile);
 	}
 
 
@@ -479,18 +504,15 @@ namespace Candia2
 	{
 		for (uint n=0; n<ITERATIONS-1; n++)
 		{
-			// std::cerr << "[DGLAP] EvolveSinglet(): Iteration " << n << '\n';
+			std::cerr << "[DGLAP] EvolveSinglet(): Iteration " << n << '\n';
 
 			// singlet 0-coefficients
 			for (uint k=0; k<_grid.Size()-1; k++)
 			{
-				// std::cerr << "[DGLAP] EvolveSinglet(): Before recursion relation.\n";
 				_S[0][1][n+1][k] = RecRelS_1(_S[0][1][n], k, _P0qq) + RecRelS_1(_S[0][0][n], k, _P0qg);
 				_S[0][0][n+1][k] = RecRelS_1(_S[0][1][n], k, _P0gq) + RecRelS_1(_S[0][0][n], k, _P0gg);
-				// std::cerr << "[DGLAP] EvolveSinglet(): After recursion relation.\n";
 			}
 
-			std::cerr << "[DGLAP] EvolveSinglet(): Moving to order>1.\n";
 			if (_order > 0)
 			{
 				// offset of singlet 1-coefficients
@@ -500,18 +522,13 @@ namespace Candia2
 						_S[1][j][n+1][k] = -_S[0][j][n+1][k] * _alpha_s.Beta1()/(4.0*M_PI*_alpha_s.Beta0()) - _S[1][j][n][k];
 				}
 
-			    std::cerr << "[DGLAP] EvolveSinglet(): finished offset for singlet-1 coefficients\n";
-
 				// evolution of singlet 1-coefficients
 				for (uint k=0; k<_grid.Size()-1; k++)
 				{
 					_S[1][1][n+1][k] += RecRelS_2(_S[0][1][n], _S[1][1][n], k, _P0qq, _P1qq) + RecRelS_2(_S[0][0][n], _S[1][0][n], k, _P0qg, _P1qg);
 					_S[1][0][n+1][k] += RecRelS_2(_S[0][1][n], _S[1][1][n], k, _P0gq, _P1gq) + RecRelS_2(_S[0][0][n], _S[1][0][n], k, _P0gg, _P1gg);
 				}
-				std::cerr << "[DGLAP] EvolveSinglet(): finished evolution for singlet-1 coefficients\n";
 			}
-
-		    std::cerr << "[DGLAP] EvolveSinglet(): starting truncation index sheisse\n";
 
 			// further evolution based on truncation index
 			for (uint t=2; t<TRUNC_IDX+1; t++)
@@ -533,7 +550,6 @@ namespace Candia2
 					}
 				}
 
-				std::cerr << "[DGLAP] EvolveSinglet(): doing NLO specific\n";
 				// NLO singlet n-coefficients
 				if (_order == 1)
 				{
@@ -545,7 +561,6 @@ namespace Candia2
 							+ RecRelS_2(_S[t-1][0][n], _S[t][0][n], k, _P0gg, _P1gg);
 					}
 				}
-				std::cerr << "[DGLAP] EvolveSinglet(): finished nlo specific\n";
 			}
 		}
 	}
@@ -599,6 +614,7 @@ namespace Candia2
 						}
 					}
 				}
+				
 			} break;
 			case 2: // NNLO
 			{
@@ -624,7 +640,7 @@ namespace Candia2
 	{
 		std::cerr << "[DGLAP] Resum(): resumming to tabulated energy\n";
 		
-		std::vector<double> Qtab{ _Qf , 0.0};
+		std::vector<double> Qtab{ _Qf };
 		
 		for ( ; Qtab[_qct]<=_alpha_s.Masses(_nf+1) && _qct<Qtab.size(); _qct++)
 		{
@@ -634,6 +650,8 @@ namespace Candia2
 								  /(_alpha0*_alpha_s.Beta1() + 4.0*M_PI*_alpha_s.Beta0()));
 
 
+			std::cerr << "[DGLAP] Resum(): _alpha1 = " << _alpha1 << '\n';
+			std::cerr << "[DGLAP] Resum(): L1=" << L1 << ", L2=" << L2 << '\n';
 
 			// singlet
 			for (uint j=0; j<=1; j++)
@@ -646,6 +664,7 @@ namespace Candia2
 					{
 						for (uint t=0; t<TRUNC_IDX+1; t++)
 							_F[j*31][k] += _S[t][j][n][k] * std::pow(_alpha1, t)*std::pow(L1, n)/Factorial(n);
+						
 					}
 				}
 			}
@@ -698,6 +717,8 @@ namespace Candia2
 									_F[j][k]+=_B[j][s][n][k]/Factorial(n)/Factorial(s-n)*std::pow(L1,n)*std::pow(L2,(s-n));
 							}
 						}
+
+						
 					}
 				}; break;
 			}

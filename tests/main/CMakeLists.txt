@@ -7,7 +7,7 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 
 add_executable(main main.cpp)
-target_compile_options(main PUBLIC -O2)
+target_compile_options(main PUBLIC)
 
 list(APPEND CMAKE_PREFIX_PATH "../../install/lib/cmake/")
 find_package(Candia REQUIRED)

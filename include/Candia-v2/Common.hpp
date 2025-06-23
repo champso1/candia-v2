@@ -49,6 +49,7 @@ namespace Candia2
 	const double M_PI_3 = M_PI*M_PI*M_PI;
 
 
+
 	/** @name Evolution constants
 	 */
 	///@{
@@ -65,7 +66,7 @@ namespace Candia2
 	const uint ITERATIONS = 15;
 
 	/** @brief number of additional iterations for truncated ansatz */
-	const uint TRUNC_IDX = 6;
+	const uint TRUNC_IDX = 5;
 	///@}
 
 

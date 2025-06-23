@@ -4,7 +4,8 @@
 
 namespace Candia2
 {
-
+	
+	
 	double LesHouchesDistribution::xuv(const double x) const {
 		return 5.1072*std::pow(x, 0.8)*std::pow(1.0-x, 3.0);
 	}

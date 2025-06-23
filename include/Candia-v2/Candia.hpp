@@ -26,11 +26,14 @@ namespace Candia2
 	class DGLAPSolver
 	{
 	private:
-		Grid _grid; //!< main @a Grid object
-		AlphaS _alpha_s; //!< main @a AlphaS object
-		uint _qct; //!< counter for tabulated Q's
 		uint _order; //!< perturbative order
+		Grid _grid; //!< main @a Grid object
 		double _Qf; //!< final energy value to evolve to
+		AlphaS _alpha_s; //!< main @a AlphaS object
+
+		uint _qct; //!< counter for tabulated Q's (to be removed)
+
+		std::shared_ptr<Distribution> _dist; //!< main (initial) distribution
 
 		/** @name Active flavor counts
 		 */
@@ -188,13 +191,16 @@ namespace Candia2
 		 */
 		///@{
 		/** @brief Main constructor to initialize evolution
+			@param order: perturbative order
 		 *  @param grid: initialized grid object
-		 *  @param alpha_s: initialized alpha_s object
 		 *  @param Qf: final energy to evaluate to
+		 *  @param initial_dist: initial distribution for masses, pdfs, and alpha0
 		 */
-	    DGLAPSolver(Grid const& grid, AlphaS const& alpha_s, const double Qf);
+	    DGLAPSolver(const uint order, Grid const& grid, const double Qf,
+					std::shared_ptr<Distribution> initial_dist);
 		~DGLAPSolver();
 		///@}
+
 
 		
 		/** @brief Returns a const-ref to the \f$\alpha_s\f$ object.
@@ -206,23 +212,28 @@ namespace Candia2
 		inline Grid const& GetGrid() const { return _grid; }
 
 
-		/** Sets the initial conditions to evolve from
-		 *  @param init_dist: The initial Distribution object
-		 */
-		void SetInitialConditions(std::shared_ptr<Distribution> init_dist);
-
 		/** @brief Main function to evolve coefficients.
 		 */
 		void Evolve();
 
 
+		/** @brief Outputs a datafile in the new format
+		 *  (very similar but with cpp functions)
+		 *  @param filepath: Name of output datafile
+		*/
+		void OutputDataFileNew(std::string const& filepath);
+
 		/** @brief Outputs a datafile in the original Candia format
 		 *  @param filepath: Name of output datafile
 		*/
-		void OutputDataFile(std::string const& filepath);
+		void OutputDataFileOld(std::string const& filepath);
 		
 
 	private:
+		/** @brief initializes coefficient arrays with distributions
+		 */
+		void SetInitialConditions();
+		
 		/** @brief Computes the actual distributions that are evolved.
 		 */
 		void SetupCoefficients();

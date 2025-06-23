@@ -15,7 +15,7 @@ file(GLOB sources src/*.cpp include/*.hpp)
 
 # make library with maximum optimization and all warnings
 add_library(candia STATIC ${sources}) 
-target_compile_options(candia PUBLIC -O2 -Wall -Wextra -lgfortran -fPIC)
+target_compile_options(candia PUBLIC -Wall -Wextra -O3 -lgfortran -fPIC)
 
 # compile the fortran code for harmonic polylogs
 enable_language(Fortran)

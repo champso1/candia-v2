@@ -41,22 +41,24 @@ namespace Candia2
 		///@}
 
 	public:
-		/** @brief Default constructor is deleted
-		 */
-		AlphaS() = delete;
 
-		/** @brief AlphaS constructor
+		/** @name Constructors/destructors
+		 */
+		///@{
+		AlphaS() = default; //!< default constructor
+
+		/** @brief AlphaS main constructor
 		 *  @param order: perturbative order
 		 *  @param nf: number of massless flavors
 		 *  @param Q0: initial factorization scale
 		 *  @param alpha0: initial value of \f$\alpha_s\f$ at Q0
 		 *  @param masses: list of quark masses
 		 */
-		AlphaS(const uint order, const uint nf,
-			   const double Q0, const double alpha0,
+	    AlphaS(const uint order, const double Q0, const double alpha0,
 			   std::array<double,8> const& masses)
 			: _order(order), _Q0(Q0), _alpha0(alpha0), _masses(masses)
-		{ Update(nf); }
+		{ }
+		///@}
 
 		
 		/** @brief getter for perturbative order
