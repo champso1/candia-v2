@@ -1,10 +1,10 @@
 #include "Candia-v2/Grid.hpp"
 #include "Candia-v2/Common.hpp"
-#include "Candia-v2/SplittingFn.hpp"
 
 #include <iostream>
+#include <limits>
 #include <cmath>
-#include <span>
+
 
 namespace Candia2
 {
@@ -27,8 +27,6 @@ namespace Candia2
 			Ntab[i] -= (double)ntab[i];
 			ntab[0] -= ntab[i];
 		}
-
-	
 
 		for (uint i=1; i<xtab_len; i++)
 		{
@@ -87,10 +85,10 @@ namespace Candia2
 			lstep=std::log10(xtab[i+1]/xtab[i])/(double)(ntab[i+1]-ntab[i]);
 
 			for (int j=ntab[i]; j<ntab[i+1]; j++)
-				_grid_points[j] = xtab[i]*std::pow(10.0, lstep*(double)(j-ntab[i]));
+				this->At(j) = xtab[i]*std::pow(10.0, lstep*(double)(j-ntab[i]));
 		}
 
-		_grid_points[nx-1] = 1.0;
+		_grid_points.at(nx-1) = 1.0;
 	}
 
 	void Grid::InitGauLeg()
@@ -100,14 +98,14 @@ namespace Candia2
 		// abscissae are symmetric:
 		uint n = GAUSS_POINTS; // simpler to type
 		uint m = (n+1)/2;
-		double xf = this->At(this->Size()-1);
-		double x0 = this->At(0);
-		double xl = 0.5*(xf-x0),
-			   xu = 0.5*(xf+x0);
+		double x2 = _grid_points.at(this->Size()-1);
+		double x1 = _grid_points.at(0);
+		double xm = 0.5*(x2+x1),
+			   xl = 0.5*(x2-x1);
 
 		for (uint i=0; i<m; i++)
 		{
-			double z = std::cos(M_PI*(i+0.75)/(n+0.5));
+			double z = std::cos(PI*(i+0.75)/(n+0.5));
 
 			// default initialize some of these.
 			// is a nice check for if they error
@@ -115,6 +113,7 @@ namespace Candia2
 			double pp = std::numeric_limits<double>::max();
 
 			double p1, p2, p3;
+			double J;
 			do
 			{
 				p1 = 1.0;
@@ -122,12 +121,13 @@ namespace Candia2
 
 				for (uint j=0; j<n; j++)
 				{
+					J = static_cast<double>(j);
 					p3 = p2;
 					p2 = p1;
-					p1 = ((2.0*j + 1.0)*z*p2 - j*p3)/(j+1);
+					p1 = ((2.0*J + 1.0)*z*p2 - J*p3)/(J+1.0);
 				}
 
-				pp = n*(z*p1 - p2)/(z*z - 1.0);
+				pp = static_cast<double>(n)*(z*p1 - p2)/(z*z - 1.0);
 				z1 = z;
 				z = z1 - p1/pp;
 				
@@ -139,10 +139,10 @@ namespace Candia2
 				throw("[MATH] error determining gauss-legendre abscissae/weights");
 			}
 
-			_Xi[i] = xu - xl*z;
-			_Xi[n-1-i] = xu + xl*z;
-			
+			_Xi[i] = xm - xl*z;
+			_Xi[n-1-i] = xm + xl*z;
 			_Wi[i] = 2.0*xl/((1.0 - z*z)*pp*pp);
+			_Wi[n-1-i] = _Wi[i];
 		}
 	}
 
@@ -156,7 +156,10 @@ namespace Candia2
 	static void __check_idx(const uint idx, const uint size)
 	{
 		if (idx >= size)
-			throw("Index " + std::to_string(idx) + " out of range; must be less than " + std::to_string(size));
+		{
+			std::cerr << "[GRID] Index " << idx << "out of range for size " << size << '\n';
+			exit(1);
+		}
 	}
 
 	double const& Grid::operator[](const uint idx) const
@@ -171,63 +174,45 @@ namespace Candia2
 		return _grid_points.at(idx);
 	}
 
-    uint Grid::InterpFindIdx(std::vector<double> const& vec, double x) const
+
+    uint Grid::InterpFindIdx(double x) const
 	{
-		if (vec.size() != this->Size())
+		int k;
+		for (k=0; x>=_grid_points.at(k); k++)
 		{
-			std::cerr << "[GRID] InterpFindIdx(): f(x) size (" << vec.size()
-					  << ") and x size (" << vec.size()
-					  <<  ") do not match.\n";
-			exit(1);
+			if (k >= static_cast<int>(Size()-1))
+				break;
 		}
 
-		//	std::cerr << "[GRID] InterpFindIdx(): Finding a good index...\n";
+		k-=INTERP_POINTS;
 
-		uint n = vec.size(); // shorthand
-		uint mm = INTERP_POINTS; // also shorthand
-		uint ju = 0, jm = 0, jl = 0;
-		bool ascend = (this->At(n-1) >= this->At(0));
-		ju = n - 1;
-
-		// std::cerr << "[GRID] InterpFindIdx(): Setup, before iterations\n";
-
-		while (ju - jl > 1)
-		{
-			jm = (ju+jl) >> 1;
-			if ((x >= this->At(jm)) == ascend)
-				jl = jm;
-			else
-				ju = jm;
-		}
-
-		// std::cerr << "[GRID] InterpFindIdx(): Done.\n";
-
-		return MAX(0, MIN(n-mm, jl-((mm-2) >> 1)));
+		if (k<0) k=0;
+		if (k>static_cast<int>(Size()-2*INTERP_POINTS))
+			k=Size()-2*INTERP_POINTS;
+		
+		return static_cast<uint>(k);
+		
 	}
 
-	double Grid::Interpolate(std::vector<double> const& y, const double x) const
+	double Grid::Interpolate(std::vector<double> const& yy, const double x, bool debug) const
 	{
-		// std::cerr << "[GRID] Interpolate(): Interpolating...\n";
+		UNUSED(debug);
 		
-		uint k = this->InterpFindIdx(y, x);
+		const static int n = 2*INTERP_POINTS;
+		int ns=0;
+		double y, den, dif, dift, ho, hp, w;
 
-		// std::cerr << "[GRID] Interpolate(): found a good k value: " << k << '\n';
+		int k = static_cast<int>(this->InterpFindIdx(x));
 
-		uint ns = 0;
-		double yy, den, dif, dift, ho, hp, w, dy;
-
-		// these are like std::string_view, but for vectors
-		std::span<const double> xa(_grid_points.begin()+k, INTERP_POINTS);
-		std::span<const double> ya(y.begin()+k, INTERP_POINTS);
+		double const* xa = &(_grid_points.data()[k]);
+		double const* ya = &(yy.data()[k]);
+		std::vector<double> c(n, 0.0);
+		std::vector<double> d(n, 0.0);
+			
 
 		dif = std::abs(x - xa[0]);
-		
-		std::vector<double> c(INTERP_POINTS);
-		std::vector<double> d(INTERP_POINTS);
 
-		// std::cerr << "[GRID] Interpolate(): Grabbed spans, other stuff before iterations.\n";
-
-		for (uint i=0; i<INTERP_POINTS; i++)
+		for (int i=0; i<n; i++)
 		{
 			if ((dift = std::abs(x - xa[i])) < dif)
 			{
@@ -237,14 +222,12 @@ namespace Candia2
 			c[i] = ya[i];
 			d[i] = ya[i];
 		}
+			
+		y = ya[ns--];
 
-		yy = ya[ns--];
-
-	    // std::cerr << "[GRID] Interpolate(): Completed first iterations(s).\n";
-
-		for (uint m=1; m<INTERP_POINTS; m++)
+		for (int m=1; m<n; m++)
 		{
-		    for (uint i=0; i<INTERP_POINTS-m; i++)
+		    for (int i=0; i<n-m; i++)
 			{
 				ho = xa[i] - x;
 				hp = xa[i+m] - x;
@@ -252,7 +235,7 @@ namespace Candia2
 
 				if ((den = ho-hp) == 0.0)
 				{
-					std::cerr << "[GRID] Interp(): found a denominator equal to 0.0.\n";
+					std::cerr << "[GRID] Interpolate(): found a denominator equal to 0.0.\n";
 					exit(1);
 				}
 
@@ -260,58 +243,37 @@ namespace Candia2
 				d[i] = hp*den;
 				c[i] = ho*den;
 			}
-			yy += (dy = (2*(ns+1) < (INTERP_POINTS-m) ? c[ns+1] : d[ns--]));
+			
+			y += (2*ns < (n-1-m) ? c[ns+1] : d[ns--]);
 		}
 
-		// std::cerr << "[GRID] Interpolate(): Completed second iterations(s). Now done. Found: " << yy << '\n';
-
-		return yy;
+		return y;
 	}
 
 
 
 	double Grid::Convolution(std::vector<double> const& A,
-							 std::shared_ptr<SplittingFunction> P,
+							 std::shared_ptr<Expression> E,
 							 uint k)
 	{
-		// std::cerr << "[GRID] Convolution(): Before everything\n";
-		
-		double x = this->At(k);
-		double fac1 = P->Delta(1.0)*A[k];
-		double fac2 = P->Plus(1.0)*A[k]*std::log1p(x);
-		double fac3 = 0.0, fac4 = 0.0;
+		double x = _grid_points.at(k);
+		double logx =  std::log(x);
 
-	    // std::cerr << "[GRID] Convolution(): After initial factors, before actual convolution\n";
+		double res = (E->Plus(1.0)*std::log(1.0-x) + E->Delta(1.0)) * A.at(k);
 		
 		for (uint i=0; i<GAUSS_POINTS; i++)
 		{
-			// std::cerr << "[GRID] Convolution(): Inside convolution, grabbing weights\n";
-			double z = _Xi[i];
+			double y = _Xi[i];
 			double w = _Wi[i];
-
-			// std::cerr << "[GRID] Convolution(): Inside convolution, doing variable redefinitions\n";
 			
-			double a = std::pow(x, 1.0-z);
-			double b = std::pow(x, z);
+			double a = std::pow(x, 1.0-y);
+			double b = std::pow(x, y);
 
-			// std::cerr << "[GRID] Convolution(): Inside convolution, doing the weighting "
-			//		  << "interpolating, and grabbing splitting function values\n";
-			
-			fac2 *= w * a*P->Regular(a)*Interpolate(A, b);
-			fac3 *= w * b*(P->Plus(a)*Interpolate(A, a) - P->Plus(1.0)*A[k])/(1.0-b);
-
-		    // std::cerr << "[GRID] Convolution(): Inside convolution, after iteration.\n";
+			res -= logx*a*E->Regular(a)*Interpolate(A, b)*w;
+			res -= logx*b*(E->Plus(b)*Interpolate(A,a) - E->Plus(1.0)*A.at(k))/(1.0-b);
 		}
-
-		// std::cerr << "[GRID] Convolution(): After actual convolution, before final factors.\n";
 		
-		double logx = std::log(this->At(k));
-		fac2 *= logx;
-		fac3 *= logx;
-
-		// std::cerr << "[GRID] Convolution(): After everything\n";
-		
-		return (fac1 + fac2 + fac3 + fac4);
+		return res;
 	}
 
 }

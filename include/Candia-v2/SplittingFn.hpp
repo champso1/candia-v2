@@ -9,22 +9,18 @@
 #ifndef __SPLITTINGFN_HPP
 #define __SPLITTINGFN_HPP
 
-#include <exception>
-#include <memory>
-#include <string>
-
 #include "Candia-v2/Common.hpp"
-#include "Candia-v2/HPLog.hpp"
-#include "Candia-v2/Math.hpp"
+#include "Candia-v2/Expression.hpp"
 
 namespace Candia2
 {	
 	/** Class to represent a generic splitting function/kernel.
 	 */
-	class SplittingFunction
+	class SplittingFunction : public Expression
 	{
 	protected:
 		static uint _nf; //!< number of active/currently massless flavors
+		static double _beta0; //!< beta0 coefficient (for P0gg)
 
 		// static HPLog _hplog; //!< hplog interface object
 	public:
@@ -45,23 +41,15 @@ namespace Candia2
 		 */
 		inline static uint Nf() { return _nf; }
 
-		/** @brief Returns a non-const reference to @a nf
+		/** @brief returns beta0 (a copy)
 		 */
-		inline static void UpdateNf(const uint nf) { _nf = nf; }
+		inline static double Beta0() { return _beta0; }
+		
+		/** @brief Updates the stored value of nf and associated beta0
+		 */
+		inline static void Update(const uint nf, const double beta0)
+		{ _nf = nf; _beta0 = beta0; }
 		///@}
-
-		/** @name Kernel components
-		 */
-		///@{
-		/** @brief the regular part */
-		virtual double Regular(const double x) const = 0;
-		/** @brief the plus-distribution part */
-		virtual double Plus(const double x) const = 0;
-		/** @brief the delta-function part */
-		virtual double Delta(const double x) const = 0;
-		///@{
-
-
 		
 
 	protected:
@@ -81,7 +69,7 @@ namespace Candia2
 
 	/** Leading-order, non-singlet kernel.
 	 */
-	class P0ns : public SplittingFunction
+	class P0ns final : public SplittingFunction
 	{
 	public:
 		P0ns() { }
@@ -95,7 +83,7 @@ namespace Candia2
 
 	/** Leading order, q->q singlet kernel.
 	 */
-	class P0qq : public SplittingFunction
+	class P0qq final: public SplittingFunction
 	{
 	public:
 		P0qq() { }
@@ -108,44 +96,37 @@ namespace Candia2
 
 	/** Leading order, q->g singlet kernel.
 	 */
-	class P0qg : public SplittingFunction
+	class P0qg final: public SplittingFunction
 	{
 	public:
 		P0qg() { }
 		~P0qg() = default;
 
 		double Regular(const double x) const override;
-		double Plus(const double x) const override;
-		double Delta(const double x) const override;
 	};
 
 	/** Leading order, g->q singlet kernel.
 	 */
-	class P0gq : public SplittingFunction
+	class P0gq final: public SplittingFunction
 	{
 	public:
 		P0gq() { }
 		~P0gq() = default;
 
 		double Regular(const double x) const override;
-		double Plus(const double x) const override;
-		double Delta(const double x) const override;
 	};
 
 	/** Leading order, g->g singlet kernel.
 	 */
-	class P0gg : public SplittingFunction
+	class P0gg final: public SplittingFunction
 	{
 	public:
-		P0gg(const double beta0) : _beta0(beta0) { }
+		P0gg() { }
 		~P0gg() = default;
 
 		double Regular(const double x) const override;
 		double Plus(const double x) const override;
 		double Delta(const double x) const override;
-
-	private:
-		const double _beta0;
 	};
 
 	///@}
@@ -156,7 +137,7 @@ namespace Candia2
 
 	/** Next-to leading order, non-singlet kernel (plus component)
 	 */
-	class P1nsp : public SplittingFunction
+	class P1nsp final: public SplittingFunction
 	{
 	public:
 		P1nsp() { }
@@ -169,7 +150,7 @@ namespace Candia2
 
 	/** Next-to leading order, non-singlet kernel (minus component)
 	 */
-	class P1nsm : public SplittingFunction
+	class P1nsm final: public SplittingFunction
 	{
 	public:
 		P1nsm() { }
@@ -183,7 +164,7 @@ namespace Candia2
 
 	/** Next-to leading order, q->q singlet kernel.
 	 */
-	class P1qq : public SplittingFunction
+	class P1qq final: public SplittingFunction
 	{
 	public:
 		P1qq() { }
@@ -196,33 +177,29 @@ namespace Candia2
 
 	/** Next-to leading order, q->g singlet kernel.
 	 */
-	class P1qg : public SplittingFunction
+	class P1qg final: public SplittingFunction
 	{
 	public:
 		P1qg() { }
 		~P1qg() = default;
 
 		double Regular(const double x) const override;
-		double Plus(const double x) const override;
-		double Delta(const double x) const override;
 	};
 
 	/** Next-to leading order, g->q singlet kernel.
 	 */
-	class P1gq : public SplittingFunction
+	class P1gq final: public SplittingFunction
 	{
 	public:
 		P1gq() { }
 		~P1gq() = default;
 
 		double Regular(const double x) const override;
-		double Plus(const double x) const override;
-		double Delta(const double x) const override;
 	};
 
 	/** Next-to leading order, g->g singlet kernel.
 	 */
-	class P1gg : public SplittingFunction
+	class P1gg final: public SplittingFunction
 	{
 	public:
 		P1gg() { }
@@ -241,7 +218,7 @@ namespace Candia2
 
 	/** Next-to-next-to leading order, non-singlet kernel (plus component)
 	 */
-	class P2nsp : public SplittingFunction
+	class P2nsp final: public SplittingFunction
 	{
 	public:
 		P2nsp() { }
@@ -254,7 +231,7 @@ namespace Candia2
 
 	/** Next-to-next-to leading order, non-singlet kernel (minus component)
 	 */
-	class P2nsm : public SplittingFunction
+	class P2nsm final: public SplittingFunction
 	{
 	public:
 		P2nsm() { }
@@ -267,7 +244,7 @@ namespace Candia2
 
 	/** Next-to-next-to leading order, non-singlet kernel (valence component)
 	 */
-	class P2nsv : public SplittingFunction
+	class P2nsv final: public SplittingFunction
 	{
 	public:
 		P2nsv() { }
@@ -281,7 +258,7 @@ namespace Candia2
 
 	/** Next-to-next-to leading order, q->q singlet kernel.
 	 */
-	class P2qq : public SplittingFunction
+	class P2qq final: public SplittingFunction
 	{
 	public:
 		P2qq() { }
@@ -294,33 +271,29 @@ namespace Candia2
 
 	/** Next-to-next-to leading order, q->g singlet kernel.
 	 */
-	class P2qg : public SplittingFunction
+	class P2qg final: public SplittingFunction
 	{
 	public:
 		P2qg() { }
 		~P2qg() = default;
 
 		double Regular(const double x) const override;
-		double Plus(const double x) const override;
-		double Delta(const double x) const override;
 	};
 
 	/** Next-to-next-to leading order, g->q singlet kernel.
 	 */
-	class P2gq : public SplittingFunction
+	class P2gq final: public SplittingFunction
 	{
 	public:
 		P2gq() { }
 		~P2gq() = default;
 
 		double Regular(const double x) const override;
-		double Plus(const double x) const override;
-		double Delta(const double x) const override;
 	};
 
 	/** Next-to-next-to leading order, g->g singlet kernel.
 	 */
-	class P2gg : public SplittingFunction
+	class P2gg final: public SplittingFunction
 	{
 	public:
 		P2gg() { }
@@ -340,7 +313,7 @@ namespace Candia2
 
 	/** NNNLO non-singlet kernel (plus component)
 	 */
-	class P3nsp : public SplittingFunction
+	class P3nsp final: public SplittingFunction
 	{
 	private:
 		const uint _imod; //!< flag for which approximation to use
@@ -356,7 +329,7 @@ namespace Candia2
 
 	/** NNNLO non-singlet kernel (minus component)
 	 */
-	class P3nsm : public SplittingFunction
+	class P3nsm final: public SplittingFunction
 	{
 	private:
 		const uint _imod; //!< flag for which approximation to use
@@ -370,20 +343,19 @@ namespace Candia2
 		double Delta(const double x) const override;
 	};
 
-	/** NNNLO non-singlet kernel (sea component)
+	
+	/** N3LO non-singlet kernel (sea component)
 	 */
-	class P3nss : public SplittingFunction
+	class P3nsv final: public SplittingFunction
 	{
 	private:
 		const uint _imod; //!< flag for which approximation to use
 		
 	public:
-		P3nss(const uint imod=3) : _imod(imod) { }
-		~P3nss() = default;
+		P3nsv(const uint imod=3) : _imod(imod) { }
+		~P3nsv() = default;
 
 		double Regular(const double x) const override;
-		double Plus(const double x) const override;
-		double Delta(const double x) const override;
 	};
 	
 	///@}

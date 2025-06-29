@@ -1,16 +1,16 @@
 #include "Candia-v2/AlphaS.hpp"
 
 #include <iostream>
-#include <iomanip>
-#include <limits>
-#include <numeric>
 
 namespace Candia2
 {	
 	static void __assert_nf(const uint nf)
 	{
 		if (nf >= 8)
-			throw("[AlphaS] Pre(): nf=" + std::to_string(nf) + " is out of bounds.");
+		{
+			std::cout << "[ALPHAS] Encountered bad nf value: " << nf << '\n';
+			exit(1);
+		}
 	}
 	
 	double AlphaS::Masses(const uint nf) const
@@ -64,13 +64,13 @@ namespace Candia2
 		double res = _beta0;
 
 		if (_order > 0)
-			res += _beta1*alpha/(4.0*M_PI);
+			res += _beta1*alpha/(4.0*PI);
 		if (_order > 1)
-			res += _beta2*std::pow(alpha,2)/(16.0*M_PI_2);
+			res += _beta2*std::pow(alpha,2)/(16.0*PI_2);
 		if (_order > 2)
-			res += _beta3*std::pow(alpha,3)/(64.0*M_PI_3);
+			res += _beta3*std::pow(alpha,3)/(64.0*PI_3);
 		
-		res *= -std::pow(alpha,2)/(4.0*M_PI);
+		res *= -std::pow(alpha,2)/(4.0*PI);
 
 		return res;
 	}
@@ -84,10 +84,10 @@ namespace Candia2
 		double L = -std::log(1.0);
 		double res = alpha;
 
-		res += std::pow(alpha,2)*L / (6.0*M_PI);
+		res += std::pow(alpha,2)*L / (6.0*PI);
 
 		if (_order == 2)
-			res += std::pow(alpha,3)*((L*L/36.0) - (19.0/24.0)*L - (7.0/24.0)) / (M_PI_2);
+			res += std::pow(alpha,3)*((L*L/36.0) - (19.0/24.0)*L - (7.0/24.0)) / (PI_2);
 
 		return res;
 	}
@@ -100,10 +100,10 @@ namespace Candia2
 		double L = -std::log(1.0);
 		double res = alpha;
 
-		res += std::pow(alpha,2)*L / (6.0*M_PI);
+		res += std::pow(alpha,2)*L / (6.0*PI);
 
 		if (_order == 2)
-			res += std::pow(alpha,3)*(14.0 + 38.0*L + (4.0/3.0)*L*L) / (48.0*M_PI_2);
+			res += std::pow(alpha,3)*(14.0 + 38.0*L + (4.0/3.0)*L*L) / (48.0*PI_2);
 
 		return res;
 	}
@@ -132,7 +132,7 @@ namespace Candia2
 			_masses[i] = 0.0;
 
 		
-		std::cerr << "[ALPHA_S] Energy array: ";
+		std::cerr << "[ALPHAS] CalculateThresholdValues(): Energy array: ";
 		for (const double m : _masses)
 		{
 			std::cerr << m << ", ";
@@ -144,7 +144,7 @@ namespace Candia2
 		if (nf1<nfi)
 			nf1++;
 
-		std::cerr << "[ALPHA_S] nf1 = " << nf1 << "\talpha0 = " << _alpha0 << '\n';
+		std::cerr << "[ALPHAS] CalculateThresholdValues(): nf1 = " << nf1 << "\talpha0 = " << _alpha0 << '\n';
 
 		Update(nf1);
 
@@ -170,10 +170,10 @@ namespace Candia2
 			_post[nf] = PostMatch(_pre[nf]);
 		}
 
-		std::cerr << "[ALPHA_S] Computed alpha_s threshold values. They are:\n";
+		std::cerr << "[ALPHAS] CalculateThresholdValues(): Computed alpha_s threshold values. They are:\n";
 		
 		for (nf=nfi; nf<=nff; nf++)
-			std::cerr << "[ALPHA_S] " << nf << '\t' << _masses[nf] << '\t' << _pre[nf] << '\t' << _post[nf] << '\n';
+			std::cerr << "[ALPHAS] " << nf << '\t' << _masses[nf] << '\t' << _pre[nf] << '\t' << _post[nf] << '\n';
 
 	}
 
@@ -184,7 +184,7 @@ namespace Candia2
 			return alpha0;
 
 		if (_order == 0) {
-			return (2.0*M_PI*alpha0) / (2.0F*M_PI + alpha0*_beta0*log(Qf/Qi));
+			return (2.0*PI*alpha0) / (2.0F*PI + alpha0*_beta0*log(Qf/Qi));
 		}
 
 		const static uint steps = 200;
@@ -219,6 +219,29 @@ namespace Candia2
 		_beta1 = CalcBeta1(nf);
 		_beta2 = CalcBeta2(nf);
 		_beta3 = CalcBeta3(nf);
+	}
+
+
+
+
+
+	uint AlphaS::Nff(const uint nfi, const double Qf)
+	{
+	    double aux = Qf;
+		uint nff, i;
+		
+		for (nff=6; aux<=_masses[nff]; nff--);
+
+		if (aux>_masses[6])
+			i=7;
+		else
+			for (i=nfi+1; aux>_masses[i]; i++);
+
+		_masses[i] = aux;
+		for (uint j=i+1; j<=8; j++)
+			_masses[j]=0.;
+
+		return nff;
 	}
 
 }

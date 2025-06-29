@@ -1,11 +1,13 @@
 #include "Candia-v2/SplittingFn.hpp"
+
 #include "Candia-v2/Common.hpp"
-#include "Candia-v2/AlphaS.hpp"
 #include "Candia-v2/SpecialFuncs.hpp"
+
 
 namespace Candia2
 {		
-	uint SplittingFunction::_nf = 3;
+	uint SplittingFunction::_nf = 4; // good default
+	double SplittingFunction::_beta0 = 0.0; // to be set
 	
 	double P0ns::Regular(const double x) const
 	{
@@ -43,31 +45,11 @@ namespace Candia2
 	{
 		return 2.0*TR*_nf*(2.0*x*x - 2.0*x + 1.0);
 	}
-	double P0qg::Plus(const double x) const
-	{
-		UNUSED(x);
-		return 0;
-	}
-	double P0qg::Delta(const double x) const
-	{
-		UNUSED(x);
-		return 0;
-	}
 
 
 	double P0gq::Regular(const double x) const
 	{
 		return CF*(x - 2.0 + 2.0/x);
-	}
-	double P0gq::Plus(const double x) const
-	{
-		UNUSED(x);
-		return 0;
-	}
-	double P0gq::Delta(const double x) const
-	{
-		UNUSED(x);
-		return 0;
 	}
 
 
@@ -89,193 +71,119 @@ namespace Candia2
 
 	double P1nsp::Regular(const double x) const
 	{
-		double f1 = CF*(4.0*_nf*TR*(1.0 + x)*(-1.0 + 11.0*x) + NC*(89.0 + (-134.0 + 6.0*M_PI_2 - 223.0*x)*x) + 6.0*CF*(-27.0 + M_PI_2 + (27.0 + M_PI_2)*x*x));
-		f1 /= 18.0*(1.0 + x);
-		
-		double f2 = Li2(-x)*(2.0*CF*(2.0*CF - NC)*(1.0 + x*x));
-		f2 /= 1.0+x;
-		
-		double f3 = std::log(x)*(CF*(30.0*CF - 230.*NC + 4.0*_nf*TR + 12.0*CF*x + (-24.0*CF + NC + 4.0*_nf*TR)*x*x));
-		f3 /= 6.0*(-1.0 + x);
-		
-		double f4 = std::pow(std::log(x), 2.0)*(CF*(2.0*NC*(1.0 + x*x) + CF*(-1.0 + x)*(3.0 + x*(2.0 + 3.0*x))));
-		f4 /= 2.0*(-1.0 + x*x);
-
-		double f5 = std::log(x)*std::log1p(-x)*(2.0*CF*CF*(1.0 + x*x));
-		f5 /= -1.0+x;
-
-		double f6 = std::log(x)*std::log1p(x)*(2.0*CF*(2.0*CF - NC)*(1.0 + x*x));
-		f6 /= 1.0+x;
-		return f1 + f2 + f3 - f4 + f5 + f6;
+		double Nf = static_cast<double>(_nf);
+		return (CF*(4.*Nf*TR*(1.+x)*(-1.+11.*x)-6.*CF*(3.+PI_2+(-3.+PI_2)*x*x)+
+				 NC*(-((1.+x)*(-17.+151.*x))+6.*PI_2*(1+x+x*x))))/(18.*(1+x))
+				+Li2(-x)*(-2.*CF*(2.*CF-NC)*(1.+x*x))/(1.+x)
+			    +std::log(x)*(CF*(6.*CF*(1.+2.*x)-(11.*NC-4.*Nf*TR)*(1.+x*x)))/(6.*(-1.+x))
+			    +std::pow(std::log(x),2.)*(CF*(CF*std::pow(-1.+x,3.)-2.*NC*x*(1.+x*x)))/(2.*(-1.+x*x))
+			    +std::log(x)*std::log(1.-x)*(2.*CF*CF*(1.+x*x))/(-1.+x)
+			    +std::log(x)*std::log(1.+x)*(-2.*CF*(2.*CF-NC)*(1.+x*x))/(1.+x);
 	}
 	double P1nsp::Plus(const double x) const
 	{
 		UNUSED(x);
-		return -(CF*(NC*(-67.0 + 3.0*M_PI_2) + 20.0*_nf*TR))/9.0;
+		return -(CF*(NC*(-67.0 + 3.0*PI_2) + 20.0*_nf*TR))/9.0;
 	}
 	double P1nsp::Delta(const double x) const
 	{
 		UNUSED(x);
-		return (CF*(-4.0*_nf*(3.0 + 4.0*M_PI_2)*TR + NC*(51.0 + 44.0*M_PI_2 - 216.0*Zeta3) + 9.0*CF*(3.0 - 4.0*M_PI_2 + 48.0*Zeta3)))/72.0;
+		return (CF*(-4.0*_nf*(3.0 + 4.0*PI_2)*TR + NC*(51.0 + 44.0*PI_2 - 216.0*Zeta3) + 9.0*CF*(3.0 - 4.0*PI_2 + 48.0*Zeta3)))/72.0;
 	}
 
 	
 	double P1nsm::Regular(const double x) const
 	{
-		double xp1 = 1.0+x;
-		
-		double f1 = (CF*(4.0*_nf*TR*xp1*(-1.0 + 11.0*x) - 6.0*CF*(3.0 + M_PI_2 + (-3.0 + M_PI_2)*x*x) + NC*(-(xp1*(-17.0 + 151.0*x)) + 6.0*M_PI_2*(1 + x + x*x))));
-		f1 /= 18.0*xp1;
-
-		double f2 = Li2(-x)*(-2.0*CF*(2.0*CF - NC)*(1.0 + x*x));
-		f2 /= xp1;
-
-		double f3 = std::log(x)*(CF*(6.0*CF*(1.0 + 2.0*x) - (11.0*NC - 4.0*_nf*TR)*(1.0 + x*x)));
-		f3 /= 6.0*(-1.0 + x);
-
-		double f4 = std::pow(std::log(x), 2.0)*(CF*(CF*std::pow(-1.0+x, 3.0) - 2.0*NC*x*(1.0 + x*x)));
-		f4 /= 2.0*(-1.0 + x*x);
-
-		double f5 = std::log(x)*std::log1p(-x)*(2.0*CF*CF*(1.0 + x*x));
-		f5 /= -1.0+x;
-
-		double f6 = std::log(x)*std::log1p(x)*(-2.0*CF*(2.0*CF - NC)*(1.0 + x*x));
-		f6 /= xp1;
-		
-		return f1 + f2 + f3 + f4 + f5 + f6;
+		double Nf = static_cast<double>(_nf);
+		return (CF*(4.*Nf*TR*(1.+x)*(-1.+11.*x)+NC*(89.+(-134.+6.*PI_2-223.*x)*x)+
+				 6.*CF*(-27.+PI_2+(27.+ PI_2)*x*x)))/(18.*(1.+x))
+				+Li2(-x)*(2.*CF*(2.*CF-NC)*(1.+x*x))/(1.+x)
+			    +std::log(x)*(CF*(30.*CF-23.*NC+4.*Nf*TR+12.*CF*x+(-24.*CF+NC+4.*Nf*TR)*x*x))/(6.*(-1.+x))
+			    -std::pow(std::log(x),2.)*(CF*(2.*NC*(1.+x*x)+CF*(-1.+x)*(3.+x*(2.+3.*x))))/(2.*(-1.+x*x))
+			    +std::log(x)*std::log(1.-x)*(2.*CF*CF*(1.+x*x))/(-1.+x)
+			    +std::log(x)*std::log(1.+x)*(2.*CF*(2.*CF-NC)*(1.+x*x))/(1.+x);
 	}
 	double P1nsm::Plus(const double x) const
 	{
 		UNUSED(x);
-		return -(CF*(NC*(-67.0 + 3.0*M_PI_2) + 20.0*_nf*TR))/9.0;
+		return -(CF*(NC*(-67.0 + 3.0*PI_2) + 20.0*_nf*TR))/9.0;
 	}
 	double P1nsm::Delta(const double x) const
 	{
 		UNUSED(x);
-		return (CF*(-4.0*_nf*(3.0 + 4.0*M_PI_2)*TR + NC*(51.0+44.0*M_PI_2 - 216.0*Zeta3) + 9.0*CF*(3.0 - 4.0*M_PI_2 + 48.0*Zeta3)))/72.0;
+		return (CF*(-4.0*_nf*(3.0 + 4.0*PI_2)*TR + NC*(51.0+44.0*PI_2 - 216.0*Zeta3) + 9.0*CF*(3.0 - 4.0*PI_2 + 48.0*Zeta3)))/72.0;
 	}
 
 
 	double P1qq::Regular(const double x) const
 	{
-		double xp1 = 1.0+x;
-		
-		double f1 = CF*(4.0*_nf*TR*(20.0 + x + 46.0*x*x + 9.0*std::pow(x, 3.0) - 56.0*std::pow(x, 4.0)) + x*(-6.0*CF*(3.0 + M_PI_2 + (-3.0 + M_PI_2)*x*x) + NC*(-(xp1*(-17.0 + 151.0*x)) + 6.0*M_PI_2*(xp1 + x*x))));
-		f1 /= 18.0*x*xp1;
-
-		double f2 = Li2(-x)*(-2.0*CF*(2.0*CF - NC)*(1.0 + x*x));
-		f2 /= xp1;
-
-		double f3 = std::log(x)*(CF*(6.0*CF*(1.0 + 2.0*x) - 11.0*NC*(1.0 + x*x) + 8.0*_nf*TR*(-1.0 + 2.0*x*(-3.0 + 2.0*x*xp1))));
-		f3 /= 6.0*(-1.0 + x);
-
-		double f4 = std::pow(std::log(x), 2.0)*(CF*(CF*std::pow(-1.0+x, 3.0) - 2.0*(2.0*_nf*TR*(-1.0 + x)*pow(1.0+x, 2.0) + NC*x*(1.0 + x*x))));
-		f4 /= 2.0*(-1.0 + x*x);
-
-		double f5 = std::log(x)*std::log1p(-x)*(2.0*CF*CF*(1.0 + x*x));
-		f5 /= -1.0 + x;
-
-		double f6 = std::log(x)*std::log1p(x)*(-2.0*CF*(2.0*CF - NC)*(1.0 + x*x));
-		f6 /= xp1;
-		
-		return f1 + f2 + f3 + f4 + f5 + f6;
+		double Nf = static_cast<double>(_nf);
+		return (CF*(4.*Nf*TR*(20.+x+46.*x*x+9.*std::pow(x,3.)-56.*std::pow(x,4.))+
+				     x*(-6.*CF*(3.+PI_2+(-3.+PI_2)*x*x)+NC*(-((1.+x)*(-17.+151.*x))+6.*PI_2*(1.+x+x*x)))))/(18.*x*(1.+x))
+				+Li2(-x)*(-2.*CF*(2.*CF-NC)*(1.+x*x))/(1.+x)
+			    +std::log(x)*(CF*(6.*CF*(1.+2.*x)-11.*NC*(1.+x*x)+8.*Nf*TR*(-1.+2.*x*(-3.+2.*x*(1.+x)))))/(6.*(-1.+x))
+			    +std::pow(std::log(x),2.)*(CF*(CF*std::pow(-1.+x,3.)-2.*(2.*Nf*TR*(-1.+x)*std::pow(1.+x,2.)+NC*x*(1.+x*x))))/(2.*(-1.+x*x))
+			    +std::log(x)*std::log(1.-x)*(2.*CF*CF*(1.+x*x))/(-1.+x)
+			    +std::log(x)*std::log(1.+x)*(-2.*CF*(2.*CF-NC)*(1.+x*x))/(1.+x);
 	}
 	double P1qq::Plus(const double x) const
 	{
 		UNUSED(x);
-		return -(CF*(NC*(-67.0 + 3.0*M_PI_2) + 20.0*_nf*TR))/9.0;
+		return -(CF*(NC*(-67.0 + 3.0*PI_2) + 20.0*_nf*TR))/9.0;
 	}
 	double P1qq::Delta(const double x) const
 	{
 		UNUSED(x);
-		return (CF*(-4.0*_nf*(3.0 + 4.0*M_PI_2)*TR + NC*(51.0 + 44.0*M_PI_2 - 216.0*Zeta3) + 9.0*CF*(3.0 - 4.0*M_PI_2 + 48.0*Zeta3)))/72.0;
+		return (CF*(-4.0*_nf*(3.0 + 4.0*PI_2)*TR + NC*(51.0 + 44.0*PI_2 - 216.0*Zeta3) + 9.0*CF*(3.0 - 4.0*PI_2 + 48.0*Zeta3)))/72.0;
 	}
 
 
 	double P1qg::Regular(const double x) const
 	{
-		double f1 = _nf*TR*(3.0*CF*x*(42.0 - 87.0*x + 60.0*x*x + M_PI_2*(-2.0 - 4.0*(-1.0 + x)*x)) - 2.0*NC*(-20.0 + x*(18.0 + x*(-225.0 + 6.0*M_PI_2 + 218.0*x))));
-		f1 /= 9.0*x;
-
-		double f2 = Li2(-x)*4.0*NC*_nf*TR*(1.0 + 2.0*x*(1.0 + x));
-		double f3 = std::log(x)*(_nf*TR*(6.0*NC + 8.0*NC*x*(6.0 + 11.0*x) + 3.0*CF*(3.0 - 4.0*x + 8.0*x*x)))/3.0;
-		double f4 = std::log1p(-x)*8.0*(CF-NC)*_nf*TR*(-1.+x)*x;
-		double f5 = std::pow(std::log(x), 2.0)*_nf*TR*(CF - 2.0*NC - 2.0*(CF + 2.0*NC)*x + 4.0*CF*x*x);
-		double f6 = std::pow(std::log1p(-x), 2.0)*2.0*(CF-NC)*_nf*TR*(1.0 + 2.0*(-1.+x)*x);
-		double f7 = std::log(x)*std::log1p(-x)*4.0*CF*_nf*TR*(1.0 + 2.0*(-1.0+x)*x);
-		double f8 = std::log(x)*std::log1p(x)*4.0*NC*_nf*TR*(1.0 + 2.0*x*(1.0+x));
-		
-		return f1 - f2 + f3 - f4 + f5 + f6 - f7 - f8;
-	}
-	double P1qg::Plus(const double x) const
-	{
-		UNUSED(x);
-		return 0;
-	}
-	double P1qg::Delta(const double x) const
-	{
-		UNUSED(x);
-		return 0;
+		double Nf = static_cast<double>(_nf);
+		return (Nf*TR*(3.*CF*x*(42.-87.*x+60.*x*x+PI_2*(-2.-4.*(-1.+x)*x))-
+				        2.*NC*(-20.+x*(18.+x*(-225.+6.*PI_2+218.*x)))))/(9.*x)
+				-Li2(-x)*4.*NC*Nf*TR*(1.+2.*x*(1.+x))
+			    +std::log(x)*(Nf*TR*(6.*NC+8.*NC*x*(6.+11.*x)+3.*CF*(3.-4.*x+8.*x*x)))/3.
+			    -std::log(1.-x)*8.*(CF-NC)*Nf*TR*(-1.+x)*x
+			    +std::pow(std::log(x),2.)*Nf*TR*(CF-2.*NC-2.*(CF+2.*NC)*x+4.*CF*x*x)
+			    +std::pow(std::log(1.-x),2.)*2.*(CF-NC)*Nf*TR*(1.+2.*(-1.+x)*x)
+			    -std::log(x)*std::log(1.-x)*4.*CF*Nf*TR*(1.+2.*(-1.+x)*x)
+			    -std::log(x)*std::log(1.+x)*4.*NC*Nf*TR*(1.+2.*x*(1.+x));
 	}
 
 
 	double P1gq::Regular(const double x) const
 	{
-		double f1 = CF*(-9.0*CF*x*(5.0 + 7.0*x) - 16.0*_nf*TR*(5.0 + x*(-5.0 + 4.0*x)) + 2.0*NC*(9.0 + x*(19.0 + 6.0*M_PI_2 + x*(37.0 + 44.0*x))));
-		f1 /= 18.0*x;
+		double Nf = static_cast<double>(_nf);
+		return (CF*(-9.*CF*x*(5.+7.*x)-16.*Nf*TR*(5.+x*(-5.+4.*x))+2.*NC*(9.+x*(19.+6.*PI_2+x*(37.+44.*x)))))/(18.*x)
+				+Li2(-x)*(2.*CF*NC*(2.+x*(2.+x)))/x
+			    +std::log(x)*(CF*(3.*CF*(4.+7.*x)-2.*NC*(36.+x*(15.+8.*x))))/6.
+			    +std::log(1.-x)*(CF*(-4.*Nf*TR*(2.+(-2.+x)*x)-3.*CF*(6.+x*(-6.+5.*x))+NC*(22.+x*(-22.+17.*x))))/(3.*x)
+			    +std::pow(std::log(x),2.)*(CF*(CF*(-2.+x)+2.*NC*(2.+x)))/2.
+			    -std::pow(std::log(1.-x),2.)*((CF*(CF-NC)*(2.+(-2.+x)*x))/x)
+			    +std::log(x)*std::log(1.-x)*(-2.*CF*NC*(2.+(-2.+x)*x))/x
+			    +std::log(x)*std::log(1.+x)*(2.*CF*NC*(2.+x*(2.+x)))/x;
+	}
 
-		double f2 = Li2(-x)*(2.0*CF*NC*(2.0 + x*(2.0+x)))/x;
-		double f3 = std::log(x)*(CF*(3.0*CF*(4.0 + 7.0*x) - 2.0*NC*(36.0 + x*(15.0 + 8.0*x))))/6.0;
-		
-		double f4 = std::log1p(-x)*(CF*(-4.0*_nf*TR*(2.0 + (-2.0+x)*x) - 3.0*CF*(6.0 + x*(-6.0 + 5.0*x)) + NC*(22.0 + x*(-22.0 + 17.0*x))));
-		f4 /= 3.0*x;
-
-		double f5 = std::pow(std::log(x), 2.0)*(CF*(CF*(-2.0+x) + 2.0*NC*(2.0+x)))/2.0;
-		double f6 = std::pow(std::log1p(-x), 2.0)*((CF*(CF-NC)*(2.0 + (-2.0+x)*x))/x);
-		double f7 = std::log(x)*std::log1p(-x)*(-2.0*CF*NC*(2.0 + (-2.+x)*x))/x;
-		double f8 = std::log(x)*std::log1p(x)*(2.0*CF*NC*(2.0 + x*(2.0+x)))/x;
-		
-		return f1 + f2 + f3 + f4 + f5 - f6 + f7 + f8;
-	}
-	double P1gq::Plus(const double x) const
-	{
-		UNUSED(x);
-		return 0;
-	}
-	double P1gq::Delta(const double x) const
-	{
-		UNUSED(x);
-		return 0;
-	}
 
 
 	double P1gg::Regular(const double x) const
 	{
-		double xp1 = 1.0+x;
-
-		double f1 = 24.0*CF*_nf*TR*(-1.0+x)*xp1*(-1.0 + x*(11.0 + 5.0*x)) + NC*(NC*x*(-(xp1*(25.0 + 109.0*x)) + 6.0*M_PI_2*(3.0 + 2.0*x*(2.0 + x + x*x))) + 4.0*_nf*TR*(-23.0 + x*(6.0 + x*(10.0 + x*(4.0 + 23.0*x)))));
-		f1 /= 18.0*x*xp1;
-
-		double f2 = Li2(-x)*(4.0*NC*NC*std::pow(xp1 + x*x, 2.0));
-		f2 /= x*xp1;
-
-		double f3 = std::log(x)*(-4.0*NC*_nf*TR*xp1 - 6.0*CF*_nf*TR*(3.0 + 5.0*x) + NC*NC*(-25.0 + 11.0*(1.0 - 4.0*x)*x))/3.0;
-
-		double f4 = std::pow(std::log(x), 2.0)*(-2.0*(CF*_nf*TR*(-1.0+x)*pow(xp1, 2.0) + NC*NC*std::pow(-1.0 + (-1.0+x)*x, 2.0)));
-		f4 /= -1.0 + x*x;
-
-		double f5 = std::log(x)*std::log1p(-x)*(4.0*NC*NC*std::pow(1.0 + (-1.0+x)*x, 2.0));
-		f5 /= (-1.0+x)*x;
-
-		double f6 = std::log(x)*std::log1p(+x)*(4.0*NC*NC*std::pow(xp1 + x*x, 2.0));
-		f6 /= x*xp1;
-		
-		return f1 + f2 + f3 + f4 + f5 + f6;
+		double Nf = static_cast<double>(_nf);
+		return (24.*CF*Nf*TR*(-1.+x)*(1.+x)*(-1.+x*(11.+5.*x))+
+				 NC*(NC*x*(-((1.+x)*(25.+109.*x))+6.*PI_2*(3.+2.*x*(2.+x+x*x)))+
+				     4.*Nf*TR*(-23.+x*(6.+x*(10.+x*(4.+23.*x))))))/(18.*x*(1.+x))
+			    +Li2(-x)*(4.*NC*NC*std::pow(1.+x+x*x,2.))/(x*(1.+x))
+			    +std::log(x)*(-4.*NC*Nf*TR*(1.+x)-6.*CF*Nf*TR*(3.+5.*x)+NC*NC*(-25.+11.*(1.-4.*x)*x))/3.
+			    +std::pow(std::log(x),2.)*(-2.*(CF*Nf*TR*(-1.+x)*std::pow(1+x,2.)+NC*NC*std::pow(-1.+(-1.+x)*x,2.)))/(-1.+x*x)
+			    +std::log(x)*std::log(1.-x)*(4.*NC*NC*std::pow(1.+(-1.+x)*x,2.))/((-1.+x)*x)
+			    +std::log(x)*std::log(1.+x)*(4.*NC*NC*std::pow(1.+x+x*x,2.))/(x*(1.+x));
 	}
 	double P1gg::Plus(const double x) const
 	{
 		UNUSED(x);
-		return -(NC*(NC*(-67.0 + 3.0*M_PI_2) + 20.0*_nf*TR))/9.0;
+		return -(NC*(NC*(-67.0 + 3.0*PI_2) + 20.0*_nf*TR))/9.0;
 	}
 	double P1gg::Delta(const double x) const
 	{
@@ -288,7 +196,8 @@ namespace Candia2
 	double P2nsp::Regular(const double x) const
 	{
 		const double dl = std::log(x);
-		const double dl1 = std::log1p(-x);
+		// const double dl1 = std::log1p(-x);
+		const double dl1 = std::log(1.0-x);
 		const double d81 = 1.0/81.0;
 
 		const double nf = static_cast<double>(_nf);
@@ -422,34 +331,37 @@ namespace Candia2
 
 	double P2qq::Regular(const double x) const
 	{
-		const double dl = std::log(x);
-		const double dl1 = std::log1p(-x);
-		const double d81 = 1.0/81.0;
+		double dl  = std::log(x);
+        double dl1 = std::log1p(-x);
+		double d81 = 1.0/81.0;
 
-		const double nf = static_cast<double>(_nf);
+		double NF = static_cast<double>(_nf);
 
-		double res1 = 1641.1 - 3135.0*x + 243.6*std::pow(x, 2.0) - 522.1*std::pow(x, 3.0)
-			+ 128.*d81*std::pow(dl, 4.0) + 2400.*d81*std::pow(dl, 3.0)
-			+ 294.9*std::pow(dl, 2.0) + 1258.0*dl
-			+ 714.1*dl1 + dl*dl1*(563.9 + 256.8*dl)
-			+ nf * ( -197.0 + 381.1*x + 72.94*std::pow(x, 2.0) + 44.79*std::pow(x, 3.0)
-					 - 192.0*d81*std::pow(dl, 3.0) - 2608.0*d81*std::pow(dl, 2.0) - 152.6*dl
-					 - 5120.0*d81*dl1 - 56.66*dl*dl1 - 1.497*x*std::pow(dl, 3.0) )
-			+ std::pow(nf, 2.0)*( 32.0*x*dl/(1.0-x) * (3.0*dl + 10.0) + 64.0
-								  + (48.0*std::pow(dl, 2.0) + 352.0*dl + 384.0)*(1.0-x) ) * d81;
 
-		double res2a = 3584.0/(27.0*x) * dl - 506.0/x + 160.0/27.0 * std::pow(dl, 4.0)
-			- 400.0/9.0 * std::pow(dl, 3.0) + 131.4*std::pow(dl, 2.0) - 661.6*dl
-			- 5.926*std::pow(dl1, 3.0) - 9.751*std::pow(dl1, 2.0) - 72.11*dl1
-			+ 177.4 + 392.9*x - 101.4*std::pow(x, 2.0) - 57.04*dl*dl1;
-		double res2b = 256.0/(81.0*x) + 32.0/27.0 * std::pow(dl, 3.0) + 17.89*std::pow(dl, 2.0)
-			+ 61.75*dl + 1.778*std::pow(dl1, 2.0) + 5.944*dl1 + 100.1
-			- 125.2*x + 49.26*std::pow(x, 2.0) - 12.59*std::pow(x, 3.0)
-			- 1.889*dl*dl1;
+		double res1 =   1641.1 - 3135.* x + 243.6 * std::pow(x, 2) - 522.1 * std::pow(x, 3)
+                 + 128.*d81 * std::pow(dl, 4) + 2400.*d81 * std::pow(dl, 3)
+                 + 294.9 * std::pow(dl, 2) + 1258.* dl
+                 + 714.1 * dl1 + dl*dl1 * (563.9 + 256.8 * dl)
+             + NF * ( -197.0 + 381.1 * x + 72.94 * std::pow(x, 2) + 44.79 * std::pow(x, 3)
+                 - 192.*d81 * std::pow(dl, 3)  - 2608.*d81 * std::pow(dl, 2) - 152.6 * dl
+                 - 5120.*d81 * dl1 - 56.66 * dl*dl1 - 1.497 * x*std::pow(dl, 3) )
+			+ std::pow(NF, 2) * ( 32.* x*dl/(1.-x) * (3.* dl + 10.) + 64.
+						 + (48.* std::pow(dl, 2) + 352.* dl + 384.) * (1.-x) ) * d81;
 
-		double res2 = (1.0-x)*nf*(res2a + nf*res2b);
+		
+		double res2a = - 3584./(27.*x) * dl - 506.0/ x + 160./27. * std::pow(dl, 4)
+			- 400./9. * std::pow(dl, 3) + 131.4 * std::pow(dl, 2) - 661.6 * dl
+			- 5.926  * std::pow(dl1, 3) - 9.751 * std::pow(dl1, 2) - 72.11 * dl1
+			+ 177.4 + 392.9 * x - 101.4 * std::pow(x, 2) - 57.04 * dl*dl1;
+		double res2b =  256./(81.*x) + 32./27. * std::pow(dl, 3) + 17.89 * std::pow(dl, 2)
+			+ 61.75 * dl + 1.778 * std::pow(dl1, 2) + 5.944 * dl1 + 100.1
+			- 125.2 * x + 49.26 * std::pow(x, 2) - 12.59 * std::pow(x, 3) 
+			- 1.889 * dl*dl1;
+			
+		double res2 = (1.0-x)*NF*(res2a + NF*res2b);
 
 		return (res1 + res2)/8.0;
+		
 	}
 	double P2qq::Plus(const double x) const
 	{
@@ -500,16 +412,6 @@ namespace Candia2
 		double res = nf*(res1 + nf*res2);
 		return res/8.0;
 	}
-	double P2qg::Plus(const double x) const
-	{
-		UNUSED(x);
-		return 0;
-	}
-	double P2qg::Delta(const double x) const
-	{
-		UNUSED(x);
-		return 0;
-	}
 
 
 	double P2gq::Regular(const double x) const
@@ -538,16 +440,6 @@ namespace Candia2
 
 		double res = res1 + nf*(res2 + nf*res3);
 		return res/8.0;
-	}
-	double P2gq::Plus(const double x) const
-	{
-		UNUSED(x);
-		return 0;
-	}
-	double P2gq::Delta(const double x) const
-	{
-		UNUSED(x);
-		return 0;
 	}
 
 
@@ -834,7 +726,7 @@ namespace Candia2
 	}
 
 
-	double P3nss::Regular(const double x) const
+	double P3nsv::Regular(const double x) const
 	{
 		const double x2   = x * x;
 		const double omx  = 1 - x;
@@ -871,15 +763,7 @@ namespace Candia2
 		else
 			return 0.5 *_nf * ( p3nsa11 + p3nsa12 ) + _nf * _nf * p3nssa2;
 	}
-	double P3nss::Plus(const double x) const
-	{
-		UNUSED(x);
-		return 0.0;
-	}
-	double P3nss::Delta(const double x) const
-	{
-		UNUSED(x);
-		return 0.0;
-	}
+
+	
 
 } // namespace Candia2

@@ -75,7 +75,7 @@ namespace Candia2
 
 	/** LesHouches toy model initial distributions
 	 */
-	class LesHouchesDistribution : public Distribution
+	class LesHouchesDistribution final : public Distribution
 	{
 	private:
 		static constexpr std::array<double,8> _leshouche_masses =

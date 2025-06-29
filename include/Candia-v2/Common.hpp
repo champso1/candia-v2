@@ -7,8 +7,6 @@
 #ifndef __COMMON_HPP
 #define __COMMON_HPP
 
-#include <exception>
-#include <string>
 #include <cmath>
 #include <vector>
 #include <concepts>
@@ -23,6 +21,7 @@ typedef unsigned int uint;
 #define MIN(x,y) ((x)<=(y)) ? (x) : (y)
 
 
+/// @brief 
 namespace Candia2
 {
 
@@ -37,17 +36,19 @@ namespace Candia2
 
 	/** @brief Mass of Z-boson */
 	const double MZ    = 91.1876;
+
+	constexpr const double PI = std::numbers::pi;
+	constexpr const double PI_2 = PI*PI;
+	constexpr const double PI_3 = PI*PI*PI;
+
 	/** @name Values of the \f$\zeta\f$-function.
 	 */
 	///@{
 	/** \f$\zeta(2)\f$ */
-	const double Zeta2 = M_PI*M_PI/6.0;
+	const double Zeta2 = PI*PI/6.0;
 	/** \f$\zeta(2)\f$ */
 	const double Zeta3 = 1.2020569031595942854;
 	///@}
-
-	const double M_PI_3 = M_PI*M_PI*M_PI;
-
 
 
 	/** @name Evolution constants
@@ -66,7 +67,7 @@ namespace Candia2
 	const uint ITERATIONS = 15;
 
 	/** @brief number of additional iterations for truncated ansatz */
-	const uint TRUNC_IDX = 5;
+	const uint TRUNC_IDX = 6;
 	///@}
 
 

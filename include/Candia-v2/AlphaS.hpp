@@ -7,7 +7,6 @@
 #ifndef __ALPHAS_HPP
 #define __ALPHAS_HPP
 
-#include <vector>
 #include <array>
 
 #include "Candia-v2/Common.hpp"
@@ -70,6 +69,12 @@ namespace Candia2
 		/** @brief Getter for mass corresponding to flavor @a nf
 		 */
 		double Masses(const uint nf) const;
+
+		/** @brief determines the number of flavors to evolve too,
+		 *  and updates the mass array accordingly
+		 *  @param Qf: the final energy to evolve to
+		 */
+		uint Nff(const uint nfi, const double Qf);
 	    
 		
 		/** @brief Calculates the value of the beta function

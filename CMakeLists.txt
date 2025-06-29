@@ -6,21 +6,22 @@ set(CMAKE_BUILD_TYPE Debug)
 # default the installation to the project directory
 set(CMAKE_INSTALL_PREFIX ${CMAKE_SOURCE_DIR}/install)
 
-# enforce C++20 (to avoid alignment issues with eigen) 
+# enforce C++20
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 
 # grab all source files
-file(GLOB sources src/*.cpp include/*.hpp)
+file(GLOB sources ${CMAKE_SOURCE_DIR}/src/*.cpp ${CMAKE_SOURCE_DIR}/include/*.hpp)
 
 # make library with maximum optimization and all warnings
 add_library(candia STATIC ${sources}) 
-target_compile_options(candia PUBLIC -Wall -Wextra -O3 -lgfortran -fPIC)
+target_compile_options(candia PUBLIC -O3 -Wall -Wextra -lgfortran -fPIC)
+#target_compile_options(candia PUBLIC -Wall -Wextra -lgfortran -fPIC)
 
 # compile the fortran code for harmonic polylogs
 enable_language(Fortran)
-set(CMAKE_Fortran_FLAGS_RELEASE "-O2 -std=legacy")
-set(CMAKE_Fortran_FLAGS_DEBUG "-O2 -std=legacy")
+set(CMAKE_Fortran_FLAGS_RELEASE "-O2 -std=legacy -w")
+set(CMAKE_Fortran_FLAGS_DEBUG "-O2 -std=legacy -w")
 add_library(hplog STATIC src/hplog.f)
 target_link_libraries(hplog PUBLIC gfortran)
 
@@ -28,10 +29,12 @@ target_link_libraries(candia PUBLIC hplog)
 
 # include directories,
 # differentiate while building versus the final installation
-target_include_directories(candia PRIVATE
+target_include_directories(candia PUBLIC
   $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:include>
 )
+
+add_subdirectory(tests)
 
 
 # --------------------------- #

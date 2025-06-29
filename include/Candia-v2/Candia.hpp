@@ -13,10 +13,10 @@
 #include "Candia-v2/AlphaS.hpp"
 #include "Candia-v2/Distribution.hpp"
 #include "Candia-v2/SplittingFn.hpp"
-#include "Candia-v2/Math.hpp"
+#include "Candia-v2/OperatorMatrixElements.hpp"
 
+#include <chrono>
 #include <memory>
-#include <sstream>
 
 
 namespace Candia2
@@ -71,6 +71,15 @@ namespace Candia2
 
 		MultiDimVector<double, 2>::type _F; //!< final distribution
 
+
+		/** @name N3LO additional parameters
+		 */
+		///@{
+		std::array<double,8> _r1; //!< one real solution to N3LO quadratic
+		std::array<double,8> _b; //!< -2*Re[r2]
+		std::array<double,8> _c; //!< |r2|^2
+		///@}
+
 		
 		/** @defgroup SplitFuncs Splitting function pointers
 		 */
@@ -123,6 +132,21 @@ namespace Candia2
 		///@}
 
 
+		/** @name Operator Matrix Elements
+		 */
+		///@{
+		std::shared_ptr<OpMatElem> _A2ns;
+		std::shared_ptr<OpMatElem> _A2gq;
+		std::shared_ptr<OpMatElem> _A2gg;
+		std::shared_ptr<OpMatElem> _A2hq;
+		std::shared_ptr<OpMatElem> _A2hg;
+		///@}
+
+
+		typedef std::chrono::high_resolution_clock Clock;
+		
+
+
 		/** @defgroup RecRels Recursion relations
 		 */
 		///@{
@@ -140,6 +164,13 @@ namespace Candia2
 						 uint k,
 						 std::shared_ptr<SplittingFunction> P0,
 						 std::shared_ptr<SplittingFunction> P1);
+		double RecRelS_3(std::vector<double> const& S1,
+						 std::vector<double> const& S2,
+						 std::vector<double> const& S3,
+						 uint k,
+						 std::shared_ptr<SplittingFunction> P0,
+						 std::shared_ptr<SplittingFunction> P1,
+						 std::shared_ptr<SplittingFunction> P2);
 		///@}
 
 		/** @name LO recursion relations
@@ -166,23 +197,41 @@ namespace Candia2
 
 		/** @name NNLO recursion relations
 		 *  @ingroup RecRels
-		 *  @note NOT IMPLEMENTED YET
 		 */
 		///@{
-		double RecRelNNLO_1();
-		double RecRelNNLO_2();
-		double RecRelNNLO_3();
+		double RecRelNNLO_1(std::vector<double> const& C,
+							uint k,
+							std::shared_ptr<SplittingFunction> P);
+		double RecRelNNLO_2(std::vector<double> const& C,
+							uint k,
+							std::shared_ptr<SplittingFunction> P);
+		double RecRelNNLO_3(std::vector<double> const& C,
+							uint k,
+							std::shared_ptr<SplittingFunction> P);
 		///@}
 
 		/** @name NNNLO recursion relations
 		 *  @ingroup RecRels
-		 *  @note NOT IMPLEMENTED YET
 		 */
 		///@{
-		double RecRelN3LO_1();
-		double RecRelN3LO_2();
-		double RecRelN3LO_3();
-		double RecRelN3LO_4();
+		double RecRelN3LO_1(std::vector<double> const& D,
+							uint k,
+							std::shared_ptr<SplittingFunction> P);
+		double RecRelN3LO_2(std::vector<double> const& D,
+							uint k,
+							std::shared_ptr<SplittingFunction> P1,
+							std::shared_ptr<SplittingFunction> P2,
+							std::shared_ptr<SplittingFunction> P3);
+		double RecRelN3LO_3(std::vector<double> const& D,
+							uint k,
+							std::shared_ptr<SplittingFunction> P1,
+							std::shared_ptr<SplittingFunction> P2,
+							std::shared_ptr<SplittingFunction> P3);
+		double RecRelN3LO_4(std::vector<double> const& D,
+							uint k,
+							std::shared_ptr<SplittingFunction> P1,
+							std::shared_ptr<SplittingFunction> P2,
+							std::shared_ptr<SplittingFunction> P3);
 		///@}
 
 		
@@ -218,15 +267,15 @@ namespace Candia2
 
 
 		/** @brief Outputs a datafile in the new format
-		 *  (very similar but with cpp functions)
+		 *  (very similar to old format but with cpp functions)
 		 *  @param filepath: Name of output datafile
 		*/
-		void OutputDataFileNew(std::string const& filepath);
+		void SetOutputDataFileNew(std::string const& filepath);
 
 		/** @brief Outputs a datafile in the original Candia format
 		 *  @param filepath: Name of output datafile
 		*/
-		void OutputDataFileOld(std::string const& filepath);
+		void SetOutputDataFileOld(std::string const& filepath);
 		
 
 	private:
@@ -258,7 +307,17 @@ namespace Candia2
 		/** @brief Finish resumming to the next threshold
 		 */
 		void ResumThreshold();
-		
+
+		/** Handles the matching conditions/transition operator matrix elements
+		 */
+		void HeavyFlavorTreatment();
+
+
+		// Some debug-related stuff
+	private:
+		uint _output_file_index;
+
+		void OutputLOCoefficients();
 	};
 
 	

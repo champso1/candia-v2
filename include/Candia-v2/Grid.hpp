@@ -9,7 +9,7 @@
 #define __GRID_HPP
 
 #include "Candia-v2/Common.hpp"
-#include "Candia-v2/Math.hpp"
+#include "Candia-v2/Expression.hpp"
 
 #include <memory>
 #include <vector>
@@ -17,8 +17,6 @@
 
 namespace Candia2
 {
-	class SplittingFunction; // forward declare
-
 	/** @brief Class to handle the logarithmic grid
 	 */
 	class Grid
@@ -52,25 +50,25 @@ namespace Candia2
 		~Grid() = default; //!< default destructor
 		///@}
 
-		/** @brief access the @a idx'th grid point
-		 *  @param idx: index of grid point
-		 *  @return the @a idx'th grid point
-		 */
-		double& operator[](const uint idx);
-
 		/** @brief access the @a idx'th grid point (const reference)
 		 *  @param idx: index of grid point
 		 *  @return the @a idx'th grid point
 		 */
 		double const& operator[](const uint idx) const;
 
-		/** @brief Same as the [] operator.
+		/** @brief access the @a idx'th grid point (reference)
+		 *  @param idx: index of grid point
+		 *  @return the @a idx'th grid point
 		 */
-		inline double& At(const uint idx) { return operator[](idx); }
+		double& operator[](const uint idx);
 
-		/** @brief Same as the [] operator.
+		/** @brief Same as the [] operator (const reference).
 		 */
 		inline double const& At(const uint idx) const { return operator[](idx);}
+
+		/** @brief Same as the [] operator (reference).
+		 */
+		inline double& At(const uint idx) { return operator[](idx); }
 		
 
 		/** @brief Gets the size of the grid
@@ -83,10 +81,19 @@ namespace Candia2
 		 */
 		inline double const* Ptr() const { return _grid_points.data(); }
 
+		/** @name Setters/getters for abscissae/weights
+		 */
+		///@{
+		inline std::vector<double> const& Abscissae() const { return _Xi; }
+		inline double Abscissae(const uint idx) const { return _Xi[idx]; }
+		inline std::vector<double> const& Weights() const { return _Wi; }
+		inline double Weights(const uint idx) const { return _Wi[idx]; }
+		///@}
+
 		
 		/** @brief Determines y(x) on the grid.
 		 */
-		double Interpolate(std::vector<double> const& y, const double x) const;
+		double Interpolate(std::vector<double> const& y, const double x, bool debug=false) const;
 
 
 	    /** Performs a convolution between a generic function
@@ -98,7 +105,7 @@ namespace Candia2
 		 *  @param k: grid index to compute the convolution at
 		 */
 		double Convolution(std::vector<double> const& A,
-						   std::shared_ptr<SplittingFunction> P,
+						   std::shared_ptr<Expression> P,
 						   uint k);
 
 
@@ -117,7 +124,7 @@ namespace Candia2
 		/** returns the index pointing to the start of the range
 		 *  in which to interpolate
 		 */
-		uint InterpFindIdx(std::vector<double> const& vec, double x) const;
+		uint InterpFindIdx(double x) const;
 	};
 
 }
