@@ -11,6 +11,7 @@
 #include <vector>
 #include <concepts>
 #include <ranges>
+#include <numbers>
 
 typedef unsigned int uint;
 
@@ -37,6 +38,7 @@ namespace Candia2
 	/** @brief Mass of Z-boson */
 	const double MZ    = 91.1876;
 
+	// some shorthand
 	constexpr const double PI = std::numbers::pi;
 	constexpr const double PI_2 = PI*PI;
 	constexpr const double PI_3 = PI*PI*PI;
@@ -67,7 +69,7 @@ namespace Candia2
 	const uint ITERATIONS = 15;
 
 	/** @brief number of additional iterations for truncated ansatz */
-	const uint TRUNC_IDX = 6;
+	const uint TRUNC_IDX = 5;
 	///@}
 
 

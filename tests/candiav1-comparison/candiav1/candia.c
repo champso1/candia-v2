@@ -12,6 +12,7 @@ typedef struct
 
 typedef unsigned int uint;
 uint _output_file_index = 1;
+int print_lo_shit = 0;
 
 extern double p2nsma_(double*,int*);
 extern double p2nspa_(double*,int*);
@@ -26,10 +27,13 @@ extern double p2gga_(double*,int*);
 extern double p2ggb_(double*,int*);
 extern double p2ggc_(double*,int*);
 extern void hplog_(double*,int*,dcomplex*,dcomplex*,dcomplex*,dcomplex*,double*,double*,double*,double*,double*,double*,double*,double*,int*,int*);
+extern void a02m_(double*,double*,double*,double*,int*,int*,int*,int*);
+extern void struc_(double*,double*,int*,double*,double*,double*,double*,double*,double*,double*,double*);
 
-const double Pi=M_PI;
-const double Pi2=M_PI*M_PI;
-const double Zeta2=M_PI*M_PI/6.;
+#define PI 3.1415926535897932384626433
+const double Pi=PI;
+const double Pi2=PI*PI;
+const double Zeta2=PI*PI/6.;
 const double Zeta3=1.2020569031595942854;
 const double MZ=91.1876;
 const double Cf=4./3.;
@@ -121,7 +125,7 @@ double A2hg(int i,double z);
 
 
 
-int main()
+int main(int argc, char *argv[])
 {	
 	double lstep;
 	const char *id[]={"g" ,"u" ,"d" ,"s" ,"c" ,"b" ,"t" ,
@@ -147,19 +151,50 @@ int main()
 
 
 	//User inputs and initialization
+	if (argc!=7)
+	{
+		printf("\nUSAGE\n\n");
+		printf("./candia.x <perturbative_order> <truncation_index> <input_model> <kr> <fns> <ext>\n\n");
+		printf("<perturbative_order> can be 0, 1 or 2\n");
+		printf("<truncation_index> cannot be less than <perturbative_order>\n");
+		printf("<input_model>:\n");
+		printf("   0= Les Houches toy model\n");
+		printf("   1= MRST parametrization\n");
+		printf("   2= MRST grid at 1.25 GeV^2 (minimal value in their grid)\n");
+		printf("   3= Alekhin parametrization\n");
+		printf("   4= Alekhin grid at 1 GeV^2\n");
+		printf("<kr> is the ratio mu_r^2 / mu_f^2\n");
+		printf("<fns>:\n");
+		printf("   0= fixed flavor number scheme\n");
+		printf("   1= variable flavor number scheme\n");
+		printf("<ext> is the extension of the output files (max 3 characters allowed)\n\n");
+
+		return 0;
+	}
 
 	//Perturbative order
-	order=0;
+	order=atoi(argv[1]);
 	orderplus1=order+1;
 
-	kr = 1.0;
+	if (order<0 || order>2)
+	{
+		printf("\nInvalid argument for <order>\n");
+		return 0;
+	}
+
+	kr = atof(argv[4]);
+
+	if (kr==0.)
+	{
+		printf("\nInvalid argument for <kr>\n");
+		return 0;
+	}
 	
 	//Truncation index
 	if (order>0)
 	{
-		trunc=5;
+		trunc=atoi(argv[2]);
 
-		
 		if (trunc<order)
 		{
 			printf("\nInvalid argument for <truncation_index>\n");
@@ -182,7 +217,7 @@ int main()
 		{
 			S[t][i] = malloc(ITERATIONS * (sizeof *S[t][i]));
 			for (uint n=0; n<ITERATIONS; n++)
-				S[t][i][n] = malloc(GRID_PTS * (sizeof *S[t][i][n]));
+				S[t][i][n] = Calloc(GRID_PTS, sizeof *S[t][i][n]);
 		}
 	}
 
@@ -192,38 +227,119 @@ int main()
 		B[j] = malloc(ITERATIONS * (sizeof *B[j]));
 		C[j] = malloc(ITERATIONS * (sizeof *C[j]));
 
-		R[j] = malloc(GRID_PTS * (sizeof *R[j]));
+		R[j] = calloc(GRID_PTS, sizeof *R[j]);
 
 		for (uint n=0; n<ITERATIONS; n++)
 		{
-			A[j][n] = malloc(GRID_PTS * (sizeof *A[j][n]));
+			A[j][n] = calloc(GRID_PTS, sizeof *A[j][n]);
 			B[j][n] = malloc(ITERATIONS * (sizeof *B[j][n]));
 			C[j][n] = malloc(ITERATIONS * (sizeof *C[j][n]));
 
 			for (uint m=0; m<ITERATIONS; m++)
 			{
-				B[j][n][m] = malloc(GRID_PTS * (sizeof *B[j][n][m]));
+				B[j][n][m] = calloc(GRID_PTS, sizeof *B[j][n][m]);
 				C[j][n][m] = malloc(ITERATIONS * (sizeof *C[j][n][m]));
 
 				for (uint l=0; l<ITERATIONS; l++)
-					C[j][n][m][l] = malloc(ITERATIONS * (sizeof *C[j][n][m][l]));
+					C[j][n][m][l] = calloc(GRID_PTS, sizeof *C[j][n][m][l]);
 			}
 		}
 	}
 
 	//Input model
-	input=0;
+	input=atoi(argv[3]);
 
-	nfi=3;
-	Q[3]=sqrt(2.);
-	Q[4]=sqrt(2.);
-	Q[5]=4.5;
-	Q[6]=175.;
-	alpha1=0.35; //initial alpha_s at mu_f=sqrt(2.) GeV
+	switch (input)
+	{
+		case 0: //Les Houches toy model
 
+			nfi=3;
+			Q[3]=sqrt(2.);
+			Q[4]=sqrt(2.);
+			Q[5]=4.5;
+			Q[6]=175.;
+			alpha1=0.35; //initial alpha_s at mu_f=sqrt(2.) GeV
+
+			break;
+
+		case 1: //MRST parametrization
+
+			nfi=3;
+			Q[3]=1.;
+			Q[4]=1.43;
+			Q[5]=4.3;
+			Q[6]=175.;
+
+			switch (order)
+			{
+				case 0:
+					alpha1=0.13; //alpha_s(MZ)
+					break;
+				case 1:
+					alpha1=0.119; //alpha_s(MZ)
+					break;
+				case 2:
+					alpha1=0.1155; //alpha_s(MZ)
+					break;
+			}
+
+			break;
+
+		case 2: //MRST grid
+
+			nfi=3;
+			Q[3]=sqrt(1.25);
+			Q[4]=1.43;
+			Q[5]=4.3;
+			Q[6]=175.;
+
+			switch (order)
+			{
+				case 0:
+					alpha1=0.13; //alpha_s(MZ)
+					break;
+				case 1:
+					alpha1=0.119; //alpha_s(MZ)
+					break;
+				case 2:
+					alpha1=0.1155; //alpha_s(MZ)
+					break;
+			}
+
+			break;
+
+		case 3: //Alekhin parametrization (BAD!!! charm missing!)
+
+			nfi=3;
+			Q[3]=3.;
+			Q[4]=3.;
+			Q[5]=4.5;
+			Q[6]=180.;
+
+			break;
+
+		case 4: //Alekhin grid
+
+			nfi=3;
+			Q[3]=1.;
+			Q[4]=1.5;
+			Q[5]=4.5;
+			Q[6]=180.;
+
+			break;
+	}
 	//Flavor number scheme
-	vfns=1;
+	vfns=atoi(argv[5]);
+	if (vfns<0 || vfns>1)
+	{
+		printf("\nInvalid argument for <fns>\n");
+		return 0;
+	}
 
+	if (!vfns)
+		for (i=nfi+1;i<=6;i++)
+			if (Q[i]!=Q[nfi])
+				Q[i]=2.*Qtab[sizeof(Qtab)/sizeof(double)-1];
 
 	//Grid definition
 	aux=-log10(xtab[0]);
@@ -334,6 +450,242 @@ int main()
 
 	fclose(fp);   
 
+
+	//Setting PDF's initial values
+	for (i=0;i<=GRID_PTS-2;i++)
+	{
+		aux=X[i];
+
+		switch (input)
+		{
+			case 0: //Les Houches toy model
+
+				//Singlet
+				S[0][0][0][i]=xg_3(aux);
+				S[0][1][0][i]=xuv_3(aux)+2.*xub_3(aux)+xdv_3(aux)+2.*xdb_3(aux)+2.*xs_3(aux);
+
+				switch (order)
+				{
+					case 0:
+						//LO nonsinglet
+						A[7][0][i]=xub_3(aux);
+						A[1][0][i]=xuv_3(aux)+A[7][0][i];
+						A[8][0][i]=xdb_3(aux);
+						A[2][0][i]=xdv_3(aux)+A[8][0][i];
+						A[3][0][i]=A[9][0][i]=xs_3(aux);
+
+						break;
+
+					case 1:
+						//NLO nonsinglet
+						B[7][0][0][i]=xub_3(aux);
+						B[1][0][0][i]=xuv_3(aux)+B[7][0][0][i];
+						B[8][0][0][i]=xdb_3(aux);
+						B[2][0][0][i]=xdv_3(aux)+B[8][0][0][i];
+						B[3][0][0][i]=B[9][0][0][i]=xs_3(aux);
+
+						break;
+
+					case 2:
+						//NNLO nonsinglet
+						C[7][0][0][0][i]=xub_3(aux);
+						C[1][0][0][0][i]=xuv_3(aux)+C[7][0][0][0][i];
+						C[8][0][0][0][i]=xdb_3(aux);
+						C[2][0][0][0][i]=xdv_3(aux)+C[8][0][0][0][i];
+						C[3][0][0][0][i]=C[9][0][0][0][i]=xs_3(aux);
+
+						break;
+				}
+
+				break;
+
+			case 1: //MRST parametrization
+
+				switch (order)
+				{
+					case 0:
+						A[7][0][i]=0.2*xS_1(order,aux)-0.5*xD_1(order,aux);
+						A[1][0][i]=xuv_1(order,aux)+A[7][0][i];
+						A[8][0][i]=0.2*xS_1(order,aux)+0.5*xD_1(order,aux);
+						A[2][0][i]=xdv_1(order,aux)+A[8][0][i];
+						A[3][0][i]=A[9][0][i]=0.1*xS_1(order,aux);
+
+						S[0][0][0][i]=xg_1(order,aux);
+						S[0][1][0][i]=A[1][0][i]+A[7][0][i]+A[2][0][i]+A[8][0][i]+2.*A[3][0][i];
+
+						break;
+
+					case 1:
+						B[7][0][0][i]=0.2*xS_1(order,aux)-0.5*xD_1(order,aux);
+						B[1][0][0][i]=xuv_1(order,aux)+B[7][0][0][i];
+						B[8][0][0][i]=0.2*xS_1(order,aux)+0.5*xD_1(order,aux);
+						B[2][0][0][i]=xdv_1(order,aux)+B[8][0][0][i];
+						B[3][0][0][i]=B[9][0][0][i]=0.1*xS_1(order,aux);
+
+						S[0][0][0][i]=xg_1(order,aux);
+						S[0][1][0][i]=B[1][0][0][i]+B[7][0][0][i]+B[2][0][0][i]+B[8][0][0][i]+2.*B[3][0][0][i];
+
+						break;
+
+					case 2:
+						C[7][0][0][0][i]=0.2*xS_1(order,aux)-0.5*xD_1(order,aux);
+						C[1][0][0][0][i]=xuv_1(order,aux)+C[7][0][0][0][i];
+						C[8][0][0][0][i]=0.2*xS_1(order,aux)+0.5*xD_1(order,aux);
+						C[2][0][0][0][i]=xdv_1(order,aux)+C[8][0][0][0][i];
+						C[3][0][0][0][i]=C[9][0][0][0][i]=0.1*xS_1(order,aux);
+
+						S[0][0][0][i]=xg_1(order,aux);
+						S[0][1][0][i]=C[1][0][0][0][i]+C[7][0][0][0][i]+C[2][0][0][0][i]+C[8][0][0][0][i]+2.*C[3][0][0][0][i];
+
+						break;
+				}
+
+				break;
+
+			case 2: //MRST grid
+
+				mode=-4*order+9;
+
+				struc_(&aux,&Q[nfi],&mode,&xuv,&xdv,&xub,&xdb,&xs,&xc,&xb,&xg);
+
+				//Singlet
+				S[0][0][0][i]=xg;
+				S[0][1][0][i]=xuv+xdv+2.*(xub+xdb+xs);
+
+				switch (order)
+				{
+					case 0:
+						//LO nonsinglet
+						A[7][0][i]=xub;
+						A[1][0][i]=xuv+xub;
+						A[8][0][i]=xdb;
+						A[2][0][i]=xdv+xdb;
+						A[3][0][i]=A[9][0][i]=xs;
+
+						break;
+
+					case 1:
+						//NLO nonsinglet
+						B[7][0][0][i]=xub;
+						B[1][0][0][i]=xuv+xub;
+						B[8][0][0][i]=xdb;
+						B[2][0][0][i]=xdv+xdb;
+						B[3][0][0][i]=B[9][0][0][i]=xs;
+						break;
+
+					case 2:
+						//NNLO nonsinglet
+						C[7][0][0][0][i]=xub;
+						C[1][0][0][0][i]=xuv+xub;
+						C[8][0][0][0][i]=xdb;
+						C[2][0][0][0][i]=xdv+xdb;
+						C[3][0][0][0][i]=C[9][0][0][0][i]=xs;
+
+						break;
+				}
+
+				break;
+
+			case 3: //Alekhin parametrization
+
+				q2=Q[nfi]*Q[nfi];
+
+				a02m_(&aux,&q2,pdfs,*dpdfs,&npdf,&npar,&orderplus1,&one);
+
+				//alpha_s
+				alpha1=pdfs[0]; //initial alpha_s at mu_r=Q[nfi]
+
+				switch (order)
+				{
+					case 0:
+						A[7][0][i]=xus_2(order,aux);
+						A[1][0][i]=xuv_2(order,aux)+A[7][0][i];
+						A[8][0][i]=xds_2(order,aux);
+						A[2][0][i]=xdv_2(order,aux)+A[8][0][i];
+						A[3][0][i]=A[9][0][i]=xss_2(order,aux);
+
+						S[0][0][0][i]=xg_2(order,aux);
+						S[0][1][0][i]=A[1][0][i]+A[7][0][i]+A[2][0][i]+A[8][0][i]+2.*A[3][0][i];
+
+						break;
+
+					case 1:
+						B[7][0][0][i]=xus_2(order,aux);
+						B[1][0][0][i]=xuv_2(order,aux)+B[7][0][0][i];
+						B[8][0][0][i]=xds_2(order,aux);
+						B[2][0][0][i]=xdv_2(order,aux)+B[8][0][0][i];
+						B[3][0][0][i]=B[9][0][0][i]=xss_2(order,aux);
+
+						S[0][0][0][i]=xg_2(order,aux);
+						S[0][1][0][i]=B[1][0][0][i]+B[7][0][0][i]+B[2][0][0][i]+B[8][0][0][i]+2.*B[3][0][0][i];
+
+						break;
+
+					case 2:
+						C[7][0][0][0][i]=xus_2(order,aux);
+						C[1][0][0][0][i]=xuv_2(order,aux)+C[7][0][0][0][i];
+						C[8][0][0][0][i]=xds_2(order,aux);
+						C[2][0][0][0][i]=xdv_2(order,aux)+C[8][0][0][0][i];
+						C[3][0][0][0][i]=C[9][0][0][0][i]=xss_2(order,aux);
+
+						S[0][0][0][i]=xg_2(order,aux);
+						S[0][1][0][i]=C[1][0][0][0][i]+C[7][0][0][0][i]+C[2][0][0][0][i]+C[8][0][0][0][i]+2.*C[3][0][0][0][i];
+
+						break;
+				}
+
+				break;
+
+			case 4: //Alekhin grid
+
+				q2=Q[nfi]*Q[nfi];
+
+				a02m_(&aux,&q2,pdfs,*dpdfs,&npdf,&npar,&orderplus1,&one);
+
+				//alpha_s
+				alpha1=pdfs[0]; //initial alpha_s at mu_r=Q[nfi]
+
+				//Singlet
+				S[0][0][0][i]=pdfs[3];
+				S[0][1][0][i]=pdfs[1]+pdfs[2]+2.*(pdfs[4]+pdfs[6]+pdfs[5]);
+
+				switch (order)
+				{
+					case 0:
+						//LO nonsinglet
+						A[7][0][i]=pdfs[4];
+						A[1][0][i]=pdfs[1]+pdfs[4];
+						A[8][0][i]=pdfs[6];
+						A[2][0][i]=pdfs[2]+pdfs[6];
+						A[3][0][i]=A[9][0][i]=pdfs[5];
+
+						break;
+
+					case 1:
+						//NLO nonsinglet
+						B[7][0][0][i]=pdfs[4];
+						B[1][0][0][i]=pdfs[1]+pdfs[4];
+						B[8][0][0][i]=pdfs[6];
+						B[2][0][0][i]=pdfs[2]+pdfs[6];
+						B[3][0][0][i]=B[9][0][0][i]=pdfs[5];
+						break;
+
+					case 2:
+						//NNLO nonsinglet
+						C[7][0][0][0][i]=pdfs[4];
+						C[1][0][0][0][i]=pdfs[1]+pdfs[4];
+						C[8][0][0][0][i]=pdfs[6];
+						C[2][0][0][0][i]=pdfs[2]+pdfs[6];
+						C[3][0][0][0][i]=C[9][0][0][0][i]=pdfs[5];
+
+						break;
+				}
+
+				break;
+		}
+	}
+
+
 	//Computation of alpha_s at the quark thresholds
 	mu0=( (input==1 || input==2)? MZ : Q[nfi] );
 
@@ -376,6 +728,7 @@ int main()
 		printf ("%d  %g  %15.9g  %15.9g\n",nf,Q[nf],alpha_pre[nf],alpha_post[nf]);
 
 
+	/*
 	int _nf = nf;
 	nf = 4;
 	Nf = 4.0;
@@ -416,7 +769,7 @@ int main()
 		x = X[i];
 		vals[i] = sin(x);
 	}
-	for (uint i=0; i<67; i++)
+	for (uint i=0; i<10; i++)
 	{
 		x = ((double)i) / 67.0;
 		out[i] = interp(vals, x);
@@ -426,6 +779,21 @@ int main()
 	free(vals);
 	free(out);
 
+	*/
+	/*
+	for (j=1; j<=9; j++)
+	{
+		for (n=0; n<ITERATIONS; n++)
+		{
+			for (k=0; k<GRID_PTS; k++)
+			{
+				fprintf(stderr, "%8.5lf\n", A[j][n][k]);
+			}
+		}
+		fprintf(stderr, "\n");
+	}
+	exit(0);
+	*/
 
 
 	//Evolution steps
@@ -441,21 +809,28 @@ int main()
 			switch (order)
 			{
 				case 0:
-					for (j=13;j<=18;j++) A[j][0][i]=A[j-12][0][i]-A[j-6][0][i];
+				{
+					for (j=13;j<=18;j++) 
+						A[j][0][i]=A[j-12][0][i]-A[j-6][0][i];
 
 					A[25][0][i]=0.;
-					for (j=13;j<=18;j++) A[25][0][i]+=A[j][0][i];
+					for (j=13;j<=18;j++) 
+						A[25][0][i]+=A[j][0][i];
 
-					for (j=26;j<=30;j++) A[j][0][i]=A[13][0][i]-A[j-12][0][i];
+					for (j=26;j<=30;j++) 
+						A[j][0][i]=A[13][0][i]-A[j-12][0][i];
 
-					for (j=19;j<=24;j++) A[j][0][i]=A[j-18][0][i]+A[j-12][0][i];
+					for (j=19;j<=24;j++) 
+						A[j][0][i]=A[j-18][0][i]+A[j-12][0][i];
 
 					S[0][1][0][i]=0.;
-					for (j=19;j<=24;j++) S[0][1][0][i]+=A[j][0][i];
+					for (j=19;j<=24;j++) 
+						S[0][1][0][i]+=A[j][0][i];
 
-					for (j=32;j<=36;j++) A[j][0][i]=A[19][0][i]-A[j-12][0][i];
+					for (j=32;j<=36;j++) 
+						A[j][0][i]=A[19][0][i]-A[j-12][0][i];
 
-					break;
+				} break;
 
 				case 1:
 					for (j=13;j<=18;j++) B[j][0][0][i]=B[j-12][0][0][i]-B[j-6][0][0][i];
@@ -492,6 +867,15 @@ int main()
 					break;
 			}
 		}
+
+		/*
+		for (k=0; k<GRID_PTS-1; k++)
+		{
+			fprintf(stderr, "%8.5lf\n", A[13][0][k]);
+		}
+		fprintf(stderr, "\n");
+		exit(0);
+		*/
 
 		if (Q[nf+1]==0.) break;
 
@@ -581,10 +965,22 @@ int main()
 				}
 			}
 
+			/*
+			for (n=0; n<ITERATIONS; n++)
+			{
+				for (k=0; k<GRID_PTS-1; k++)
+				{
+					fprintf(stderr, "%8.4lf\n", A[13][n][k]);
+				}
+				fprintf(stderr, "\n");
+			}
+			*/
+
 			//Nonsinglet
 			switch (order)
 			{
 				case 0: //LO nonsinglet
+					//print_lo_shit = 1;
 					for (i=0;i<=ITERATIONS-2;i++)
 					{
 						printf("Iteration %d (LO nonsinglet)\n",i);
@@ -592,8 +988,7 @@ int main()
 						for (k=0;k<=GRID_PTS-2;k++)
 						{
 							for (j=13;j<=12+nf;j++) {
-								double res = RecRel_A(A[j][i],k,P0NS);
-								A[j][i+1][k]=res;
+								A[j][i+1][k]=RecRel_A(A[j][i],k,P0NS);
 							}
 
 							for (j=32;j<=30+nf;j++)
@@ -601,7 +996,7 @@ int main()
 						}
 					}
 
-					OutputLOCoefficients(A);
+					// OutputLOCoefficients(A);
 				    
 					break;
 
@@ -799,23 +1194,27 @@ int main()
 					}
 
 					R[19][k]=R[31][k];
-					for (j=32;j<=30+nf;j++) R[19][k]+=R[j][k];
+					for (j=32;j<=30+nf;j++) 
+						R[19][k]+=R[j][k];
 					R[19][k]/=Nf;
 
-					for (j=20;j<=18+nf;j++) R[j][k]=R[19][k]-R[j+12][k];
+					for (j=20;j<=18+nf;j++) 
+						R[j][k]=R[19][k]-R[j+12][k];
 
 					for (j=1;j<=nf;j++)
 					{
-						R[j][k]=0.5*(R[j+18][k]+R[j+12][k]);
+						R[j][k]  =0.5*(R[j+18][k]+R[j+12][k]);
 						R[j+6][k]=0.5*(R[j+18][k]-R[j+12][k]);
 					}
 
 					if (order<2)
 					{
 						R[25][k]=0.;
-						for (j=13;j<=12+nf;j++) R[25][k]+=R[j][k];
+						for (j=13;j<=12+nf;j++) 
+							R[25][k]+=R[j][k];
 
-						for (j=26;j<=24+nf;j++) R[j][k]=R[13][k]-R[j-12][k];
+						for (j=26;j<=24+nf;j++)
+							R[j][k]=R[13][k]-R[j-12][k];
 					}
 				}
 
@@ -944,14 +1343,16 @@ int main()
 					for (k=0;k<=GRID_PTS-2;k++)
 					{
 						B[19][0][0][k]=S[0][1][0][k];
-						for (j=32;j<=30+nf;j++) B[19][0][0][k]+=B[j][0][0][k];
+						for (j=32;j<=30+nf;j++)
+							B[19][0][0][k]+=B[j][0][0][k];
 						B[19][0][0][k]/=Nf;
 
-						for (j=20;j<=18+nf;j++) B[j][0][0][k]=B[19][0][0][k]-B[j+12][0][0][k];
+						for (j=20;j<=18+nf;j++)
+							B[j][0][0][k]=B[19][0][0][k]-B[j+12][0][0][k];
 
 						for (j=1;j<=nf;j++)
 						{
-							B[j][0][0][k]=0.5*(B[j+18][0][0][k]+B[j+12][0][0][k]);
+							B[j][0][0][k]  =0.5*(B[j+18][0][0][k]+B[j+12][0][0][k]);
 							B[j+6][0][0][k]=0.5*(B[j+18][0][0][k]-B[j+12][0][0][k]);
 						}
 					}
@@ -1002,6 +1403,7 @@ int main()
 			}
 
 			aux=alpha_post[nf+1];
+			fprintf(stderr, "value of alpha_s post threshold: %9.5lf\n", aux);
 
 			//Computation of after-threshold distributions
 			for (k=0;k<=GRID_PTS-2;k++)
@@ -1163,7 +1565,8 @@ double polint(double *xa,double *ya,int n,double x)
 
 	int i,m,ns=0;
 	double den,dif,dift,ho,hp,w,res;
-	double c[n],d[n];
+	double *c = calloc(n, sizeof *c);
+	double *d = calloc(n, sizeof *d);
 
 	dif=fabs(x-xa[0]);
 	for (i=0;i<=n-1;i++)
@@ -1201,6 +1604,9 @@ double polint(double *xa,double *ya,int n,double x)
 		res+=((2*ns<(n-1-m) ? c[ns+1] : d[ns--]));
 	}
 
+	free(c);
+	free(d);
+
 	return res;
 }
 
@@ -1231,7 +1637,17 @@ double convolution(int i,double kernel(int,double),double *A)
 
 double RecRel_A(double *A,int k,double P0(int,double))
 {
-	return -2./beta0*convolution(k,P0,A);
+	if (print_lo_shit)
+	{
+		for (uint _k=0; _k<GRID_PTS; _k++)
+		{
+			fprintf(stderr, "%.5lf\n", A[_k]);
+		}
+		exit(0);
+	}
+	double p1 = -2./beta0;
+	double p2 = convolution(k,P0,A);
+	return p1*p2;
 }
 
 

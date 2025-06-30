@@ -177,6 +177,7 @@ namespace Candia2
 		 *  @ingroup RecRels
 		 */
 		///@{
+		bool _print_lo_shit = false;
 		double RecRelLO(std::vector<double> const& A,
 						uint k,
 						std::shared_ptr<SplittingFunction> P);
@@ -189,8 +190,7 @@ namespace Candia2
 		double RecRelNLO_1(std::vector<double> const& b,
 						   uint k,
 						   std::shared_ptr<SplittingFunction> P);
-		double RecRelNLO_2(std::vector<double> const& B1,
-						   std::vector<double> const& B2,
+		double RecRelNLO_2(std::vector<double> const& B,
 						   uint k,
 						   std::shared_ptr<SplittingFunction> P);
 		///@}
@@ -301,8 +301,9 @@ namespace Candia2
 		void EvolveNonSinglet();
 
 		/** @brief After computing coefficients, do resummation to a tabulated energy value
+		 *  @param Q: the tabulated energy value to evolve to
 		 */
-		void Resum();
+		void Resum(const double Q);
 
 		/** @brief Finish resumming to the next threshold
 		 */

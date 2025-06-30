@@ -259,8 +259,8 @@ namespace Candia2
 		double x = _grid_points.at(k);
 		double logx =  std::log(x);
 
-		double res = (E->Plus(1.0)*std::log(1.0-x) + E->Delta(1.0)) * A.at(k);
-		
+		double res = (E->Plus(1.0)*std::log1p(-x) + E->Delta(1.0)) * A.at(k);
+
 		for (uint i=0; i<GAUSS_POINTS; i++)
 		{
 			double y = _Xi[i];
@@ -269,8 +269,11 @@ namespace Candia2
 			double a = std::pow(x, 1.0-y);
 			double b = std::pow(x, y);
 
-			res -= logx*a*E->Regular(a)*Interpolate(A, b)*w;
-			res -= logx*b*(E->Plus(b)*Interpolate(A,a) - E->Plus(1.0)*A.at(k))/(1.0-b);
+			double interp1 = Interpolate(A, b);
+			double interp2 = Interpolate(A, a);
+
+			res -= w*logx*a*E->Regular(a)*interp1;
+			res -= w*logx*b*(E->Plus(b)*interp2 - E->Plus(1.0)*A.at(k))/(1.0-b);
 		}
 		
 		return res;

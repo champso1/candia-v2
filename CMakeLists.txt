@@ -1,30 +1,35 @@
 cmake_minimum_required(VERSION 3.25)
 project(candia_v2)
 set(CMAKE_EXPORT_COMPILE_COMMANDS on)
-set(CMAKE_BUILD_TYPE Debug)
+
+# include the toolchain file
+set(CMAKE_TOOLCHAIN_FILE ${CMAKE_SOURCE_DIR}/share/cmake/toolchain.cmake)
 
 # default the installation to the project directory
 set(CMAKE_INSTALL_PREFIX ${CMAKE_SOURCE_DIR}/install)
 
-# enforce C++20
+# enforce C++20 and c99 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
+set(CMAKE_C_STANDARD 99)
+set(CMAKE_C_STANDARD_REQUIRED True)
 
 # grab all source files
 file(GLOB sources ${CMAKE_SOURCE_DIR}/src/*.cpp ${CMAKE_SOURCE_DIR}/include/*.hpp)
 
-# make library with maximum optimization and all warnings
-add_library(candia STATIC ${sources}) 
-target_compile_options(candia PUBLIC -O3 -Wall -Wextra -lgfortran -fPIC)
-#target_compile_options(candia PUBLIC -Wall -Wextra -lgfortran -fPIC)
+add_library(candia STATIC ${sources})
+set(CMAKE_CXX_FLAGS_RELEASE_INIT "-fPIC")
+set(CMAKE_CXX_FLAGS_DEBUG_INIT "-Wall -Wextra -fPIC")
+target_link_libraries(candia PUBLIC gfortran)
 
 # compile the fortran code for harmonic polylogs
 enable_language(Fortran)
-set(CMAKE_Fortran_FLAGS_RELEASE "-O2 -std=legacy -w")
-set(CMAKE_Fortran_FLAGS_DEBUG "-O2 -std=legacy -w")
+set(CMAKE_Fortran_FLAGS_RELEASE "-O3 -std=legacy -w")
+set(CMAKE_Fortran_FLAGS_DEBUG "-O3 -std=legacy -w")
 add_library(hplog STATIC src/hplog.f)
 target_link_libraries(hplog PUBLIC gfortran)
 
+# link this with main candia
 target_link_libraries(candia PUBLIC hplog)
 
 # include directories,
