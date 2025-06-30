@@ -177,6 +177,18 @@ namespace Candia2
 		_nff = _alpha_s.Nff(_nfi, _Qf);
 		std::cerr << "[DGLAP] Evolving to " << _nff << " flavors.\n";
 
+
+		// std::cerr << std::fixed << std::setw(9) << std::setprecision(5);
+		// for (uint j=1; j<=9; j++)
+		// {
+		// 	for (uint k=0; k<_grid.Size(); k++)
+		// 	{
+		// 		std::cerr << _C[j][0][0][0][k] << '\n';
+		// 	}
+		// 	std::cerr << '\n';
+		// }
+		// exit(0);
+
 		_output_file_index = 1;
 		_qct = 0;
 	}
@@ -255,22 +267,6 @@ namespace Candia2
 		}
 
 		std::cerr << "[DGLAP] Done setting initial conditions.\n";
-
-		/*
-		std::cerr << std::fixed << std::setw(8) << std::setprecision(5);
-		for (uint j=1; j<=9; j++)
-		{
-			for (uint n=0; n<ITERATIONS; n++)
-			{
-				for (uint k=0; k<_grid.Size(); k++)
-				{
-					std::cerr << _A[j][n][k] << '\n';
-				}
-			}
-			std::cerr << '\n';
-		}
-		exit(0);
-		*/
 	}
 
 
@@ -278,7 +274,14 @@ namespace Candia2
 	double DGLAPSolver::RecRelS_1(std::vector<double> const& S, uint k,
 								  std::shared_ptr<SplittingFunction> P)
 	{
-		return -(2.0/_alpha_s.Beta0()) * _grid.Convolution(S, P, k);
+		// std::cerr << std::fixed << std::setw(15) << std::setprecision(9);
+		// for (uint _k=0; _k < _grid.Size(); _k++)
+		// {
+		// 	std::cerr << S[_k] << '\n';
+		// }
+
+		double conv = _grid.Convolution(S, P, k);
+		return -(2.0/_alpha_s.Beta0()) * conv;
 	}
 
 	double DGLAPSolver::RecRelS_2(std::vector<double> const& S1,
@@ -287,8 +290,16 @@ namespace Candia2
 								  std::shared_ptr<SplittingFunction> P0,
 								  std::shared_ptr<SplittingFunction> P1)
 	{
-		double res = _grid.Convolution(S2, P0, k) * 2.0/_alpha_s.Beta0();
-		res += _grid.Convolution(S1, P1, k) / (PI*_alpha_s.Beta0());
+		// std::cerr << std::fixed << std::setw(15) << std::setprecision(9);
+		// for (uint _k=0; _k < _grid.Size(); _k++)
+		// {
+		// 	std::cerr << S1[_k] << ", " << S2[_k] << '\n';
+		// }
+
+		double conv1 = _grid.Convolution(S2, P0, k);
+		double conv2 = _grid.Convolution(S1, P1, k);
+		double res = conv1 * 2.0/_alpha_s.Beta0();
+		res += conv2 / (PI*_alpha_s.Beta0());
 		
 		return -res;
 	}
@@ -301,9 +312,19 @@ namespace Candia2
 								  std::shared_ptr<SplittingFunction> P1,
 								  std::shared_ptr<SplittingFunction> P2)
 	{
-		double res = _grid.Convolution(S3, P0, k) * 2.0/_alpha_s.Beta0();
-		res += _grid.Convolution(S2, P1, k) / (PI*_alpha_s.Beta0());
-		res += _grid.Convolution(S1, P2, k) / (2.0*PI*_alpha_s.Beta0());
+		// std::cerr << std::fixed << std::setw(15) << std::setprecision(9);
+		// for (uint _k=0; _k < _grid.Size(); _k++)
+		// {
+		// 	std::cerr << S1[_k] << ", " << S2[_k] << ", " << S3[_k] << '\n';
+		// }
+
+		double conv1 = _grid.Convolution(S3, P0, k);
+		double conv2 = _grid.Convolution(S2, P1, k);
+		double conv3 = _grid.Convolution(S1, P2, k);
+
+		double res = conv1 * 2.0/_alpha_s.Beta0();
+		res += conv2 / (PI*_alpha_s.Beta0());
+		res += conv3 / (2.0*PI_2*_alpha_s.Beta0());
 		
 		return -res;
 	}
@@ -313,19 +334,11 @@ namespace Candia2
 	double DGLAPSolver::RecRelLO(std::vector<double> const& A, uint k,
 					  std::shared_ptr<SplittingFunction> P)
 	{
-		if (_print_lo_shit)
-		{
-			std::cerr << std::fixed << std::setprecision(5);
-			for (uint _k=0; _k<_grid.Size(); _k++)
-			{
-				std::cerr << A[_k] << '\n';
-			}
-			exit(0);
-		}
 		double p1 = -2.0/_alpha_s.Beta0();
 		double p2 = _grid.Convolution(A, P, k);
 		return p1*p2;
 	}
+
 
 	double DGLAPSolver::RecRelNLO_1(std::vector<double> const& B,
 									uint k,
@@ -347,21 +360,42 @@ namespace Candia2
 									 uint k,
 									 std::shared_ptr<SplittingFunction> P)
 	{
-		return -(2.0)/_alpha_s.Beta0() * _grid.Convolution(C, P, k);
+		// std::cerr << std::fixed << std::setw(15) << std::setprecision(9);
+		// for (uint k=0; k<_grid.Size(); k++)
+		// {
+		// 	std::cerr << C[k] << '\n';
+		// }
+
+		double conv = _grid.Convolution(C, P, k);
+		return -(2.0)/_alpha_s.Beta0() * conv;
 	}
 
 	double DGLAPSolver::RecRelNNLO_2(std::vector<double> const& C,
 									 uint k,
 									 std::shared_ptr<SplittingFunction> P)
 	{
-		return -4.0/_alpha_s.Beta2()*_grid.Convolution(C, P, k);
+		// std::cerr << std::fixed << std::setw(15) << std::setprecision(9);
+		// for (uint k=0; k<_grid.Size(); k++)
+		// {
+		// 	std::cerr << C[k] << '\n';
+		// }
+
+		double conv = _grid.Convolution(C, P, k);
+		return -4.0/_alpha_s.Beta2() * conv;
 	}
 
 	double DGLAPSolver::RecRelNNLO_3(std::vector<double> const& C,
 									 uint k,
 									 std::shared_ptr<SplittingFunction> P)
 	{
-		return -8.0*_grid.Convolution(C, P, k);
+		// std::cerr << std::fixed << std::setw(15) << std::setprecision(9);
+		// for (uint k=0; k<_grid.Size(); k++)
+		// {
+		// 	std::cerr << C[k] << '\n';
+		// }
+
+		double conv = _grid.Convolution(C, P, k);
+		return -8.0 * conv;
 	}
 
 
@@ -369,7 +403,14 @@ namespace Candia2
 									 uint k,
 									 std::shared_ptr<SplittingFunction> P)
 	{
-		return -(2.0)/_alpha_s.Beta0() * _grid.Convolution(D, P, k);
+		std::cerr << std::fixed << std::setw(15) << std::setprecision(9);
+		for (uint _k=0; _k<_grid.Size(); _k++)
+		{
+			std::cerr << D[_k] << '\n';
+		}
+
+		double conv = _grid.Convolution(D, P, k);
+		return -(2.0)/_alpha_s.Beta0() * conv;
 	}
 
 	double DGLAPSolver::RecRelN3LO_2(std::vector<double> const& D,
@@ -378,14 +419,24 @@ namespace Candia2
 									 std::shared_ptr<SplittingFunction> P2,
 									 std::shared_ptr<SplittingFunction> P3)
 	{
+		std::cerr << std::fixed << std::setw(15) << std::setprecision(9);
+		for (uint _k=0; _k<_grid.Size(); _k++)
+		{
+			std::cerr << D[_k] << '\n';
+		}
+
 		// for simplified notation
 		const double r1 = _r1[_nf];
 		// const double b = _b[_nf];
 		// const double c = _c[_nf];
 
-		const double fac1 = -4*_grid.Convolution(D, P1, k);
-		const double fac2 = -8*r1*_grid.Convolution(D, P2, k);
-		const double fac3 = -16*r1*r1*_grid.Convolution(D, P3, k);
+		double conv1 = _grid.Convolution(D, P1, k);
+		double conv2 = _grid.Convolution(D, P2, k);
+		double conv3 = _grid.Convolution(D, P3, k);
+
+		const double fac1 = -4*conv1;
+		const double fac2 = -8*r1*conv2;
+		const double fac3 = -16*r1*r1*conv3;
 		
 	    return fac1+fac2+fac3;
 	}
@@ -397,14 +448,24 @@ namespace Candia2
 									 std::shared_ptr<SplittingFunction> P2,
 									 std::shared_ptr<SplittingFunction> P3)
 	{
+		std::cerr << std::fixed << std::setw(15) << std::setprecision(9);
+		for (uint _k=0; _k<_grid.Size(); _k++)
+		{
+			std::cerr << D[_k] << '\n';
+		}
+
 		// for simplified notation
 		const double r1 = _r1[_nf];
 		const double b = _b[_nf];
 		const double c = _c[_nf];
 
-		const double fac1 = 2*_grid.Convolution(D, P1, k);
-		const double fac2 = 4*r1*_grid.Convolution(D, P2, k);
-		const double fac3 = -8*(c + b*r1)*_grid.Convolution(D, P3, k);
+		double conv1 = _grid.Convolution(D, P1, k);
+		double conv2 = _grid.Convolution(D, P2, k);
+		double conv3 = _grid.Convolution(D, P3, k);
+
+		const double fac1 = 2*conv1;
+		const double fac2 = 4*r1*conv2;
+		const double fac3 = -8*(c + b*r1)*conv3;
 		
 	    return fac1+fac2+fac3;
 	}
@@ -415,14 +476,24 @@ namespace Candia2
 									 std::shared_ptr<SplittingFunction> P2,
 									 std::shared_ptr<SplittingFunction> P3)
 	{
+		std::cerr << std::fixed << std::setw(15) << std::setprecision(9);
+		for (uint _k=0; _k<_grid.Size(); _k++)
+		{
+			std::cerr << D[_k] << '\n';
+		}
+
 		// for simplified notation
 		const double r1 = _r1[_nf];
 		const double b = _b[_nf];
 		const double c = _c[_nf];
 
-		const double fac1 = 8*(b+r1)*_grid.Convolution(D, P1, k);
-		const double fac2 = -16*c*_grid.Convolution(D, P2, k);
-		const double fac3 = -32*c*r1*_grid.Convolution(D, P3, k);
+		double conv1 = _grid.Convolution(D, P1, k);
+		double conv2 = _grid.Convolution(D, P2, k);
+		double conv3 = _grid.Convolution(D, P3, k);
+
+		const double fac1 = 8*(b+r1)*conv1;
+		const double fac2 = -16*c*conv2;
+		const double fac3 = -32*c*r1*conv3;
 		
 	    return fac1+fac2+fac3;
 	}
@@ -440,15 +511,15 @@ namespace Candia2
 			std::cerr << "[DGLAP] Setting nf=" << _nf << '\n';
 			SetupCoefficients();
 
-			/*
-			std::cerr << std::fixed << std::setw(8) << std::setprecision(5);
-			for (uint k=0; k<_grid.Size()-1; k++)
-			{
-				std::cerr << _A[13][0][k] << '\n';
-			}
-			std::cerr << '\n';
-			exit(0);
-			*/
+			
+			// std::cerr << std::fixed << std::setw(15) << std::setprecision(9);
+			// for (uint k=0; k<_grid.Size()-1; k++)
+			// {
+			// 	std::cerr << _C[26][0][0][0][k] << '\n';
+			// }
+			// std::cerr << '\n';
+			// exit(0);
+			
 
 			// if the next mass is zero, we are already done
 			if (_alpha_s.Masses(_nf+1) == 0.0)
@@ -516,7 +587,6 @@ namespace Candia2
 
 		std::cerr << "[DGLAP] OutputDataFile(): Successfully saved data to file '" << filepath << "'\n";
 	}
-
 	void DGLAPSolver::SetOutputDataFileOld(std::string const& filepath)
 	{
 		UNUSED(filepath);
@@ -585,11 +655,13 @@ namespace Candia2
 					for (uint j=13; j<=18; j++)
 						_C[j][0][0][0][k] = _C[j-12][0][0][0][k]-_C[j-6][0][0][0][k];
 			
-					_C[25][0][0][0][k]=0.;
+					_C[25][0][0][0][k]=0.0;
 					for (uint j=13; j<=18; j++)
 						_C[25][0][0][0][k] += _C[j][0][0][0][k];
+
 					for (uint j=26; j<=30; j++)
 						_C[j][0][0][0][k] = _C[13][0][0][0][k]-_C[j-12][0][0][0][k];
+
 					for (uint j=19; j<=24; j++)
 						_C[j][0][0][0][k] = _C[j-18][0][0][0][k]+_C[j-12][0][0][0][k];
 
@@ -737,7 +809,6 @@ namespace Candia2
 		}
 	}
 
-
 	void DGLAPSolver::EvolveNonSinglet()
 	{
 		switch (_order)
@@ -760,8 +831,6 @@ namespace Candia2
 
 					}
 				}
-
-				OutputLOCoefficients();
 			} break;
 			case 1: // NLO
 			{
@@ -1193,7 +1262,7 @@ namespace Candia2
 					_F[j][k] = _F[13][k] - _F[j-12][k];
 			}
 		}
-		FILE* outfile = fopen("out-NNLO.dat", "w");
+		FILE* outfile = fopen("out-N3LO.dat", "w");
 		for (uint k=0; k<_grid.Size(); k++) {
 			fprintf(outfile, "%15.9g", _grid.At(k));
 			for (uint j=0; j<=12; j++)
@@ -1202,7 +1271,6 @@ namespace Candia2
 		}
 		fclose(outfile);
 	}
-
 
 	void DGLAPSolver::ResumThreshold()
 	{
@@ -1447,13 +1515,18 @@ namespace Candia2
 					if (_order == 2)
 						_C[j][1][0][0][k]    = _C[j][0][0][0][k];
 					else if (_order == 3)
-						_D[j][1][0][0][0][k] = _D[j][0][0][0][0][k]; // NOT SURE
+						_D[j][1][0][0][0][k] = _D[j][0][0][0][0][k];
 				}
 			}
 		}
 
 		double aux = _alpha_s.Post(_nf+1);
 		std::cerr << "[DGLAP] HeavyFlavorTreatment(): value of alpha_s post threshold: " << aux << '\n';
+
+		for (uint k=0; k<_grid.Size(); k++)
+		{
+
+		}
 
 		//Computation of after-threshold distributions
 		for (uint k=0; k<_grid.Size()-1;k++)
@@ -1480,53 +1553,6 @@ namespace Candia2
 			else if (_order == 3)
 				_D[_nf+1][0][0][0][0][k] = _D[_nf+7][0][0][0][0][k] = fac;
 		}
-	}
-
-
-
-
-	void DGLAPSolver::OutputLOCoefficients()
-	{
-		std::ostringstream ssfilepath;
-		ssfilepath << "./output/output-candiav2/" << _output_file_index++ << ".dat";
-		std::string filepath = ssfilepath.str();
-		
-		std::ofstream file(filepath);
-		if (!file)
-		{
-			std::cerr << "[DGLAP] OutputLOCoefficients(): Could not open file '" << filepath << "'\n";
-			exit(1);
-		}
-
-		file << std::fixed << std::setw(15) << std::setprecision(std::numeric_limits<double>::max_digits10);
-		
-		for (uint j=13; j<=12+_nf; j++)
-		{
-			for (uint n=0; n<ITERATIONS; n++)
-			{
-				for (uint k=0; k<_grid.Size(); k++)
-				{
-					file << _A[j][n][k] << " ";
-				}
-				file << '\n';
-			}
-			file << "\n\n";
-		}
-
-		for (uint j=32; j<=30+_nf; j++)
-		{
-			for (uint n=0; n<ITERATIONS; n++)
-			{
-				for (uint k=0; k<_grid.Size(); k++)
-				{
-					file << _A[j][n][k] << " ";
-				}
-				file << '\n';
-			}
-			file << "\n\n";
-		}
-
-		file.close();
 	}
 	
 	

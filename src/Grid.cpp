@@ -98,8 +98,8 @@ namespace Candia2
 		// abscissae are symmetric:
 		uint n = GAUSS_POINTS; // simpler to type
 		uint m = (n+1)/2;
-		double x2 = _grid_points.at(this->Size()-1);
-		double x1 = _grid_points.at(0);
+		double x2 = 1.0;
+		double x1 = 0.0;
 		double xm = 0.5*(x2+x1),
 			   xl = 0.5*(x2-x1);
 

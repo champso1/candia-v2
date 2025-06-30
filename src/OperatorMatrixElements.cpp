@@ -9,26 +9,29 @@ namespace Candia2
 	{
 		double L = std::log(x);
 
-		return CF*TR*((1.0 + x*x)/(1.0-x)*(2.0/3.0*L*L + 20.0/9.0*L) + 8.0/3.0*(1.0-x)*L + 44.0/27.0 - 268.0/27.0*x);
+		return CF*TR*((1.0 + x*x)/(1.0-x)*((2.0/3.0)*L*L + (20.0/9.0)*L) 
+					  + (8.0/3.0)*(1.0-x)*L + 44.0/27.0 - (268.0/27.0)*x);
 	}
 
 	double A2ns::Plus(const double x) const
 	{
 		UNUSED(x);
-		return CF*TR*224.0/27.0;
+		return CF*TR*(224.0/27.0);
 	}
 
 	double A2ns::Delta(const double x) const
 	{
 		UNUSED(x);
-		return CF*TR*(-8.0/3.0*Zeta3 + 40.0/9.0*Zeta2 + 73.0/18.0);
+		return CF*TR*((-8.0/3.0)*Zeta3 + (40.0/9.0)*Zeta2 + 73.0/18.0);
 	}
 
 
 	double A2gq::Regular(const double x) const
 	{
-		double L = std::log1p(-x);
-		return CF*TR*(4.0/3.0*(2.0/x - 2.0 + x)*L*L + 8.0/9.0*(10.0/x - 10.0 + 8.0*x)*L + (448.0/x - 448.0 + 344.0*x)/27.0);
+		double M = std::log1p(-x);
+		return CF*TR*((4.0/3.0)*(2.0/x - 2.0 + x)*M*M
+					  + (8.0/9.0)*(10.0/x - 10.0 + 8.0*x)*M
+					  + (448.0/x - 448.0 + 344.0*x)/27.0);
 	}
 
 	double A2gq::Plus(const double x) const
@@ -50,7 +53,13 @@ namespace Candia2
 		double L = std::log(x);
 		double M = std::log1p(-x);
 
-		return CF*TR*(4.0/3.0*(1.0+x)*L*L*L + (6.0 + 10.0*x)*L*L + (32.0 + 48.0*x)*L - 8.0/x + 80.0 - 48.0*x - 24.0*x*x) + NC*TR*(4.0/3.0*(1.0+x)*L*L + (52.0 + 88.0*x)*L/9.0 - 4.0/3.0*x*M + (556.0/x - 628.0 + 548.0*x - 700.0*x*x)/27.0);
+		return CF*TR*((4.0/3.0)*(1.0+x)*L*L*L
+					  + (6.0 + 10.0*x)*L*L 
+					  + (32.0 + 48.0*x)*L 
+					  - 8.0/x + 80.0 - 48.0*x - 24.0*x*x) 
+				+ NC*TR*(4.0/3.0*(1.0+x)*L*L 
+				+ (52.0 + 88.0*x)*L/9.0 - 4.0/3.0*x*M
+				+ (556.0/x - 628.0 + 548.0*x - 700.0*x*x)/27.0);
 	}
 
 	double A2gg::Plus(const double x) const

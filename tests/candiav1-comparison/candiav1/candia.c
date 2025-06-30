@@ -62,11 +62,11 @@ void gauleg(double x1,double x2,double *x,double *w,int n);
 double interp(double *A,double x);
 double polint(double *xa,double *ya,int n,double x);
 double convolution(int i,double kernel(int,double),double *A);
-double RecRel_A(double *A,int k,double P0(int,double));
+double RecRel_A(double *A,int k,double P0(int,double), int singlet);
 double RecRel_B(double *A,double *B,int k,double P0(int,double),double P1(int,double));
 double RecRel_C(double *A,double *B,double *C,int k,
                 double P0(int,double),double P1(int,double),double P2(int,double));
-double RecRel_Diag(double *C,int k,double P0(int,double));
+double RecRel_Diag(double *C,int k,double P0(int,double), int nnlo);
 double RecRel_Vert1(double *B,int k,double P0(int,double),double P1(int,double));
 double RecRel_Vert2(double *C,int k,double P0(int,double),double P1(int,double),double P2(int,double));
 double RecRel_Horiz(double *C,int k,double P0(int,double),double P1(int,double));
@@ -686,6 +686,17 @@ int main(int argc, char *argv[])
 	}
 
 
+	// for (j=1; j<=9; j++)
+	// {
+	// 	for (k=0; k<GRID_PTS; k++)
+	// 	{
+	// 		fprintf(stderr, "%9.5lf\n", C[j][0][0][0][k]);
+	// 	}
+	// 	fprintf(stderr, "\n");
+	// }
+	// exit(0);
+
+
 	//Computation of alpha_s at the quark thresholds
 	mu0=( (input==1 || input==2)? MZ : Q[nfi] );
 
@@ -833,6 +844,7 @@ int main(int argc, char *argv[])
 				} break;
 
 				case 1:
+				{
 					for (j=13;j<=18;j++) B[j][0][0][i]=B[j-12][0][0][i]-B[j-6][0][0][i];
 
 					B[25][0][0][i]=0.;
@@ -846,36 +858,41 @@ int main(int argc, char *argv[])
 					for (j=19;j<=24;j++) S[0][1][0][i]+=B[j][0][0][i];
 
 					for (j=32;j<=36;j++) B[j][0][0][i]=B[19][0][0][i]-B[j-12][0][0][i];
-
-					break;
-
+				} break;
 				case 2:
-					for (j=13;j<=18;j++) C[j][0][0][0][i]=C[j-12][0][0][0][i]-C[j-6][0][0][0][i];
+				{
+					for (j=13;j<=18;j++) 
+						C[j][0][0][0][i] = C[j-12][0][0][0][i]-C[j-6][0][0][0][i];
 
 					C[25][0][0][0][i]=0.;
-					for (j=13;j<=18;j++) C[25][0][0][0][i]+=C[j][0][0][0][i];
+					for (j=13;j<=18;j++) 
+						C[25][0][0][0][i] += C[j][0][0][0][i];
 
-					for (j=26;j<=30;j++) C[j][0][0][0][i]=C[13][0][0][0][i]-C[j-12][0][0][0][i];
+					for (j=26;j<=30;j++)
+						C[j][0][0][0][i] = C[13][0][0][0][i] - C[j-12][0][0][0][i];
 
-					for (j=19;j<=24;j++) C[j][0][0][0][i]=C[j-18][0][0][0][i]+C[j-12][0][0][0][i];
+					for (j=19;j<=24;j++) 
+						C[j][0][0][0][i] = C[j-18][0][0][0][i] + C[j-12][0][0][0][i];
 
 					S[0][1][0][i]=0.;
-					for (j=19;j<=24;j++) S[0][1][0][i]+=C[j][0][0][0][i];
+					for (j=19;j<=24;j++)
+						S[0][1][0][i] += C[j][0][0][0][i];
 
-					for (j=32;j<=36;j++) C[j][0][0][0][i]=C[19][0][0][0][i]-C[j-12][0][0][0][i];
+					for (j=32;j<=36;j++)
+						C[j][0][0][0][i] = C[19][0][0][0][i] - C[j-12][0][0][0][i];
 
-					break;
+				} break;
 			}
 		}
 
-		/*
-		for (k=0; k<GRID_PTS-1; k++)
-		{
-			fprintf(stderr, "%8.5lf\n", A[13][0][k]);
-		}
-		fprintf(stderr, "\n");
-		exit(0);
-		*/
+		
+		// for (k=0; k<GRID_PTS-1; k++)
+		// {
+		// 	fprintf(stderr, "%15.9lf\n", C[26][0][0][0][k]);
+		// }
+		// fprintf(stderr, "\n");
+		// exit(0);
+		
 
 		if (Q[nf+1]==0.) break;
 
@@ -904,9 +921,9 @@ int main(int argc, char *argv[])
 				//Evolution of singlet 0-coefficients
 				for (k=0;k<=GRID_PTS-2;k++)
 				{
-					S[0][1][i+1][k]=RecRel_A(S[0][1][i],k,P0qq)+RecRel_A(S[0][0][i],k,P0qg);
+					S[0][1][i+1][k]=RecRel_A(S[0][1][i],k,P0qq, 1)+RecRel_A(S[0][0][i],k,P0qg, 1);
 
-					S[0][0][i+1][k]=RecRel_A(S[0][1][i],k,P0gq)+RecRel_A(S[0][0][i],k,P0gg);
+					S[0][0][i+1][k]=RecRel_A(S[0][1][i],k,P0gq, 1)+RecRel_A(S[0][0][i],k,P0gg, 1);
 				}
 
 				if (order>0)
@@ -988,11 +1005,11 @@ int main(int argc, char *argv[])
 						for (k=0;k<=GRID_PTS-2;k++)
 						{
 							for (j=13;j<=12+nf;j++) {
-								A[j][i+1][k]=RecRel_A(A[j][i],k,P0NS);
+								A[j][i+1][k]=RecRel_A(A[j][i],k,P0NS, 0);
 							}
 
 							for (j=32;j<=30+nf;j++)
-								A[j][i+1][k]=RecRel_A(A[j][i],k,P0NS);
+								A[j][i+1][k]=RecRel_A(A[j][i],k,P0NS, 0);
 						}
 					}
 
@@ -1010,7 +1027,7 @@ int main(int argc, char *argv[])
 							for (j=13;j<=12+nf;j++)
 							{
 								for (l=1;l<=i;l++)
-									B[j][i][l][k]=RecRel_Diag(B[j][i-1][l-1],k,P0NS);
+									B[j][i][l][k]=RecRel_Diag(B[j][i-1][l-1],k,P0NS, 0);
 
 								B[j][i][0][k]=-B[j][i][1][k]+RecRel_Vert1(B[j][i-1][0],k,P0NS,P1NSm);
 							}
@@ -1018,7 +1035,7 @@ int main(int argc, char *argv[])
 							for (j=32;j<=30+nf;j++)
 							{
 								for (l=1;l<=i;l++)
-									B[j][i][l][k]=RecRel_Diag(B[j][i-1][l-1],k,P0NS);
+									B[j][i][l][k]=RecRel_Diag(B[j][i-1][l-1],k,P0NS, 0);
 
 								B[j][i][0][k]=-B[j][i][1][k]+RecRel_Vert1(B[j][i-1][0],k,P0NS,P1NSp);
 							}
@@ -1038,7 +1055,7 @@ int main(int argc, char *argv[])
 							{
 								for (t=1;t<=s;t++)
 									for (n=1;n<=t;n++)
-										C[j][s][t][n][k]=RecRel_Diag(C[j][s-1][t-1][n-1],k,P0NS);
+										C[j][s][t][n][k]=RecRel_Diag(C[j][s-1][t-1][n-1],k,P0NS, 1);
 
 								C[j][s][s][0][k]=-0.5*C[j][s][s][1][k]+RecRel_Vert2(C[j][s-1][s-1][0],k,P0NS,P1NSm,P2NSm);
 
@@ -1050,7 +1067,7 @@ int main(int argc, char *argv[])
 							{
 								for (t=1;t<=s;t++)
 									for (n=1;n<=t;n++)
-										C[j][s][t][n][k]=RecRel_Diag(C[j][s-1][t-1][n-1],k,P0NS);
+										C[j][s][t][n][k]=RecRel_Diag(C[j][s-1][t-1][n-1],k,P0NS, 1);
 
 								C[j][s][s][0][k]=-0.5*C[j][s][s][1][k]+RecRel_Vert2(C[j][s-1][s-1][0],k,P0NS,P1NSp,P2NSp);
 
@@ -1060,7 +1077,7 @@ int main(int argc, char *argv[])
 
 							for (t=1;t<=s;t++)
 								for (n=1;n<=t;n++)
-									C[25][s][t][n][k]=RecRel_Diag(C[25][s-1][t-1][n-1],k,P0NS);
+									C[25][s][t][n][k]=RecRel_Diag(C[25][s-1][t-1][n-1],k,P0NS, 1);
 
 							C[25][s][s][0][k]=-0.5*C[25][s][s][1][k]+RecRel_Vert2(C[25][s-1][s-1][0],k,P0NS,P1NSm,P2NSv);
 
@@ -1505,7 +1522,7 @@ void gauleg(double x1,double x2,double *x,double *w,int n)
 	//Computes the Gauss-Legendre abscissas and weights of order n in the interval [x1,x2]
 
 	int m,j,i;
-	double eps=3.e-11,z1,z,xm,xl,pp,p3,p2,p1;
+	double eps=1.e-14,z1,z,xm,xl,pp,p3,p2,p1;
 	m=(n+1)/2;
 	xm=0.5*(x2+x1);
 	xl=0.5*(x2-x1);
@@ -1635,26 +1652,29 @@ double convolution(int i,double kernel(int,double),double *A)
 
 //Recursion relations
 
-double RecRel_A(double *A,int k,double P0(int,double))
+double RecRel_A(double *A,int k,double P0(int,double), int singlet)
 {
-	if (print_lo_shit)
+	if (singlet)
 	{
-		for (uint _k=0; _k<GRID_PTS; _k++)
-		{
-			fprintf(stderr, "%.5lf\n", A[_k]);
-		}
-		exit(0);
+		// for (uint _k=0; _k<GRID_PTS; _k++)
+		// 	fprintf(stderr, "%15.9lf\n", A[_k]);
+		
 	}
-	double p1 = -2./beta0;
-	double p2 = convolution(k,P0,A);
-	return p1*p2;
+
+	double conv = convolution(k,P0,A);
+	return -2./beta0*conv;
 }
 
 
 double RecRel_B(double *A,double *B,int k,double P0(int,double),double P1(int,double))
 {
-	double res=convolution(k,P0,B)*2./beta0;
-	res+=convolution(k,P1,A)/(Pi*beta0);
+	// for (uint _k=0; _k<GRID_PTS; _k++)
+	// 	fprintf(stderr, "%15.9lf, %15.9lf\n", A[_k], B[_k]);
+
+	double conv1 = convolution(k,P0,B);
+	double conv2 = convolution(k,P1,A);
+	double res=conv1*2./beta0;
+	res+=conv2/(Pi*beta0);
 
 	//Additional terms for mu_f!=mu_r
 	if (log_mf2_mr2!=0.)
@@ -1667,9 +1687,15 @@ double RecRel_B(double *A,double *B,int k,double P0(int,double),double P1(int,do
 double RecRel_C(double *A,double *B,double *C,int k,
                 double P0(int,double),double P1(int,double),double P2(int,double))
 {
-	double res=convolution(k,P0,C)*2./beta0;
-	res+=convolution(k,P1,B)/(Pi*beta0);
-	res+=convolution(k,P2,A)/(2.*Pi2*beta0);
+	// for (uint _k=0; _k<GRID_PTS; _k++)
+	// 	fprintf(stderr, "%15.9lf, %15.9lf, %15.9lf\n", A[_k], B[_k], C[_k]);
+
+	double conv1 = convolution(k,P0,C);
+	double conv2 = convolution(k,P1,B);
+	double conv3 = convolution(k,P2,A);
+	double res=conv1*2./beta0;
+	res+=conv2/(Pi*beta0);
+	res+=conv3/(2.*Pi2*beta0);
 
 	//Additional terms for mu_f!=mu_r
 	if (log_mf2_mr2!=0.)
@@ -1684,9 +1710,17 @@ double RecRel_C(double *A,double *B,double *C,int k,
 }
 
 
-double RecRel_Diag(double *C,int k,double P0(int,double))
+double RecRel_Diag(double *C,int k,double P0(int,double), int nnlo)
 {
-	return -2./beta0*convolution(k,P0,C);
+	if (nnlo)
+	{
+		// for (k=0; k<GRID_PTS; k++)
+		// 	fprintf(stderr, "%15.9lf\n", C[k]);
+
+	}
+
+	double conv = convolution(k,P0,C);
+	return -2./beta0*conv;
 }
 
 
@@ -1704,7 +1738,11 @@ double RecRel_Vert1(double *B,int k,double P0(int,double),double P1(int,double))
 
 double RecRel_Vert2(double *C,int k,double P0(int,double),double P1(int,double),double P2(int,double))
 {
-	double res=-4./beta2*convolution(k,P2,C);
+	// for (k=0; k<GRID_PTS; k++)
+	// 	fprintf(stderr, "%15.9lf\n", C[k]);
+
+	double conv = convolution(k,P2,C);
+	double res=-4./beta2*conv;
 
 	//Additional terms for mu_f!=mu_r
 	if (log_mf2_mr2!=0.)
@@ -1719,7 +1757,11 @@ double RecRel_Vert2(double *C,int k,double P0(int,double),double P1(int,double),
 
 double RecRel_Horiz(double *C,int k,double P0(int,double),double P1(int,double))
 {
-	double res=-8.*convolution(k,P1,C);
+	// for (k=0; k<GRID_PTS; k++)
+	// 	fprintf(stderr, "%15.9lf\n", C[k]);
+
+	double conv = convolution(k,P1,C);
+	double res=-8.*conv;
 
 	//Additional terms for mu_f!=mu_r
 	if (log_mf2_mr2!=0.)

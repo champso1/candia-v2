@@ -318,7 +318,7 @@ namespace Candia2
 	private:
 		uint _output_file_index;
 
-		void OutputLOCoefficients();
+		// void OutputLOCoefficients();
 	};
 
 	
