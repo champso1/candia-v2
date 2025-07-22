@@ -356,6 +356,8 @@ namespace Candia2
 		~P3nsv() = default;
 
 		double Regular(const double x) const override;
+		double Plus(const double x) const override;
+		double Delta(const double x) const override;
 	};
 	
 	///@}

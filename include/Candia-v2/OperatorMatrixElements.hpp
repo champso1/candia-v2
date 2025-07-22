@@ -40,8 +40,6 @@ namespace Candia2
 		~A2gq()  = default;
 
 		double Regular(const double x) const;
-		double Plus(const double x) const;
-		double Delta(const double x) const;
 	};
 
 	class A2gg : public OpMatElem
@@ -62,8 +60,6 @@ namespace Candia2
 		~A2hq()  = default;
 
 		double Regular(const double x) const;
-		double Plus(const double x) const;
-		double Delta(const double x) const;
 	};
 
 	class A2hg : public OpMatElem
@@ -73,8 +69,6 @@ namespace Candia2
 		~A2hg()  = default;
 
 		double Regular(const double x) const;
-		double Plus(const double x) const;
-		double Delta(const double x) const;
 	};
 	
 };

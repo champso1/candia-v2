@@ -66,7 +66,7 @@ namespace Candia2
 	const uint INTERP_POINTS = 5;
 
 	/** @brief Number of iterations for non-singlet */
-	const uint ITERATIONS = 5;
+	const uint ITERATIONS = 4;
 
 	/** @brief number of additional iterations for truncated ansatz */
 	const uint TRUNC_IDX = 5;
@@ -108,7 +108,7 @@ namespace Candia2
 	};
 
 
-	/** @brief concept for arithmetic
+	/** @brief concept for arithmetic arguments
 	 */
 	template <typename T>
 	concept Arithmetic = std::integral<T> or std::floating_point<T>;

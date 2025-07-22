@@ -14,18 +14,18 @@ set(CMAKE_CXX_STANDARD_REQUIRED True)
 set(CMAKE_C_STANDARD 99)
 set(CMAKE_C_STANDARD_REQUIRED True)
 
+# setup main flags
+set(CMAKE_CXX_FLAGS_RELEASE_INIT "-fPIC")
+set(CMAKE_CXX_FLAGS_DEBUG_INIT "-Wall -Wextra fPIC")
+
 # grab all source files
 file(GLOB sources ${CMAKE_SOURCE_DIR}/src/*.cpp ${CMAKE_SOURCE_DIR}/include/*.hpp)
 
 add_library(candia STATIC ${sources})
-set(CMAKE_CXX_FLAGS_RELEASE_INIT "-fPIC")
-set(CMAKE_CXX_FLAGS_DEBUG_INIT "-Wall -Wextra -fPIC")
 target_link_libraries(candia PUBLIC gfortran)
 
 # compile the fortran code for harmonic polylogs
 enable_language(Fortran)
-set(CMAKE_Fortran_FLAGS_RELEASE "-O3 -std=legacy -w")
-set(CMAKE_Fortran_FLAGS_DEBUG "-O3 -std=legacy -w")
 add_library(hplog STATIC src/hplog.f)
 target_link_libraries(hplog PUBLIC gfortran)
 

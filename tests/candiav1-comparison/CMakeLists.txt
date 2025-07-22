@@ -15,9 +15,7 @@ target_link_libraries(candiav2 PUBLIC hplog candia)
 enable_language(Fortran)
 add_library(candiav1-fortran candiav1/hplog.f
   candiav1/xpns2p.f
-  candiav1/xpij2p.f
-  candiav1/partonww.f
-  candiav1/a02m.f)
+  candiav1/xpij2p.f)
 target_link_libraries(candiav1-fortran PUBLIC gfortran)
 
 add_executable(candiav1 candiav1/candia.c)

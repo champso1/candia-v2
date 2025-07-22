@@ -27,8 +27,8 @@ extern double p2gga_(double*,int*);
 extern double p2ggb_(double*,int*);
 extern double p2ggc_(double*,int*);
 extern void hplog_(double*,int*,dcomplex*,dcomplex*,dcomplex*,dcomplex*,double*,double*,double*,double*,double*,double*,double*,double*,int*,int*);
-extern void a02m_(double*,double*,double*,double*,int*,int*,int*,int*);
-extern void struc_(double*,double*,int*,double*,double*,double*,double*,double*,double*,double*,double*);
+//extern void a02m_(double*,double*,double*,double*,int*,int*,int*,int*);
+//extern void struc_(double*,double*,int*,double*,double*,double*,double*,double*,double*,double*,double*);
 
 #define PI 3.1415926535897932384626433
 const double Pi=PI;
@@ -262,71 +262,9 @@ int main(int argc, char *argv[])
 
 			break;
 
-		case 1: //MRST parametrization
-
-			nfi=3;
-			Q[3]=1.;
-			Q[4]=1.43;
-			Q[5]=4.3;
-			Q[6]=175.;
-
-			switch (order)
-			{
-				case 0:
-					alpha1=0.13; //alpha_s(MZ)
-					break;
-				case 1:
-					alpha1=0.119; //alpha_s(MZ)
-					break;
-				case 2:
-					alpha1=0.1155; //alpha_s(MZ)
-					break;
-			}
-
-			break;
-
-		case 2: //MRST grid
-
-			nfi=3;
-			Q[3]=sqrt(1.25);
-			Q[4]=1.43;
-			Q[5]=4.3;
-			Q[6]=175.;
-
-			switch (order)
-			{
-				case 0:
-					alpha1=0.13; //alpha_s(MZ)
-					break;
-				case 1:
-					alpha1=0.119; //alpha_s(MZ)
-					break;
-				case 2:
-					alpha1=0.1155; //alpha_s(MZ)
-					break;
-			}
-
-			break;
-
-		case 3: //Alekhin parametrization (BAD!!! charm missing!)
-
-			nfi=3;
-			Q[3]=3.;
-			Q[4]=3.;
-			Q[5]=4.5;
-			Q[6]=180.;
-
-			break;
-
-		case 4: //Alekhin grid
-
-			nfi=3;
-			Q[3]=1.;
-			Q[4]=1.5;
-			Q[5]=4.5;
-			Q[6]=180.;
-
-			break;
+		default:
+			fprintf(stderr, "Must use Les Houche distribution.\n");
+			exit(1);
 	}
 	//Flavor number scheme
 	vfns=atoi(argv[5]);
@@ -499,189 +437,9 @@ int main(int argc, char *argv[])
 
 				break;
 
-			case 1: //MRST parametrization
-
-				switch (order)
-				{
-					case 0:
-						A[7][0][i]=0.2*xS_1(order,aux)-0.5*xD_1(order,aux);
-						A[1][0][i]=xuv_1(order,aux)+A[7][0][i];
-						A[8][0][i]=0.2*xS_1(order,aux)+0.5*xD_1(order,aux);
-						A[2][0][i]=xdv_1(order,aux)+A[8][0][i];
-						A[3][0][i]=A[9][0][i]=0.1*xS_1(order,aux);
-
-						S[0][0][0][i]=xg_1(order,aux);
-						S[0][1][0][i]=A[1][0][i]+A[7][0][i]+A[2][0][i]+A[8][0][i]+2.*A[3][0][i];
-
-						break;
-
-					case 1:
-						B[7][0][0][i]=0.2*xS_1(order,aux)-0.5*xD_1(order,aux);
-						B[1][0][0][i]=xuv_1(order,aux)+B[7][0][0][i];
-						B[8][0][0][i]=0.2*xS_1(order,aux)+0.5*xD_1(order,aux);
-						B[2][0][0][i]=xdv_1(order,aux)+B[8][0][0][i];
-						B[3][0][0][i]=B[9][0][0][i]=0.1*xS_1(order,aux);
-
-						S[0][0][0][i]=xg_1(order,aux);
-						S[0][1][0][i]=B[1][0][0][i]+B[7][0][0][i]+B[2][0][0][i]+B[8][0][0][i]+2.*B[3][0][0][i];
-
-						break;
-
-					case 2:
-						C[7][0][0][0][i]=0.2*xS_1(order,aux)-0.5*xD_1(order,aux);
-						C[1][0][0][0][i]=xuv_1(order,aux)+C[7][0][0][0][i];
-						C[8][0][0][0][i]=0.2*xS_1(order,aux)+0.5*xD_1(order,aux);
-						C[2][0][0][0][i]=xdv_1(order,aux)+C[8][0][0][0][i];
-						C[3][0][0][0][i]=C[9][0][0][0][i]=0.1*xS_1(order,aux);
-
-						S[0][0][0][i]=xg_1(order,aux);
-						S[0][1][0][i]=C[1][0][0][0][i]+C[7][0][0][0][i]+C[2][0][0][0][i]+C[8][0][0][0][i]+2.*C[3][0][0][0][i];
-
-						break;
-				}
-
-				break;
-
-			case 2: //MRST grid
-
-				mode=-4*order+9;
-
-				struc_(&aux,&Q[nfi],&mode,&xuv,&xdv,&xub,&xdb,&xs,&xc,&xb,&xg);
-
-				//Singlet
-				S[0][0][0][i]=xg;
-				S[0][1][0][i]=xuv+xdv+2.*(xub+xdb+xs);
-
-				switch (order)
-				{
-					case 0:
-						//LO nonsinglet
-						A[7][0][i]=xub;
-						A[1][0][i]=xuv+xub;
-						A[8][0][i]=xdb;
-						A[2][0][i]=xdv+xdb;
-						A[3][0][i]=A[9][0][i]=xs;
-
-						break;
-
-					case 1:
-						//NLO nonsinglet
-						B[7][0][0][i]=xub;
-						B[1][0][0][i]=xuv+xub;
-						B[8][0][0][i]=xdb;
-						B[2][0][0][i]=xdv+xdb;
-						B[3][0][0][i]=B[9][0][0][i]=xs;
-						break;
-
-					case 2:
-						//NNLO nonsinglet
-						C[7][0][0][0][i]=xub;
-						C[1][0][0][0][i]=xuv+xub;
-						C[8][0][0][0][i]=xdb;
-						C[2][0][0][0][i]=xdv+xdb;
-						C[3][0][0][0][i]=C[9][0][0][0][i]=xs;
-
-						break;
-				}
-
-				break;
-
-			case 3: //Alekhin parametrization
-
-				q2=Q[nfi]*Q[nfi];
-
-				a02m_(&aux,&q2,pdfs,*dpdfs,&npdf,&npar,&orderplus1,&one);
-
-				//alpha_s
-				alpha1=pdfs[0]; //initial alpha_s at mu_r=Q[nfi]
-
-				switch (order)
-				{
-					case 0:
-						A[7][0][i]=xus_2(order,aux);
-						A[1][0][i]=xuv_2(order,aux)+A[7][0][i];
-						A[8][0][i]=xds_2(order,aux);
-						A[2][0][i]=xdv_2(order,aux)+A[8][0][i];
-						A[3][0][i]=A[9][0][i]=xss_2(order,aux);
-
-						S[0][0][0][i]=xg_2(order,aux);
-						S[0][1][0][i]=A[1][0][i]+A[7][0][i]+A[2][0][i]+A[8][0][i]+2.*A[3][0][i];
-
-						break;
-
-					case 1:
-						B[7][0][0][i]=xus_2(order,aux);
-						B[1][0][0][i]=xuv_2(order,aux)+B[7][0][0][i];
-						B[8][0][0][i]=xds_2(order,aux);
-						B[2][0][0][i]=xdv_2(order,aux)+B[8][0][0][i];
-						B[3][0][0][i]=B[9][0][0][i]=xss_2(order,aux);
-
-						S[0][0][0][i]=xg_2(order,aux);
-						S[0][1][0][i]=B[1][0][0][i]+B[7][0][0][i]+B[2][0][0][i]+B[8][0][0][i]+2.*B[3][0][0][i];
-
-						break;
-
-					case 2:
-						C[7][0][0][0][i]=xus_2(order,aux);
-						C[1][0][0][0][i]=xuv_2(order,aux)+C[7][0][0][0][i];
-						C[8][0][0][0][i]=xds_2(order,aux);
-						C[2][0][0][0][i]=xdv_2(order,aux)+C[8][0][0][0][i];
-						C[3][0][0][0][i]=C[9][0][0][0][i]=xss_2(order,aux);
-
-						S[0][0][0][i]=xg_2(order,aux);
-						S[0][1][0][i]=C[1][0][0][0][i]+C[7][0][0][0][i]+C[2][0][0][0][i]+C[8][0][0][0][i]+2.*C[3][0][0][0][i];
-
-						break;
-				}
-
-				break;
-
-			case 4: //Alekhin grid
-
-				q2=Q[nfi]*Q[nfi];
-
-				a02m_(&aux,&q2,pdfs,*dpdfs,&npdf,&npar,&orderplus1,&one);
-
-				//alpha_s
-				alpha1=pdfs[0]; //initial alpha_s at mu_r=Q[nfi]
-
-				//Singlet
-				S[0][0][0][i]=pdfs[3];
-				S[0][1][0][i]=pdfs[1]+pdfs[2]+2.*(pdfs[4]+pdfs[6]+pdfs[5]);
-
-				switch (order)
-				{
-					case 0:
-						//LO nonsinglet
-						A[7][0][i]=pdfs[4];
-						A[1][0][i]=pdfs[1]+pdfs[4];
-						A[8][0][i]=pdfs[6];
-						A[2][0][i]=pdfs[2]+pdfs[6];
-						A[3][0][i]=A[9][0][i]=pdfs[5];
-
-						break;
-
-					case 1:
-						//NLO nonsinglet
-						B[7][0][0][i]=pdfs[4];
-						B[1][0][0][i]=pdfs[1]+pdfs[4];
-						B[8][0][0][i]=pdfs[6];
-						B[2][0][0][i]=pdfs[2]+pdfs[6];
-						B[3][0][0][i]=B[9][0][0][i]=pdfs[5];
-						break;
-
-					case 2:
-						//NNLO nonsinglet
-						C[7][0][0][0][i]=pdfs[4];
-						C[1][0][0][0][i]=pdfs[1]+pdfs[4];
-						C[8][0][0][0][i]=pdfs[6];
-						C[2][0][0][0][i]=pdfs[2]+pdfs[6];
-						C[3][0][0][0][i]=C[9][0][0][0][i]=pdfs[5];
-
-						break;
-				}
-
-				break;
+			default:
+				fprintf(stderr, "Must use Les Houche distribution.\n");
+				exit(1);
 		}
 	}
 

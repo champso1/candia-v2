@@ -3,10 +3,12 @@
 #include <iostream>
 
 namespace Candia2
-{	
+{
+
+	// helper function to ensure that NF is not out of bounds
 	static void __assert_nf(const uint nf)
 	{
-		if (nf >= 8)
+		if (nf > 7)
 		{
 			std::cout << "[ALPHAS] Encountered bad nf value: " << nf << '\n';
 			exit(1);
@@ -55,7 +57,7 @@ namespace Candia2
 	{
 		const double f = static_cast<double>(nf);
 		
-		return (149745.0/6.0 - 3564.0*Zeta3) - (1078361.0/162.0 + (6508.0/27.0)*Zeta3)*f
+		return (149745.0/6.0 + 3564.0*Zeta3) - (1078361.0/162.0 + (6508.0/27.0)*Zeta3)*f
 			+ (50065.0/162.0 + (6472.0/81.0)*Zeta3)*f*f + (1093.0/729.0)*f*f*f;
 	}
 
@@ -78,6 +80,7 @@ namespace Candia2
 
 	double AlphaS::PreMatch(const double alpha)
 	{
+		
 		if (_order == 0)
 			return alpha;
 		
@@ -86,7 +89,7 @@ namespace Candia2
 
 		res += std::pow(alpha,2)*L / (6.0*PI);
 
-		if (_order == 2)
+		if (_order >= 2)
 			res += std::pow(alpha,3)*((L*L/36.0) - (19.0/24.0)*L - (7.0/24.0)) / (PI_2);
 
 		return res;
@@ -102,7 +105,7 @@ namespace Candia2
 
 		res += std::pow(alpha,2)*L / (6.0*PI);
 
-		if (_order == 2)
+		if (_order >= 2)
 			res += std::pow(alpha,3)*(14.0 + 38.0*L + (4.0/3.0)*L*L) / (48.0*PI_2);
 
 		return res;
@@ -180,13 +183,16 @@ namespace Candia2
 
 	double AlphaS::Evaluate(const double Qi, const double Qf, const double alpha0) const
 	{
+		// if the before/after energies are identical, there is nothing to evaluate
 		if (Qi == Qf)
 			return alpha0;
 
+		// at LO we have the exact solution
 		if (_order == 0) {
-			return (2.0*PI*alpha0) / (2.0F*PI + alpha0*_beta0*log(Qf/Qi));
+			return (2.0*PI*alpha0) / (2.0*PI + alpha0*_beta0*log(Qf/Qi));
 		}
 
+		// otherwise, 4th order runge-kutta
 		const static uint steps = 200;
 		double h = 2.0*std::log(Qf/Qi) / static_cast<double>(steps);
 		double k1, k2, k3, k4;

@@ -17,6 +17,8 @@
 
 #include <chrono>
 #include <memory>
+#include <iostream>
+#include <fstream>
 
 
 namespace Candia2
@@ -128,7 +130,7 @@ namespace Candia2
 		///@{
 		std::shared_ptr<SplittingFunction> _P3nsp;
 		std::shared_ptr<SplittingFunction> _P3nsm;
-		std::shared_ptr<SplittingFunction> _P3nss;
+		std::shared_ptr<SplittingFunction> _P3nsv;
 		///@}
 
 
@@ -177,7 +179,6 @@ namespace Candia2
 		 *  @ingroup RecRels
 		 */
 		///@{
-		bool _print_lo_shit = false;
 		double RecRelLO(std::vector<double> const& A,
 						uint k,
 						std::shared_ptr<SplittingFunction> P);
@@ -319,6 +320,8 @@ namespace Candia2
 		uint _output_file_index;
 
 		// void OutputLOCoefficients();
+
+		std::ofstream _debug_file;
 	};
 
 	
