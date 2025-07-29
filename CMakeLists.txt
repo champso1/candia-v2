@@ -1,9 +1,6 @@
-cmake_minimum_required(VERSION 3.25)
+cmake_minimum_required(VERSION 3.30)
 project(candia_v2)
 set(CMAKE_EXPORT_COMPILE_COMMANDS on)
-
-# include the toolchain file
-set(CMAKE_TOOLCHAIN_FILE ${CMAKE_SOURCE_DIR}/share/cmake/toolchain.cmake)
 
 # default the installation to the project directory
 set(CMAKE_INSTALL_PREFIX ${CMAKE_SOURCE_DIR}/install)
@@ -23,11 +20,14 @@ file(GLOB sources ${CMAKE_SOURCE_DIR}/src/*.cpp ${CMAKE_SOURCE_DIR}/include/*.hp
 
 add_library(candia STATIC ${sources})
 target_link_libraries(candia PUBLIC gfortran)
+target_compile_options(candia PRIVATE -Wall -Wextra -fPIC)
+
 
 # compile the fortran code for harmonic polylogs
 enable_language(Fortran)
 add_library(hplog STATIC src/hplog.f)
 target_link_libraries(hplog PUBLIC gfortran)
+target_compile_options(hplog PRIVATE -std=legacy -w)
 
 # link this with main candia
 target_link_libraries(candia PUBLIC hplog)
@@ -51,15 +51,18 @@ add_subdirectory(tests)
 option(BUILD_DOCS "Build documentation" OFF)
 
 if(BUILD_DOCS)
-  find_package(Doxygen)
+  find_package(Doxygen
+    REQUIRED dot)
   if (DOXYGEN_FOUND)
 	set(DOXYGEN_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/docs)
+  set(DOXYGEN_GENERATE_LATEX YES)
 	set(DOXYGEN_GENERATE_TREEVIEW YES)
-	set(DOXYGEN_HAVE_DOT YES)
-	file(GLOB_RECURSE manualfiles ${CMAKE_BINARY_SOURCE_DIR}/res/manual/*)
+  set(DOXYGEN_QUIET YES)
+  set(DOXYGEN_WARN_IF_UNDOCUMENTED NO)
 	doxygen_add_docs(doxygen
-	  ${sources} ${manualfiles}
-	  ALL)
+	  ${CMAKE_SOURCE_DIR}/include ${CMAKE_SOURCE_DIR}/src
+	  ALL
+    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
   endif(DOXYGEN_FOUND)
 endif(BUILD_DOCS)
 

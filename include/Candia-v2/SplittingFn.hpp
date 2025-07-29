@@ -56,7 +56,7 @@ namespace Candia2
 		/** @brief Constructs a generic splitting function.
 		 *  @param use_cache: flag for whether to cache values upon creation
 		 */
-		SplittingFunction(bool use_cache = false) {}
+		SplittingFunction(bool use_cache = false) { UNUSED(use_cache); }
 		///@}
 
 		/** @name Setters/getters

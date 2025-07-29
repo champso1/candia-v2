@@ -48,7 +48,6 @@ namespace Candia2
 
 		/** @brief AlphaS main constructor
 		 *  @param order: perturbative order
-		 *  @param nf: number of massless flavors
 		 *  @param Q0: initial factorization scale
 		 *  @param alpha0: initial value of \f$\alpha_s\f$ at Q0
 		 *  @param masses: list of quark masses
@@ -72,6 +71,7 @@ namespace Candia2
 
 		/** @brief determines the number of flavors to evolve too,
 		 *  and updates the mass array accordingly
+		 *  @param nfi: the initial number of massless flavors
 		 *  @param Qf: the final energy to evolve to
 		 */
 		uint Nff(const uint nfi, const double Qf);
@@ -107,11 +107,11 @@ namespace Candia2
 		void CalculateThresholdValues(const double Qf);
 		
 		
-		/** @brief returns pre-match value for @nf
+		/** @brief returns pre-match value for @a nf
 		 */
 		double Pre(const uint nf) const;
 
-		/** @brief returns post-match value for @nf
+		/** @brief returns post-match value for @a nf
 		 */
 		double Post(const uint nf) const;
 		///@}
