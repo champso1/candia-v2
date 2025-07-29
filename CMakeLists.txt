@@ -42,6 +42,28 @@ target_include_directories(candia PUBLIC
 add_subdirectory(tests)
 
 
+
+# --------------------------
+#   Doxygen/Documentation
+# --------------------------
+
+# set default option to no docs
+option(BUILD_DOCS "Build documentation" OFF)
+
+if(BUILD_DOCS)
+  find_package(Doxygen)
+  if (DOXYGEN_FOUND)
+	set(DOXYGEN_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/docs)
+	set(DOXYGEN_GENERATE_TREEVIEW YES)
+	set(DOXYGEN_HAVE_DOT YES)
+	file(GLOB_RECURSE manualfiles ${CMAKE_BINARY_SOURCE_DIR}/res/manual/*)
+	doxygen_add_docs(doxygen
+	  ${sources} ${manualfiles}
+	  ALL)
+  endif(DOXYGEN_FOUND)
+endif(BUILD_DOCS)
+
+
 # --------------------------- #
 # --- binary installation --- #
 # --------------------------- #
