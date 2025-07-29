@@ -851,8 +851,7 @@ namespace Candia2
 				- ( 2.633744e-1 * dm - 1.31687e-1 * ( 1 + x ) ) * dl3;
 
 			// Assembly
-			const double p3nsmai = p3nsa0 + _nf * p3nsa1 + _nf * _nf * p3nsma2 + _nf * _nf * _nf * p3nsa3;
-			double res2;
+			const double p3nsmai = p3nsa0 + _nf * p3nsa1 + _nf * _nf * p3nsma2 + _nf * _nf * _nf * p3nsa3;			
 			if (_imod == 1)
 				res2 = p3nsmai + p3nma01 + _nf * p3nma11;
 			else if (_imod == 2)
