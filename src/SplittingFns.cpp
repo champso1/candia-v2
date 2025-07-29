@@ -498,15 +498,15 @@ namespace Candia2
 		
 		const double x2   = x * x;
 		const double x3   = x2 * x;
-		const double omx  = 1 - x;
-		const double dm   = 1 / omx;
-		const double dl   = log(x);
+		const double omx  = 1.0 - x;
+		const double dm   = 1.0 / omx;
+		const double dl   = std::log(x);
 		const double dl2  = dl * dl;
 		const double dl3  = dl2 * dl;
 		const double dl4  = dl3 * dl;
 		const double dl5  = dl4 * dl;
 		const double dl6  = dl5 * dl;
-		const double dlm  = log1p(-x);
+		const double dlm  = std::log1p(-x);
 		const double dlm2 = dlm * dlm;
 		const double dlm3 = dlm2 * dlm;
 
@@ -521,11 +521,11 @@ namespace Candia2
 					   + 2.5251 * omx * dlm + 2.5203 * dl * dlm + 2.2242 * x * dl
 					   - 0.02460 * x * dl2 + 0.00310 * x * dl3 )
 			- 9.239374e+3 * dl - 2.917312e+3 * dl2 - 4.305308e+2 *dl3 - 3.6e+1 * dl4
-			- 4. / 3. * dl5 + 8.115605e+3 - 3.079761e+3 * dlm;
+			- 4.0/3.0 * dl5 + 8.115605e+3 - 3.079761e+3 * dlm;
 
 		// Nonleading large-n_c, nf^0 and nf^1: two approximations
 		const double p3npa01 =
-			3948.16 * omx - 2464.61 * ( 2 * x - x2 ) * omx - 1839.44 * dl2 - 402.156 * dl3
+			3948.16 * omx - 2464.61 * ( 2.0*x - x2 ) * omx - 1839.44 * dl2 - 402.156 * dl3
 			- 1777.27 * dlm2 * omx - 204.183 * dlm3 * omx + 507.152 - 5.587553e1 * dl4 - 2.831276e0 * dl5
 			- 1.488340e-1 * dl6 - 2.601749e3 - 2.118867e3 * dlm;
 		const double p3npa02 =
@@ -867,13 +867,12 @@ namespace Candia2
 		UNUSED(x);
 		double Nf = static_cast<double>(_nf);
 
-		const double a4qi  =
-			2.120902e+4
-			- 5.179372e+3 * Nf
-			+ 1.955772e+2 * Nf * Nf
-			+ 3.272344e+0 * Nf * Nf * Nf;
-		const double a4ap1 = - 511.228 + 7.08645 * Nf;
-		const double a4ap2 = - 502.481 + 7.82077 * Nf;
+		const double a4qi  = 2.120902e+4
+			- 5.179372e+3*Nf
+			+ 1.955772e+2*Nf*Nf
+			+ 3.272344e+0*Nf*Nf*Nf;
+		const double a4ap1 = -511.228 + 7.08645*Nf;
+		const double a4ap2 = -502.481 + 7.82077*Nf;
 
 		double res;
 		if (_imod == 1)

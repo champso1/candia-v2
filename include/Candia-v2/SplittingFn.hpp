@@ -339,7 +339,7 @@ namespace Candia2
 	 */
 	///@{
 
-	/** NNNLO non-singlet kernel (plus component)
+	/** N3LO non-singlet kernel (plus component)
 	 */
 	class P3nsp final: public SplittingFunction
 	{
@@ -355,7 +355,7 @@ namespace Candia2
 		double Delta(const double x) const override;
 	};
 
-	/** NNNLO non-singlet kernel (minus component)
+	/** N3LO non-singlet kernel (minus component)
 	 */
 	class P3nsm final: public SplittingFunction
 	{

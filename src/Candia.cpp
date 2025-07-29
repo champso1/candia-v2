@@ -4,6 +4,7 @@
 #include "Candia-v2/Math.hpp"
 #include "Candia-v2/SplittingFn.hpp"
 
+
 #include <chrono>
 #include <iomanip>
 #include <iostream>
@@ -873,6 +874,7 @@ namespace Candia2
 					{
 						for (uint j=26; j<25+_nf; j++)
 						{
+							// RecRel #1:
 							for (uint t=1; t<=s; t++)
 							{
 								for (uint m=1; m<=t; m++)
@@ -882,6 +884,7 @@ namespace Candia2
 								}
 							}
 
+							// RecRel #2:
 							{
 								double fac1 = 0.5*(_alpha_s.Beta1() + r1*_alpha_s.Beta2() - fac*_alpha_s.Beta3()) *_D[j][s][s][s][1][k];
 								double fac2 = RecRelN3LO_3(_D[j][s-1][s-1][s-1][0], k, _P1nsm, _P2nsm, _P3nsm);
@@ -889,6 +892,7 @@ namespace Candia2
 								_D[j][s][s][s][0][k] /= gamma;
 							}
 
+							// RecRel #3:
 							for (int m=s-1; m>=0; m--)
 							{
 								double fac1 = (-_alpha_s.Beta1() - r1*_alpha_s.Beta2() - r1*r1*_alpha_s.Beta3()) * _D[j][s][s][m+1][1][k];
@@ -897,9 +901,10 @@ namespace Candia2
 								_D[j][s][s][m][0][k] /= gamma;
 							}
 
+							// RecRel #4:
 							for (int t=s-1; t>=0; t--)
 							{
-								for (int m=1; m<=t; m++) // this one doesn't need to be an int, but removes compiler warning
+								for (int m=0; m<=t; m++) // this one doesn't need to be an int, but removes compiler warning
 								{
 									double fac0 = -2*b*gamma*_D[j][s][t+1][m+1][1][k];
 									double fac1 = fac0 - 2.0*(-b*_alpha_s.Beta1() - r1*_alpha_s.Beta1() + c*_alpha_s.Beta2() + c*r1*_alpha_s.Beta3())*_D[j][s][t+1][m+1][1][k];
@@ -939,7 +944,7 @@ namespace Candia2
 
 							for (int t=s-1; t>=0; t--)
 							{
-								for (int m=1; m<=t; m++)
+								for (int m=0; m<=t; m++)
 								{
 									double fac0 = -2*b*gamma*_D[j][s][t+1][m+1][1][k];
 									double fac1 = fac0 - 2.0*(-b*_alpha_s.Beta1() - r1*_alpha_s.Beta1() + c*_alpha_s.Beta2() + c*r1*_alpha_s.Beta3())*_D[j][s][t+1][m+1][1][k];
@@ -977,7 +982,7 @@ namespace Candia2
 
 							for (int t=s-1; t>=0; t--)
 							{
-								for (int m=1; m<=t; m++)
+								for (int m=0; m<=t; m++)
 								{
 									double fac0 = -2*b*gamma*_D[25][s][t+1][m+1][1][k];
 									double fac1 = fac0 - 2.0*(-b*_alpha_s.Beta1() - r1*_alpha_s.Beta1() + c*_alpha_s.Beta2() + c*r1*_alpha_s.Beta3())*_D[25][s][t+1][m+1][1][k];
@@ -1240,14 +1245,23 @@ namespace Candia2
 		std::string filepath = filepath_ss.str();
 
 		FILE* outfile = fopen(filepath.c_str(), "w");
+
+		// for (uint k=0; k<_grid.Size(); k++) {
+		// 	fprintf(outfile, "%15.9g", _grid.At(k));
+		// 	for (uint j=26; j<=30; j++)
+		// 		fprintf(outfile, "  %15.9g", _F[j][k]);
+		// 	for (uint j=32; j<=36; j++)
+		// 		fprintf(outfile, "  %15.9g", _F[j][k]);	
+		// 	fprintf(outfile, "\n");
+		// }
+
 		for (uint k=0; k<_grid.Size(); k++) {
-			fprintf(outfile, "%15.9g", _grid.At(k));
-			for (uint j=26; j<=30; j++)
+		fprintf(outfile, "%15.9g", _grid.At(k));
+			for (uint j=0; j<=12; j++)
 				fprintf(outfile, "  %15.9g", _F[j][k]);
-			for (uint j=32; j<=36; j++)
-				fprintf(outfile, "  %15.9g", _F[j][k]);	
 			fprintf(outfile, "\n");
 		}
+
 		fclose(outfile);
 	}
 
@@ -1403,13 +1417,17 @@ namespace Candia2
 							{
 								for (uint j=25; j<=24+_nf; j++)
 								{
-									_C[j][0][0][0][k] += _C[j][s][t][n][k]*std::pow(L1,n)*std::pow(L2,(t-n))*std::pow(L3,(s-t))
-																		  /Factorial(n)/Factorial(t-n)/Factorial(s-t);
+									double orig = _C[j][s][t][n][k];
+									double powers = std::pow(L1,n)*std::pow(L2,(t-n))*std::pow(L3,(s-t));
+									double factorials = Factorial(n)*Factorial(t-n)*Factorial(s-t);
+									_C[j][0][0][0][k] += orig*powers/factorials;
 								}
 								for (uint j=32; j<=30+_nf; j++)
 								{
-									_C[j][0][0][0][k] += _C[j][s][t][n][k]*std::pow(L1,n)*std::pow(L2,(t-n))*std::pow(L3,(s-t))
-																		  /Factorial(n)/Factorial(t-n)/Factorial(s-t);
+									double orig = _C[j][s][t][n][k];
+									double powers = std::pow(L1,n)*std::pow(L2,(t-n))*std::pow(L3,(s-t));
+									double factorials = Factorial(n)*Factorial(t-n)*Factorial(s-t);
+									_C[j][0][0][0][k] += orig*powers/factorials;
 								}
 							}
 						}
@@ -1505,6 +1523,7 @@ namespace Candia2
 
 	void DGLAPSolver::HeavyFlavorTreatment()
 	{
+		return;
 		std::cerr << "[DGLAP] HeavyFlavorTreatment(): " << _nf+1 << "th quark mass threshold (mass "
 				  << _alpha_s.Masses(_nf+1) << ")\n";
 

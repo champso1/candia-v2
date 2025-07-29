@@ -11,10 +11,6 @@ set(CMAKE_CXX_STANDARD_REQUIRED True)
 set(CMAKE_C_STANDARD 99)
 set(CMAKE_C_STANDARD_REQUIRED True)
 
-# setup main flags
-set(CMAKE_CXX_FLAGS_RELEASE_INIT "-fPIC")
-set(CMAKE_CXX_FLAGS_DEBUG_INIT "-Wall -Wextra fPIC")
-
 # grab all source files
 file(GLOB sources ${CMAKE_SOURCE_DIR}/src/*.cpp ${CMAKE_SOURCE_DIR}/include/*.hpp)
 
