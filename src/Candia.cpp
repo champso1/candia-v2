@@ -161,6 +161,8 @@ namespace Candia2
 
 		std::cerr << "[DGLAP] Done creating splitting function pointers.\n";
 
+		FillSplittingFunctionCaches();
+
 		std::cerr << "[DGLAP] Creating operator matrix element pointers...\n";
 
 		_A2ns = std::make_shared<A2ns>();
@@ -269,7 +271,10 @@ namespace Candia2
 		std::cerr << "[DGLAP] Done setting initial conditions.\n";
 	}
 
-
+	void DGLAPSolver::FillSplittingFunctionCaches()
+	{
+		std::cerr << "[DGLAP] FillSplittingFunctionCaches(): NOT YET IMPLEMENTED\n";
+	}
 
 	double DGLAPSolver::RecRelS_1(std::vector<double> const& S, uint k,
 								  std::shared_ptr<SplittingFunction> P)
@@ -872,8 +877,12 @@ namespace Candia2
 			} break;
 			case 2: // NNLO
 			{
+				Clock::time_point t0, tf;
+
 				for (uint s=1; s<=ITERATIONS-1; s++)
 				{
+					t0 = Clock::now();
+
 					std::cerr << "[DGLAP] EvolveNonSinglet(): NNLO Iteration " << s << '\n';
 
 					for (uint k=0; k<_grid.Size()-1; k++)
@@ -890,16 +899,16 @@ namespace Candia2
 							double fac2 = RecRelNNLO_2(_C[j][s-1][s-1][0], k, _P2nsm);
 							_C[j][s][s][0][k] = fac1 + fac2;
 
-							std::ostringstream filepath;
-							filepath << "./debug/nnlo/" << s << '.' << s << '.' << 0 << ".dat";
-							_debug_file.open(filepath.str());
-							_debug_file << "s=" << s << ",t=" << s << ",m=" << s << "n=0\n";
-							_debug_file << std::fixed << std::setw(9) << std::setprecision(5);
-							for (uint k=0; k<_grid.Size(); k++)
-							{
-								_debug_file << _C[j][s][s][0][k] << '\n';
-							}
-							_debug_file.close();
+							// std::ostringstream filepath;
+							// filepath << "./debug/nnlo/" << s << '.' << s << '.' << 0 << ".dat";
+							// _debug_file.open(filepath.str());
+							// _debug_file << "s=" << s << ",t=" << s << ",m=" << s << "n=0\n";
+							// _debug_file << std::fixed << std::setw(9) << std::setprecision(5);
+							// for (uint k=0; k<_grid.Size(); k++)
+							// {
+							// 	_debug_file << _C[j][s][s][0][k] << '\n';
+							// }
+							// _debug_file.close();
 
 							// these must be regular ints:
 							// unsigned ints, when they are 0 and get --,
@@ -938,6 +947,10 @@ namespace Candia2
 						for (int t=s-1; t>=0; t--)
 							_C[25][s][t][0][k] = -2.0*_alpha_s.Beta1()*(_C[25][s][t+1][0][k] + _C[25][s][t+1][1][k]) + RecRelNNLO_3(_C[25][s-1][t][0], k, _P1nsm);
 					}
+
+					tf = Clock::now();
+					std::chrono::duration<double> elapsed = std::chrono::duration_cast<std::chrono::duration<double>>(tf-t0);
+					std::cerr << "[DGLAP] EvolveNonSinglet(): NNLO iteration took " << elapsed.count() << " seconds.\n";
 				}
 			} break;
 			case 3: // N3LO
@@ -1593,7 +1606,6 @@ namespace Candia2
 
 	void DGLAPSolver::HeavyFlavorTreatment()
 	{
-		return;
 		std::cerr << "[DGLAP] HeavyFlavorTreatment(): " << _nf+1 << "th quark mass threshold (mass "
 				  << _alpha_s.Masses(_nf+1) << ")\n";
 

@@ -23,15 +23,40 @@ namespace Candia2
 		static double _beta0; //!< beta0 coefficient (for P0gg)
 
 		// static HPLog _hplog; //!< hplog interface object
+
+		/**
+		 * Class used to cache the values of the splitting functions
+		 * (NNLO and beyond) to avoid repeat calls of highly complex functions
+		 * NOTE: not yet implemented!
+		 */
+		class SplittingFunctionCache
+		{
+		private:
+			std::vector<double> _regular;
+			std::vector<double> _singular;
+			std::vector<double> _delta;
+
+		public:
+			SplittingFunctionCache() = default;
+			~SplittingFunctionCache() = default;
+
+
+			inline void Add(double regular, double singular, double delta)
+			{
+				_regular.push_back(regular);
+				_singular.push_back(singular);
+				_delta.push_back(delta);
+			}
+		};
+
 	public:
 		/** @name Constructors/destructors
 		 */
 		///@{
 		/** @brief Constructs a generic splitting function.
-		 *  @param nf: Number of currently massless flavors (default 3)
+		 *  @param use_cache: flag for whether to cache values upon creation
 		 */
-		SplittingFunction() = default;
-		~SplittingFunction() = default; //!< default destructor
+		SplittingFunction(bool use_cache = false) {}
 		///@}
 
 		/** @name Setters/getters
@@ -61,6 +86,9 @@ namespace Candia2
 		// double S12(const double x) const;
 		///@}
 	};
+
+
+	
 
 
 	/** @name Leading-order splitting functions.

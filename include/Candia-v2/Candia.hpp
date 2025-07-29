@@ -124,6 +124,20 @@ namespace Candia2
 		std::shared_ptr<SplittingFunction> _P2gg;
 		///@}
 
+		/**
+		 * @name NNLO splitting functions cache
+		 * @ingroup SplitFuncs
+		 */
+		///@{
+		std::vector<double> _P2nsp_cache;
+		std::vector<double> _P2nsm_cache;
+		std::vector<double> _P2nsv_cache;
+		std::vector<double> _P2qq_cache;
+		std::vector<double> _P2qg_cache;
+		std::vector<double> _P2gq_cache;
+		std::vector<double> _P2gg_cache;
+		///@}
+
 		/** @name NNNLO splitting functions
 		 *  @ingroup SplitFuncs
 		 */
@@ -131,6 +145,16 @@ namespace Candia2
 		std::shared_ptr<SplittingFunction> _P3nsp;
 		std::shared_ptr<SplittingFunction> _P3nsm;
 		std::shared_ptr<SplittingFunction> _P3nsv;
+		///@}
+
+		/**
+		 * @name N3LO splitting functions cache
+		 * @ingroup SplitFuncs
+		 */
+		///@{
+		std::vector<double> _P3nsp_cache;
+		std::vector<double> _P3nsm_cache;
+		std::vector<double> _P3nsv_cache;
 		///@}
 
 
@@ -283,6 +307,11 @@ namespace Candia2
 		/** @brief initializes coefficient arrays with distributions
 		 */
 		void SetInitialConditions();
+
+		/** @brief For NNLO and beyond, evaluates the splitting functions at all grid points
+		 *  and caches the results for speed
+		 */
+		void FillSplittingFunctionCaches();
 		
 		/** @brief Computes the actual distributions that are evolved.
 		 */
