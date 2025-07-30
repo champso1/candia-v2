@@ -67,7 +67,7 @@ namespace Candia2
 	const uint INTERP_POINTS = 5;
 
 	/** @brief Number of iterations for non-singlet */
-	const uint ITERATIONS = 5;
+	const uint ITERATIONS = 7;
 
 	/** @brief number of additional iterations for truncated ansatz */
 	const uint TRUNC_IDX = 8;

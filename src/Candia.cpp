@@ -94,6 +94,21 @@ namespace Candia2
 				_r1[4] = -0.0962106; _b[4] = -2.0 * 0.0228195; _c[4] = std::pow(0.0228195, 2) + std::pow(0.101286, 2);
 				_r1[5] = -0.1050890; _b[5] = -2.0 * 0.0338021; _c[5] = std::pow(0.0338021, 2) + std::pow(0.118211, 2);
 				_r1[6] = -0.1136210; _b[6] = -2.0 * 0.0633832; _c[6] = std::pow(0.0633832, 2) + std::pow(0.144577, 2);
+
+				// technially the above values are the solutions
+				// for a_s, NOT alpha_s
+				// this therefore makes r1, r2, and r3 a factor of 4pi off
+				// b is 2*Re[r2], so it gets a single power of 4pi,
+				// but c is |r2|^2 (or |r3|^2) so it gets (4pi)^2
+				std::for_each(_r1.begin(), _r1.end(), [](double &x){
+					x *= 4*PI;
+				});
+				std::for_each(_b.begin(), _b.end(), [](double &x){
+					x *= 4*PI;
+				});
+				std::for_each(_c.begin(), _c.end(), [](double &x){
+					x *= std::pow(4*PI, 2);
+				});
 			} break;
 			default:
 			{
@@ -904,7 +919,7 @@ namespace Candia2
 							// RecRel #4:
 							for (int t=s-1; t>=0; t--)
 							{
-								for (int m=0; m<=t; m++) // this one doesn't need to be an int, but removes compiler warning
+								for (int m=t; m>=0; m--) // this one doesn't need to be an int, but removes compiler warning (wrong! (for now))
 								{
 									double fac0 = -2*b*gamma*_D[j][s][t+1][m+1][1][k];
 									double fac1 = fac0 - 2.0*(-b*_alpha_s.Beta1() - r1*_alpha_s.Beta1() + c*_alpha_s.Beta2() + c*r1*_alpha_s.Beta3())*_D[j][s][t+1][m+1][1][k];
@@ -944,7 +959,7 @@ namespace Candia2
 
 							for (int t=s-1; t>=0; t--)
 							{
-								for (int m=0; m<=t; m++)
+								for (int m=t; m>=0; m--)
 								{
 									double fac0 = -2*b*gamma*_D[j][s][t+1][m+1][1][k];
 									double fac1 = fac0 - 2.0*(-b*_alpha_s.Beta1() - r1*_alpha_s.Beta1() + c*_alpha_s.Beta2() + c*r1*_alpha_s.Beta3())*_D[j][s][t+1][m+1][1][k];
@@ -982,7 +997,7 @@ namespace Candia2
 
 							for (int t=s-1; t>=0; t--)
 							{
-								for (int m=0; m<=t; m++)
+								for (int m=t; m>=t; m--)
 								{
 									double fac0 = -2*b*gamma*_D[25][s][t+1][m+1][1][k];
 									double fac1 = fac0 - 2.0*(-b*_alpha_s.Beta1() - r1*_alpha_s.Beta1() + c*_alpha_s.Beta2() + c*r1*_alpha_s.Beta3())*_D[25][s][t+1][m+1][1][k];
@@ -1018,11 +1033,6 @@ namespace Candia2
 		double L3 = 0.0;
 		double L4 = 0.0;
 
-		// N3LO shorthand
-		double r1 = _r1[_nf];
-		double b = _b[_nf];
-		double c = _c[_nf];
-
 		if (_order == 1)
 		{
 			L2 = std::log((_alpha1*_alpha_s.Beta1() + 4.0*PI*_alpha_s.Beta0())
@@ -1046,6 +1056,11 @@ namespace Candia2
 		}
 		else if (_order == 3)
 		{
+			// shorthand
+			double r1 = _r1[_nf];
+			double b = _b[_nf];
+			double c = _c[_nf];
+
 			L2 = std::log((_alpha1 - r1)/(_alpha0 - r1));
 			L3 = std::log((_alpha1*_alpha1 + b*_alpha1 + c) / (_alpha0*_alpha0 + b*_alpha0 + c));
 			double aux = std::sqrt(-b*b + 4*c); // never negative, no need for analytic continuation
@@ -1141,12 +1156,16 @@ namespace Candia2
 							{
 								for (uint j=25; j<=24+_nf;j++)
 								{
-									_F[j][k] += _C[j][s][t][n][k]*std::pow(L1,n)*std::pow(L2,(t-n))*std::pow(L3,(s-t))
-																 /Factorial(n)/Factorial(t-n)/Factorial(s-t);
+									double orig = _C[j][s][t][n][k];
+									double powers = std::pow(L1,n)*std::pow(L2,(t-n))*std::pow(L3,(s-t));
+									double factorials = Factorial(n)*Factorial(t-n)*Factorial(s-t);
+									_F[j][k] += orig*powers/factorials;
 								}
 								for (uint j=32; j<=30+_nf; j++) {
-									_F[j][k] += _C[j][s][t][n][k]*std::pow(L1,n)*std::pow(L2,(t-n))*std::pow(L3,(s-t))
-																 /Factorial(n)/Factorial(t-n)/Factorial(s-t);
+									double orig = _C[j][s][t][n][k];
+									double powers = std::pow(L1,n)*std::pow(L2,(t-n))*std::pow(L3,(s-t));
+									double factorials = Factorial(n)*Factorial(t-n)*Factorial(s-t);
+									_F[j][k] += orig*powers/factorials;
 								}
 							}
 						}
@@ -1276,11 +1295,6 @@ namespace Candia2
 		double L3 = 0.0;
 		double L4 = 0.0;
 
-		// N3LO shorthand
-		double r1 = _r1[_nf];
-		double b = _b[_nf];
-		double c = _c[_nf];
-
 		if (_order == 1)
 		{
 			L2 = std::log((_alpha1*_alpha_s.Beta1() + 4.0*PI*_alpha_s.Beta0())
@@ -1304,15 +1318,20 @@ namespace Candia2
 		}
 		else if (_order == 3)
 		{
+			// shorthand
+			double r1 = _r1[_nf];
+			double b = _b[_nf];
+			double c = _c[_nf];
+
 			L2 = std::log((_alpha1 - r1)/(_alpha0 - r1));
 			L3 = std::log((_alpha1*_alpha1 + b*_alpha1 + c) / (_alpha0*_alpha0 + b*_alpha0 + c));
-
-			std::cerr << "[DGLAP] ResumThreshold(): N3LO square root argument = " << -b*b + 4*c << '\n';
 			double aux = std::sqrt(-b*b + 4*c); // never negative, no need for analytic continuation
 			L4 = std::atan((_alpha1-_alpha0)*aux / (2*_alpha0*_alpha1 + (_alpha0+_alpha1)*b + 2.0*c))/aux;
 			// L4 = std::atan((_alpha1-_alpha0)*aux / (2*_alpha0*_alpha1 + (_alpha0+_alpha1)*b + 2.0*c));
 		}
 
+		std::cerr << "[DGLAP] ResumThreshold(): alpha0=" << _alpha0 << ", _alpha1 = " << _alpha1 << '\n';
+		std::cerr << "[DGLAP] ResumThreshold(): L1=" << L1 << ", L2=" << L2 << ", L3=" << L3 << ", L4=" << L4 << '\n';
 
 		// singlet 
 		for (uint j=0; j<=1; j++)
