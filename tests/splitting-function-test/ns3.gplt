@@ -1,0 +1,13 @@
+set terminal pngcairo enhanced color notransparent
+
+set output "ns3.png"
+set ylabel "xP_{ns}^{(3)}(x)"
+set xlabel "x"
+
+set logscale x
+set format x "%.0e"
+
+plot 'ns.dat' using 1:6 with lines lw 3 title "- approx1",\
+'' using 1:7 with lines lw 3 title "- approx2",\
+'' using 1:8 with lines lw 3 title "+ approx1",\
+'' using 1:9 with lines lw 3 title "+ approx2"

@@ -8,7 +8,7 @@ namespace Candia2
 	// helper function to ensure that NF is not out of bounds
 	static void __assert_nf(const uint nf)
 	{
-		if (nf > 7)
+		if (nf > 8)
 		{
 			std::cout << "[ALPHAS] Encountered bad nf value: " << nf << '\n';
 			exit(1);
@@ -56,9 +56,10 @@ namespace Candia2
 	double AlphaS::CalcBeta3(const uint nf) const
 	{
 		const double f = static_cast<double>(nf);
-		
-		return (149745.0/6.0 + 3564.0*Zeta3) - (1078361.0/162.0 + (6508.0/27.0)*Zeta3)*f
-			+ (50065.0/162.0 + (6472.0/81.0)*Zeta3)*f*f + (1093.0/729.0)*f*f*f;
+		return (149753.0/6.0 + 3564.0*Zeta3)
+			   - (1078361.0/162.0 + (6508.0/27.0)*Zeta3)*f
+			   + (50065.0/162.0 + (6472.0/81.0)*Zeta3)*f*f
+			   + (1093.0/729.0)*f*f*f;
 	}
 
 	double AlphaS::BetaFn(const double alpha) const
@@ -187,6 +188,13 @@ namespace Candia2
 		if (Qi == Qf)
 			return alpha0;
 
+		if (Qf < Qi)
+		{
+			std::cerr << "[ALPHAS] Evaluate(): Final energy Qf=" << Qf << " is smaller than initial energy Qi=" << Qi
+					  << ". Will return alpha0=" << alpha0 << std::endl;
+			return alpha0;
+		}
+
 		// at LO we have the exact solution
 		if (_order == 0) {
 			return (2.0*PI*alpha0) / (2.0*PI + alpha0*_beta0*log(Qf/Qi));
@@ -205,12 +213,6 @@ namespace Candia2
 			k4 = h*BetaFn(a + k3);
 			
 			a += (k1/6.0) + (k2/3.0) + (k3/3.0) + (k4/6.0);
-		}
-
-		if (a > 1.0)
-		{
-			std::cerr << "[ALPHAS] Evaluate(): Error has occurred: Qi=" << Qi << ", Qf=" << Qf << ", alpha0=" << alpha0 << '\n';
-			exit(1);
 		}
 
 		return a;

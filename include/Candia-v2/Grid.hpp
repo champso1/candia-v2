@@ -30,6 +30,8 @@ namespace Candia2
 		std::vector<double> _Xi;
 		std::vector<double> _Wi;
 		///@}
+
+		std::vector<int> _ntab; //!< stores indices for the tabulated grid points
 		
 	public:
 
@@ -81,6 +83,10 @@ namespace Candia2
 		 */
 		inline double const* Ptr() const { return _grid_points.data(); }
 
+		/** @brief returns a const reference to the underlying grid-points
+		 */
+		inline std::vector<double> const& GridPoints() const { return _grid_points; }
+
 		/** @name Setters/getters for abscissae/weights
 		 */
 		///@{
@@ -88,6 +94,15 @@ namespace Candia2
 		inline double Abscissae(const uint idx) const { return _Xi[idx]; }
 		inline std::vector<double> const& Weights() const { return _Wi; }
 		inline double Weights(const uint idx) const { return _Wi[idx]; }
+		///@}
+
+		/** @name Setters/getters for @a ntab array
+		 */
+		///@{
+		inline std::vector<int> const& Ntab() const { return _ntab; }
+		inline int const& Ntab(const uint idx) const { return _ntab.at(idx); }
+		inline std::vector<int>& Ntab() { return _ntab; }
+		inline int& Ntab(const uint idx) { return _ntab.at(idx); }
 		///@}
 
 		

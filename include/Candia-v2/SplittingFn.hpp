@@ -23,32 +23,6 @@ namespace Candia2
 		static double _beta0; //!< beta0 coefficient (for P0gg)
 
 		// static HPLog _hplog; //!< hplog interface object
-
-		/**
-		 * Class used to cache the values of the splitting functions
-		 * (NNLO and beyond) to avoid repeat calls of highly complex functions
-		 * NOTE: not yet implemented!
-		 */
-		class SplittingFunctionCache
-		{
-		private:
-			std::vector<double> _regular;
-			std::vector<double> _singular;
-			std::vector<double> _delta;
-
-		public:
-			SplittingFunctionCache() = default;
-			~SplittingFunctionCache() = default;
-
-
-			inline void Add(double regular, double singular, double delta)
-			{
-				_regular.push_back(regular);
-				_singular.push_back(singular);
-				_delta.push_back(delta);
-			}
-		};
-
 	public:
 		/** @name Constructors/destructors
 		 */
@@ -284,6 +258,20 @@ namespace Candia2
 	};
 
 
+	class P2ps final: public SplittingFunction
+	{
+	public:
+		P2ps() = default;
+		~P2ps() = default;
+
+		double Regular(const double x) const override;
+		// double Plus(const double x) const override;
+		// double Delta(const double x) const override;
+	};
+
+
+
+
 	/** Next-to-next-to leading order, q->q singlet kernel.
 	 */
 	class P2qq final: public SplittingFunction
@@ -372,7 +360,7 @@ namespace Candia2
 	};
 
 	
-	/** N3LO non-singlet kernel (sea component)
+	/** N3LO non-singlet kernel (valence component)
 	 */
 	class P3nsv final: public SplittingFunction
 	{
@@ -387,6 +375,94 @@ namespace Candia2
 		double Plus(const double x) const override;
 		double Delta(const double x) const override;
 	};
+
+
+	/** N3LO pure-singlet kernel
+	 */
+	class P3ps final: public SplittingFunction
+	{
+	private:
+		const uint _imod; //!< flag for which approximation to use
+
+	public:
+		P3ps(const uint imod=3) : _imod(imod) { }
+		~P3ps() = default;
+
+		double Regular(const double x) const override;
+		// double Plus(const double x) const override;
+		// double Delta(const double x) const override;
+	};
+
+	/** N3LO qq diagonal singlet term (P3nsp + P3ps)
+	 */ 
+	class P3qq final: public SplittingFunction
+	{
+	private:
+		const uint _imod; //!< flag for which approximation to use
+
+	public:
+		P3qq(const uint imod=3) : _imod(imod) { }
+		~P3qq() = default;
+
+		double Regular(const double x) const override;
+		double Plus(const double x) const override;
+		double Delta(const double x) const override;
+	};
+
+
+
+	/** N3LO qg off-diagonal singlet term
+	 */
+	class P3qg final: public SplittingFunction
+	{
+	private:
+		const uint _imod; //!< flag for which approximation to use
+
+	public:
+		P3qg(const uint imod=3) : _imod(imod) { }
+		~P3qg() = default;
+
+		double Regular(const double x) const override;
+		//double Plus(const double x) const override;
+		//double Delta(const double x) const override;
+	};
+
+	/** N3LO gq off-diagonal singlet term
+	 */
+	class P3gq final: public SplittingFunction
+	{
+	private:
+		const uint _imod; //!< flag for which approximation to use
+
+	public:
+		P3gq(const uint imod=3) : _imod(imod) { }
+		~P3gq() = default;
+
+		double Regular(const double x) const override;
+		// double Plus(const double x) const override;
+		// double Delta(const double x) const override;
+	};
+
+	/** N3LO gg diagonal singlet term
+	 */
+	class P3gg final: public SplittingFunction
+	{
+	private:
+		const uint _imod; //!< flag for which approximation to use
+
+	public:
+		P3gg(const uint imod=3) : _imod(imod) { }
+		~P3gg() = default;
+
+		double Regular(const double x) const override;
+		double Plus(const double x) const override;
+		double Delta(const double x) const override;
+	};
+
+
+
+
+
 	
 	///@}
 

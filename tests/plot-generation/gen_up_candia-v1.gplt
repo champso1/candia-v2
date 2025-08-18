@@ -1,0 +1,14 @@
+set terminal pdfcairo enhanced color notransparent
+
+set output "up_candia-v1.pdf"
+set title  "Candia-v2 up-quark evolution from Les Houches initial conditions"
+set ylabel "xf_u(x,Q^2)"
+set xlabel "x"
+
+# set logscale x
+set yrange [0:1]
+set format x "%.1f"
+
+plot 'candia-v1/lo.dat' using 1:3 with lines title "LO",\
+'candia-v1/nlo.dat' using 1:3 with lines title "NLO",\
+'candia-v1/nnlo.dat' using 1:3 with lines title "NNLO"

@@ -96,9 +96,12 @@ namespace Candia2
 		inline double Beta2() const { return _beta2; };
 		inline double Beta3() const { return _beta3; };
 		///@}
-	    
 
-		/**
+
+
+	public:
+		
+		/** @name threshold value computation
 		 */
 		///@{
 		/** @brief Calculates all threshold values of \f$\alpha_s\f$

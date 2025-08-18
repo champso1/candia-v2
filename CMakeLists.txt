@@ -5,6 +5,9 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS on)
 # default the installation to the project directory
 set(CMAKE_INSTALL_PREFIX ${CMAKE_SOURCE_DIR}/install)
 
+# we don't care about release with debug info (only for Ninja Multi-Config)
+set(CMAKE_CONFIGURATION_TYPES Release;Debug)
+
 # enforce C++20 and c99 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
@@ -15,8 +18,16 @@ set(CMAKE_C_STANDARD_REQUIRED True)
 file(GLOB sources ${CMAKE_SOURCE_DIR}/src/*.cpp ${CMAKE_SOURCE_DIR}/include/*.hpp)
 
 add_library(candia STATIC ${sources})
-target_link_libraries(candia PUBLIC gfortran)
-target_compile_options(candia PRIVATE -Wall -Wextra -fPIC)
+
+option(SANITIZATION "Use undefined/address sanitization" off)
+
+if (SANITIZATION)
+  target_link_libraries(candia PUBLIC asan ubsan gfortran)
+  target_compile_options(candia PRIVATE -Werror -Wall -Wextra -fsanitize=undefined,address -fPIC)
+else()
+  target_link_libraries(candia PUBLIC gfortran)
+  target_compile_options(candia PRIVATE -Werror -Wall -Wextra -fPIC)
+endif()
 
 
 # compile the fortran code for harmonic polylogs

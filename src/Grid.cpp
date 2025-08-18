@@ -1,9 +1,11 @@
 #include "Candia-v2/Grid.hpp"
 #include "Candia-v2/Common.hpp"
 
+#include <cstdlib>
 #include <iostream>
 #include <limits>
 #include <cmath>
+#include <format>
 
 
 namespace Candia2
@@ -12,8 +14,8 @@ namespace Candia2
 	{
 		const uint xtab_len = xtab.size();
 		std::vector<double> Ntab(xtab_len);
-		std::vector<int> ntab(xtab_len);
-		
+	    std::vector<int> ntab(xtab_len);
+
 		double temp = -std::log10(xtab[0]);
 
 		for (uint i=1; i<xtab_len; i++)
@@ -58,7 +60,7 @@ namespace Candia2
 			ntab[n]--;
 			Ntab[n] += 1.0;
 		}
-	
+
 		for ( ; ntab[0]>0; ntab[0]--)
 		{
 			n=0;
@@ -89,6 +91,7 @@ namespace Candia2
 		}
 
 		_grid_points.at(nx-1) = 1.0;
+		_ntab = ntab;
 	}
 
 	void Grid::InitGauLeg()
@@ -130,7 +133,6 @@ namespace Candia2
 				pp = static_cast<double>(n)*(z*p1 - p2)/(z*z - 1.0);
 				z1 = z;
 				z = z1 - p1/pp;
-				
 			} while (std::abs(z-z1) > eps);
 
 			if (z1 == std::numeric_limits<double>::max() ||
@@ -157,8 +159,8 @@ namespace Candia2
 	{
 		if (idx >= size)
 		{
-			std::cerr << "[GRID] Index " << idx << "out of range for size " << size << '\n';
-			exit(1);
+			std::cerr << std::format("[GRID] Index {} out of range for size {}", idx, size) << std::endl;
+			exit(EXIT_FAILURE);
 		}
 	}
 
@@ -189,15 +191,14 @@ namespace Candia2
 		if (k<0) k=0;
 		if (k>static_cast<int>(Size()-2*INTERP_POINTS))
 			k=Size()-2*INTERP_POINTS;
-		
+
 		return static_cast<uint>(k);
-		
 	}
 
 	double Grid::Interpolate(std::vector<double> const& yy, const double x, bool debug) const
 	{
 		UNUSED(debug);
-		
+
 		const static int n = 2*INTERP_POINTS;
 		int ns=0;
 		double y, den, dif, dift, ho, hp, w;
@@ -208,7 +209,6 @@ namespace Candia2
 		double const* ya = &(yy.data()[k]);
 		std::vector<double> c(n, 0.0);
 		std::vector<double> d(n, 0.0);
-			
 
 		dif = std::abs(x - xa[0]);
 
@@ -222,7 +222,7 @@ namespace Candia2
 			c[i] = ya[i];
 			d[i] = ya[i];
 		}
-			
+
 		y = ya[ns--];
 
 		for (int m=1; m<n; m++)
@@ -243,7 +243,7 @@ namespace Candia2
 				d[i] = hp*den;
 				c[i] = ho*den;
 			}
-			
+
 			y += (2*ns < (n-1-m) ? c[ns+1] : d[ns--]);
 		}
 
@@ -265,7 +265,7 @@ namespace Candia2
 		{
 			double y = _Xi[i];
 			double w = _Wi[i];
-			
+
 			double a = std::pow(x, 1.0-y);
 			double b = std::pow(x, y);
 
@@ -275,7 +275,7 @@ namespace Candia2
 			res -= w*logx*a*E->Regular(a)*interp1;
 			res -= w*logx*b*(E->Plus(b)*interp2 - E->Plus(1.0)*A.at(k))/(1.0-b);
 		}
-		
+
 		return res;
 	}
 

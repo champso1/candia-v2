@@ -1,0 +1,11 @@
+set terminal pngcairo enhanced color notransparent
+
+set output "ns2.png"
+set ylabel "xP_{ns}^{(2)}(x)"
+set xlabel "x"
+
+set logscale x
+set format x "%.0e"
+
+plot 'ns.dat' using 1:2 with lines lw 3 notitle,\
+'' using 1:3 with lines lw 3 notitle

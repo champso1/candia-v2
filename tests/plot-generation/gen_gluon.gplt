@@ -1,0 +1,15 @@
+set terminal pngcairo enhanced color notransparent
+
+set output "gluon.png"
+set title  "Candia-v2 gluon evolution from Les Houches initial conditions"
+set ylabel "xf_g(x,Q^2)"
+set xlabel "x"
+
+# set logscale x
+set xrange [0.0004:0.4]
+# set logscale y
+set format x "%.0e"
+
+plot 'lo.dat' using ($1**(2./3.)):($2*($1)**(2./3.)) with lines lw 3 title "LO",\
+'nlo.dat' using ($1**(2./3.)):($2*($1)**(2./3.)) with lines lw 3 title "NLO",\
+'nnlo.dat' using ($1**(2./3.)):($2*($1)**(2./3.)) with lines lw 3 title "NNLO"

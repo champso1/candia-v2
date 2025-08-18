@@ -1,3 +1,5 @@
 add_subdirectory(main)
 add_subdirectory(candiav1-comparison)
 add_subdirectory(cpp-test)
+add_subdirectory(splitting-function-test)
+add_subdirectory(plot-generation)

@@ -15,9 +15,7 @@
 #include "Candia-v2/SplittingFn.hpp"
 #include "Candia-v2/OperatorMatrixElements.hpp"
 
-#include <chrono>
 #include <memory>
-#include <iostream>
 #include <fstream>
 
 
@@ -28,21 +26,21 @@ namespace Candia2
 	class DGLAPSolver
 	{
 	private:
-		uint _order; //!< perturbative order
+		uint _order{}; //!< perturbative order
 		Grid _grid; //!< main @a Grid object
-		double _Qf; //!< final energy value to evolve to
+		double _Qf{}; //!< final energy value to evolve to
 		AlphaS _alpha_s; //!< main @a AlphaS object
 
-		uint _qct; //!< counter for tabulated Q's (to be removed)
+		uint _qct{}; //!< counter for tabulated Q's (to be removed)
 
 		std::shared_ptr<Distribution> _dist; //!< main (initial) distribution
 
 		/** @name Active flavor counts
 		 */
 		///@{
-		uint _nf; //!< current active number of massless flavors
-		uint _nfi; //!< minimum number based on initial evolution and provided quark masses
-		uint _nff; //!< final based on final evolution and provided quark masses
+		uint _nf{}; //!< current active number of massless flavors
+		uint _nfi{}; //!< minimum number based on initial evolution and provided quark masses
+		uint _nff{}; //!< final based on final evolution and provided quark masses
 		///@}
 
 		/** @name Alpha_s threshold values
@@ -51,35 +49,42 @@ namespace Candia2
 		 *  i.e. \f$\alpha_s\f$ in the beginning/end of the current interval
 		 */
 		///@{
-		double _alpha0;
-		double _alpha1;
+		double _alpha0{};
+		double _alpha1{};
+		///@}
+
+		/** @name other evolution variables
+		 */
+		///@{
+		uint _iterations{}; //!< number of singlet/non-singlet iterations
+		uint _trunc_idx{}; //!< number of additional singlet truncated iterations
 		///@}
 
 		
 		/** @name non-singlet coefficients
 		 */
 		///@{
-	    MultiDimVector<double, 3>::type _A; //!< LO Coefficients
-		MultiDimVector<double, 4>::type _B; //!< NLO Coefficients
-		MultiDimVector<double, 5>::type _C; //!< NNLO Coefficients
-		MultiDimVector<double, 6>::type _D; //!< N3LO Coefficients
+	    MultiDimVector<double, 3>::type _A{}; //!< LO Coefficients
+		MultiDimVector<double, 4>::type _B{}; //!< NLO Coefficients
+		MultiDimVector<double, 5>::type _C{}; //!< NNLO Coefficients
+		MultiDimVector<double, 6>::type _D{}; //!< N3LO Coefficients
 		///@}
 
 		/** @name singlet coefficients
 		 */
 		///@{
-		MultiDimVector<double, 4>::type _S; //!< singlet coefficients
+		MultiDimVector<double, 4>::type _S{}; //!< singlet coefficients
 		///@}
 
-		MultiDimVector<double, 2>::type _F; //!< final distribution
+		MultiDimVector<double, 2>::type _F{}; //!< final distribution
 
 
 		/** @name N3LO additional parameters
 		 */
 		///@{
-		std::array<double,8> _r1; //!< one real solution to N3LO quadratic
-		std::array<double,8> _b; //!< -2*Re[r2]
-		std::array<double,8> _c; //!< |r2|^2
+		std::array<double,8> _r1{}; //!< one real solution to N3LO quadratic
+		std::array<double,8> _b{};  //!< -2*Re[r2]
+		std::array<double,8> _c{};  //!< |r2|^2
 		///@}
 
 		
@@ -92,84 +97,65 @@ namespace Candia2
 		 *  @ingroup SplitFuncs
 		 */
 		///@{
-		std::shared_ptr<SplittingFunction> _P0ns;
-		std::shared_ptr<SplittingFunction> _P0qq;
-		std::shared_ptr<SplittingFunction> _P0qg;
-		std::shared_ptr<SplittingFunction> _P0gq;
-		std::shared_ptr<SplittingFunction> _P0gg;
+		std::shared_ptr<SplittingFunction> _P0ns{};
+		std::shared_ptr<SplittingFunction> _P0qq{};
+		std::shared_ptr<SplittingFunction> _P0qg{};
+		std::shared_ptr<SplittingFunction> _P0gq{};
+		std::shared_ptr<SplittingFunction> _P0gg{};
 		///@}
 
 		/** @name NLO splitting functions
 		 *  @ingroup SplitFuncs
 		 */
 		///@{
-		std::shared_ptr<SplittingFunction> _P1nsp;
-		std::shared_ptr<SplittingFunction> _P1nsm;
-		std::shared_ptr<SplittingFunction> _P1qq;
-		std::shared_ptr<SplittingFunction> _P1qg;
-		std::shared_ptr<SplittingFunction> _P1gq;
-		std::shared_ptr<SplittingFunction> _P1gg;
+		std::shared_ptr<SplittingFunction> _P1nsp{};
+		std::shared_ptr<SplittingFunction> _P1nsm{};
+		std::shared_ptr<SplittingFunction> _P1qq{};
+		std::shared_ptr<SplittingFunction> _P1qg{};
+		std::shared_ptr<SplittingFunction> _P1gq{};
+		std::shared_ptr<SplittingFunction> _P1gg{};
 		///@}
 
 		/** @name NNLO splitting functions
 		 *  @ingroup SplitFuncs
 		 */
 		///@{
-		std::shared_ptr<SplittingFunction> _P2nsp;
-		std::shared_ptr<SplittingFunction> _P2nsm;
-		std::shared_ptr<SplittingFunction> _P2nsv;
-		std::shared_ptr<SplittingFunction> _P2qq;
-		std::shared_ptr<SplittingFunction> _P2qg;
-		std::shared_ptr<SplittingFunction> _P2gq;
-		std::shared_ptr<SplittingFunction> _P2gg;
-		///@}
-
-		/**
-		 * @name NNLO splitting functions cache
-		 * @ingroup SplitFuncs
-		 */
-		///@{
-		std::vector<double> _P2nsp_cache;
-		std::vector<double> _P2nsm_cache;
-		std::vector<double> _P2nsv_cache;
-		std::vector<double> _P2qq_cache;
-		std::vector<double> _P2qg_cache;
-		std::vector<double> _P2gq_cache;
-		std::vector<double> _P2gg_cache;
+		std::shared_ptr<SplittingFunction> _P2nsp{};
+		std::shared_ptr<SplittingFunction> _P2nsm{};
+		std::shared_ptr<SplittingFunction> _P2nsv{};
+		std::shared_ptr<SplittingFunction> _P2qq{};
+		std::shared_ptr<SplittingFunction> _P2qg{};
+		std::shared_ptr<SplittingFunction> _P2gq{};
+		std::shared_ptr<SplittingFunction> _P2gg{};
 		///@}
 
 		/** @name NNNLO splitting functions
 		 *  @ingroup SplitFuncs
 		 */
 		///@{
-		std::shared_ptr<SplittingFunction> _P3nsp;
-		std::shared_ptr<SplittingFunction> _P3nsm;
-		std::shared_ptr<SplittingFunction> _P3nsv;
-		///@}
-
-		/**
-		 * @name N3LO splitting functions cache
-		 * @ingroup SplitFuncs
-		 */
-		///@{
-		std::vector<double> _P3nsp_cache;
-		std::vector<double> _P3nsm_cache;
-		std::vector<double> _P3nsv_cache;
+		std::shared_ptr<SplittingFunction> _P3nsp{};
+		std::shared_ptr<SplittingFunction> _P3nsm{};
+		std::shared_ptr<SplittingFunction> _P3nsv{};
+		std::shared_ptr<SplittingFunction> _P3ps{};
+		std::shared_ptr<SplittingFunction> _P3qq{};
+		std::shared_ptr<SplittingFunction> _P3qg{};
+		std::shared_ptr<SplittingFunction> _P3gq{};
+		std::shared_ptr<SplittingFunction> _P3gg{};
 		///@}
 
 
 		/** @name Operator Matrix Elements
 		 */
 		///@{
-		std::shared_ptr<OpMatElem> _A2ns;
-		std::shared_ptr<OpMatElem> _A2gq;
-		std::shared_ptr<OpMatElem> _A2gg;
-		std::shared_ptr<OpMatElem> _A2hq;
-		std::shared_ptr<OpMatElem> _A2hg;
+		std::shared_ptr<OpMatElem> _A2ns{};
+		std::shared_ptr<OpMatElem> _A2gq{};
+		std::shared_ptr<OpMatElem> _A2gg{};
+		std::shared_ptr<OpMatElem> _A2hq{};
+		std::shared_ptr<OpMatElem> _A2hg{};
 		///@}
 
 
-		typedef std::chrono::high_resolution_clock Clock;
+		// typedef std::chrono::high_resolution_clock Clock;
 		
 
 
@@ -197,6 +183,15 @@ namespace Candia2
 						 std::shared_ptr<SplittingFunction> P0,
 						 std::shared_ptr<SplittingFunction> P1,
 						 std::shared_ptr<SplittingFunction> P2);
+		double RecRelS_4(std::vector<double> const& S1,
+						 std::vector<double> const& S2,
+						 std::vector<double> const& S3,
+						 std::vector<double> const& S4,
+						 uint k,
+						 std::shared_ptr<SplittingFunction> P0,
+						 std::shared_ptr<SplittingFunction> P1,
+						 std::shared_ptr<SplittingFunction> P2,
+						 std::shared_ptr<SplittingFunction> P3);
 		///@}
 
 		/** @name LO recursion relations
@@ -268,14 +263,15 @@ namespace Candia2
 			@param order: perturbative order
 		 *  @param grid: initialized grid object
 		 *  @param Qf: final energy to evaluate to
+		 *  @param iterations: number of iterations
+		 *  @param trunc_idx: number of additional truncated iterations (singlet) per main iteration
 		 *  @param initial_dist: initial distribution for masses, pdfs, and alpha0
 		 */
 	    DGLAPSolver(const uint order, Grid const& grid, const double Qf,
+					const uint iterations, const uint trunc_idx,
 					std::shared_ptr<Distribution> initial_dist);
 		~DGLAPSolver();
 		///@}
-
-
 		
 		/** @brief Returns a const-ref to the \f$\alpha_s\f$ object.
 		 */
@@ -285,21 +281,28 @@ namespace Candia2
 		 */
 		inline Grid const& GetGrid() const { return _grid; }
 
-
-		/** @brief Main function to evolve coefficients.
+		/** @brief sets the number of normal and truncation iterations
 		 */
-		void Evolve();
+		void SetEvolutionVariables(const uint iterations, const uint trunc_idx);
+
+		
+		/** @brief Main function to evolve coefficients.
+		 *  @return The final distributions
+		 */
+		MultiDimVector<double, 2>::type Evolve();
 
 
 		/** @brief Outputs a datafile in the new format
 		 *  (very similar to old format but with cpp functions)
 		 *  @param filepath: Name of output datafile
 		*/
+		[[deprecated("user has control of final distributions")]]
 		void SetOutputDataFileNew(std::string const& filepath);
 
 		/** @brief Outputs a datafile in the original Candia format
 		 *  @param filepath: Name of output datafile
 		*/
+		[[deprecated("user has control of final distributions")]]
 		void SetOutputDataFileOld(std::string const& filepath);
 		
 
@@ -332,8 +335,9 @@ namespace Candia2
 
 		/** @brief After computing coefficients, do resummation to a tabulated energy value
 		 *  @param Q: the tabulated energy value to evolve to
+		 *  @return the final distributions
 		 */
-		void Resum(const double Q);
+		MultiDimVector<double, 2>::type Resum(const double Q);
 
 		/** @brief Finish resumming to the next threshold
 		 */

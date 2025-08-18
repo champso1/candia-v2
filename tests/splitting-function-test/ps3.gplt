@@ -1,0 +1,12 @@
+set terminal pngcairo enhanced color notransparent
+
+set output "ps3.png"
+set ylabel "xP_{ps}(x)"
+set xlabel "x"
+
+set logscale x
+set format x "%.0e"
+set yrange [-1.0:6.0]
+
+plot 'ps.dat' using 1:5 with lines lw 3 title "N3LO approx 1",\
+'' using 1:6 with lines lw 3 title "N3LO approx 2"
