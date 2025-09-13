@@ -30,24 +30,24 @@
         {
             "name": "gcc-debug-linux",
             "displayName": "gcc-debug-linux",
-            "description": "Using compilers: C = /usr/local/bin/gcc, CXX = /usr/local/bin/g++",
+            "description": "Using compilers: C = /usr/bin/cc, CXX = /usr/bin/c++",
             "binaryDir": "${sourceDir}/build/${presetName}",
             "cacheVariables": {
                 "CMAKE_INSTALL_PREFIX": "${sourceDir}/install/${presetName}",
-                "CMAKE_C_COMPILER": "/usr/local/bin/gcc",
-                "CMAKE_CXX_COMPILER": "/usr/local/bin/g++",
+                "CMAKE_C_COMPILER": "/usr/bin/cc",
+                "CMAKE_CXX_COMPILER": "/usr/bin/c++",
                 "CMAKE_BUILD_TYPE": "Debug"
             }
         },
         {
             "name": "gcc-release-linux",
             "displayName": "gcc-release-linux",
-            "description": "Using compilers: C = /usr/local/bin/gcc, CXX = /usr/local/bin/g++",
+            "description": "Using compilers: C = /usr/bin/cc, CXX = /usr/bin/c++",
             "binaryDir": "${sourceDir}/build/${presetName}",
             "cacheVariables": {
                 "CMAKE_INSTALL_PREFIX": "${sourceDir}/install/${presetName}",
-                "CMAKE_C_COMPILER": "/usr/local/bin/gcc",
-                "CMAKE_CXX_COMPILER": "/usr/local/bin/g++",
+                "CMAKE_C_COMPILER": "/usr/bin/cc",
+                "CMAKE_CXX_COMPILER": "/usr/bin/c++",
                 "CMAKE_BUILD_TYPE": "Release"
             }
         }

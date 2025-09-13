@@ -16,13 +16,13 @@ namespace Candia2
 		 */
 		///@{
 		OpMatElem() = default;
-		~OpMatElem() = default;
+		virtual ~OpMatElem() = default;
 		///@}
 	};
 
 
 
-	class A2ns : public OpMatElem
+	class A2ns final : public OpMatElem
 	{
 	public:
 		A2ns() = default;
@@ -33,7 +33,7 @@ namespace Candia2
 		double Delta(const double x) const;
 	};
 
-	class A2gq : public OpMatElem
+	class A2gq final : public OpMatElem
 	{
 	public:
 		A2gq() = default;
@@ -42,7 +42,7 @@ namespace Candia2
 		double Regular(const double x) const;
 	};
 
-	class A2gg : public OpMatElem
+	class A2gg final : public OpMatElem
 	{
 	public:
 		A2gg() = default;
@@ -53,7 +53,7 @@ namespace Candia2
 		double Delta(const double x) const;
 	};
 
-	class A2hq : public OpMatElem
+	class A2hq final : public OpMatElem
 	{
 	public:
 		A2hq() = default;
@@ -62,7 +62,7 @@ namespace Candia2
 		double Regular(const double x) const;
 	};
 
-	class A2hg : public OpMatElem
+	class A2hg final : public OpMatElem
 	{
 	public:
 		A2hg() = default;

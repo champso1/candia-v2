@@ -35,6 +35,8 @@ namespace Candia2
 
 		std::shared_ptr<Distribution> _dist; //!< main (initial) distribution
 
+		std::ofstream _debug_file; //!< output file for debug purposes
+
 		/** @name Active flavor counts
 		 */
 		///@{
@@ -322,6 +324,7 @@ namespace Candia2
 
 		/** @brief Computes (from the calculated coefficients)
 		 */
+		[[maybe_unused]]
 		void SetupFinalDistributions();
 
 
@@ -348,13 +351,22 @@ namespace Candia2
 		void HeavyFlavorTreatment();
 
 
+		/** @brief multi-threaded operations
+		 *  these are prefixed by `_mt_`
+		 */
+		///@{
+		/** @brief evolves a single non-singlet distribution with index j */
+		void _mt_EvolveDistribution_NS(uint j);
+		/** @brief evolves a single singlet distribution with index j */
+		void _mt_EvolveDistribution_S(uint j);
+		///@}
+
+
 		// Some debug-related stuff
 	private:
 		uint _output_file_index;
 
 		// void OutputLOCoefficients();
-
-		std::ofstream _debug_file;
 	};
 
 	

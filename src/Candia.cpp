@@ -10,7 +10,9 @@
 #include <iomanip>
 #include <ios>
 #include <iostream>
+// #include <thread>
 #include <fstream>
+#include <limits>
 
 namespace Candia2
 {
@@ -21,8 +23,10 @@ namespace Candia2
 		: _order{order},  _grid{grid}, _Qf{Qf},
 		  _alpha_s{order, initial_dist->Q0(), initial_dist->Alpha0(), initial_dist->Masses()},
 		  _dist{initial_dist},
+		  _debug_file{"debug.log"},
 		  _iterations{iterations}, _trunc_idx{trunc_idx}
-	{	
+	{
+		
 		// reserve space in all the coefficient arrays
 		std::cerr << "[DGLAP] Reserving space in coefficient arrays...\n";
 
@@ -508,6 +512,17 @@ namespace Candia2
 			std::cerr << "[DGLAP] Setting nf=" << _nf << '\n';
 			SetupCoefficients();
 
+			if (_order == 3)
+			{
+				for (uint k=0; k<_grid.Size(); k++)
+				{
+					_debug_file << "D[26][0][0][0][0][" << k << "] = "
+								<< std::setprecision(std::numeric_limits<double>::max_digits10)
+								<< _D[26][0][0][0][0][k] << '\n';
+				}
+				_debug_file << "\n\n";
+			}
+
 			// update all values
 			_alpha_s.Update(_nf);
 			SplittingFunction::Update(_nf, _alpha_s.Beta0());
@@ -949,6 +964,17 @@ namespace Candia2
 				double gamma = r1*r1 + r1*b + c;
 				// double fac = c + b*r1;
 
+
+				_debug_file << std::fixed;
+				_debug_file << std::setprecision(9);
+				_debug_file << "---------------\n";
+				_debug_file << "r1 = " << r1 << '\n';
+				_debug_file << "b = " << b << '\n';
+				_debug_file << "c = " << c << '\n';
+				_debug_file << "gamma = " << gamma << '\n';
+				_debug_file << "---------------\n";
+				_debug_file << std::scientific << std::left << std::internal;
+
 			    std::chrono::high_resolution_clock::time_point t0, tf;
 				
 				for (uint s=1; s<=_iterations-1; s++)
@@ -960,7 +986,8 @@ namespace Candia2
 					for (uint k=0; k<_grid.Size()-1; k++)
 					{
 						// minus distributions
-						for (uint j=26; j<25+_nf; j++)
+						// for (uint j=26; j<25+_nf; j++)
+						uint j = 26;
 						{
 							// RecRel #1:
 							for (uint t=1; t<=s; t++)
@@ -972,6 +999,10 @@ namespace Candia2
 										double conv = _grid.Convolution(_D[j][s-1][t-1][m-1][n-1], _P0ns, k);
 										double res = -(2.0/_alpha_s.Beta0()) * conv;
 										_D[j][s][t][m][n][k] = res;
+
+										_debug_file << "(" << s << ',' << t << ',' << m << ',' << n << ")[k=" << k << "]: " << "RecRel 1\n";
+										_debug_file << '\t' << std::setw(6) << "conv" << " = " << std::setw(16) << conv << '\n';
+										_debug_file << '\t' << std::setw(6) << "res" << " = " << std::setw(16) << res << "\n\n";
 									}
 								}
 							}
@@ -991,6 +1022,15 @@ namespace Candia2
 								_D[j][s][s][s][0][k] = fac1 * _D[j][s][s][s][1][k] + fac2a+fac2b+fac2c;
 								_D[j][s][s][s][0][k] /= gamma;
 
+								_debug_file << "(" << s << ',' << s << ',' << s << ",0)[k=" << k << "]: " << "RecRel 2\n";
+								_debug_file << '\t' << std::setw(6) << "conv1" << " = " << std::setw(16) << conv1 << '\n';
+								_debug_file << '\t' << std::setw(6) << "conv2" << " = " << std::setw(16) << conv2 << '\n';
+								_debug_file << '\t' << std::setw(6) << "conv3" << " = " << std::setw(16) << conv3 << '\n';
+								_debug_file << '\t' << std::setw(6) << "fac1" << " = " << std::setw(16) << fac1 << '\n';
+								_debug_file << '\t' << std::setw(6) << "fac2a" << " = " << std::setw(16) << fac2a << '\n';
+								_debug_file << '\t' << std::setw(6) << "fac2b" << " = " << std::setw(16) << fac2b << '\n';
+								_debug_file << '\t' << std::setw(6) << "fac2c" << " = " << std::setw(16) << fac2c << '\n';
+								_debug_file << '\t' << std::setw(6) << "res" << " = " << std::setw(16) << _D[j][s][s][s][0][k] << "\n\n";
 							}
 
 							// RecRel #3:
@@ -1008,6 +1048,16 @@ namespace Candia2
 
 								_D[j][s][s][m][0][k] = fac1 * _D[j][s][s][m+1][1][k] + fac2a+fac2b+fac2c;
 								_D[j][s][s][m][0][k] /= gamma;
+
+								_debug_file << "(" << s << ',' << s << ',' << m << ",0)[k=" << k << "]: " << "RecRel 2\n";
+								_debug_file << '\t' << std::setw(6) << "conv1" << " = " << std::setw(16) << conv1 << '\n';
+								_debug_file << '\t' << std::setw(6) << "conv2" << " = " << std::setw(16) << conv2 << '\n';
+								_debug_file << '\t' << std::setw(6) << "conv3" << " = " << std::setw(16) << conv3 << '\n';
+								_debug_file << '\t' << std::setw(6) << "fac1" << " = " << std::setw(16) << fac1 << '\n';
+								_debug_file << '\t' << std::setw(6) << "fac2a" << " = " << std::setw(16) << fac2a << '\n';
+								_debug_file << '\t' << std::setw(6) << "fac2b" << " = " << std::setw(16) << fac2b << '\n';
+								_debug_file << '\t' << std::setw(6) << "fac2c" << " = " << std::setw(16) << fac2c << '\n';
+								_debug_file << '\t' << std::setw(6) << "res" << " = " << std::setw(16) << _D[j][s][s][m][0][k] << "\n\n";
 							}
 
 							// RecRel #4:
@@ -1030,12 +1080,24 @@ namespace Candia2
 														  + fac1b*_D[j][s][t+1][m+1][1][k] 
 														  + fac2a+fac2b+fac2c;
 									_D[j][s][t][m][0][k] /= gamma;
+
+									_debug_file << "(" << s << ',' << t << ',' << m << ",0)[k=" << k << "]: " << "RecRel 2\n";
+									_debug_file << '\t' << std::setw(6) <<  "conv1" << " = " << std::setw(16) << conv1 << '\n';
+									_debug_file << '\t' << std::setw(6) <<  "conv2" << " = " << std::setw(16) << conv2 << '\n';
+									_debug_file << '\t' << std::setw(6) <<  "conv3" << " = " << std::setw(16) << conv3 << '\n';
+									_debug_file << '\t' << std::setw(6) <<  "fac1a" << " = " << std::setw(16) << fac1a << '\n';
+									_debug_file << '\t' << std::setw(6) <<  "fac1b" << " = " << std::setw(16) << fac1b << '\n';
+									_debug_file << '\t' << std::setw(6) <<  "fac2a" << " = " << std::setw(16) << fac2a << '\n';
+									_debug_file << '\t' << std::setw(6) <<  "fac2b" << " = " << std::setw(16) << fac2b << '\n';
+									_debug_file << '\t' << std::setw(6) <<  "fac2c" << " = " << std::setw(16) << fac2c << '\n';
+									_debug_file << '\t' << std::setw(6) <<  "res" << " = " << std::setw(16) << _D[j][s][t][m][0][k] << "\n\n";
 								}
 							}
 						}
 
 						// plus distributions
-						for (uint j=32; j<31+_nf; j++)
+						// for (uint j=32; j<31+_nf; j++)
+						if constexpr (false)
 						{
 							// RecRel #1:
 							for (uint t=1; t<=s; t++)
@@ -1113,6 +1175,7 @@ namespace Candia2
 						}
 
 						// valence distribution
+						if constexpr (false)
 						{
 							// RecRel #1:
 							for (uint t=1; t<=s; t++)
@@ -1744,6 +1807,20 @@ namespace Candia2
 			else if (_order == 3)
 				_D[_nf+1][0][0][0][0][k] = _D[_nf+7][0][0][0][0][k] = fac;
 		}
+	}
+
+
+
+
+	void DGLAPSolver::_mt_EvolveDistribution_NS(uint j)
+	{
+		UNUSED(j);
+		
+	}
+
+	void DGLAPSolver::_mt_EvolveDistribution_S(uint j)
+	{
+		UNUSED(j);
 	}
 	
 	
