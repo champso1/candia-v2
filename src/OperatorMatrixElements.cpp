@@ -2,6 +2,8 @@
 #include "Candia-v2/OperatorMatrixElements.hpp"
 #include "Candia-v2/SpecialFuncs.hpp"
 
+#include <cmath>
+
 namespace Candia2
 {
 

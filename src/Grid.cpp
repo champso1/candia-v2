@@ -1,11 +1,14 @@
 #include "Candia-v2/Grid.hpp"
 #include "Candia-v2/Common.hpp"
+#include "gsl/gsl_integration.h"
+#include "gsl/gsl_math.h"
 
 #include <cstdlib>
 #include <iostream>
 #include <limits>
 #include <cmath>
 #include <format>
+#include <memory>
 
 
 namespace Candia2
@@ -96,22 +99,24 @@ namespace Candia2
 
 	void Grid::InitGauLeg()
 	{
-		const double eps = 1.0e-14; // relative precision
+		const double eps = 3.0e-11; // relative precision
 
 		// abscissae are symmetric:
 		uint n = GAUSS_POINTS; // simpler to type
+		double N = static_cast<double>(n);
 		uint m = (n+1)/2;
 		double x2 = 1.0;
 		double x1 = 0.0;
-		double xm = 0.5*(x2+x1),
-			   xl = 0.5*(x2-x1);
+		double xm = 0.5*(x2+x1);
+		double xl = 0.5*(x2-x1);
 
-		for (uint i=0; i<m; i++)
+		for (uint i=1; i<=m; i++)
 		{
-			double z = std::cos(PI*(i+0.75)/(n+0.5));
+			double I = static_cast<double>(i);
+			double z = std::cos(PI*(I-0.25)/(N+0.5));
 
 			// default initialize some of these.
-			// is a nice check for if they error
+			// easy to spot if error occurs
 			double z1 = std::numeric_limits<double>::max();
 			double pp = std::numeric_limits<double>::max();
 
@@ -122,15 +127,15 @@ namespace Candia2
 				p1 = 1.0;
 				p2 = 0.0;
 
-				for (uint j=0; j<n; j++)
+				for (uint j=1; j<=n; j++)
 				{
 					J = static_cast<double>(j);
 					p3 = p2;
 					p2 = p1;
-					p1 = ((2.0*J + 1.0)*z*p2 - J*p3)/(J+1.0);
+					p1 = ((2.0*J - 1.0)*z*p2 - (J-1.0)*p3)/J;
 				}
 
-				pp = static_cast<double>(n)*(z*p1 - p2)/(z*z - 1.0);
+				pp = N*(z*p1 - p2)/(z*z - 1.0);
 				z1 = z;
 				z = z1 - p1/pp;
 			} while (std::abs(z-z1) > eps);
@@ -138,18 +143,21 @@ namespace Candia2
 			if (z1 == std::numeric_limits<double>::max() ||
 				pp == std::numeric_limits<double>::max())
 			{
-				throw("[MATH] error determining gauss-legendre abscissae/weights");
+				std::cerr << "Grid::InitGauleg(): error determining gauss-legendre abscissae/weights\n";
+				exit(EXIT_FAILURE);
 			}
 
-			_Xi[i] = xm - xl*z;
-			_Xi[n-1-i] = xm + xl*z;
-			_Wi[i] = 2.0*xl/((1.0 - z*z)*pp*pp);
-			_Wi[n-1-i] = _Wi[i];
+			_Xi[i-1] = xm - xl*z;
+			_Xi[n-i] = xm + xl*z;
+			_Wi[i-1] = 2.0*xl/((1.0 - z*z)*pp*pp);
+			_Wi[n-i] = _Wi[i-1];
 		}
 	}
 
 	Grid::Grid(std::vector<double> const& xtab, const uint nx)
-		: _grid_points(nx), _Xi(GAUSS_POINTS), _Wi(GAUSS_POINTS)
+		: _grid_points(nx), _Xi(GAUSS_POINTS), _Wi(GAUSS_POINTS),
+		  _ws{gsl_integration_workspace_alloc(_N),
+		    [](gsl_integration_workspace *p){ gsl_integration_workspace_free(p); }}
 	{
 		InitGrid(xtab, nx);
 		InitGauLeg();
@@ -263,7 +271,7 @@ namespace Candia2
 
 		for (uint i=0; i<GAUSS_POINTS; i++)
 		{
-			double y = _Xi[i];
+		    double y = _Xi[i];
 			double w = _Wi[i];
 
 			double a = std::pow(x, 1.0-y);
@@ -275,8 +283,62 @@ namespace Candia2
 			res -= w*logx*a*E->Regular(a)*interp1;
 			res -= w*logx*b*(E->Plus(b)*interp2 - E->Plus(1.0)*A.at(k))/(1.0-b);
 		}
-
+		
 		return res;
 	}
 
+
+	double Grid::ConvolutionGSL(
+		std::vector<double> const& A,
+		std::shared_ptr<Expression> P,
+		uint k)
+	{
+		double x = _grid_points.at(k);
+		// std::cout << x << '\n';
+		
+		GSLConvObj obj{this, k, x, A, P};
+		
+		auto func_reg = [](double z, void *params) -> double {
+			GSLConvObj *obj = reinterpret_cast<GSLConvObj*>(params);
+			Grid const* grid = obj->grid;
+			const double x = obj->x;
+			std::vector<double> const& A = obj->A;
+			const std::shared_ptr<Expression> P = obj->P;
+
+			const double a = std::pow(x, 1.0-z);
+			const double b = std::pow(x, z);
+			return a*P->Regular(a)*grid->Interpolate(A, b);
+		};
+
+		auto func_sing = [](double z, void *params) -> double {
+			GSLConvObj *obj = reinterpret_cast<GSLConvObj*>(params);
+			Grid const* grid = obj->grid;
+			const uint k = obj->k;
+			const double x = obj->x;
+			std::vector<double> const& A = obj->A;
+			const std::shared_ptr<Expression> P = obj->P;
+
+			const double a = std::pow(x, 1.0-z);
+			const double b = std::pow(x, z);
+			return b*(P->Plus(b)*grid->Interpolate(A, a) - P->Plus(1.0)*A.at(k))/(1.0-b);
+		};
+
+		gsl_function F;
+		F.function = func_reg;
+		F.params = reinterpret_cast<void*>(&obj);
+
+		double res_reg{}, res_sing{};
+		double abserr{};
+		gsl_integration_workspace *ws = _ws.get();
+
+		gsl_integration_qag(&F, 0.0, 1.0, 1e-4, 0.0, _N, GSL_INTEG_GAUSS61, ws, &res_reg, &abserr);
+
+		F.function = func_sing;
+		gsl_integration_qag(&F, 0.0, 1.0, 1e-4, 0.0, _N, GSL_INTEG_GAUSS61, ws, &res_sing, &abserr);
+
+		double res = P->Delta(1.0)*A.at(k);
+		res += -std::log(x)*res_reg;
+		res += -std::log(x)*res_sing + P->Plus(1.0)*A.at(k)*std::log1p(-x);
+		return res;
+	}
 }

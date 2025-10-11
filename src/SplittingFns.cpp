@@ -1,6 +1,7 @@
 #include "Candia-v2/SplittingFn.hpp"
 
 #include <limits>
+#include <cmath>
 
 #include "Candia-v2/Common.hpp"
 #include "Candia-v2/SpecialFuncs.hpp"

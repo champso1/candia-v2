@@ -8,9 +8,10 @@
 #define __ALPHAS_HPP
 
 #include <array>
+#include <fstream>
+#include <string>
 
 #include "Candia-v2/Common.hpp"
-
 
 namespace Candia2
 {
@@ -21,23 +22,30 @@ namespace Candia2
 	class AlphaS
 	{
 	private:
-		uint _order; //!< Perturbative order.
-		double _Q0, _alpha0; //!< Initial value of \f$\alpha_s\f$ at Q0
+		uint _order{}; //!< Perturbative order.
+		double _Q0{}, _alpha0{}; //!< Initial value of \f$\alpha_s\f$ at Q0
 
 		/** @name Stored values of beta coefficients/values
 		 */
 		///@{
-	    double _beta0, _beta1, _beta2, _beta3;
-		double _beta;
+	    double _beta0{}, _beta1{}, _beta2{}, _beta3{};
+		double _beta{};
 		///@}
 
-		std::array<double, 8> _masses; //!< Values of quark masses.
+		// TODO: is 8 okay for this? see AlphaS.cpp,
+		// there was a loop over the indices which was inclusive on 8
+		// raising an error (only in Debug mode though...)
+		std::array<double, 8> _masses{}; //!< Values of quark masses.
 
 		/** @name Values of \f$\alpha_s\f$ pre- and post-threshold.
 		 */
 		///@{
-		std::array<double, 8> _pre, _post;
+		std::array<double, 8> _pre{}, _post{};
 		///@}
+
+		// static const std::string DEBUG_FILE_PATH; //!< default debug file path
+		                                          //!< defined in AlphaS.cpp
+		// std::ofstream _debug_file{}; //!< debug file
 
 	public:
 

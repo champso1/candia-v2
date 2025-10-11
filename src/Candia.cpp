@@ -4,29 +4,28 @@
 #include "Candia-v2/Math.hpp"
 #include "Candia-v2/SplittingFn.hpp"
 
-
 #include <chrono>
 #include <cstdlib>
 #include <iomanip>
 #include <ios>
 #include <iostream>
-// #include <thread>
 #include <fstream>
-#include <limits>
+
+// TODO: multithreading for the different distributions
+#include <thread>
 
 namespace Candia2
 {
 
-	DGLAPSolver::DGLAPSolver(const uint order, Grid const& grid, const double Qf,
-							 const uint iterations, const uint trunc_idx,
-							 std::shared_ptr<Distribution> initial_dist)
-		: _order{order},  _grid{grid}, _Qf{Qf},
-		  _alpha_s{order, initial_dist->Q0(), initial_dist->Alpha0(), initial_dist->Masses()},
-		  _dist{initial_dist},
-		  _debug_file{"debug.log"},
-		  _iterations{iterations}, _trunc_idx{trunc_idx}
+	DGLAPSolver::DGLAPSolver(
+		const uint order, Grid & grid, const double Qf,
+		const uint iterations, const uint trunc_idx,
+		std::shared_ptr<Distribution> initial_dist
+	) : _order{order},  _grid{grid}, _Qf{Qf},
+		_alpha_s{order, initial_dist->Q0(), initial_dist->Alpha0(), initial_dist->Masses()},
+		_dist{initial_dist},
+		_iterations{iterations}, _trunc_idx{trunc_idx}
 	{
-		
 		// reserve space in all the coefficient arrays
 		std::cerr << "[DGLAP] Reserving space in coefficient arrays...\n";
 
@@ -98,18 +97,26 @@ namespace Candia2
 
 				// also initialize the N3LO coefficients we will need
 				_r1[3] = -1.11203;
+				_r2[3] = {0.221422, 1.13108};
+				_r3[3] = {0.221422, -1.13108};
 				_b[3] = -2.0 * 0.221422;
 				_c[3] = std::pow(0.221422, 2) + std::pow(1.13108, 2);
-				
+
 				_r1[4] = -1.20902;
+				_r2[4] = {0.286759, 1.27279};
+				_r3[4] = {0.286759, -1.27279};
 				_b[4] = -2.0 * 0.286759;
 				_c[4] = std::pow(0.286759, 2) + std::pow(1.27279, 2);
 				
 				_r1[5] = -1.32059;
+				_r2[5] = {0.424770, 1.48548};
+				_r3[5] = {0.424770, -1.48548};
 				_b[5] = -2.0 * 0.42477;
 				_c[5] = std::pow(0.42477, 2) + std::pow(1.48548, 2);
 				
 				_r1[6] = -1.4278;
+				_r2[6] = {0.796497, 1.81618};
+				_r3[6] = {0.796497, -1.81618};
 				_b[6] = -2.0 * 0.796497;
 				_c[6] = std::pow(0.796497, 2) + std::pow(1.81681, 2);
 			} break;
@@ -185,8 +192,6 @@ namespace Candia2
 
 		std::cerr << "[DGLAP] Done creating splitting function pointers.\n";
 
-		FillSplittingFunctionCaches();
-
 		std::cerr << "[DGLAP] Creating operator matrix element pointers...\n";
 
 		_A2ns = std::make_shared<A2ns>();
@@ -223,8 +228,12 @@ namespace Candia2
 		{
 			double x = _grid[k];
 			_S[0][0][0][k] = _dist->xg(x);
-			_S[0][1][0][k] = _dist->xuv(x) + 2.0*_dist->xub(x)
-				+ _dist->xdv(x) + 2.0*_dist->xdb(x) + 2.0*_dist->xs(x);
+			_S[0][1][0][k] =
+				_dist->xuv(x)
+				+ 2.0*_dist->xub(x)
+				+ _dist->xdv(x)
+				+ 2.0*_dist->xdb(x)
+				+ 2.0*_dist->xs(x);
 		}
 	    
 		switch (_order)
@@ -281,11 +290,6 @@ namespace Candia2
 		}
 
 		std::cerr << "[DGLAP] Done setting initial conditions.\n";
-	}
-
-	void DGLAPSolver::FillSplittingFunctionCaches()
-	{
-		std::cerr << "[DGLAP] FillSplittingFunctionCaches(): NOT YET IMPLEMENTED\n";
 	}
 
 	double DGLAPSolver::RecRelS_1(std::vector<double> const& S, uint k,
@@ -413,10 +417,10 @@ namespace Candia2
 	}
 
 	double DGLAPSolver::RecRelN3LO_2(std::vector<double> const& D,
-									 uint k,
-									 std::shared_ptr<SplittingFunction> P1,
-									 std::shared_ptr<SplittingFunction> P2,
-									 std::shared_ptr<SplittingFunction> P3)
+		uint k,
+		std::shared_ptr<SplittingFunction> P1,
+		std::shared_ptr<SplittingFunction> P2,
+		std::shared_ptr<SplittingFunction> P3)
 	{
 		// for simplified notation
 		const double r1 = _r1[_nf];
@@ -433,6 +437,7 @@ namespace Candia2
 
 	    return fac1+fac2+fac3;
 	}
+	
 
 	double DGLAPSolver::RecRelN3LO_3(std::vector<double> const& D,
 									 uint k,
@@ -500,27 +505,24 @@ namespace Candia2
 
 	MultiDimVector<double, 2>::type DGLAPSolver::Evolve()
 	{
+		// TODO: remove this nonsense!
+		// it is here to mirror the structure of Candia-v1's ability
+		// to specify more than one tabulated energy
+		// but this is not the best way to do it in my opinion
 		std::array<double,1> Qtab{_Qf};
 		MultiDimVector<double, 2>::type final_dists{};
 
 		for (_nf=_nfi; ; _nf++)
+		// for (_nf=4; ;)
 		{
-			// if the next mass is zero, we are already done
-			if (_alpha_s.Masses(_nf+1) == 0.0)
-				break;
-			
 			std::cerr << "[DGLAP] Setting nf=" << _nf << '\n';
 			SetupCoefficients();
 
-			if (_order == 3)
+			// if the next mass is zero, we are already done
+			if (_alpha_s.Masses(_nf+1) == 0.0)
 			{
-				for (uint k=0; k<_grid.Size(); k++)
-				{
-					_debug_file << "D[26][0][0][0][0][" << k << "] = "
-								<< std::setprecision(std::numeric_limits<double>::max_digits10)
-								<< _D[26][0][0][0][0][k] << '\n';
-				}
-				_debug_file << "\n\n";
+				std::cerr << "[DGLAP] Next mass is zero. Quitting...\n";
+				break;
 			}
 
 			// update all values
@@ -530,11 +532,11 @@ namespace Candia2
 			_alpha1 = _alpha_s.Pre(_nf+1);
 			std::cerr << "[DGLAP] Alpha_s: " << _alpha0 << " --> " << _alpha1 << '\n';
 
-			// only do evolution if alphas are different (i.e. energy scales are different
+			// only do evolution if alphas are different (i.e. energy scales are different)
 			if (_alpha0 != _alpha1)
 			{
 				// singlet sector
-				EvolveSinglet();
+				EvolveSingletAlt();
 				std::cerr << "[DGLAP] Evolve(): finished singlet evolution\n";
 						
 				// non-singlet sector
@@ -542,7 +544,7 @@ namespace Candia2
 				std::cerr << "[DGLAP] Evolve(): finished non-singlet evolution\n";
 
 				// perform the resummation to the tabulated energy value(s)
-				for ( ; _qct<Qtab.size()&& Qtab.at(_qct)<=_alpha_s.Masses(_nf+1); _qct++)
+				for ( ; _qct<Qtab.size() && Qtab.at(_qct)<=_alpha_s.Masses(_nf+1); _qct++)
 					final_dists = Resum(Qtab[_qct]);
 				std::cerr << "[DGLAP] Evolve(): finished resummation evolution\n";
 
@@ -556,7 +558,7 @@ namespace Candia2
 		}
 
 		// resetup the main quark/gluon distributions
-		// TODO: figure out why I had this here, as it is useless
+		// TODO: figure out why I used to have this here, as it is useless
 		// and im pretty sure also just incorrect
 		// SetupFinalDistributions();
 
@@ -576,7 +578,7 @@ namespace Candia2
 		}
 		
 		file << std::fixed;
-		file << std::setw(15) << std::setprecision(9);
+		file << std::setw(16) << std::setprecision(10);
 		for (uint k=0; k<_grid.Size(); k++)
 		{
 			file << _grid.At(k);
@@ -733,9 +735,315 @@ namespace Candia2
 	}
 
 
+	void DGLAPSolver::EvolveSingletAlt()
+	{	
+		// The singlet evolution is incremental at each order,
+		// NLO directly builds off of LO,
+		// NNLO build directly off NLO (and hence LO) and so on
+		// Thus, we do LO automatically no matter what
+		// For NLO *and beyond*, we do the same NLO stuff
+		// and so on
+		// These cases are for the truncation index exactly equal
+		// to the order, so after doing this,
+		// we proceed similarly with the additional terms
+		
+		for (uint n=0; n<_iterations-1; ++n)
+		{
+			std::cerr << "[DGLAP] EvolveSinglet(): Singlet iteration " << n << '\n';
+
+			// LO iterations always
+			for (uint k=0; k<_grid.Size()-1; ++k)
+			{
+				double conv1a = _grid.Convolution(_S[0][1][n], _P0qq, k);
+				double conv1b = _grid.Convolution(_S[0][0][n], _P0qg, k);
+				double conv2a = _grid.Convolution(_S[0][1][n], _P0gq, k);
+				double conv2b = _grid.Convolution(_S[0][0][n], _P0gg, k);
+
+				_S[0][1][n+1][k] = (-2.0/_alpha_s.Beta0())*(conv1a + conv1b);
+				_S[0][0][n+1][k] = (-2.0/_alpha_s.Beta0())*(conv2a + conv2b);
+			}
+		
+
+			// NLO evolution terms
+			if (_order >= 1)
+			{
+				// non-convolution piece:
+				for (uint k=0; k<_grid.Size()-1; k++)
+				{
+					for (uint j=0; j<=1; j++)
+						_S[1][j][n+1][k] = -_S[0][j][n+1][k] * _alpha_s.Beta1()/(4.0*PI*_alpha_s.Beta0()) - _S[1][j][n][k];
+				}
+
+				// convolution piece
+				for (uint k=0; k<_grid.Size()-1; k++)
+				{
+					{
+						double conv1a = _grid.Convolution(_S[1][1][n], _P0qq, k);
+						double conv1b = _grid.Convolution(_S[1][0][n], _P0qg, k);
+						double conv2a = _grid.Convolution(_S[1][1][n], _P0gq, k);
+						double conv2b = _grid.Convolution(_S[1][0][n], _P0gg, k);
+
+						_S[1][1][n+1][k] += (-2.0/_alpha_s.Beta0())*(conv1a + conv1b);
+						_S[1][0][n+1][k] += (-2.0/_alpha_s.Beta0())*(conv2a + conv2b);
+					}
+					{
+						double conv1a = _grid.Convolution(_S[0][1][n], _P1qq, k);
+						double conv1b = _grid.Convolution(_S[0][0][n], _P1qg, k);
+						double conv2a = _grid.Convolution(_S[0][1][n], _P1gq, k);
+						double conv2b = _grid.Convolution(_S[0][0][n], _P1gg, k);
+
+						_S[1][1][n+1][k] += (-1.0/(PI*_alpha_s.Beta0()))*(conv1a + conv1b);
+						_S[1][0][n+1][k] += (-1.0/(PI*_alpha_s.Beta0()))*(conv2a + conv2b);
+					}
+				}
+			}
+		
+
+			// NNLO evolution terms
+			if (_order >= 2)
+			{
+				// non-convolution piece:
+				for (uint k=0; k<_grid.Size()-1; k++)
+				{
+					for (uint j=0; j<=1; j++)
+						_S[2][j][n+1][k] =
+							- (_alpha_s.Beta1()/(4.0*PI*_alpha_s.Beta0()))*_S[1][j][n+1][k]
+							- (_alpha_s.Beta2()/(16.0*PI_2*_alpha_s.Beta0()))*_S[0][j][n+1][k]
+							- 2.0*_S[2][j][n][k]
+							- (_alpha_s.Beta1()/(4.0*PI*_alpha_s.Beta0()))*_S[1][j][n][k];
+				}
+
+				// convolution piece
+				for (uint k=0; k<_grid.Size()-1; k++)
+				{
+					{
+						double conv1a = _grid.Convolution(_S[2][1][n], _P0qq, k);
+						double conv1b = _grid.Convolution(_S[2][0][n], _P0qg, k);
+						double conv2a = _grid.Convolution(_S[2][1][n], _P0gq, k);
+						double conv2b = _grid.Convolution(_S[2][0][n], _P0gg, k);
+
+						_S[2][1][n+1][k] += (-2.0/_alpha_s.Beta0())*(conv1a + conv1b);
+						_S[2][0][n+1][k] += (-2.0/_alpha_s.Beta0())*(conv2a + conv2b);
+					}
+					{
+						double conv1a = _grid.Convolution(_S[1][1][n], _P1qq, k);
+						double conv1b = _grid.Convolution(_S[1][0][n], _P1qg, k);
+						double conv2a = _grid.Convolution(_S[1][1][n], _P1gq, k);
+						double conv2b = _grid.Convolution(_S[1][0][n], _P1gg, k);
+
+						_S[2][1][n+1][k] += (-1.0/(PI*_alpha_s.Beta0()))*(conv1a + conv1b);
+						_S[2][0][n+1][k] += (-1.0/(PI*_alpha_s.Beta0()))*(conv2a + conv2b);
+					}
+					{
+						double conv1a = _grid.Convolution(_S[0][1][n], _P2qq, k);
+						double conv1b = _grid.Convolution(_S[0][0][n], _P2qg, k);
+						double conv2a = _grid.Convolution(_S[0][1][n], _P2gq, k);
+						double conv2b = _grid.Convolution(_S[0][0][n], _P2gg, k);
+
+						_S[2][1][n+1][k] += (-1.0/(2.0*PI_2*_alpha_s.Beta0()))*(conv1a + conv1b);
+						_S[2][0][n+1][k] += (-1.0/(2.0*PI_2*_alpha_s.Beta0()))*(conv2a + conv2b);
+					}
+				}
+			}
+
+			// N3LO terms
+			if (_order >= 3)
+			{
+				// non-convolution piece:
+				for (uint k=0; k<_grid.Size()-1; k++)
+				{
+					for (uint j=0; j<=1; j++)
+						_S[3][j][n+1][k] =
+							- (_alpha_s.Beta1()/(4.0*PI*_alpha_s.Beta0()))*_S[2][j][n+1][k]
+							- (_alpha_s.Beta2()/(16.0*PI_2*_alpha_s.Beta0()))*_S[1][j][n+1][k]
+							- (_alpha_s.Beta3()/(64.0*PI_3*_alpha_s.Beta0()))*_S[0][j][n+1][k]
+							- 3.0*_S[3][j][n][k]
+							- 2.0*(_alpha_s.Beta1()/(4.0*PI*_alpha_s.Beta0()))*_S[2][j][n][k]
+							- (_alpha_s.Beta2()/(16.0*PI_2*_alpha_s.Beta0()))*_S[1][j][n][k];
+				}
+
+				// convolution piece
+				for (uint k=0; k<_grid.Size()-1; k++)
+				{
+					{
+						double conv1a = _grid.Convolution(_S[3][1][n], _P0qq, k);
+						double conv1b = _grid.Convolution(_S[3][0][n], _P0qg, k);
+						double conv2a = _grid.Convolution(_S[3][1][n], _P0gq, k);
+						double conv2b = _grid.Convolution(_S[3][0][n], _P0gg, k);
+
+						_S[3][1][n+1][k] += (-2.0/_alpha_s.Beta0())*(conv1a + conv1b);
+						_S[3][0][n+1][k] += (-2.0/_alpha_s.Beta0())*(conv2a + conv2b);
+					}
+					{
+						double conv1a = _grid.Convolution(_S[2][1][n], _P1qq, k);
+						double conv1b = _grid.Convolution(_S[2][0][n], _P1qg, k);
+						double conv2a = _grid.Convolution(_S[2][1][n], _P1gq, k);
+						double conv2b = _grid.Convolution(_S[2][0][n], _P1gg, k);
+
+						_S[3][1][n+1][k] += (-1.0/(PI*_alpha_s.Beta0()))*(conv1a + conv1b);
+						_S[3][0][n+1][k] += (-1.0/(PI*_alpha_s.Beta0()))*(conv2a + conv2b);
+					}
+					{
+						double conv1a = _grid.Convolution(_S[1][1][n], _P2qq, k);
+						double conv1b = _grid.Convolution(_S[1][0][n], _P2qg, k);
+						double conv2a = _grid.Convolution(_S[1][1][n], _P2gq, k);
+						double conv2b = _grid.Convolution(_S[1][0][n], _P2gg, k);
+
+						_S[3][1][n+1][k] += (-1.0/(2.0*PI_2*_alpha_s.Beta0()))*(conv1a + conv1b);
+						_S[3][0][n+1][k] += (-1.0/(2.0*PI_2*_alpha_s.Beta0()))*(conv2a + conv2b);
+					}
+					{
+						double conv1a = _grid.Convolution(_S[0][1][n], _P3qq, k);
+						double conv1b = _grid.Convolution(_S[0][0][n], _P3qg, k);
+						double conv2a = _grid.Convolution(_S[0][1][n], _P3gq, k);
+						double conv2b = _grid.Convolution(_S[0][0][n], _P3gg, k);
+
+						_S[3][1][n+1][k] += (-1.0/(4.0*PI_3*_alpha_s.Beta0()))*(conv1a + conv1b);
+						_S[3][0][n+1][k] += (-1.0/(4.0*PI_3*_alpha_s.Beta0()))*(conv2a + conv2b);
+					}
+				}
+			}
+
+			// at this stage, we do the truncation iterations
+			// unlike the cases where we had truncation index equal to order
+			// where it just built up, the additional truncates
+			// are order-specific
+			// there is of course a pattern in here,
+			// one which could have utilized to make the code less verbose,
+			// but I find this more explicit and better
+
+			if (_order == 1)
+			{
+				for (uint t=2; t<=_trunc_idx; ++t)
+				{
+					double T = static_cast<double>(t);
+
+					// non-convolution piece:
+					for (uint k=0; k<_grid.Size()-1; k++)
+					{
+						for (uint j=0; j<=1; j++)
+							_S[t][j][n+1][k] =
+								- (_alpha_s.Beta1()/(4.0*PI*_alpha_s.Beta0()))*_S[t-1][j][n+1][k]
+								- T*_S[t][j][n][k]
+								- (T-1.0)*(_alpha_s.Beta1()/(4.0*PI*_alpha_s.Beta0()))*_S[t-1][j][n][k];
+					}
+
+					// convolution piece
+					for (uint k=0; k<_grid.Size()-1; k++)
+					{
+						{
+							double conv1a = _grid.Convolution(_S[t][1][n], _P0qq, k);
+							double conv1b = _grid.Convolution(_S[t][0][n], _P0qg, k);
+							double conv2a = _grid.Convolution(_S[t][1][n], _P0gq, k);
+							double conv2b = _grid.Convolution(_S[t][0][n], _P0gg, k);
+
+							_S[t][1][n+1][k] += (-2.0/_alpha_s.Beta0())*(conv1a + conv1b);
+							_S[t][0][n+1][k] += (-2.0/_alpha_s.Beta0())*(conv2a + conv2b);
+						}
+						{
+							double conv1a = _grid.Convolution(_S[t-1][1][n], _P1qq, k);
+							double conv1b = _grid.Convolution(_S[t-1][0][n], _P1qg, k);
+							double conv2a = _grid.Convolution(_S[t-1][1][n], _P1gq, k);
+							double conv2b = _grid.Convolution(_S[t-1][0][n], _P1gg, k);
+
+							_S[t][1][n+1][k] += (-1.0/(PI*_alpha_s.Beta0()))*(conv1a + conv1b);
+							_S[t][0][n+1][k] += (-1.0/(PI*_alpha_s.Beta0()))*(conv2a + conv2b);
+						}
+					}
+				}
+			}
+			else if (_order == 2)
+			{
+				for (uint t=3; t<=_trunc_idx; ++t)
+				{
+					double T = static_cast<double>(t);
+
+					// non-convolution piece:
+					for (uint k=0; k<_grid.Size()-1; k++)
+					{
+						for (uint j=0; j<=1; j++)
+							_S[t][j][n+1][k] =
+								- (_alpha_s.Beta1()/(4.0*PI*_alpha_s.Beta0()))*_S[t-1][j][n+1][k]
+								- (_alpha_s.Beta2()/(16.0*PI_2*_alpha_s.Beta0()))*_S[t-2][j][n+1][k]
+								- T*_S[t][j][n][k]
+								- (T-1.0)*(_alpha_s.Beta1()/(4.0*PI*_alpha_s.Beta0()))*_S[t-1][j][n][k]
+								- (T-2.0)*(_alpha_s.Beta2()/(16.0*PI_2*_alpha_s.Beta0()))*_S[t-2][j][n][k];
+					}
+
+					// convolution piece
+					for (uint k=0; k<_grid.Size()-1; k++)
+					{
+						{
+							double conv1a = _grid.Convolution(_S[t][1][n], _P0qq, k);
+							double conv1b = _grid.Convolution(_S[t][0][n], _P0qg, k);
+							double conv2a = _grid.Convolution(_S[t][1][n], _P0gq, k);
+							double conv2b = _grid.Convolution(_S[t][0][n], _P0gg, k);
+
+							_S[t][1][n+1][k] += (-2.0/_alpha_s.Beta0())*(conv1a + conv1b);
+							_S[t][0][n+1][k] += (-2.0/_alpha_s.Beta0())*(conv2a + conv2b);
+						}
+						{
+							double conv1a = _grid.Convolution(_S[t-1][1][n], _P1qq, k);
+							double conv1b = _grid.Convolution(_S[t-1][0][n], _P1qg, k);
+							double conv2a = _grid.Convolution(_S[t-1][1][n], _P1gq, k);
+							double conv2b = _grid.Convolution(_S[t-1][0][n], _P1gg, k);
+
+							_S[t][1][n+1][k] += (-1.0/(PI*_alpha_s.Beta0()))*(conv1a + conv1b);
+							_S[t][0][n+1][k] += (-1.0/(PI*_alpha_s.Beta0()))*(conv2a + conv2b);
+						}
+					}
+				}
+			}
+			else if (_order == 3)
+			{
+				for (uint t=4; t<=_trunc_idx; ++t)
+				{
+					double T = static_cast<double>(t);
+
+					// non-convolution piece:
+					for (uint k=0; k<_grid.Size()-1; k++)
+					{
+						for (uint j=0; j<=1; j++)
+							_S[t][j][n+1][k] =
+								- (_alpha_s.Beta1()/(4.0*PI*_alpha_s.Beta0()))*_S[t-1][j][n+1][k]
+								- (_alpha_s.Beta2()/(16.0*PI_2*_alpha_s.Beta0()))*_S[t-2][j][n+1][k]
+								- (_alpha_s.Beta3()/(64.0*PI_3*_alpha_s.Beta0()))*_S[t-3][j][n+1][k]
+								- T*_S[t][j][n][k]
+								- (T-1.0)*(_alpha_s.Beta1()/(4.0*PI*_alpha_s.Beta0()))*_S[t-1][j][n][k]
+								- (T-2.0)*(_alpha_s.Beta2()/(16.0*PI_2*_alpha_s.Beta0()))*_S[t-2][j][n][k]
+								- (T-3.0)*(_alpha_s.Beta3()/(64.0*PI_3*_alpha_s.Beta0()))*_S[t-3][j][n][k];
+					}
+
+					// convolution piece
+					for (uint k=0; k<_grid.Size()-1; k++)
+					{
+						{
+							double conv1a = _grid.Convolution(_S[t][1][n], _P0qq, k);
+							double conv1b = _grid.Convolution(_S[t][0][n], _P0qg, k);
+							double conv2a = _grid.Convolution(_S[t][1][n], _P0gq, k);
+							double conv2b = _grid.Convolution(_S[t][0][n], _P0gg, k);
+
+							_S[t][1][n+1][k] += (-2.0/_alpha_s.Beta0())*(conv1a + conv1b);
+							_S[t][0][n+1][k] += (-2.0/_alpha_s.Beta0())*(conv2a + conv2b);
+						}
+						{
+							double conv1a = _grid.Convolution(_S[t-1][1][n], _P1qq, k);
+							double conv1b = _grid.Convolution(_S[t-1][0][n], _P1qg, k);
+							double conv2a = _grid.Convolution(_S[t-1][1][n], _P1gq, k);
+							double conv2b = _grid.Convolution(_S[t-1][0][n], _P1gg, k);
+
+							_S[t][1][n+1][k] += (-1.0/(PI*_alpha_s.Beta0()))*(conv1a + conv1b);
+							_S[t][0][n+1][k] += (-1.0/(PI*_alpha_s.Beta0()))*(conv2a + conv2b);
+						}
+					}
+				}
+			}
+		}
+	}
+	
 
 	void DGLAPSolver::EvolveSinglet()
-	{	
+	{
 		for (uint n=0; n<_iterations-1; n++)
 		{
 			std::cerr << "[DGLAP] EvolveSinglet(): Singlet iteration " << n << '\n';
@@ -747,7 +1055,7 @@ namespace Candia2
 				_S[0][0][n+1][k] = RecRelS_1(_S[0][1][n], k, _P0gq) + RecRelS_1(_S[0][0][n], k, _P0gg);
 			}
 
-			if (_order > 0)
+			if (_order >= 1)
 			{
 				// offset of singlet 1-coefficients
 				for (uint k=0; k<_grid.Size()-1; k++)
@@ -761,7 +1069,7 @@ namespace Candia2
 				{
 					_S[1][1][n+1][k] += RecRelS_2(_S[0][1][n], _S[1][1][n], k, _P0qq, _P1qq) + RecRelS_2(_S[0][0][n], _S[1][0][n], k, _P0qg, _P1qg);
 					_S[1][0][n+1][k] += RecRelS_2(_S[0][1][n], _S[1][1][n], k, _P0gq, _P1gq) + RecRelS_2(_S[0][0][n], _S[1][0][n], k, _P0gg, _P1gg);
-				}
+				}	
 			}
 
 			// further evolution based on truncation index
@@ -776,7 +1084,7 @@ namespace Candia2
 						_S[t][j][n+1][k] = -_S[t-1][j][n+1][k] * _alpha_s.Beta1()/(4.0*PI*_alpha_s.Beta0())
 							- T*_S[t][j][n][k] - (T-1.0)*_S[t-1][j][n][k]*_alpha_s.Beta1()/(4.0*PI*_alpha_s.Beta0());
 
-						if (_order >= 2)
+						if (_order == 2)
 						{
 							_S[t][j][n+1][k] -= _S[t-2][j][n+1][k] * _alpha_s.Beta2()/(16.0*PI_2*_alpha_s.Beta0())
 								+ (T-2.0)*_S[t-2][j][n][k] * _alpha_s.Beta2()/(16.0*PI_2*_alpha_s.Beta0());
@@ -795,9 +1103,7 @@ namespace Candia2
 										  + RecRelS_2(_S[t-1][0][n], _S[t][0][n], k, _P0gg, _P1gg);
 					}
 				}
-
-				// NNLO (& N3LO) singlet coefficients
-				if (_order >= 2)
+				else if (_order == 2) // NNLO singlet coefficients
 				{
 				    for (uint k=0; k<_grid.Size()-1; k++)
 					{
@@ -878,13 +1184,21 @@ namespace Candia2
 							for (uint t=1; t<=s; t++)
 							{
 								for (uint n=1; n<=t; n++)
-									_C[j][s][t][n][k] = RecRelNNLO_1(_C[j][s-1][t-1][n-1], k, _P0ns);
+								{
+									double conv = _grid.Convolution(_C[j][s-1][t-1][n-1], _P0ns, k);
+									double res = -(2.0/_alpha_s.Beta0())*conv;
+									
+									_C[j][s][t][n][k] = res;
+									
+								}
 							}
 
 							// RecRel #2:
 							{
 								double fac1 = -0.5*_C[j][s][s][1][k];
-								double fac2 = RecRelNNLO_2(_C[j][s-1][s-1][0], k, _P2nsm);
+								double conv = _grid.Convolution(_C[j][s-1][s-1][0], _P2nsm, k);
+								double fac2 = -4.0/_alpha_s.Beta2() * conv;
+								
 								_C[j][s][s][0][k] = fac1 + fac2;
 							}
 
@@ -897,7 +1211,9 @@ namespace Candia2
 							for (int t=s-1; t>=0; t--)
 							{
 								double fac1 = -2.0*_alpha_s.Beta1()*(_C[j][s][t+1][0][k] + _C[j][s][t+1][1][k]);
-								double fac2 = RecRelNNLO_3(_C[j][s-1][t][0], k, _P1nsm);
+								double conv = _grid.Convolution(_C[j][s-1][t][0], _P1nsm, k);
+								double fac2 = -8.0*conv;
+								
 								_C[j][s][t][0][k] = fac1 + fac2;
 							}
 						}
@@ -927,26 +1243,28 @@ namespace Candia2
 							}
 						}
 
-						for (uint t=1; t<=s; t++)
-						{
-							// RecRel #1:
-							for (uint n=1; n<=t; n++)
-								_C[25][s][t][n][k] = RecRelNNLO_1(_C[25][s-1][t-1][n-1], k, _P0ns);
-						}
+					    {
+							for (uint t=1; t<=s; t++)
+							{
+								// RecRel #1:
+								for (uint n=1; n<=t; n++)
+									_C[25][s][t][n][k] = RecRelNNLO_1(_C[25][s-1][t-1][n-1], k, _P0ns);
+							}
 
-						// RecRel #2:
-						{
-							double fac1 = -0.5*_C[25][s][s][1][k];
-							double fac2 = RecRelNNLO_2(_C[25][s-1][s-1][0], k, _P2nsv);
-							_C[25][s][s][0][k] = fac1 + fac2;
-						}
+							// RecRel #2:
+							{
+								double fac1 = -0.5*_C[25][s][s][1][k];
+								double fac2 = RecRelNNLO_2(_C[25][s-1][s-1][0], k, _P2nsv);
+								_C[25][s][s][0][k] = fac1 + fac2;
+							}
 						
-						// RecRel #3:
-						for (int t=s-1; t>=0; t--)
-						{
-							double fac1 = -2.0*_alpha_s.Beta1()*(_C[25][s][t+1][0][k] + _C[25][s][t+1][1][k]);
-							double fac2 = RecRelNNLO_3(_C[25][s-1][t][0], k, _P1nsm);
-							_C[25][s][t][0][k] = fac1 + fac2;
+							// RecRel #3:
+							for (int t=s-1; t>=0; t--)
+							{
+								double fac1 = -2.0*_alpha_s.Beta1()*(_C[25][s][t+1][0][k] + _C[25][s][t+1][1][k]);
+								double fac2 = RecRelNNLO_3(_C[25][s-1][t][0], k, _P1nsm);
+								_C[25][s][t][0][k] = fac1 + fac2;
+							}
 						}
 					}
 
@@ -955,25 +1273,14 @@ namespace Candia2
 					std::cerr << "[DGLAP] EvolveNonSinglet(): NNLO iteration took " << elapsed.count() << " seconds.\n";
 				}
 			} break;
-			case 3: // N3LO
+			case 3: // N3LO nonsinglet
 			{
 				// some shorthand
 				double r1 = _r1[_nf];
 				double b = _b[_nf];
 				double c = _c[_nf];
-				double gamma = r1*r1 + r1*b + c;
+				double gamma = (r1*r1 + r1*b + c)*_alpha_s.Beta3();
 				// double fac = c + b*r1;
-
-
-				_debug_file << std::fixed;
-				_debug_file << std::setprecision(9);
-				_debug_file << "---------------\n";
-				_debug_file << "r1 = " << r1 << '\n';
-				_debug_file << "b = " << b << '\n';
-				_debug_file << "c = " << c << '\n';
-				_debug_file << "gamma = " << gamma << '\n';
-				_debug_file << "---------------\n";
-				_debug_file << std::scientific << std::left << std::internal;
 
 			    std::chrono::high_resolution_clock::time_point t0, tf;
 				
@@ -986,8 +1293,7 @@ namespace Candia2
 					for (uint k=0; k<_grid.Size()-1; k++)
 					{
 						// minus distributions
-						// for (uint j=26; j<25+_nf; j++)
-						uint j = 26;
+						for (uint j=26; j<25+_nf; j++)
 						{
 							// RecRel #1:
 							for (uint t=1; t<=s; t++)
@@ -999,10 +1305,6 @@ namespace Candia2
 										double conv = _grid.Convolution(_D[j][s-1][t-1][m-1][n-1], _P0ns, k);
 										double res = -(2.0/_alpha_s.Beta0()) * conv;
 										_D[j][s][t][m][n][k] = res;
-
-										_debug_file << "(" << s << ',' << t << ',' << m << ',' << n << ")[k=" << k << "]: " << "RecRel 1\n";
-										_debug_file << '\t' << std::setw(6) << "conv" << " = " << std::setw(16) << conv << '\n';
-										_debug_file << '\t' << std::setw(6) << "res" << " = " << std::setw(16) << res << "\n\n";
 									}
 								}
 							}
@@ -1021,21 +1323,12 @@ namespace Candia2
 
 								_D[j][s][s][s][0][k] = fac1 * _D[j][s][s][s][1][k] + fac2a+fac2b+fac2c;
 								_D[j][s][s][s][0][k] /= gamma;
-
-								_debug_file << "(" << s << ',' << s << ',' << s << ",0)[k=" << k << "]: " << "RecRel 2\n";
-								_debug_file << '\t' << std::setw(6) << "conv1" << " = " << std::setw(16) << conv1 << '\n';
-								_debug_file << '\t' << std::setw(6) << "conv2" << " = " << std::setw(16) << conv2 << '\n';
-								_debug_file << '\t' << std::setw(6) << "conv3" << " = " << std::setw(16) << conv3 << '\n';
-								_debug_file << '\t' << std::setw(6) << "fac1" << " = " << std::setw(16) << fac1 << '\n';
-								_debug_file << '\t' << std::setw(6) << "fac2a" << " = " << std::setw(16) << fac2a << '\n';
-								_debug_file << '\t' << std::setw(6) << "fac2b" << " = " << std::setw(16) << fac2b << '\n';
-								_debug_file << '\t' << std::setw(6) << "fac2c" << " = " << std::setw(16) << fac2c << '\n';
-								_debug_file << '\t' << std::setw(6) << "res" << " = " << std::setw(16) << _D[j][s][s][s][0][k] << "\n\n";
 							}
 
 							// RecRel #3:
 							for (int m=s-1; m>=0; m--)
 							{
+								// int m = 0;
 								double fac1 = -(16.0*PI_2*_alpha_s.Beta1() + 4.0*PI*r1*_alpha_s.Beta2() + r1*r1*_alpha_s.Beta3());
 
 								double conv1 = _grid.Convolution(_D[j][s-1][s-1][m][0], _P1nsm, k);
@@ -1048,21 +1341,12 @@ namespace Candia2
 
 								_D[j][s][s][m][0][k] = fac1 * _D[j][s][s][m+1][1][k] + fac2a+fac2b+fac2c;
 								_D[j][s][s][m][0][k] /= gamma;
-
-								_debug_file << "(" << s << ',' << s << ',' << m << ",0)[k=" << k << "]: " << "RecRel 2\n";
-								_debug_file << '\t' << std::setw(6) << "conv1" << " = " << std::setw(16) << conv1 << '\n';
-								_debug_file << '\t' << std::setw(6) << "conv2" << " = " << std::setw(16) << conv2 << '\n';
-								_debug_file << '\t' << std::setw(6) << "conv3" << " = " << std::setw(16) << conv3 << '\n';
-								_debug_file << '\t' << std::setw(6) << "fac1" << " = " << std::setw(16) << fac1 << '\n';
-								_debug_file << '\t' << std::setw(6) << "fac2a" << " = " << std::setw(16) << fac2a << '\n';
-								_debug_file << '\t' << std::setw(6) << "fac2b" << " = " << std::setw(16) << fac2b << '\n';
-								_debug_file << '\t' << std::setw(6) << "fac2c" << " = " << std::setw(16) << fac2c << '\n';
-								_debug_file << '\t' << std::setw(6) << "res" << " = " << std::setw(16) << _D[j][s][s][m][0][k] << "\n\n";
 							}
 
 							// RecRel #4:
 							for (int t=s-1; t>=0; t--)
 							{
+								// int t = 0;
 								for (int m=t; m>=0; m--)
 								{
 									double fac1a = -2.0*b*gamma;
@@ -1080,24 +1364,12 @@ namespace Candia2
 														  + fac1b*_D[j][s][t+1][m+1][1][k] 
 														  + fac2a+fac2b+fac2c;
 									_D[j][s][t][m][0][k] /= gamma;
-
-									_debug_file << "(" << s << ',' << t << ',' << m << ",0)[k=" << k << "]: " << "RecRel 2\n";
-									_debug_file << '\t' << std::setw(6) <<  "conv1" << " = " << std::setw(16) << conv1 << '\n';
-									_debug_file << '\t' << std::setw(6) <<  "conv2" << " = " << std::setw(16) << conv2 << '\n';
-									_debug_file << '\t' << std::setw(6) <<  "conv3" << " = " << std::setw(16) << conv3 << '\n';
-									_debug_file << '\t' << std::setw(6) <<  "fac1a" << " = " << std::setw(16) << fac1a << '\n';
-									_debug_file << '\t' << std::setw(6) <<  "fac1b" << " = " << std::setw(16) << fac1b << '\n';
-									_debug_file << '\t' << std::setw(6) <<  "fac2a" << " = " << std::setw(16) << fac2a << '\n';
-									_debug_file << '\t' << std::setw(6) <<  "fac2b" << " = " << std::setw(16) << fac2b << '\n';
-									_debug_file << '\t' << std::setw(6) <<  "fac2c" << " = " << std::setw(16) << fac2c << '\n';
-									_debug_file << '\t' << std::setw(6) <<  "res" << " = " << std::setw(16) << _D[j][s][t][m][0][k] << "\n\n";
 								}
 							}
 						}
 
 						// plus distributions
-						// for (uint j=32; j<31+_nf; j++)
-						if constexpr (false)
+						for (uint j=32; j<31+_nf; j++)
 						{
 							// RecRel #1:
 							for (uint t=1; t<=s; t++)
@@ -1175,7 +1447,6 @@ namespace Candia2
 						}
 
 						// valence distribution
-						if constexpr (false)
 						{
 							// RecRel #1:
 							for (uint t=1; t<=s; t++)
@@ -1254,7 +1525,7 @@ namespace Candia2
 					}
 
 					tf = std::chrono::high_resolution_clock::now();
-					std::chrono::duration<double> elapsed = std::chrono::duration_cast<std::chrono::duration<double>>(tf-t0);
+					std::chrono::duration<double> elapsed = tf-t0;
 					std::cerr << "[DGLAP] EvolveNonSinglet(): N3LO iteration took " << elapsed.count() << " seconds.\n";
 				}				
 			} break;
@@ -1277,40 +1548,55 @@ namespace Candia2
 		double L3 = 0.0;
 		double L4 = 0.0;
 
+		// shorthand
+		double r1 = _r1[_nf];
+		std::complex<double> r2 = _r2[_nf];
+		std::complex<double> r3 = _r3[_nf];
+		double b = _b[_nf];
+		double c = _c[_nf];
+		double gamma = (r1*r1 + r1*b + c)*_alpha_s.Beta3();
+
+		// more shorthand
+		double beta0 = _alpha_s.Beta0();
+		double beta1 = _alpha_s.Beta1();
+		double beta2 = _alpha_s.Beta2();
+		// double beta3 = _alpha_s.Beta3();
+
 		if (_order == 1)
 		{
-			L2 = std::log((_alpha1*_alpha_s.Beta1() + 4.0*PI*_alpha_s.Beta0())
-							  /(_alpha0*_alpha_s.Beta1() + 4.0*PI*_alpha_s.Beta0()));
+			L2 = std::log((_alpha1*beta1 + 4.0*PI*beta0)
+							  /(_alpha0*beta1 + 4.0*PI*beta0));
 		}
 		else if (_order == 2)
 		{
-			L2 = std::log((16.0*PI_2*_alpha_s.Beta0()+4.*PI*_alpha1*_alpha_s.Beta1()+_alpha1*_alpha1*_alpha_s.Beta2())
-						  /(16.*PI_2*_alpha_s.Beta0()+4.*PI*_alpha0*_alpha_s.Beta1()+_alpha0*_alpha0*_alpha_s.Beta2()));
+			L2 = std::log((16.0*PI_2*beta0 + 4.*PI*_alpha1*beta1 + _alpha1*_alpha1*beta2)
+						  /(16.*PI_2*beta0 + 4.*PI*_alpha0*beta1 + _alpha0*_alpha0*beta2));
 			
 			// analytic continuation for arctan
-			double aux=4.0*_alpha_s.Beta0()*_alpha_s.Beta2() - _alpha_s.Beta1()*_alpha_s.Beta1();
+			double aux=4.0*beta0*beta2 - beta1*beta1;
 			if (aux>=0)
 			{
-				L3 = std::atan(2.0*PI*(_alpha1-_alpha0)*std::sqrt(aux)/(2.*PI*(8.*PI*_alpha_s.Beta0()+(_alpha1+_alpha0))+_alpha1*_alpha0*_alpha_s.Beta2()))/std::sqrt(aux);
+				L3 = std::atan(
+					2.0*PI*(_alpha1-_alpha0)*std::sqrt(aux)
+					/(2.*PI*(8.*PI*beta0+(_alpha1+_alpha0))+_alpha1*_alpha0*beta2)
+				)/std::sqrt(aux);
 			}
 			else
 			{
-				L3 = std::tanh(2.*PI*(_alpha1-_alpha0)*std::sqrt(-aux)/(2.*PI*(8.*PI*_alpha_s.Beta0()+(_alpha1+_alpha0))+_alpha1*_alpha0*_alpha_s.Beta2()))/std::sqrt(-aux);
+				L3 = std::tanh(
+					2.*PI*(_alpha1-_alpha0)*std::sqrt(-aux)
+					/(2.*PI*(8.*PI*beta0+(_alpha1+_alpha0))+_alpha1*_alpha0*beta2)
+				)/std::sqrt(-aux);
 			}
 		}
 		else if (_order == 3)
 		{
-			// shorthand
-			double r1 = _r1[_nf];
-			double b = _b[_nf];
-			double c = _c[_nf];
-
 			// NOTE: equation 2 and recursion relation 2 are determined from the log with the quadratic terms,
 			// which were initially called L3, so I swapped them
-			L3 = std::log((_alpha1 - r1)/(_alpha0 - r1));
-			L2 = std::log((_alpha1*_alpha1 + b*_alpha1 + c) / (_alpha0*_alpha0 + b*_alpha0 + c));
+			L3 = std::log(std::abs(_alpha1 - r1)/std::abs(_alpha0 - r1));
+			L2 = std::log(std::abs(_alpha1*_alpha1 + b*_alpha1 + c) / std::abs(_alpha0*_alpha0 + b*_alpha0 + c));
 			double aux = std::sqrt(-b*b + 4*c); // never negative, no need for analytic continuation
-			L4 = std::atan((_alpha1-_alpha0)*aux / (2*_alpha0*_alpha1 + (_alpha0+_alpha1)*b + 2.0*c))/aux;
+			L4 = std::atan((_alpha1-_alpha0)*aux / (2.0*_alpha0*_alpha1 + (_alpha0+_alpha1)*b + 2.0*c))/aux;
 		}
 		
 		std::cerr << "[DGLAP] Resum(): alpha0=" << _alpha0 << ", _alpha1 = " << _alpha1 << '\n';
@@ -1404,7 +1690,9 @@ namespace Candia2
 									double orig = _C[j][s][t][n][k];
 									double powers = std::pow(L1,n)*std::pow(L2,(t-n))*std::pow(L3,(s-t));
 									double factorials = Factorial(n)*Factorial(t-n)*Factorial(s-t);
-									_F[j][k] += orig*powers/factorials;
+									double res = orig*powers/factorials;
+
+									_F[j][k] += res;
 								}
 								for (uint j=32; j<=30+_nf; j++) {
 									double orig = _C[j][s][t][n][k];
@@ -1427,6 +1715,7 @@ namespace Candia2
 						if (j == (24+_nf))
 							j = 31;
 					}
+					
 					for (uint s=1; s<=_iterations-1; s++)
 					{
 						for (uint t=0; t<=s; t++)
@@ -1440,7 +1729,9 @@ namespace Candia2
 										double orig = _D[j][s][t][m][n][k];
 										double powers = std::pow(L1,n)*std::pow(L2,(m-n))*std::pow(L3,(t-m))*std::pow(L4,(s-t));
 										double factorials = Factorial(n)*Factorial(m-n)*Factorial(t-m)*Factorial(s-t);
-										_F[j][k] += orig*powers/factorials;
+										double res = orig*powers/factorials;
+										
+										_F[j][k] += res;
 									}
 									for (uint j=32; j<=30+_nf;j++)
 									{
@@ -1456,6 +1747,7 @@ namespace Candia2
 				}
 			} break;
 		}
+		
 		// flavor reconstruction
 		double Nf = static_cast<double>(_nf);
 		for (uint k=0; k<_grid.Size()-1;k++)
@@ -1509,39 +1801,54 @@ namespace Candia2
 		double L3 = 0.0;
 		double L4 = 0.0;
 
+		// shorthand
+		double r1 = _r1[_nf];
+		std::complex<double> r2 = _r2[_nf];
+		std::complex<double> r3 = _r3[_nf];
+		double b = _b[_nf];
+		double c = _c[_nf];
+		double gamma = (r1*r1 + r1*b + c)*_alpha_s.Beta3();
+
+		// more shorthand
+		double beta0 = _alpha_s.Beta0();
+		double beta1 = _alpha_s.Beta1();
+		double beta2 = _alpha_s.Beta2();
+		// double beta3 = _alpha_s.Beta3();
+
 		if (_order == 1)
 		{
-			L2 = std::log((_alpha1*_alpha_s.Beta1() + 4.0*PI*_alpha_s.Beta0())
-						  /(_alpha0*_alpha_s.Beta1() + 4.0*PI*_alpha_s.Beta0()));
+			L2 = std::log((_alpha1*beta1 + 4.0*PI*beta0)
+						  /(_alpha0*beta1 + 4.0*PI*beta0));
 		}
 		else if (_order == 2)
 		{
-			L2 = std::log((16.0*PI_2*_alpha_s.Beta0()+4.*PI*_alpha1*_alpha_s.Beta1()+_alpha1*_alpha1*_alpha_s.Beta2())
-						  /(16.*PI_2*_alpha_s.Beta0()+4.*PI*_alpha0*_alpha_s.Beta1()+_alpha0*_alpha0*_alpha_s.Beta2()));
+			L2 = std::log((16.0*PI_2*beta0 + 4.*PI*_alpha1*beta1 + _alpha1*_alpha1*beta2)
+						  /(16.*PI_2*beta0 + 4.*PI*_alpha0*beta1 + _alpha0*_alpha0*beta2));
 				
 			// analytic continuation for arctan
-			double aux=4.0*_alpha_s.Beta0()*_alpha_s.Beta2() - _alpha_s.Beta1()*_alpha_s.Beta1();
+			double aux=4.0*beta0*beta2 - beta1*beta1;
 			if (aux>=0)
 			{
-				L3 = std::atan(2.0*PI*(_alpha1-_alpha0)*std::sqrt(aux)/(2.*PI*(8.*PI*_alpha_s.Beta0()+(_alpha1+_alpha0))+_alpha1*_alpha0*_alpha_s.Beta2()))/std::sqrt(aux);
+				L3 = std::atan(
+					2.0*PI*(_alpha1-_alpha0)*std::sqrt(aux)
+					/(2.*PI*(8.*PI*beta0+(_alpha1+_alpha0))+_alpha1*_alpha0*beta2)
+				)/std::sqrt(aux);
 			}
 			else
 			{
-				L3 = std::tanh(2.*PI*(_alpha1-_alpha0)*std::sqrt(-aux)/(2.*PI*(8.*PI*_alpha_s.Beta0()+(_alpha1+_alpha0))+_alpha1*_alpha0*_alpha_s.Beta2()))/std::sqrt(-aux);
+				L3 = std::tanh(
+					2.*PI*(_alpha1-_alpha0)*std::sqrt(-aux)
+					/(2.*PI*(8.*PI*beta0+(_alpha1+_alpha0))+_alpha1*_alpha0*beta2)
+				)/std::sqrt(-aux);
 			}
 		}
 		else if (_order == 3)
 		{
-			// shorthand
-			double r1 = _r1[_nf];
-			double b = _b[_nf];
-			double c = _c[_nf];
-
-			// NOTE: see note in Resum()
-			L3 = std::log((_alpha1 - r1)/(_alpha0 - r1));
-			L2 = std::log((_alpha1*_alpha1 + b*_alpha1 + c) / (_alpha0*_alpha0 + b*_alpha0 + c));
+		    // NOTE: see note in Resum()
+			L3 = std::log((_alpha1 - r1)/std::abs(_alpha0 - r1));
+			L2 = std::log((_alpha1*_alpha1 + b*_alpha1 + c) / std::abs(_alpha0*_alpha0 + b*_alpha0 + c));
 			double aux = std::sqrt(-b*b + 4*c); // never negative, no need for analytic continuation
-			L4 = std::atan((_alpha1-_alpha0)*aux / (2*_alpha0*_alpha1 + (_alpha0+_alpha1)*b + 2.0*c))/aux;
+			L4 = std::atan((_alpha1-_alpha0)*aux / (2.0*_alpha0*_alpha1 + (_alpha0+_alpha1)*b + 2.0*c))/aux;
 		}
 
 		std::cerr << "[DGLAP] ResumThreshold(): alpha0=" << _alpha0 << ", _alpha1 = " << _alpha1 << '\n';
@@ -1653,7 +1960,9 @@ namespace Candia2
 									double orig = _C[j][s][t][n][k];
 									double powers = std::pow(L1,n)*std::pow(L2,(t-n))*std::pow(L3,(s-t));
 									double factorials = Factorial(n)*Factorial(t-n)*Factorial(s-t);
-									_C[j][0][0][0][k] += orig*powers/factorials;
+									double res = orig*powers/factorials;
+
+									_C[j][0][0][0][k] += res;
 								}
 								for (uint j=32; j<=30+_nf; j++)
 								{
@@ -1707,9 +2016,19 @@ namespace Candia2
 									for (uint j=25; j<=24+_nf; j++)
 									{
 										double orig = _D[j][s][t][m][n][k];
-										double powers = std::pow(L1,n)*std::pow(L2,(m-n))*std::pow(L3,(t-m))*std::pow(L4,(s-t));
-										double factorials = Factorial(n)*Factorial(m-n)*Factorial(t-m)*Factorial(s-t);
-										_D[j][0][0][0][0][k] += orig*powers/factorials;
+										double powers =
+											std::pow(L1,n)
+											*std::pow(L2,(m-n))
+											*std::pow(L3,(t-m))
+											*std::pow(L4,(s-t));
+										double factorials =
+											Factorial(n)
+											*Factorial(m-n)
+											*Factorial(t-m)
+											*Factorial(s-t);
+										double res = orig*powers/factorials;
+										
+										_D[j][0][0][0][0][k] += res;
 									}
 
 									for (uint j=32; j<=30+_nf; j++)
@@ -1757,6 +2076,8 @@ namespace Candia2
 	void DGLAPSolver::HeavyFlavorTreatment()
 	{
 		return;
+		// std::cerr << "[WARN] DGLAPSolver::HeavyFlavorTreatment(): NOT DOING HEAVY FLAVOR TREATMENT\n";
+		// return;
 		std::cerr << "[DGLAP] HeavyFlavorTreatment(): " << _nf+1 << "th quark mass threshold (mass "
 				  << _alpha_s.Masses(_nf+1) << ")\n";
 

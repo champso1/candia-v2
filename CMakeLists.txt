@@ -5,6 +5,9 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS on)
 # default the installation to the project directory
 set(CMAKE_INSTALL_PREFIX ${CMAKE_SOURCE_DIR}/install)
 
+# default to release build
+# set(CMAKE_BUILD_TYPE Release)
+
 # enforce C++20
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
@@ -21,27 +24,40 @@ if (SANITIZATION)
   target_link_libraries(candia PUBLIC asan ubsan gfortran)
   target_compile_options(candia PRIVATE -Wall -Wextra -fsanitize=undefined,address -fPIC)
 else()
-  target_link_libraries(candia PUBLIC gfortran)
+  #target_link_libraries(candia PUBLIC gfortran)
   target_compile_options(candia PRIVATE -Wall -Wextra -fPIC)
 endif()
+
+# remove some extraneous warnings that I do not care about
+target_compile_options(candia PRIVATE -Wno-unused-private-field)
 
 
 # compile the fortran code for harmonic polylogs
 enable_language(Fortran)
-add_library(hplog STATIC src/hplog.f)
-target_link_libraries(hplog PUBLIC gfortran) # fortran stdlib/runtime not linked by default I guess
-target_compile_options(hplog PRIVATE -std=legacy -w)
+add_library(hplog STATIC src/fortran/hplog.f)
+target_link_libraries(hplog PUBLIC gfortran)
 
-# link this with main candia
-target_link_libraries(candia PUBLIC hplog)
+# compile the fortran code for 3-loop splitting functions
+enable_language(Fortran)
+add_library(p2splitfuncs STATIC src/fortran/xpij2p.f src/fortran/xpns2p.f)
+target_link_libraries(p2splitfuncs PUBLIC gfortran)
+target_compile_options(p2splitfuncs PRIVATE -std=legacy -w)
+
+# link these with main candia
+target_link_libraries(candia PUBLIC hplog p2splitfuncs)
 
 # include directories,
-# differentiate while building versus the final installation
 target_include_directories(candia PUBLIC ${CMAKE_SOURCE_DIR}/include)
+
+
+# GSL
+find_package(GSL REQUIRED)
+target_include_directories(candia PUBLIC ${GSL_INCLUDE_DIR})
+target_link_libraries(candia PUBLIC ${GSL_LIBRARIES})
+
 
 # compile tests as well
 add_subdirectory(tests)
-
 
 
 # --------------------------

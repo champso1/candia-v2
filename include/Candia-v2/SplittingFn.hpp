@@ -457,16 +457,126 @@ namespace Candia2
 		double Regular(const double x) const override;
 		double Plus(const double x) const override;
 		double Delta(const double x) const override;
-	};
-
-
-
-
-
-	
+	};	
 	///@}
 
-}; // namespace Candia2
+
+
+
+
+
+
+	namespace splitfunc_fortran
+	{
+
+		/** @name Next-to-next-to leading order (NNLO) splitting functions.
+		 */
+		///@{
+
+		/** Next-to-next-to leading order, non-singlet kernel (plus component)
+		 */
+		class P2nsp final: public SplittingFunction
+		{
+		public:
+			P2nsp() { }
+			~P2nsp() = default;
+
+			double Regular(const double x) const override;
+			double Plus(const double x) const override;
+			double Delta(const double x) const override;
+		};
+
+		/** Next-to-next-to leading order, non-singlet kernel (minus component)
+		 */
+		class P2nsm final: public SplittingFunction
+		{
+		public:
+			P2nsm() { }
+			~P2nsm() = default;
+
+			double Regular(const double x) const override;
+			double Plus(const double x) const override;
+			double Delta(const double x) const override;
+		};
+
+		/** Next-to-next-to leading order, non-singlet kernel (valence component)
+		 */
+		class P2nsv final: public SplittingFunction
+		{
+		public:
+			P2nsv() { }
+			~P2nsv() = default;
+
+			double Regular(const double x) const override;
+			double Plus(const double x) const override;
+			double Delta(const double x) const override;
+		};
+
+
+		class P2ps final: public SplittingFunction
+		{
+		public:
+			P2ps() = default;
+			~P2ps() = default;
+
+			double Regular(const double x) const override;
+			// double Plus(const double x) const override;
+			// double Delta(const double x) const override;
+		};
+
+
+
+
+		/** Next-to-next-to leading order, q->q singlet kernel.
+		 */
+		class P2qq final: public SplittingFunction
+		{
+		public:
+			P2qq() { }
+			~P2qq() = default;
+
+			double Regular(const double x) const override;
+			double Plus(const double x) const override;
+			double Delta(const double x) const override;
+		};
+
+		/** Next-to-next-to leading order, q->g singlet kernel.
+		 */
+		class P2qg final: public SplittingFunction
+		{
+		public:
+			P2qg() { }
+			~P2qg() = default;
+
+			double Regular(const double x) const override;
+		};
+
+		/** Next-to-next-to leading order, g->q singlet kernel.
+		 */
+		class P2gq final: public SplittingFunction
+		{
+		public:
+			P2gq() { }
+			~P2gq() = default;
+
+			double Regular(const double x) const override;
+		};
+
+		/** Next-to-next-to leading order, g->g singlet kernel.
+		 */
+		class P2gg final: public SplittingFunction
+		{
+		public:
+			P2gg() { }
+			~P2gg() = default;
+
+			double Regular(const double x) const override;
+			double Plus(const double x) const override;
+			double Delta(const double x) const override;
+		};
+	}
+
+} // namespace Candia2
 
 
 #endif // __SPLITTINGFN_HPP

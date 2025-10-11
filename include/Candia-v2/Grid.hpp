@@ -11,9 +11,10 @@
 #include "Candia-v2/Common.hpp"
 #include "Candia-v2/Expression.hpp"
 
+#include "gsl/gsl_integration.h"
+
 #include <memory>
 #include <vector>
-
 
 namespace Candia2
 {
@@ -32,6 +33,21 @@ namespace Candia2
 		///@}
 
 		std::vector<int> _ntab; //!< stores indices for the tabulated grid points
+
+		// static bool _debug_mode;
+		// std::ofstream _debug_file;
+
+		// GSL integration objects
+	    struct GSLConvObj
+		{
+			Grid *grid;
+			uint k;
+			double x;
+			std::vector<double> const& A;
+			std::shared_ptr<Expression> P;
+		};
+		static constexpr int _N = 1000;
+		std::shared_ptr<gsl_integration_workspace> _ws;
 		
 	public:
 
@@ -49,7 +65,8 @@ namespace Candia2
 		 */
 		Grid(std::vector<double> const& xtab, const uint nx);
 
-		~Grid() = default; //!< default destructor
+		/** @brief default destructor */
+		~Grid() = default;
 		///@}
 
 		/** @brief access the @a idx'th grid point (const reference)
@@ -79,14 +96,19 @@ namespace Candia2
 		inline uint Size() const { return _grid_points.size(); }
 
 
+		// TODO: I don't think this is used
 		/** @brief Returns a regular pointer to the underlying c-array
 		 */
+		[[maybe_unused]]
 		inline double const* Ptr() const { return _grid_points.data(); }
-
+		
+		// TODO: I don't think this is used
 		/** @brief returns a const reference to the underlying grid-points
 		 */
+		[[maybe_unused]]
 		inline std::vector<double> const& GridPoints() const { return _grid_points; }
 
+		
 		/** @name Setters/getters for abscissae/weights
 		 */
 		///@{
@@ -118,10 +140,26 @@ namespace Candia2
 		 *  @param A: array of points representing the generic function
 		 *  @param P: reference to @a SplittingFunction object
 		 *  @param k: grid index to compute the convolution at
+		 *
+		 *  @return The value of the convolution
 		 */
 		double Convolution(std::vector<double> const& A,
 						   std::shared_ptr<Expression> P,
 						   uint k);
+
+		/** Performs the convolution via the QAGS algorithm using GSL
+		 *
+		 *  @param A: array of points representing the generic function
+		 *  @param P: reference to @a SplittingFunction object
+		 *  @param k: grid index to compute the convolution at
+		 *
+		 *  @return The value of the convolution
+		 */
+		double ConvolutionGSL(
+			std::vector<double> const& A,
+			std::shared_ptr<Expression> P,
+			uint k
+		);
 
 
 	private:
@@ -129,15 +167,13 @@ namespace Candia2
 		/** @name Constructor helper functions
 		 */
 		///@{
-
 		void InitGrid(std::vector<double> const& xtab, const uint nx); //!< fills the grid
 		void InitGauLeg(); //!< init gauss-legendre abscissae/weights
-		
 		///@}
 
 		
 		/** returns the index pointing to the start of the range
-		 *  in which to interpolate
+		 *  in which to interpolate for the value @a x
 		 */
 		uint InterpFindIdx(double x) const;
 	};

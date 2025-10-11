@@ -1,10 +1,11 @@
 #include "Candia-v2/AlphaS.hpp"
 
 #include <iostream>
+#include <iomanip>
+#include <cmath>
 
 namespace Candia2
 {
-
 	// helper function to ensure that NF is not out of bounds
 	static void __assert_nf(const uint nf)
 	{
@@ -55,11 +56,11 @@ namespace Candia2
 
 	double AlphaS::CalcBeta3(const uint nf) const
 	{
-		const double f = static_cast<double>(nf);
+		const double F = static_cast<double>(nf);
 		return (149753.0/6.0 + 3564.0*Zeta3)
-			   - (1078361.0/162.0 + (6508.0/27.0)*Zeta3)*f
-			   + (50065.0/162.0 + (6472.0/81.0)*Zeta3)*f*f
-			   + (1093.0/729.0)*f*f*f;
+			   - (1078361.0/162.0 + (6508.0/27.0)*Zeta3)*F
+			   + (50065.0/162.0 + (6472.0/81.0)*Zeta3)*F*F
+			   + (1093.0/729.0)*F*F*F;
 	}
 
 	double AlphaS::BetaFn(const double alpha) const
@@ -118,7 +119,7 @@ namespace Candia2
 		uint nfi = 3,
 			 nff = 6;
 		uint nf1;
-		double mu0 = std::sqrt(2.0);
+		const double mu0 = std::sqrt(2.0);
 
 		// here we fix the final value in our masses/energy array
 		// to correspond to the final energy that we are evolving to
@@ -132,22 +133,24 @@ namespace Candia2
 			for (idx=nfi+1; temp>_masses[idx]; idx++);
 
 		_masses[idx] = temp;
-		for (int i=idx+1; i<=8; i++)
+		for (uint i=idx+1; i<8; i++)  // TODO: why does this loop inclusive on 8?
 			_masses[i] = 0.0;
 
 		
-		std::cerr << "[ALPHAS] CalculateThresholdValues(): Energy array: ";
-		for (const double m : _masses)
-		{
-			std::cerr << m << ", ";
-		}
-		std::cerr << '\n';
+		// std::cerr << "[ALPHAS] CalculateThresholdValues(): Energy array: ";
+		// std::cerr << std::fixed << std::setprecision(9);
+		// for (const double m : _masses)
+		// {
+		// 	std::cerr << m << ", ";
+		// }
+		// std::cerr << '\n';
 
 		// set nf1 correctly
 		for (nf1=nff; mu0<_masses[nf1]; nf1--);
 		if (nf1<nfi)
 			nf1++;
 
+		std::cerr << std::fixed << std::setprecision(9);
 		std::cerr << "[ALPHAS] CalculateThresholdValues(): nf1 = " << nf1 << "\talpha0 = " << _alpha0 << '\n';
 
 		Update(nf1);
@@ -157,27 +160,32 @@ namespace Candia2
 
 		_pre[nf1+1] =  Evaluate(mu0, _masses[nf1+1], _alpha0);
 		_post[nf1+1] = PostMatch(_pre[nf1+1]);
-		
+
 		uint nf;
 		for (nf=nf1-1; nf>=nfi; nf--)
 		{
 			Update(nf);
+			
 			_post[nf] = Evaluate(_masses[nf+1], _masses[nf], _pre[nf+1]);
 			_pre[nf]  = PreMatch(_post[nf]);
 		}
 
-		
 		for (nf=nf1+1; nf<=nff+1; nf++)
 		{
 			Update(nf-1);
+			
 			_pre[nf]  = Evaluate(_masses[nf-1], _masses[nf], _post[nf-1]);
 			_post[nf] = PostMatch(_pre[nf]);
 		}
 
 		std::cerr << "[ALPHAS] CalculateThresholdValues(): Computed alpha_s threshold values. They are:\n";
-		
-		for (nf=nfi; nf<=nff; nf++)
-			std::cerr << "[ALPHAS] " << nf << '\t' << _masses[nf] << '\t' << _pre[nf] << '\t' << _post[nf] << '\n';
+
+		std::cerr << std::fixed << std::setprecision(9);
+		for (nf=nfi; nf<=nff+1; nf++)
+			std::cerr << "[ALPHAS] " << nf << ' '
+					  << std::setw(14) << _masses[nf] << ' '
+					  << std::setw(14) << _pre[nf] << ' '
+					  << std::setw(14) << _post[nf] << '\n';
 
 	}
 
@@ -206,7 +214,7 @@ namespace Candia2
 		double k1, k2, k3, k4;
 		double a = alpha0;
 		
-		for (uint i=1; i<steps; i++) {
+		for (uint i=0; i<steps; i++) {
 			k1 = h*BetaFn(a);
 			k2 = h*BetaFn(a + k1/2.0);
 			k3 = h*BetaFn(a + k2/2.0);
@@ -246,7 +254,7 @@ namespace Candia2
 			for (i=nfi+1; aux>_masses[i]; i++);
 
 		_masses[i] = aux;
-		for (uint j=i+1; j<=8; j++)
+		for (uint j=i+1; j<8; j++)
 			_masses[j]=0.;
 
 		return nff;

@@ -17,6 +17,7 @@
 
 #include <memory>
 #include <fstream>
+#include <complex>
 
 
 namespace Candia2
@@ -33,9 +34,9 @@ namespace Candia2
 
 		uint _qct{}; //!< counter for tabulated Q's (to be removed)
 
-		std::shared_ptr<Distribution> _dist; //!< main (initial) distribution
+	  std::shared_ptr<Distribution> _dist; //!< main (initial) distribution
 
-		std::ofstream _debug_file; //!< output file for debug purposes
+	  // std::ofstream _debug_file; //!< output file for debug purposes
 
 		/** @name Active flavor counts
 		 */
@@ -85,6 +86,8 @@ namespace Candia2
 		 */
 		///@{
 		std::array<double,8> _r1{}; //!< one real solution to N3LO quadratic
+		std::array<std::complex<double>,8> _r2{};
+		std::array<std::complex<double>,8> _r3{};
 		std::array<double,8> _b{};  //!< -2*Re[r2]
 		std::array<double,8> _c{};  //!< |r2|^2
 		///@}
@@ -269,7 +272,7 @@ namespace Candia2
 		 *  @param trunc_idx: number of additional truncated iterations (singlet) per main iteration
 		 *  @param initial_dist: initial distribution for masses, pdfs, and alpha0
 		 */
-	    DGLAPSolver(const uint order, Grid const& grid, const double Qf,
+	    DGLAPSolver(const uint order, Grid & grid, const double Qf,
 					const uint iterations, const uint trunc_idx,
 					std::shared_ptr<Distribution> initial_dist);
 		~DGLAPSolver();
@@ -336,6 +339,10 @@ namespace Candia2
 		 */
 		void EvolveNonSinglet();
 
+		/** @brief evolves the singlet coefficients (different form of the code including n3lo)
+		 */
+		void EvolveSingletAlt();
+
 		/** @brief After computing coefficients, do resummation to a tabulated energy value
 		 *  @param Q: the tabulated energy value to evolve to
 		 *  @return the final distributions
@@ -367,6 +374,20 @@ namespace Candia2
 		uint _output_file_index;
 
 		// void OutputLOCoefficients();
+
+
+
+
+	public:
+		enum LatexNumberFormat : uint
+		{
+			SCIENTIFIC,
+			PERCENT
+		};
+		
+		/** @brief Prints all required distributions into a nice latex table
+		 */
+		static void OutputLatexTable(MultiDimVector<double, 2>::type const& dists, std::string const& title, uint format);
 	};
 
 	

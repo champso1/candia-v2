@@ -2,52 +2,50 @@
     "version": 8,
     "configurePresets": [
         {
-            "name": "gcc-debug-win",
-            "displayName": "gcc-debug-win",
-            "description": "Using compilers: C = C:\\msys64\\ucrt64\\bin\\gcc.exe, CXX = C:\\msys64\\ucrt64\\bin\\g++.exe",
-            "generator": "MinGW Makefiles",
-            "binaryDir": "${sourceDir}/build/${presetName}",
+            "name": "clang-debug-win",
+            "displayName": "clang-debug-win",
+            "description": "Using compilers: C = C:\\msys64\\ucrt64\\bin\\clang.exe, CXX = C:\\msys64\\ucrt64\\bin\\clang++.exe",
+            "generator": "Ninja",
+            "binaryDir": "${sourceDir}/bin/${presetName}",
             "cacheVariables": {
                 "CMAKE_INSTALL_PREFIX": "${sourceDir}/install/${presetName}",
-                "CMAKE_C_COMPILER": "C:/msys64/ucrt64/bin/gcc.exe",
-                "CMAKE_CXX_COMPILER": "C:/msys64/ucrt64/bin/g++.exe",
+                "CMAKE_C_COMPILER": "C:/msys64/ucrt64/bin/clang.exe",
+                "CMAKE_CXX_COMPILER": "C:/msys64/ucrt64/bin/clang++.exe",
                 "CMAKE_BUILD_TYPE": "Debug"
             }
         },
         {
-            "name": "gcc-release-win",
-            "displayName": "gcc-release-win",
-            "description": "Using compilers: C = C:\\msys64\\ucrt64\\bin\\gcc.exe, CXX = C:\\msys64\\ucrt64\\bin\\g++.exe",
-            "generator": "MinGW Makefiles",
-            "binaryDir": "${sourceDir}/build/${presetName}",
+            "name": "clang-release-win",
+            "displayName": "clang-release-win",
+            "description": "Using compilers: C = C:\\msys64\\ucrt64\\bin\\clang.exe, CXX = C:\\msys64\\ucrt64\\bin\\clang++.exe",
+            "generator": "Ninja",
+            "binaryDir": "${sourceDir}/bin/${presetName}",
             "cacheVariables": {
                 "CMAKE_INSTALL_PREFIX": "${sourceDir}/install/${presetName}",
-                "CMAKE_C_COMPILER": "C:/msys64/ucrt64/bin/gcc.exe",
-                "CMAKE_CXX_COMPILER": "C:/msys64/ucrt64/bin/g++.exe",
+                "CMAKE_C_COMPILER": "C:/msys64/ucrt64/bin/clang.exe",
+                "CMAKE_CXX_COMPILER": "C:/msys64/ucrt64/bin/clang++.exe",
                 "CMAKE_BUILD_TYPE": "Release"
             }
         },
         {
             "name": "gcc-debug-linux",
             "displayName": "gcc-debug-linux",
-            "description": "Using compilers: C = /usr/bin/cc, CXX = /usr/bin/c++",
-            "binaryDir": "${sourceDir}/build/${presetName}",
+            "description": "Using compilers: C = clang, CXX = clang++",
+            "binaryDir": "${sourceDir}/bin/${presetName}",
             "cacheVariables": {
-                "CMAKE_INSTALL_PREFIX": "${sourceDir}/install/${presetName}",
-                "CMAKE_C_COMPILER": "/usr/bin/cc",
-                "CMAKE_CXX_COMPILER": "/usr/bin/c++",
+                "CMAKE_C_COMPILER": "clang",
+                "CMAKE_CXX_COMPILER": "clang++",
                 "CMAKE_BUILD_TYPE": "Debug"
             }
         },
         {
             "name": "gcc-release-linux",
             "displayName": "gcc-release-linux",
-            "description": "Using compilers: C = /usr/bin/cc, CXX = /usr/bin/c++",
-            "binaryDir": "${sourceDir}/build/${presetName}",
+            "description": "Using compilers: C = clang, CXX = clang++",
+            "binaryDir": "${sourceDir}/bin/${presetName}",
             "cacheVariables": {
-                "CMAKE_INSTALL_PREFIX": "${sourceDir}/install/${presetName}",
-                "CMAKE_C_COMPILER": "/usr/bin/cc",
-                "CMAKE_CXX_COMPILER": "/usr/bin/c++",
+                "CMAKE_C_COMPILER": "clang",
+                "CMAKE_CXX_COMPILER": "clang++",
                 "CMAKE_BUILD_TYPE": "Release"
             }
         }

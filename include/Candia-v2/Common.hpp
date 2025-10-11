@@ -7,7 +7,6 @@
 #ifndef __COMMON_HPP
 #define __COMMON_HPP
 
-#include <cmath>
 #include <vector>
 #include <concepts>
 #include <ranges>
@@ -20,6 +19,8 @@ typedef unsigned int uint;
 
 #define MAX(x,y) ((x)>=(y)) ? (x) : (y)
 #define MIN(x,y) ((x)<=(y)) ? (x) : (y)
+
+#define EPS 1e-8
 
 
 /// @brief 
