@@ -16,7 +16,6 @@
 #include "Candia-v2/OperatorMatrixElements.hpp"
 
 #include <memory>
-#include <fstream>
 #include <complex>
 
 
@@ -33,10 +32,10 @@ namespace Candia2
 		AlphaS _alpha_s; //!< main @a AlphaS object
 
 		uint _qct{}; //!< counter for tabulated Q's (to be removed)
+		
+		std::shared_ptr<Distribution> _dist; //!< main (initial) distribution
 
-	  std::shared_ptr<Distribution> _dist; //!< main (initial) distribution
-
-	  // std::ofstream _debug_file; //!< output file for debug purposes
+		// std::ofstream _debug_file; //!< output file for debug purposes
 
 		/** @name Active flavor counts
 		 */
@@ -160,10 +159,6 @@ namespace Candia2
 		///@}
 
 
-		// typedef std::chrono::high_resolution_clock Clock;
-		
-
-
 		/** @defgroup RecRels Recursion relations
 		 */
 		///@{
@@ -272,7 +267,7 @@ namespace Candia2
 		 *  @param trunc_idx: number of additional truncated iterations (singlet) per main iteration
 		 *  @param initial_dist: initial distribution for masses, pdfs, and alpha0
 		 */
-	    DGLAPSolver(const uint order, Grid & grid, const double Qf,
+	    DGLAPSolver(const uint order, Grid const& grid, const double Qf,
 					const uint iterations, const uint trunc_idx,
 					std::shared_ptr<Distribution> initial_dist);
 		~DGLAPSolver();
@@ -339,6 +334,12 @@ namespace Candia2
 		 */
 		void EvolveNonSinglet();
 
+		/** @brief evolves the non-singlet coefficients
+		 *  @note does this with multi-threading, and makes
+		 *  a new thread for each distribution
+		 */
+		void EvolveNonSingletThreaded();
+
 		/** @brief evolves the singlet coefficients (different form of the code including n3lo)
 		 */
 		void EvolveSingletAlt();
@@ -357,25 +358,36 @@ namespace Candia2
 		 */
 		void HeavyFlavorTreatment();
 
+		
 
 		/** @brief multi-threaded operations
 		 *  these are prefixed by `_mt_`
 		 */
 		///@{
-		/** @brief evolves a single non-singlet distribution with index j */
-		void _mt_EvolveDistribution_NS(uint j);
-		/** @brief evolves a single singlet distribution with index j */
-		void _mt_EvolveDistribution_S(uint j);
+		/** @brief evolves a single non-singlet distribution at LO
+		 *  @param j: the distribution index
+		 */
+	    void _mt_EvolveDistribution_NS_LO(uint j);
+
+		/** @brief evolves a single non-singlet distribution at LO
+		 *  @param j: the distribution index
+		 *  @param P1: the plus or minus NLO splitting function to evolve with
+		 */
+	    void _mt_EvolveDistribution_NS_NLO(uint j, std::shared_ptr<Expression> P1);
+
+		/** @brief evolves a single non-singlet distribution at LO
+		 *  @param j: the distribution index
+		 *  @param P2: array of plus, minus, or valence NNLO and below splitting functions
+		 */
+	    void _mt_EvolveDistribution_NS_NNLO(uint j, std::array<std::shared_ptr<Expression>, 2> const& P2);
+
+		/** @brief evolves a single non-singlet distribution at LO
+		 *  @param j: the distribution index
+		 *  @param P3: array of plus, minus, or valence N3LO and below splitting functions
+		 */
+	    void _mt_EvolveDistribution_NS_N3LO(uint j, std::array<std::shared_ptr<Expression>, 3> const& P3);
+		
 		///@}
-
-
-		// Some debug-related stuff
-	private:
-		uint _output_file_index;
-
-		// void OutputLOCoefficients();
-
-
 
 
 	public:

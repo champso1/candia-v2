@@ -1,17 +1,13 @@
 .*
 !/.gitignore
 
+
 GPATH
 GTAGS
 GRTAGS
 
-Makefile
 docs
-old
-setup.sh
 
 install
-build
-build-win
 bin
 res

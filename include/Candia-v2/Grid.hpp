@@ -11,44 +11,29 @@
 #include "Candia-v2/Common.hpp"
 #include "Candia-v2/Expression.hpp"
 
-#include "gsl/gsl_integration.h"
-
+#include <iterator>
 #include <memory>
+#include <tuple>
 #include <vector>
 
 namespace Candia2
 {
+	
 	/** @brief Class to handle the logarithmic grid
 	 */
-	class Grid
+	class Grid final
 	{
 	protected:
-		std::vector<double> _grid_points; //!< the main list of grid points
-
+		std::vector<double> _points{};
+		
 		/** @name Gauss-Legendre abscissae and weights
 		*/
 		///@{
-		std::vector<double> _Xi;
-		std::vector<double> _Wi;
+		std::vector<double> _Xi{};
+		std::vector<double> _Wi{};
 		///@}
 
 		std::vector<int> _ntab; //!< stores indices for the tabulated grid points
-
-		// static bool _debug_mode;
-		// std::ofstream _debug_file;
-
-		// GSL integration objects
-	    struct GSLConvObj
-		{
-			Grid *grid;
-			uint k;
-			double x;
-			std::vector<double> const& A;
-			std::shared_ptr<Expression> P;
-		};
-		static constexpr int _N = 1000;
-		std::shared_ptr<gsl_integration_workspace> _ws;
-		
 	public:
 
 		/** @name Constructors/destructors
@@ -62,6 +47,7 @@ namespace Candia2
 
 		/** @param xtab: list of tabulated x-values.
 		 *  @param nx: number of desired grid points
+		 *  @note Only fills grid points, doesn't evaluate any function
 		 */
 		Grid(std::vector<double> const& xtab, const uint nx);
 
@@ -69,44 +55,13 @@ namespace Candia2
 		~Grid() = default;
 		///@}
 
-		/** @brief access the @a idx'th grid point (const reference)
-		 *  @param idx: index of grid point
-		 *  @return the @a idx'th grid point
+		/** @name Accessors
 		 */
-		double const& operator[](const uint idx) const;
-
-		/** @brief access the @a idx'th grid point (reference)
-		 *  @param idx: index of grid point
-		 *  @return the @a idx'th grid point
-		 */
-		double& operator[](const uint idx);
-
-		/** @brief Same as the [] operator (const reference).
-		 */
-		inline double const& At(const uint idx) const { return operator[](idx);}
-
-		/** @brief Same as the [] operator (reference).
-		 */
-		inline double& At(const uint idx) { return operator[](idx); }
-		
-
-		/** @brief Gets the size of the grid
-		 *  @returns number of grid points
-		 */
-		inline uint Size() const { return _grid_points.size(); }
-
-
-		// TODO: I don't think this is used
-		/** @brief Returns a regular pointer to the underlying c-array
-		 */
-		[[maybe_unused]]
-		inline double const* Ptr() const { return _grid_points.data(); }
-		
-		// TODO: I don't think this is used
-		/** @brief returns a const reference to the underlying grid-points
-		 */
-		[[maybe_unused]]
-		inline std::vector<double> const& GridPoints() const { return _grid_points; }
+		///@{
+		inline std::vector<double> const& Points() const { return _points; }
+		inline double At(const uint idx) const { return _points.at(idx); };
+		inline double operator[](const uint idx) const { return _points.at(idx); }
+		///@}
 
 		
 		/** @name Setters/getters for abscissae/weights
@@ -118,6 +73,8 @@ namespace Candia2
 		inline double Weights(const uint idx) const { return _Wi[idx]; }
 		///@}
 
+		inline uint Size() const { return _points.size(); }
+
 		/** @name Setters/getters for @a ntab array
 		 */
 		///@{
@@ -128,9 +85,15 @@ namespace Candia2
 		///@}
 
 		
-		/** @brief Determines y(x) on the grid.
+		/** @brief Determines y(x) on the grid
+		 *
+		 *  @param y: vector of points of the function's values on the grid
+		 *  @param x: the point to interpolate to
+		 *
+		 *  @note This is only for functions stored within a generic vector
+		 *  not for functions stored on a function grid. 
 		 */
-		double Interpolate(std::vector<double> const& y, const double x, bool debug=false) const;
+		double Interpolate(std::vector<double> const& y, const double x) const;
 
 
 	    /** Performs a convolution between a generic function
@@ -142,25 +105,13 @@ namespace Candia2
 		 *  @param k: grid index to compute the convolution at
 		 *
 		 *  @return The value of the convolution
+		 *
+		 *  @note This is only for functions evaluated on a generic vector,
+		 *  if a function is evaluated on a function grid, use that function's Interpolate
 		 */
 		double Convolution(std::vector<double> const& A,
 						   std::shared_ptr<Expression> P,
 						   uint k);
-
-		/** Performs the convolution via the QAGS algorithm using GSL
-		 *
-		 *  @param A: array of points representing the generic function
-		 *  @param P: reference to @a SplittingFunction object
-		 *  @param k: grid index to compute the convolution at
-		 *
-		 *  @return The value of the convolution
-		 */
-		double ConvolutionGSL(
-			std::vector<double> const& A,
-			std::shared_ptr<Expression> P,
-			uint k
-		);
-
 
 	private:
 
@@ -168,17 +119,75 @@ namespace Candia2
 		 */
 		///@{
 		void InitGrid(std::vector<double> const& xtab, const uint nx); //!< fills the grid
+		void InitGrid2(std::vector<double> const& xtab, const uint nx); //!< fills the grid// 
 		void InitGauLeg(); //!< init gauss-legendre abscissae/weights
 		///@}
 
-		
+
+	public:
 		/** returns the index pointing to the start of the range
 		 *  in which to interpolate for the value @a x
 		 */
 		uint InterpFindIdx(double x) const;
 	};
 
-}
 
+	class FunctionGrid final
+	{
+	private:
+	    Grid const& _grid;
+		std::array<std::vector<double>, 3> _y{};
+		
+	public:
+		FunctionGrid(Grid const& grid)
+			:  _grid{grid},
+			   _y([](const uint size) -> decltype(_y) {
+				   std::array<std::vector<double>, 3> v{};
+				   for (std::vector<double>& _v : v)
+					   _v.resize(size);
+				   return v;
+			   }(grid.Size()))
+		{}
+
+		enum FunctionPart : uint
+		{
+			REGULAR = 0,
+			PLUS,
+			DELTA
+		};
+		
+		/** @brief Determines the value of this function on the underlying grid
+		 *
+		 *  @param part: which part of the expression to interpolate on
+		 *  @param x: the point to interpolate to
+		 */
+		double Interpolate(FunctionPart part, const double x) const;
+
+		/** Performs a convolution between this function
+		 *  and a splitting function @a P, at point k on the grid.
+		 *
+		 *  @param A: vector of points to convolute this function with
+		 *  @param k: grid index to compute the convolution at
+		 */
+		double Convolution(std::vector<double> A, uint k) const;
+
+	private:
+		inline double X(const uint idx) const { return _grid.At(idx); }
+		inline std::vector<double> const& Y(const FunctionPart part) const
+		{
+			switch (part)
+			{
+				case REGULAR: return std::get<0>(_y);
+				case PLUS: return std::get<1>(_y);
+				case DELTA: return std::get<2>(_y);
+			}
+		}
+		inline double Y(const FunctionPart part, const uint idx) const
+		{
+			return Y(part).at(idx);
+		}
+	};
+
+}
 
 #endif // __GRID_HPP

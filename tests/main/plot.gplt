@@ -3,21 +3,21 @@ set terminal pdfcairo enhanced color notransparent
 set border lw 2
 set size ratio 0.65
 
-set output "n3lo.pdf"
+set output "uv.pdf"
 #set label "Candia-v2 up-quark evolution from" at 0.12,0.7
 #set label "Les Houches initial conditions" at 0.12,0.68
-set ylabel "xu(x,Q^2)" offset 2,0
+set ylabel "fxu_v(x,Q^2)" offset 2,0
 set xlabel "x" offset 0,0.7
 
 set logscale x
-set xrange [1e-4:0.5]
+set xrange [1e-5:0.9]
 #set yrange [0.0:1.0]
 
-set format x "%.2f"
+# set format x "%.2f"
 
 # set xtics ("10@^{-2}" 1e-2, "0.05" 0.05, "0.1" 0.1, "0.15" 0.15, "0.2" 0.2, "0.25" 0.25, "0.3" 0.3)
 
-plot 'n3lo-12-301.dat' using 1:2 with lines lw 2 title "N3LO",\
+plot 'n3lo-g1501-i15-t30.dat' using 1:2 with lines lw 2 title "N3LO",\
 'nnlo-15-801.dat' using 1:2 with lines lw 2 title "NNLO",\
 'nlo-15-801.dat' using 1:2 with lines lw 2 title "NLO",\
 'lo-15-801.dat' using 1:2 with lines lw 2 title "LO"

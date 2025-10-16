@@ -12,14 +12,21 @@ target_link_libraries(evolve PUBLIC candia)
 add_executable(read read.cpp)
 target_include_directories(read PUBLIC ${CMAKE_SOURCE_DIR}/include)
 target_link_libraries(read PUBLIC candia)
-# must link with this stupid piece of shit library on windows
-if (WIN32)
-  target_link_libraries(read PUBLIC stdc++exp)
-endif()
 
 add_executable(compare compare.cpp)
 target_include_directories(compare PUBLIC ${CMAKE_SOURCE_DIR}/include)
 target_link_libraries(compare PUBLIC candia)
+
+add_executable(plot plot.cpp)
+target_include_directories(plot PUBLIC ${CMAKE_SOURCE_DIR}/include)
+target_link_libraries(plot PUBLIC candia)
+
+
+# must link with this stupid piece of shit library on windows
+if (WIN32)
+  target_link_libraries(read PUBLIC stdc++exp)
+  target_link_libraries(plot PUBLIC stdc++exp)
+endif()
 
 set(resources
   VFNS-MSHT-FHMRUVV.dat

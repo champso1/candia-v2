@@ -45,15 +45,14 @@ target_compile_options(p2splitfuncs PRIVATE -std=legacy -w)
 
 # link these with main candia
 target_link_libraries(candia PUBLIC hplog p2splitfuncs)
+# on unix, we need pthread
+if (UNIX)
+  target_compile_options(candia PUBLIC -pthread)
+  target_link_libraries(candia PUBLIC pthread)
+endif()
 
 # include directories,
 target_include_directories(candia PUBLIC ${CMAKE_SOURCE_DIR}/include)
-
-
-# GSL
-find_package(GSL REQUIRED)
-target_include_directories(candia PUBLIC ${GSL_INCLUDE_DIR})
-target_link_libraries(candia PUBLIC ${GSL_LIBRARIES})
 
 
 # compile tests as well

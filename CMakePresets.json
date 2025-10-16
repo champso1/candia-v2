@@ -28,8 +28,8 @@
             }
         },
         {
-            "name": "gcc-debug-linux",
-            "displayName": "gcc-debug-linux",
+            "name": "clang-debug-linux",
+            "displayName": "clang-debug-linux",
             "description": "Using compilers: C = clang, CXX = clang++",
             "binaryDir": "${sourceDir}/bin/${presetName}",
             "cacheVariables": {
@@ -39,8 +39,8 @@
             }
         },
         {
-            "name": "gcc-release-linux",
-            "displayName": "gcc-release-linux",
+            "name": "clang-release-linux",
+            "displayName": "clang-release-linux",
             "description": "Using compilers: C = clang, CXX = clang++",
             "binaryDir": "${sourceDir}/bin/${presetName}",
             "cacheVariables": {

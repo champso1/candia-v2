@@ -1,5 +1,4 @@
 #include <cstdlib>
-#include <iomanip>
 #include <ios>
 #include <iostream>
 #include <limits>
@@ -38,24 +37,25 @@ int main(int argc, char *argv[])
 	vector<int> ntab{};
 	
 	double temp1{};
-	int temp2;
-	
+	int temp2{};
 	string line{};
-	getline(file_stream, line);
 
+	// read in xtab array
+	getline(file_stream, line);
 	istringstream iss{line};
 	while (iss >> temp1)
 		xtab.push_back(temp1);
 
+	// read in ntab array
 	getline(file_stream, line);
 	iss = istringstream{line};
 	while (iss >> temp2)
 		ntab.push_back(temp2);
-	
+
+	// read in rest of data points
 	vector<double> X{};
 	MultiDimVector<double, 2>::type F{};
 	F.resize(13);
-
 	while (getline(file_stream, line))
 	{
 		iss = istringstream{line};
@@ -68,7 +68,7 @@ int main(int argc, char *argv[])
 		}
 	}
 
-	// must create valid final dists
+	// must create required dists from the regular ones
 	MultiDimVector<double, 2>::type dists(8, vector<double>(11, 0.0));
 	double size = ntab.size();
 	for (uint ik=0; ik<size-1; ++ik) // -1 because we don't want x=1.0x
@@ -96,11 +96,19 @@ int main(int argc, char *argv[])
 		init_pos = 2;
 		dot_pos -= 2;
 	}
-    
-	string name = filename.substr(init_pos, dot_pos) + ".tex";
 
-	print("init_pos = {0}, dot_pos = {1}\n", init_pos, dot_pos);
-	cout << "Tex file name is going to be: " << quoted(name) << '\n';
+	string basename = filename.substr(init_pos, dot_pos);
+	string name = basename + ".tex";
 	
 	DGLAPSolver::OutputLatexTable(dists, name, DGLAPSolver::SCIENTIFIC);
+	// after making the file, copy the pdf back to the main directory
+	filesystem::path pdfpath{"latex"};
+	pdfpath /= basename + ".pdf";
+	if (!filesystem::exists(pdfpath))
+	{
+		println("[ERROR] read.cpp: output pdf file \"{}\" doesnt exist...", pdfpath.string());
+		exit(EXIT_FAILURE);
+	}
+	filesystem::copy(pdfpath, filesystem::current_path());
 }
+

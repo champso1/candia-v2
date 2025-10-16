@@ -11,14 +11,11 @@
 #include <iostream>
 #include <fstream>
 
-// TODO: multithreading for the different distributions
-#include <thread>
-
 namespace Candia2
 {
 
 	DGLAPSolver::DGLAPSolver(
-		const uint order, Grid & grid, const double Qf,
+		const uint order, Grid const& grid, const double Qf,
 		const uint iterations, const uint trunc_idx,
 		std::shared_ptr<Distribution> initial_dist
 	) : _order{order},  _grid{grid}, _Qf{Qf},
@@ -208,7 +205,6 @@ namespace Candia2
 		_nff = _alpha_s.Nff(_nfi, _Qf);
 		std::cerr << "[DGLAP] Evolving to " << _nff << " flavors.\n";
 
-		_output_file_index = 1;
 		_qct = 0;
 	}
 
@@ -540,7 +536,8 @@ namespace Candia2
 				std::cerr << "[DGLAP] Evolve(): finished singlet evolution\n";
 						
 				// non-singlet sector
-				EvolveNonSinglet();
+				EvolveNonSingletThreaded();
+				// EvolveNonSinglet();
 				std::cerr << "[DGLAP] Evolve(): finished non-singlet evolution\n";
 
 				// perform the resummation to the tabulated energy value(s)
@@ -1550,11 +1547,11 @@ namespace Candia2
 
 		// shorthand
 		double r1 = _r1[_nf];
-		std::complex<double> r2 = _r2[_nf];
-		std::complex<double> r3 = _r3[_nf];
+		// std::complex<double> r2 = _r2[_nf];
+		// std::complex<double> r3 = _r3[_nf];
 		double b = _b[_nf];
 		double c = _c[_nf];
-		double gamma = (r1*r1 + r1*b + c)*_alpha_s.Beta3();
+		// double gamma = (r1*r1 + r1*b + c)*_alpha_s.Beta3();
 
 		// more shorthand
 		double beta0 = _alpha_s.Beta0();
@@ -1803,11 +1800,11 @@ namespace Candia2
 
 		// shorthand
 		double r1 = _r1[_nf];
-		std::complex<double> r2 = _r2[_nf];
-		std::complex<double> r3 = _r3[_nf];
+		// std::complex<double> r2 = _r2[_nf];
+		// std::complex<double> r3 = _r3[_nf];
 		double b = _b[_nf];
 		double c = _c[_nf];
-		double gamma = (r1*r1 + r1*b + c)*_alpha_s.Beta3();
+		// double gamma = (r1*r1 + r1*b + c)*_alpha_s.Beta3();
 
 		// more shorthand
 		double beta0 = _alpha_s.Beta0();
@@ -2075,9 +2072,6 @@ namespace Candia2
 
 	void DGLAPSolver::HeavyFlavorTreatment()
 	{
-		return;
-		// std::cerr << "[WARN] DGLAPSolver::HeavyFlavorTreatment(): NOT DOING HEAVY FLAVOR TREATMENT\n";
-		// return;
 		std::cerr << "[DGLAP] HeavyFlavorTreatment(): " << _nf+1 << "th quark mass threshold (mass "
 				  << _alpha_s.Masses(_nf+1) << ")\n";
 
@@ -2130,19 +2124,6 @@ namespace Candia2
 		}
 	}
 
-
-
-
-	void DGLAPSolver::_mt_EvolveDistribution_NS(uint j)
-	{
-		UNUSED(j);
-		
-	}
-
-	void DGLAPSolver::_mt_EvolveDistribution_S(uint j)
-	{
-		UNUSED(j);
-	}
 	
 	
 } // namespace Candia2
