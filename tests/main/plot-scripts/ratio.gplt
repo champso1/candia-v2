@@ -1,0 +1,31 @@
+set terminal pdfcairo enhanced color notransparent
+
+set border lw 2
+set size ratio 0.65
+
+set title "Ratio of N^{3}LO to NNLO"
+set output "ratio.pdf"
+set ylabel "f^{N3LO}/f^{NNLO}"
+set xlabel "x"
+
+set logscale x
+set xrange [1e-5:0.99]
+set yrange [0.9:1.1]
+
+set format x "%.0e"
+
+set style line 99 lt 1 lw 2 dt 1
+
+array dists[9]
+dists[1] = "xg"
+dists[2] = "xu"
+dists[3] = "xu'"
+dists[4] = "xd"
+dists[5] = "xd'"
+dists[6] = "xs"
+dists[7] = "xs'"
+dists[8] = "xc+"
+dists[9] = "xb+"
+
+
+plot for [i=2:10] 'ratios.dat' using 1:i with lines title dists[i-1]

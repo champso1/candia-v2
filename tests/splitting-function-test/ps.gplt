@@ -1,6 +1,6 @@
-set terminal pngcairo enhanced color notransparent
+set terminal pdfcairo enhanced color notransparent
 
-set output "ps.png"
+set output "ps.pdf"
 set ylabel "xP_{ps}(x)"
 set xlabel "x"
 

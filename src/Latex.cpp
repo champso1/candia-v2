@@ -173,8 +173,8 @@ namespace Candia2
 			latex_file << scientificToLatex(x, 1) << " & "; // always scientific
 				
 			for (uint i=0; i<dists.size()-1; ++i)
-				latex_file << format_func(dists.at(i).at(ix), 3) << " & ";
-			latex_file << format_func(dists.at(7).at(ix), 3);
+				latex_file << format_func(dists.at(i).at(ix), 4) << " & ";
+			latex_file << format_func(dists.at(7).at(ix), 4);
 			
 			latex_file << " \\\\\n";
 		}

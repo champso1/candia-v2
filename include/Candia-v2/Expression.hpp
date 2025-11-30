@@ -10,25 +10,22 @@ namespace Candia2
 	 */
 	class Expression
 	{
-	public:
-		/** @name Constructors/destructors
-		 */
-		///@{
+	protected:
 		Expression() = default;
-		~Expression() = default;
-		///@}
+	public:
+		virtual ~Expression() = default;
 		
 		/** @brief Regular part of the expression
 		 */
-		virtual double Regular(const double x) const;
+		virtual double Regular(double x) const;
 
 		/** @brief Singular (plus-distribution) part of the expression
 		 */
-		virtual double Plus(const double x) const;
+		virtual double Plus(double x) const;
 
 		/** @brief Delta function part of the distribution
 		 */
-		virtual double Delta(const double x) const;
+		virtual double Delta(double x) const;
 		
 	};
 	

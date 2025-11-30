@@ -3,6 +3,7 @@
 
 #include <algorithm>
 #include <cstdlib>
+#include <functional>
 #include <random>
 #include <iostream>
 #include <iterator>
@@ -15,12 +16,17 @@
 namespace Candia2
 {
 	Grid::Grid(std::vector<double> const& xtab, const uint nx)
-		: _points(nx), _Xi(GAUSS_POINTS), _Wi(GAUSS_POINTS)
+		: _points(nx), 
+		  _Xi(GAUSS_POINTS), _Wi(GAUSS_POINTS),
+		  _Xi_low(GAUSS_POINTS), _Xi_high(GAUSS_POINTS),
+		  _Wi_low(GAUSS_POINTS), _Wi_high(GAUSS_POINTS)
 	{
 		InitGrid(xtab, nx);
-		InitGauLeg();
+		InitGauLeg(0.0, 1.0, _Xi, _Wi);
+		InitGauLeg(0.0, 0.9, _Xi_low, _Wi_low);
+		InitGauLeg(0.9, 1.0, _Xi_high, _Wi_high);
 	}
-	
+
 	void Grid::InitGrid(std::vector<double> const& xtab, const uint nx)
 	{
 		std::cerr << "[GRID] Using InitGrid()\n";
@@ -105,6 +111,67 @@ namespace Candia2
 
 		_points.at(nx-1) = 1.0;
 		_ntab = ntab;
+
+		// just to be safe, lets print everything out
+		/*
+		std::cout << "Ntab: ";
+		for (const int n : _ntab)
+			std::cout << n << ' ';
+		std::cout << '\n';
+		std::cout << "Corresponding xtab: ";
+		for (const int n : _ntab)
+			std::cout << _points[n] << ' ';
+		std::cout << std::endl;
+		std::cout << "All grid values: [";
+		for (const double x : _points)
+			std::cout << "  " << x << '\n';
+		std::cout << "]\n";
+		*/
+		return;
+
+		// at this point we have all of our grid points (obviously)
+		// but I want to pad the >0.5 range a bit more
+		// 10% of total grid points, ill add to >0.5 randomly,
+		// then do it again for >0.9, so a total of 120% of the
+		// asked-for grid points
+		std::random_device rd{};
+		std::mt19937 gen{rd()};
+		std::uniform_real_distribution<> dis1(0.5, 1.0);
+		std::uniform_real_distribution<> dis2(0.9, 1.0);
+		auto rand1 = std::bind(dis1, gen);
+		auto rand2 = std::bind(dis2, gen);
+		uint num_new_points = _points.size()/10;
+
+		std::vector<double> new_points1{}, new_points2{};
+		for (uint i=0; i<num_new_points; ++i)
+		{
+			new_points1.emplace_back(rand1());
+			new_points2.emplace_back(rand2());
+		}
+
+		std::set<double> points_set{_points.begin(), _points.end()};
+		points_set.insert(new_points1.begin(), new_points1.end());
+		points_set.insert(new_points2.begin(), new_points2.end());
+		_points = std::vector<double>{points_set.begin(), points_set.end()};
+
+		// must recreate ntab
+		_ntab = std::vector<int>{};
+		for (const double x : xtab)
+		{
+			auto it = std::ranges::lower_bound(_points, x);
+			if (it != _points.end() && std::abs(*it - x) < 1e-14)
+				_ntab.emplace_back(std::distance(_points.begin(), it));
+		}
+
+		// just to be safe, lets print everything out
+		std::cout << "Ntab: ";
+		for (const int n : _ntab)
+			std::cout << n << ' ';
+		std::cout << '\n';
+		std::cout << "Corresponding xtab: ";
+		for (const int n : _ntab)
+			std::cout << _points[n] << ' ';
+		std::cout << std::endl;
 	}
 
 	void Grid::InitGrid2(std::vector<double> const& xtab, const uint nx)
@@ -188,7 +255,50 @@ namespace Candia2
 		std::cout << "]\n";
 	}
 
-	void Grid::InitGauLeg()
+	void Grid::InitGrid3(std::vector<double> const& xtab, uint nx)
+	{
+		std::cerr << "[GRID] Using InitGrid3()\n";
+		
+		std::vector<double> points(nx-xtab.size()+1);
+		const double xmin = xtab.front();
+		const double xmax = xtab.back();
+		const double ymin = std::log10(xmin);
+		const double ymax = std::log10(xmax);
+		for (uint i=0; i<nx-xtab.size()+1; ++i)
+		{
+			const double u = static_cast<double>(i)/(static_cast<double>(nx-xtab.size()+1) - 1.0);
+			// double _y = ymin + (ymax-ymin)*0.5*(1.0 - std::cos(PI*u));
+			double _y = ymin + (ymax-ymin)*u;
+			points[i] = std::pow(10.0, _y);
+		}
+
+		// insert the tabulated points
+		// make it a set to avoid duplicate values
+		// then replace the original points array with the new one
+		std::ranges::sort(points);
+		std::set<double> set{points.begin(), points.end()};
+		set.insert(xtab.begin(), xtab.end());
+		points = std::vector<double>(set.begin(), set.end());
+
+		// fix front and back
+		if (points.front() != xtab.front())
+			points.front() = xtab.front();
+		if (points.back() != xtab.back())
+			points.back() = xtab.back();
+
+		_points = points;
+
+		// build the ntab array
+		_ntab = std::vector<int>{};
+		for (const double x : xtab)
+		{
+			auto it = std::ranges::lower_bound(_points, x);
+			if (it != _points.end() && std::abs(*it - x) < 1e-14)
+				_ntab.emplace_back(std::distance(_points.begin(), it));
+		}
+	}
+
+	void Grid::InitGauLeg(double x1, double x2, std::vector<double> & Xi, std::vector<double> & Wi)
 	{
 		const double eps = 3.0e-11; // relative precision
 
@@ -196,8 +306,8 @@ namespace Candia2
 		uint n = GAUSS_POINTS; // simpler to type
 		double N = static_cast<double>(n);
 		uint m = (n+1)/2;
-		double x2 = 1.0;
-		double x1 = 0.0;
+		// double x2 = 1.0;
+		// double x1 = 0.0;
 		double xm = 0.5*(x2+x1);
 		double xl = 0.5*(x2-x1);
 
@@ -238,10 +348,10 @@ namespace Candia2
 				exit(EXIT_FAILURE);
 			}
 
-			_Xi[i-1] = xm - xl*z;
-			_Xi[n-i] = xm + xl*z;
-			_Wi[i-1] = 2.0*xl/((1.0 - z*z)*pp*pp);
-			_Wi[n-i] = _Wi[i-1];
+			Xi[i-1] = xm - xl*z;
+			Xi[n-i] = xm + xl*z;
+			Wi[i-1] = 2.0*xl/((1.0 - z*z)*pp*pp);
+			Wi[n-i] = Wi[i-1];
 		}
 	}
 
@@ -275,6 +385,7 @@ namespace Candia2
 
 		double const* xa = &(_points.data()[k]);
 		double const* ya = &(yy.data()[k]);
+		
 		std::vector<double> c(n, 0.0);
 		std::vector<double> d(n, 0.0);
 
@@ -323,113 +434,67 @@ namespace Candia2
 
 	double Grid::Convolution(std::vector<double> const& A,
 							 std::shared_ptr<Expression> E,
-							 uint k)
+							 uint k, bool highorder_conv)
 	{
 		double x = _points.at(k);
 		double logx =  std::log(x);
 
 		double res = (E->Plus(1.0)*std::log1p(-x) + E->Delta(1.0)) * A.at(k);
 
-		for (uint i=0; i<GAUSS_POINTS; i++)
+		if (!highorder_conv)
 		{
-		    double y = _Xi[i];
-			double w = _Wi[i];
+			// ordinary convolution with one range, (1e-7,1]
+			for (uint i=0; i<GAUSS_POINTS; i++)
+			{
+				double y = _Xi[i];
+				double w = _Wi[i];
 
-			double a = std::pow(x, 1.0-y);
-			double b = std::pow(x, y);
+				double a = std::pow(x, 1.0-y);
+				double b = std::pow(x, y);
 
-			double interp1 = Interpolate(A, b);
-			double interp2 = Interpolate(A, a);
+				double interp1 = Interpolate(A, b);
+				double interp2 = Interpolate(A, a);
 
-			res -= w*logx*a*E->Regular(a)*interp1;
-			res -= w*logx*b*(E->Plus(b)*interp2 - E->Plus(1.0)*A.at(k))/(1.0-b);
+				res -= w*logx*a*E->Regular(a)*interp1;
+				res -= w*logx*b*(E->Plus(b)*interp2 - E->Plus(1.0)*A.at(k))/(1.0-b);
+			}
 		}
-		
+		else
+		{
+			// low convolution (<0.9)
+			for (uint i=0; i<GAUSS_POINTS; i++)
+			{
+				double y = _Xi_low[i];
+				double w = _Wi_low[i];
+
+				double a = std::pow(x, 1.0-y);
+				double b = std::pow(x, y);
+
+				double interp1 = Interpolate(A, b);
+				double interp2 = Interpolate(A, a);
+
+				res -= w*logx*a*E->Regular(a)*interp1;
+				res -= w*logx*b*(E->Plus(b)*interp2 - E->Plus(1.0)*A.at(k))/(1.0-b);
+			}
+
+			// high convolution (>0.9)
+			for (uint i=0; i<GAUSS_POINTS; i++)
+			{
+				double y = _Xi_high[i];
+				double w = _Wi_high[i];
+
+				double a = std::pow(x, 1.0-y);
+				double b = std::pow(x, y);
+
+				double interp1 = Interpolate(A, b);
+				double interp2 = Interpolate(A, a);
+
+				res -= w*logx*a*E->Regular(a)*interp1;
+				res -= w*logx*b*(E->Plus(b)*interp2 - E->Plus(1.0)*A.at(k))/(1.0-b);
+			}
+		}
 		return res;
 	}
 
-
-
-
-	double FunctionGrid::Interpolate(FunctionPart part, const double x) const
-	{
-		const static int n = 2*INTERP_POINTS;
-		int ns=0;
-		double y, den, dif, dift, ho, hp, w;
-
-		int k = static_cast<int>(_grid.InterpFindIdx(x));
-
-		double const* xa = &(_grid.Points().data()[k]);
-		double const* ya = &(Y(part).data()[k]);
-
-		std::vector<double> c(n, 0.0);
-		std::vector<double> d(n, 0.0);
-
-		dif = std::abs(x - xa[0]);
-
-		for (int i=0; i<n; i++)
-		{
-			if ((dift = std::abs(x - xa[i])) < dif)
-			{
-				ns = i;
-				dif = dift;
-			}
-			c[i] = ya[i];
-			d[i] = ya[i];
-		}
-
-		y = ya[ns--];
-
-		for (int m=1; m<n; m++)
-		{
-		    for (int i=0; i<n-m; i++)
-			{
-				ho = xa[i] - x;
-				hp = xa[i+m] - x;
-				w = c[i+1] - d[i];
-
-				if ((den = ho-hp) == 0.0)
-				{
-					std::cerr << "[GRID] Interpolate(): found a denominator equal to 0.0.\n";
-					exit(1);
-				}
-
-				den = w/den;
-				d[i] = hp*den;
-				c[i] = ho*den;
-			}
-
-			y += (2*ns < (n-1-m) ? c[ns+1] : d[ns--]);
-		}
-
-		return y;
-	}
-
-	double FunctionGrid::Convolution(std::vector<double> A, uint k) const
-	{
-		double x = _grid[k];
-		double logx =  std::log(x);
-
-		double eplus = Y(PLUS, 1.0);
-		double edelta = Y(DELTA, 1.0);
-		double res = (eplus*std::log1p(-x) + edelta) * A.at(k);
-
-		for (uint i=0; i<GAUSS_POINTS; i++)
-		{
-		    double y = _grid.Abscissae(i);
-			double w = _grid.Weights(i);
-
-			double a = std::pow(x, 1.0-y);
-			double b = std::pow(x, y);
-
-			double interp1 = _grid.Interpolate(A, b);
-			double interp2 = _grid.Interpolate(A, a);
-
-			res -= w*logx*a*Interpolate(REGULAR, a)*interp1;
-			res -= w*logx*b*(Interpolate(PLUS, b)*interp2 - eplus*A.at(k))/(1.0-b);
-		}
-		
-		return res;
-	}
 
 }

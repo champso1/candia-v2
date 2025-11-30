@@ -1,8 +1,7 @@
 add_subdirectory(main)
 
-option(BUILD_ALL_TESTS "Build all tests, i.e. those other than the main" off)
-if(BUILD_ALL_TESTS)
-  add_subdirectory(candiav1-comparison)
-  add_subdirectory(splitting-function-test)
-  add_subdirectory(plot-generation)
-endif()
+add_subdirectory(function-grid)
+# add_subdirectory(splitting-function-test)
+# add_subdirectory(grid)
+# add_subdirectory(candiav1-comparison)
+# add_subdirectory(plot-generation)

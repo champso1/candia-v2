@@ -6,8 +6,11 @@
 
 namespace Candia2
 {
-
-	double A2ns::Regular(const double x) const
+	// sensible defaults and to provide a definition
+	double OpMatElem::_lm = 0.0;
+	uint OpMatElem::_nf = 4;
+	
+  	double A2ns::Regular(const double x) const
 	{
 		double L = std::log(x);
 
@@ -75,9 +78,6 @@ namespace Candia2
 		return CF*TR*((1.0+x)*(32.0*S12(1.0-x) + 16.0*L*Li2(1.0-x) - 16.0*Zeta2*L - 4.0/3.0*L*L*L) + (32.0/(3.0*x) + 8.0 - 8.0*x - 32.0/3.0*x*x)*Li2(1.0-x) + (-32.0/(3.0*x) - 8.0 + 8.0*x + 32.0/3.0*x*x)*Zeta2 + (2.0 + 10.0*x + 16.0/3.0*x*x)*L*L - (56.0/3.0 + 88.0/3.0*x + 448.0/9.0*x*x)*L - 448.0/(27.0*x) - 4.0/3.0 - 124.0/3.0*x + 1600.0/27.0*x*x);
 	}
 
-
-
-
     double A2hg::Regular(const double x) const
 	{
 		double L = std::log(x);
@@ -87,5 +87,4 @@ namespace Candia2
 
 		return CF*TR*((1.0 - 2.0*x + 2.0*x*x)*(8.0*Zeta3 + 4.0/3.0*M*M*M - 8.0*M*Li2(1.0-x) + 8.0*Zeta2*L - 4.0*L*M*M + 2.0/3.0*L*L*L - 8.0*L*Li2(1.0-x) + 8.0*Li3(1.0-x) - 24.0*S) + x*x*(-16.0*Zeta2*L + 4.0/3.0*L*L*L + 16.0*L*Li2(1.0-x) + 32.0*S) - (4.0 + 96.0*x - 64.0*x*x)*Li2(1.0-x) - (4.0 - 48.0*x + 40.0*x*x)*Zeta2 - (8.0 + 48.0*x - 24.0*x*x)*L*M + (4.0 + 8.0*x - 12.0*x*x)*M*M - (1.0 + 12.0*x - 20.0*x*x)*L*L - (52.0*x - 48.0*x*x)*M - (16.0 + 18.0*x + 48.0*x*x)*L + 26.0 - 82.0*x + 80.0*x*x) + NC*TR*((1.0 - 2.0*x + 2.0*x*x)*(-4.0/3.0*M*M*M + 8.0*M*Li2(1.0-x) - 8.0*Li3(1.0-x))+(1.0 + 2.0*x + 2.0*x*x)*(-8.0*Zeta2*P - 16.0*P*Li2(-x) - 8.0*L*P*P + 4.0*L*L*P + 8.0*L*Li2(-x) - 8.0*Li3(-x) - 16.0*S12(-x)) + (16.0 + 64.0*x)*(2.0*S + L*Li2(1.0-x)) - (4.0/3.0 + 8.0/3.0*x)*L*L*L + (8.0 - 32.0*x + 16.0*x*x)*Zeta3 - (16.0 + 64.0*x)*Zeta2*L + (16.0*x + 16.0*x*x)*(Li2(-x) + L*P) + (32.0/(3.0*x) + 12.0 + 64.0*x - 272.0/3.0*x*x)*Li2(1.0-x) - (12.0 + 48.0*x - 260.0/3.0*x*x + 32.0/(3.0*x))*Zeta2 - 4.0*x*x*L*M - (2.0 + 8.0*x - 10.0*x*x)*M*M + (2.0 + 8.0*x + 46.0/3.0*x*x)*L*L + (4.0 + 16.0*x - 16.0*x*x)*M - (56.0/3.0 + 172.0/3.0*x + 1600.0/9.0*x*x)*L - 448.0/(27.0*x) - 4.0/3.0 - 628.0/3.0*x + 6352.0/27.0*x*x);
 	}
-	
 };

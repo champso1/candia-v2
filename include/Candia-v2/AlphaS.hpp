@@ -8,8 +8,7 @@
 #define __ALPHAS_HPP
 
 #include <array>
-#include <fstream>
-#include <string>
+#include <cmath>
 
 #include "Candia-v2/Common.hpp"
 
@@ -31,6 +30,8 @@ namespace Candia2
 	    double _beta0{}, _beta1{}, _beta2{}, _beta3{};
 		double _beta{};
 		///@}
+
+		double _L{}; //!< log (mu_R/mu_F)
 
 		// TODO: is 8 okay for this? see AlphaS.cpp,
 		// there was a loop over the indices which was inclusive on 8
@@ -61,8 +62,9 @@ namespace Candia2
 		 *  @param masses: list of quark masses
 		 */
 	    AlphaS(const uint order, const double Q0, const double alpha0,
-			   std::array<double,8> const& masses)
-			: _order(order), _Q0(Q0), _alpha0(alpha0), _masses(masses)
+			std::array<double,8> const& masses,
+			double log_mur2_muf2)
+			: _order(order), _Q0(Q0), _alpha0(alpha0), _L{log_mur2_muf2}, _masses(masses)
 		{ }
 		///@}
 
@@ -155,13 +157,13 @@ namespace Candia2
 		 *  @param alpha: current \f$\alpha_s\f$
 		 *  @return \f$\alpha_s\f$ in the next threshold
 		 */
-		double PostMatch(const double alpha);
+		double PostMatch(const double alpha, const uint nf);
 		
 		/** @brief Calculates \f$\alpha_s\f$ in the previous threshold
 		 *  @param alpha: current \f$\alpha_s\f$
 		 *  @return \f$\alpha_s\f$ in the previous threshold
 		 */
-		double PreMatch(const double alpha);
+		double PreMatch(const double alpha, const uint nf);
 
 		
 		/** @name The \f$\beta\f$ coefficients

@@ -21,34 +21,28 @@ namespace Candia2
 	protected:
 		static uint _nf; //!< number of active/currently massless flavors
 		static double _beta0; //!< beta0 coefficient (for P0gg)
+		static double _kr; //!< log of mu_f/mu_r
+
+		SplittingFunction() = default;
 
 		// static HPLog _hplog; //!< hplog interface object
 	public:
-		/** @name Constructors/destructors
-		 */
-		///@{
-		/** @brief Constructs a generic splitting function.
-		 *  @param use_cache: flag for whether to cache values upon creation
-		 */
-		SplittingFunction(bool use_cache = false) { UNUSED(use_cache); }
-		///@}
+		virtual ~SplittingFunction() = default;
 
 		/** @name Setters/getters
 		 */
 		///@{
-		/** @brief Returns nf (a copy)
-		 */
 		inline static uint Nf() { return _nf; }
-
-		/** @brief returns beta0 (a copy)
-		 */
 		inline static double Beta0() { return _beta0; }
+		inline static double kr() { return _kr; }
+		inline static void kr(double kr) { _kr = kr; }
+		///@}
+		
 		
 		/** @brief Updates the stored value of nf and associated beta0
 		 */
 		inline static void Update(const uint nf, const double beta0)
 		{ _nf = nf; _beta0 = beta0; }
-		///@}
 		
 
 	protected:

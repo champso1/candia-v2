@@ -95,6 +95,14 @@ namespace Candia2
 	typedef MultiDimVector<double,2>::type Vector2; //!< 2-dim vector
 	typedef MultiDimVector<double,3>::type Vector3; //!< 3-dim vector
 	typedef MultiDimVector<double,4>::type Vector4; //!< 4-dim vector
+
+	template <typename T>
+	using Vec = std::vector<T>;
+	template <typename T>
+	using Vec2 = Vec<Vec<T>>;
+	template <typename T>
+	using Vec3 = Vec<Vec<Vec<T>>>;
+	
 	///@}
 
 

@@ -32,10 +32,15 @@
             "displayName": "clang-debug-linux",
             "description": "Using compilers: C = clang, CXX = clang++",
             "binaryDir": "${sourceDir}/bin/${presetName}",
+            "generator": "Ninja",
             "cacheVariables": {
                 "CMAKE_C_COMPILER": "clang",
                 "CMAKE_CXX_COMPILER": "clang++",
-                "CMAKE_BUILD_TYPE": "Debug"
+                "CMAKE_Fortran_COMPILER": "gfortran",
+                "CMAKE_BUILD_TYPE": "Debug",
+
+                "CMAKE_C_FLAGS_INIT": "",
+                "CMAKE_CXX_FLAGS_INIT": "-stdlib=libstdc++"
             }
         },
         {
@@ -43,10 +48,75 @@
             "displayName": "clang-release-linux",
             "description": "Using compilers: C = clang, CXX = clang++",
             "binaryDir": "${sourceDir}/bin/${presetName}",
+            "generator": "Ninja",
             "cacheVariables": {
                 "CMAKE_C_COMPILER": "clang",
                 "CMAKE_CXX_COMPILER": "clang++",
-                "CMAKE_BUILD_TYPE": "Release"
+                "CMAKE_Fortran_COMPILER": "gfortran",
+                "CMAKE_BUILD_TYPE": "Release",
+
+                "CMAKE_C_FLAGS_INIT": "",
+                "CMAKE_CXX_FLAGS_INIT": "-stdlib=libstdc++"
+            }
+        },
+		{
+            "name": "gcc-release-linux",
+            "displayName": "gcc-release-linux",
+            "description": "Using compilers: C = gcc, CXX = g++",
+            "binaryDir": "${sourceDir}/bin/${presetName}",
+            "generator": "Ninja",
+            "cacheVariables": {
+                "CMAKE_C_COMPILER": "gcc",
+                "CMAKE_CXX_COMPILER": "g++",
+                "CMAKE_Fortran_COMPILER": "gfortran",
+                "CMAKE_BUILD_TYPE": "Release",
+
+                "CMAKE_C_FLAGS_INIT": ""
+            }
+        },
+		{
+            "name": "gcc-debug-linux",
+            "displayName": "gcc-debug-linux",
+            "description": "Using compilers: C = gcc, CXX = g++",
+            "binaryDir": "${sourceDir}/bin/${presetName}",
+            "generator": "Ninja",
+            "cacheVariables": {
+                "CMAKE_C_COMPILER": "gcc",
+                "CMAKE_CXX_COMPILER": "g++",
+                "CMAKE_Fortran_COMPILER": "gfortran",
+                "CMAKE_BUILD_TYPE": "Debug",
+
+                "CMAKE_C_FLAGS_INIT": ""
+            }
+        },
+		{
+            "name": "gcc-debug-win",
+            "displayName": "gcc-debug-win",
+            "description": "Using compilers: C = gcc, CXX = g++",
+            "binaryDir": "${sourceDir}/bin/${presetName}",
+            "generator": "Ninja",
+            "cacheVariables": {
+                "CMAKE_C_COMPILER": "gcc.exe",
+                "CMAKE_CXX_COMPILER": "g++.exe",
+                "CMAKE_Fortran_COMPILER": "gfortran.exe",
+                "CMAKE_BUILD_TYPE": "Debug",
+
+                "CMAKE_C_FLAGS_INIT": ""
+            }
+        },
+		{
+            "name": "gcc-release-win",
+            "displayName": "gcc-release-win",
+            "description": "Using compilers: C = gcc, CXX = g++",
+            "binaryDir": "${sourceDir}/bin/${presetName}",
+            "generator": "Ninja",
+            "cacheVariables": {
+                "CMAKE_C_COMPILER": "gcc",
+                "CMAKE_CXX_COMPILER": "g++",
+                "CMAKE_Fortran_COMPILER": "gfortran",
+                "CMAKE_BUILD_TYPE": "Release",
+
+                "CMAKE_C_FLAGS_INIT": ""
             }
         }
     ]

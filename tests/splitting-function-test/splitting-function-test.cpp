@@ -11,10 +11,10 @@ using namespace std;
 
 int main()
 {
-	vector<double> xtab{1e-4, 1e-3, 1e-2, 0.1, 0.3, 0.5, 0.7, 0.9, 1.0};
-	Candia2::Grid grid(xtab, 401);
+	vector<double> xtab{1e-5, 1e-4, 1e-3, 1e-2, 0.1, 0.3, 0.5, 0.7, 0.9, 1.0};
+	Candia2::Grid grid(xtab, 10000);
 
-	Candia2::SplittingFunction::Update(4, 8.3333333);
+	Candia2::SplittingFunction::Update(4, 8.3333333333333);
 
 	Candia2::P1qq p0ps{};
 	Candia2::P1nsm p1ps{};
@@ -38,7 +38,7 @@ int main()
 	std::vector<double> p3nsm_vals{}, p3nsp_vals{};
 	std::vector<double> p3nsm_a1_vals{}, p3nsm_a2_vals{}, p3nsp_a1_vals{}, p3nsp_a2_vals{};
 
-	for (uint k=0; k<=grid.Size()-1; k++)
+	for (uint k=0; k<grid.Size(); k++)
 	{
 		double x = grid.At(k);
 		x_vals.push_back(x);
@@ -66,9 +66,9 @@ int main()
 	filesystem::path outfile_path{"ps.dat"};
 	ofstream outfile{outfile_path};
 	if (!outfile)
-		exit(5);
+		exit(EXIT_FAILURE);
 
-    for (uint k=0; k<=grid.Size()-1; k++)
+    for (uint k=0; k<grid.Size(); k++)
 	{
 	    outfile << scientific << setprecision(9);
 		outfile << x_vals[k] << '\t';
@@ -89,7 +89,7 @@ int main()
 	if (!outfile)
 		exit(5);
 
-    for (uint k=0; k<=grid.Size()-1; k++)
+    for (uint k=0; k<grid.Size(); k++)
 	{
 	    outfile << scientific << setprecision(9);
 		outfile << x_vals[k] << '\t';
