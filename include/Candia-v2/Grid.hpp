@@ -25,34 +25,33 @@ namespace Candia2
 		gauleg_type _Xi2{}, _Wi2{};
 		gauleg_type _Xi3{}, _Wi3{};
 	public:
-
 		Grid() = delete;
 		Grid(std::vector<double> const& xtab, uint nx, int grid_fill_type=1);
 		~Grid() = default;
 
 
-		inline grid_type const& Points() const { return _points; }
-		inline double At(const uint idx) const { return _points.at(idx); };
+		inline grid_type const& points() const { return _points; }
+		inline double at(const uint idx) const { return _points.at(idx); };
 		inline double operator[](const uint idx) const { return _points.at(idx); }
 
-		inline gauleg_type const& Abscissae() const { return _Xi; }
-		inline double Abscissae(uint idx) const { return _Xi[idx]; }
-		inline gauleg_type const& Weights() const { return _Wi; }
-		inline double Weights(uint idx) const { return _Wi[idx]; }
+		inline gauleg_type const& abscissae() const { return _Xi; }
+		inline double abscissae(uint idx) const { return _Xi[idx]; }
+		inline gauleg_type const& weights() const { return _Wi; }
+		inline double weights(uint idx) const { return _Wi[idx]; }
 
-		inline uint Size() const { return _points.size(); }
+		inline uint size() const { return _points.size(); }
 
-		inline ntab_type const& Ntab() const { return _ntab; }
-		inline int const& Ntab(uint idx) const { return _ntab.at(idx); }
-		inline ntab_type& Ntab() { return _ntab; }
-		inline int& Ntab(uint idx) { return _ntab.at(idx); }
+		inline ntab_type const& ntab() const { return _ntab; }
+		inline int const& ntab(uint idx) const { return _ntab.at(idx); }
+		inline ntab_type& ntab() { return _ntab; }
+		inline int& ntab(uint idx) { return _ntab.at(idx); }
 
 		inline grid_type::const_iterator begin() const { return _points.begin(); }
 		inline grid_type::iterator begin() { return _points.begin(); }
 		inline grid_type::const_iterator end() const { return _points.end(); }
 		inline grid_type::iterator end() { return _points.end(); }
 
-		inline gauleg_type const& Abscissae(int idx) const
+		inline gauleg_type const& abscissae(int idx) const
 		{
 			switch (idx)
 			{
@@ -62,7 +61,7 @@ namespace Candia2
 			}
 			return _Xi;
 		}
-		inline gauleg_type const& Weights(int idx) const
+		inline gauleg_type const& weights(int idx) const
 		{
 			switch (idx)
 			{
@@ -74,21 +73,21 @@ namespace Candia2
 		}
 
 
-		double Interpolate(grid_type const& y, const double x) const;
-		double Convolution(
+		double interpolate(grid_type const& y, const double x) const;
+		double convolution(
 			grid_type const& A,
 			std::shared_ptr<Expression> P,
 			uint k);
 
 	private:
-		void InitGrid(grid_type const& xtab, const uint nx);
-		void InitGrid2(grid_type const& xtab, const uint nx);
-		void InitGrid3(grid_type const& xtab, const uint nx);
-		void InitGauLeg(double x1, double x2, std::vector<double> & Xi, std::vector<double> & Wi);
+		void initGrid(grid_type const& xtab, const uint nx);
+		void initGrid2(grid_type const& xtab, const uint nx);
+		void initGrid3(grid_type const& xtab, const uint nx);
+		void initGauLeg(double x1, double x2, std::vector<double> & Xi, std::vector<double> & Wi);
 
 
 	public:
-		uint InterpFindIdx(double x) const;
+		uint interpFindIdx(double x) const;
 	};
 }
 

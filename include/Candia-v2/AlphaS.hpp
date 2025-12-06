@@ -1,181 +1,65 @@
-/** @file
- *
- *  Contains information related to the strong coupling constant \f$\alpha_s\f$
- *  and the coefficients of the \f$\beta\f$-function.
- */
-
 #ifndef __ALPHAS_HPP
 #define __ALPHAS_HPP
 
 #include <array>
-#include <cmath>
 
 #include "Candia-v2/Common.hpp"
 
 namespace Candia2
 {
 
-	/** Class for handling the calculation and matching conditions
-	 *  for the QCD strong coupling constant.
-	 */
 	class AlphaS
 	{
 	private:
 		uint _order{}; //!< Perturbative order.
 		double _Q0{}, _alpha0{}; //!< Initial value of \f$\alpha_s\f$ at Q0
 
-		/** @name Stored values of beta coefficients/values
-		 */
-		///@{
 	    double _beta0{}, _beta1{}, _beta2{}, _beta3{};
-		double _beta{};
-		///@}
-
 		double _L{}; //!< log (mu_R/mu_F)
 
-		// TODO: is 8 okay for this? see AlphaS.cpp,
-		// there was a loop over the indices which was inclusive on 8
-		// raising an error (only in Debug mode though...)
 		std::array<double, 8> _masses{}; //!< Values of quark masses.
-
-		/** @name Values of \f$\alpha_s\f$ pre- and post-threshold.
-		 */
-		///@{
 		std::array<double, 8> _pre{}, _post{};
-		///@}
-
-		// static const std::string DEBUG_FILE_PATH; //!< default debug file path
-		                                          //!< defined in AlphaS.cpp
-		// std::ofstream _debug_file{}; //!< debug file
-
 	public:
-
-		/** @name Constructors/destructors
-		 */
-		///@{
-		AlphaS() = default; //!< default constructor
-
-		/** @brief AlphaS main constructor
-		 *  @param order: perturbative order
-		 *  @param Q0: initial factorization scale
-		 *  @param alpha0: initial value of \f$\alpha_s\f$ at Q0
-		 *  @param masses: list of quark masses
-		 */
-	    AlphaS(const uint order, const double Q0, const double alpha0,
+		AlphaS() = default;
+	    AlphaS(
+			uint order, double Q0, double alpha0,
 			std::array<double,8> const& masses,
 			double log_mur2_muf2)
-			: _order(order), _Q0(Q0), _alpha0(alpha0), _L{log_mur2_muf2}, _masses(masses)
-		{ }
-		///@}
+		  : _order{order}, _Q0{Q0}, _alpha0{alpha0}, _L{log_mur2_muf2}, _masses{masses}
+		{}
 
-		
-		/** @brief getter for perturbative order
-		 *  @return the perturbative order
-		 */
-		inline uint Order() const
-		{ return _order; }
-		
-		/** @brief Getter for mass corresponding to flavor @a nf
-		 */
-		double Masses(const uint nf) const;
-
-		/** @brief determines the number of flavors to evolve too,
-		 *  and updates the mass array accordingly
-		 *  @param nfi: the initial number of massless flavors
-		 *  @param Qf: the final energy to evolve to
-		 */
-		uint Nff(const uint nfi, const double Qf);
+		inline uint order() const { return _order; }
+		double masses(uint nf) const;
+		uint nff(uint nfi, double Qf);
 	    
-		
-		/** @brief Calculates the value of the beta function
-		 *  @param alpha: current value of \f$\alpha_s\f$
-		 *  @return The value of the beta function
-		 */
-		double BetaFn(const double alpha) const;
+		double betaFn(double alpha) const;
 
-
-		/** @name The \f$\beta\f$-coefficients
-		 *
-		 *  These function simple return the already-calculated coeffs
-		 *  These are updated by calling @a Update with a new
-		 *  number of massless flavors
-		 */
-	    ///@{
-		inline double Beta0() const { return _beta0; };
-		inline double Beta1() const { return _beta1; };
-		inline double Beta2() const { return _beta2; };
-		inline double Beta3() const { return _beta3; };
-		///@}
-
-
-
+		inline double beta0() const { return _beta0; };
+		inline double beta1() const { return _beta1; };
+		inline double beta2() const { return _beta2; };
+		inline double beta3() const { return _beta3; };
 	public:
-		
-		/** @name threshold value computation
-		 */
-		///@{
-		/** @brief Calculates all threshold values of \f$\alpha_s\f$
-		 *  @param Qf: the final energy/factorization scale
-		 */
-		void CalculateThresholdValues(const double Qf);
-		
-		
-		/** @brief returns pre-match value for @a nf
-		 */
-		double Pre(const uint nf) const;
 
-		/** @brief returns post-match value for @a nf
-		 */
-		double Post(const uint nf) const;
-		///@}
+		void calculateThresholdValues(double Qf);
+		double pre(uint nf) const;
+		double post(uint nf) const;
 
-		
-		/** @brief Calculates the value of \f$\alpha_s\f$ at scale @a Qf given \f$\alpha_0\f$ at scale @a Q0
-		 *
-		 *  Utilizes an exact solution of the beta function at leading-order,
-		 *  otherwise uses a fourth-order Runge-Kutta method.
-		 *
-		 *  @param Q0: the initial scale
-		 *  @param Qf: the desired final scale
-		 *  @param alpha0: the value of \f$\alpha_s\f$ at @a Q0
-		 *  @return \f$\alpha_s\f$
-		 */
-		double Evaluate(const double Q0, const double Qf,
-						const double alpha0) const;
+		double evaluate(
+			double Q0, double Qf,
+			double alpha0) const;
 
-
-		/** @brief Updates beta coefficients with new @a nf
-		 */
-		void Update(const uint nf);
-
+		void update(uint nf);
 
 	private:
-		/** @name \f$\alpha_s\f$ threshold value calculations
-		 */
-		///@{
-		/** @brief Calculates \f$\alpha_s\f$ in the next threshold
-		 *  @param alpha: current \f$\alpha_s\f$
-		 *  @return \f$\alpha_s\f$ in the next threshold
-		 */
-		double PostMatch(const double alpha, const uint nf);
-		
-		/** @brief Calculates \f$\alpha_s\f$ in the previous threshold
-		 *  @param alpha: current \f$\alpha_s\f$
-		 *  @return \f$\alpha_s\f$ in the previous threshold
-		 */
-		double PreMatch(const double alpha, const uint nf);
+		double postMatch(double alpha, uint nf);
+		double preMatch(double alpha, uint nf);
 
-		
-		/** @name The \f$\beta\f$ coefficients
-		 */
-	    ///@{
-		double CalcBeta0(const uint nf) const;
-		double CalcBeta1(const uint nf) const;
-		double CalcBeta2(const uint nf) const;
-		double CalcBeta3(const uint nf) const;
-		////@}
+		double calcBeta0(uint nf) const;
+		double calcBeta1(uint nf) const;
+		double calcBeta2(uint nf) const;
+		double calcBeta3(uint nf) const;
 	};
 
-}
+} // class AlphaS
 
 #endif // __ALPHAS_HPP

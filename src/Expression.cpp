@@ -4,19 +4,19 @@
 namespace Candia2
 {
 
-	double Expression::Regular(const double x) const
+	double Expression::regular(const double x) const
 	{
 		UNUSED(x);
 		return 0.0;
 	}
 
-	double Expression::Plus(const double x) const
+	double Expression::plus(const double x) const
 	{
 		UNUSED(x);
 		return 0.0;
 	}
 
-	double Expression::Delta(const double x) const
+	double Expression::delta(const double x) const
 	{
 		UNUSED(x);
 		return 0.0;

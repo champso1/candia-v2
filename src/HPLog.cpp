@@ -1,12 +1,13 @@
 #include "Candia-v2/HPLog.hpp"
-#include "Candia-v2/Common.hpp"
 
+#include <cstdlib>
 #include <numbers>
-#include <iostream>
+#include <print>
 #include <limits>
-
 #include <complex>
 using namespace std::complex_literals;
+
+#include "Candia-v2/Common.hpp"
 
 namespace Candia2
 {
@@ -14,86 +15,80 @@ namespace Candia2
 	HPLog::HPLog(const uint W, std::string const& file_prefix)
 		: _W(W), _file_prefix(file_prefix)
 	{
-		LoadCoeffs();
-		LoadWeights();
+		loadCoeffs();
+		loadWeights();
 	}
 
-	void HPLog::LoadCoeffs()
+	void HPLog::loadCoeffs()
 	{
-		std::cerr << "[HPLOG] LoadCoeffs(); Reading coefficients....\n";
-		_DA2 = ReadFile<double>("TTT2.m", 360);
-		_DA3 = ReadFile<double>("TTT3.m", 1600);
-		_DA4 = ReadFile<double>("TTT4.m", 5040);
-		_DA5 = ReadFile<double>("TTT5.m", 17280);
-		_DA6 = ReadFile<double>("TTT6.m", 51040);
-		_DA7 = ReadFile<double>("TTT7.m", 162240);
-		_DA8 = ReadFile<double>("TTT8.m", 486000);
-		std::cerr << "[HPLOG] LoadCoeffs(): Read all coefficients\n";
+		std::print("[HPLOG] LoadCoeffs(); Reading coefficients.... ");
+		_DA2 = readFile<double>("TTT2.m", 360);
+		_DA3 = readFile<double>("TTT3.m", 1600);
+		_DA4 = readFile<double>("TTT4.m", 5040);
+		_DA5 = readFile<double>("TTT5.m", 17280);
+		_DA6 = readFile<double>("TTT6.m", 51040);
+		_DA7 = readFile<double>("TTT7.m", 162240);
+		_DA8 = readFile<double>("TTT8.m", 486000);
+		std::println("Done.");
 	}
 
-	void HPLog::LoadWeights()
+	void HPLog::loadWeights()
 	{
-		std::cerr << "[HPLOG] LoadWeights(): Loading weights...\n";
+		std::print("[HPLOG] LoadWeights(): Loading weights... ");
 	
 		if (_W < 5)
 			return;
 
-		try
+		if (_W >= 5)
 		{
-			if (_W >= 5)
-			{
-				_ii15 = ReadFile<int>("B51.m", 48);
-				_ii25 = ReadFile<int>("B52.m", 48);
-				_ii35 = ReadFile<int>("B53.m", 48);
-				_ii45 = ReadFile<int>("B54.m", 48);
-				_ii55 = ReadFile<int>("B55.m", 48);
-			}
-			if (_W >= 6)
-			{
-				_ii16 = ReadFile<int>("B61.m", 116);
-				_ii26 = ReadFile<int>("B62.m", 116);
-				_ii36 = ReadFile<int>("B63.m", 116);
-				_ii46 = ReadFile<int>("B64.m", 116);
-				_ii56 = ReadFile<int>("B65.m", 116);
-				_ii66 = ReadFile<int>("B66.m", 116);
-			}
-			if (_W >= 7)
-			{
-				_ii17 = ReadFile<int>("B71.m", 312);
-				_ii27 = ReadFile<int>("B72.m", 312);
-				_ii37 = ReadFile<int>("B73.m", 312);
-				_ii47 = ReadFile<int>("B74.m", 312);
-				_ii57 = ReadFile<int>("B75.m", 312);
-				_ii67 = ReadFile<int>("B76.m", 312);
-				_ii77 = ReadFile<int>("B77.m", 312);
-			}
-			if (_W == 8)
-			{
-				_ii18 = ReadFile<int>("B81.m", 810);
-				_ii28 = ReadFile<int>("B82.m", 810);
-				_ii38 = ReadFile<int>("B83.m", 810);
-				_ii48 = ReadFile<int>("B84.m", 810);
-				_ii58 = ReadFile<int>("B85.m", 810);
-				_ii68 = ReadFile<int>("B86.m", 810);
-				_ii78 = ReadFile<int>("B87.m", 810);
-				_ii88 = ReadFile<int>("B88.m", 810);
-			}
-		} catch (std::exception& e) {
-			std::cerr << e.what() << std::endl;
-			exit(1);
+			_ii15 = readFile<int>("B51.m", 48);
+			_ii25 = readFile<int>("B52.m", 48);
+			_ii35 = readFile<int>("B53.m", 48);
+			_ii45 = readFile<int>("B54.m", 48);
+			_ii55 = readFile<int>("B55.m", 48);
+		}
+		if (_W >= 6)
+		{
+			_ii16 = readFile<int>("B61.m", 116);
+			_ii26 = readFile<int>("B62.m", 116);
+			_ii36 = readFile<int>("B63.m", 116);
+			_ii46 = readFile<int>("B64.m", 116);
+			_ii56 = readFile<int>("B65.m", 116);
+			_ii66 = readFile<int>("B66.m", 116);
+		}
+		if (_W >= 7)
+		{
+			_ii17 = readFile<int>("B71.m", 312);
+			_ii27 = readFile<int>("B72.m", 312);
+			_ii37 = readFile<int>("B73.m", 312);
+			_ii47 = readFile<int>("B74.m", 312);
+			_ii57 = readFile<int>("B75.m", 312);
+			_ii67 = readFile<int>("B76.m", 312);
+			_ii77 = readFile<int>("B77.m", 312);
+		}
+		if (_W == 8)
+		{
+			_ii18 = readFile<int>("B81.m", 810);
+			_ii28 = readFile<int>("B82.m", 810);
+			_ii38 = readFile<int>("B83.m", 810);
+			_ii48 = readFile<int>("B84.m", 810);
+			_ii58 = readFile<int>("B85.m", 810);
+			_ii68 = readFile<int>("B86.m", 810);
+			_ii78 = readFile<int>("B87.m", 810);
+			_ii88 = readFile<int>("B88.m", 810);
 		}
 
-		std::cerr << "[HPLOG] LoadWeights(): Weights loaded.\n";
+		std::println("Done.");
 	}
 
 
 	static void __throw_b_coeff(std::string const& B)
 	{
-		std::cerr << "[HPLOG] Check_B():" << B << " has invalid coefficients.\n";
+		std::println("[HPLOG: ERROR] checkB(): {} has invalid coefficients.", B);
 		exit(1);
 	}
 
-	int HPLog::Check_B2(int i1, int i2) {
+	int HPLog::checkB2(int i1, int i2) {
 		std::vector<int> ii1({0,-1,-1});
 		std::vector<int> ii2({1,1,0});
 
@@ -111,7 +106,7 @@ namespace Candia2
 	}
 
 
-	int HPLog::Check_B3(int i1, int i2, int i3) {
+	int HPLog::checkB3(int i1, int i2, int i3) {
 		std::vector<int> ii1({0 ,0 ,-1,-1,-1,-1,-1,-1});
 		std::vector<int> ii2({1 ,0 ,1 ,1 ,0 ,0 ,-1,-1});
 		std::vector<int> ii3({1 ,1 ,1 ,0 ,1 ,0 ,1 ,0 });
@@ -128,7 +123,7 @@ namespace Candia2
 		return j;
 	}
 
-	int HPLog::Check_B4(int i1, int i2, int i3, int i4) {
+	int HPLog::checkB4(int i1, int i2, int i3, int i4) {
 		std::vector<int> ii1({0,0,0,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1});
 		std::vector<int> ii2({1,0,0, 1, 1, 1, 1, 0, 0, 0, 0, 0,-1,-1,-1,-1,-1,-1});
 		std::vector<int> ii3({1,1,0, 1, 1, 0, 0, 1, 1, 0, 0,-1, 1, 1, 0, 0,-1,-1});
@@ -146,7 +141,7 @@ namespace Candia2
 		return j;
 	}
 
-	int HPLog::Check_B5(int i1, int i2, int i3, int i4, int i5) {
+	int HPLog::checkB5(int i1, int i2, int i3, int i4, int i5) {
 		int j = -1;
 		for (uint i=0; i<48; i++) {
 			if (i1 == _ii15[i] && i2 == _ii25[i] && i3 == _ii35[i] && i4 == _ii45[i] && i5 == _ii55[i])
@@ -159,7 +154,7 @@ namespace Candia2
 		return j;
 	}
 
-	int HPLog::Check_B6(int i1, int i2, int i3, int i4, int i5, int i6) {
+	int HPLog::checkB6(int i1, int i2, int i3, int i4, int i5, int i6) {
 		int j = -1;
 		for (uint i=0; i<116; i++) {
 			if (i1 == _ii16[i] && i2 == _ii26[i] && i3 == _ii36[i] && i4 == _ii46[i] && i5 == _ii56[i] && i6 == _ii66[i])
@@ -172,7 +167,7 @@ namespace Candia2
 		return j;
 	}
 
-	int HPLog::Check_B7(int i1, int i2, int i3, int i4, int i5, int i6, int i7) {
+	int HPLog::checkB7(int i1, int i2, int i3, int i4, int i5, int i6, int i7) {
 		int j = -1;
 		for (uint i=0; i<312; i++) {
 			if (i1 == _ii17[i] && i2 == _ii27[i] && i3 == _ii37[i] && i4 == _ii47[i] && i5 == _ii57[i] && i6 == _ii67[i] && i7 == _ii77[i])
@@ -185,7 +180,7 @@ namespace Candia2
 		return j;
 	}
 
-	int HPLog::Check_B8(int i1, int i2, int i3, int i4, int i5, int i6, int i7, int i8) {
+	int HPLog::checkB8(int i1, int i2, int i3, int i4, int i5, int i6, int i7, int i8) {
 		int j = -1;
 		for (uint i=0; i<810; i++) {
 			if (i1 == _ii18[i] && i2 == _ii28[i] && i3 == _ii38[i] && i4 == _ii48[i] && i5 == _ii58[i] && i6 == _ii68[i] && i7 == _ii78[i] && i8 == _ii88[i])
@@ -200,7 +195,7 @@ namespace Candia2
 
 
 
-	uint HPLog::Check_X(double x)
+	uint HPLog::checkX(double x)
 	{
 		uint type = 0;
 		
@@ -226,8 +221,8 @@ namespace Candia2
 		// sanity check
 		if ((new_x < 0.0) || (new_x > std::sqrt(2.0)+1))
 		{
-			std::cerr << "[HPLOG] Check_X(): Error determining mappings.\n";
-			exit(1);
+			std::println("[HPLOG: ERROR] checkX(): Error determining mappings.");
+			exit(EXIT_FAILURE);
 		}
 
 		return type;
@@ -270,8 +265,8 @@ namespace Candia2
 			} break;
 			case HPLog::MappingType::GRT1:
 			{
-				std::cerr << "[HPLOG] H1(): impossible x-value: " << x << " (abs(x) > 1 not possible)\n";
-				exit(1);
+				std::println("[HPLOG: ERROR] H1(): impossible x-value encountered: {} (abs(x) > 1 not possible)", x);
+				exit(EXIT_FAILURE);
 			} break;
 			case HPLog::MappingType::GRTSqrt2Minus1:
 			{
@@ -325,8 +320,8 @@ namespace Candia2
 				}
 				else
 				{
-					std::cerr << "[HPLOG] H2(): i1=" << i1 << " and i2=" << i2 << " are invalid.\n";
-					exit(1);
+					std::println("[HPLOG: ERROR] H2(): i1={} and i2={} are invalid.", i1, i2);
+					exit(EXIT_FAILURE);
 				}
 				double y = -x;
 				std::complex<double> res = (-std::numbers::pi*1i - H1(0, y))*H1(1, y) + H2(0,1, y);
@@ -334,8 +329,8 @@ namespace Candia2
 			} break;
 			case GRT1:
 			{
-				std::cerr << "[HPLOG] H2(): Impossible x value: " << x << '\n';
-				exit(1);
+				std::println("[HPLOG: ERROR] H2(): Impossible x value encountered: {}", x);
+				exit(EXIT_FAILURE);
 			} break;
 			case GRTSqrt2Minus1:
 			{
@@ -352,7 +347,7 @@ namespace Candia2
 
 
 	double HPLog::H1(int i1, double x) {
-		uint mappings = Check_X(x);
+		uint mappings = checkX(x);
 
 		if (mappings != MappingType::None)
 			return H1Mappings(mappings, i1, x);
@@ -372,20 +367,20 @@ namespace Candia2
 
 
 	double HPLog::H2(int i1, int i2, double x) {
-		uint mappings = Check_X(x);
+		uint mappings = checkX(x);
 
 		// the only weight-2 polylogarithm we compute is H[-1,0],
 		// so we can skip checking for i1 and i2 (but with an assert just in case)
 		if ((i1 != -1) || (i2 != 0))
 		{
-			std::cerr << "[HPLOG] H2(): i1=" << i1 << " and i2=" << i2 << "is not valid.\n";
-			exit(1);
+			std::println("[HPLOG: ERROR] H2(): i1={} and i2={} are not valid.", i1, i2);
+			exit(EXIT_FAILURE);
 		}
 
 		if (mappings != MappingType::None)
 			return H2Mappings(mappings, i1, i2, x);
 		
-		int j = Check_B2(i1, i2);
+		int j = checkB2(i1, i2);
 			
 		double u =  std::log1p( x);
 		double v = -std::log1p(-x);
@@ -410,9 +405,9 @@ namespace Candia2
 
 
 	double HPLog::H3(int i1, int i2, int i3, double x) {
-		Check_X(x);
+		checkX(x);
 
-		int j = Check_B3(i1, i2, i3);
+		int j = checkB3(i1, i2, i3);
 
 		double u =  std::log1p( x);
 		double v = -std::log1p(-x);
@@ -449,9 +444,9 @@ namespace Candia2
 
 
 	double HPLog::H4(int i1, int i2, int i3, int i4, double x) {
-		Check_X(x);
+		checkX(x);
 
-		int j = Check_B4(i1, i2, i3, i4);
+		int j = checkB4(i1, i2, i3, i4);
 
 		double u =  std::log1p( x);
 		double v = -std::log1p(-x);
@@ -500,9 +495,9 @@ namespace Candia2
 
 
 	double HPLog::H5(int i1, int i2, int i3, int i4, int i5, double x) {
-		Check_X(x);
+		checkX(x);
 
-		int j = Check_B5(i1, i2, i3, i4, i5);
+		int j = checkB5(i1, i2, i3, i4, i5);
 
 		double u =  std::log1p( x);
 		double v = -std::log1p(-x);
@@ -560,9 +555,9 @@ namespace Candia2
 
 
 	double HPLog::H6(int i1, int i2, int i3, int i4, int i5, int i6, double x) {
-		Check_X(x);
+		checkX(x);
 
-		int j = Check_B6(i1, i2, i3, i4, i5, i6);
+		int j = checkB6(i1, i2, i3, i4, i5, i6);
 
 		double u =  std::log1p( x);
 		double v = -std::log1p(-x);
@@ -630,9 +625,9 @@ namespace Candia2
 
 
 	double HPLog::H7(int i1, int i2, int i3, int i4, int i5, int i6, int i7, double x) {
-		Check_X(x);
+		checkX(x);
 
-		int j = Check_B7(i1, i2, i3, i4, i5, i6, i7);
+		int j = checkB7(i1, i2, i3, i4, i5, i6, i7);
 
 		double u =  std::log1p( x);
 		double v = -std::log1p(-x);
@@ -708,9 +703,9 @@ namespace Candia2
 	}
 
 	double HPLog::H8(int i1, int i2, int i3, int i4, int i5, int i6, int i7, int i8, double x) {
-		Check_X(x);
+		checkX(x);
 
-		int j = Check_B8(i1, i2, i3, i4, i5, i6, i7, i8);
+		int j = checkB8(i1, i2, i3, i4, i5, i6, i7, i8);
 
 		double u =  std::log1p( x);
 		double v = -std::log1p(-x);

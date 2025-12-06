@@ -1,6 +1,7 @@
 #include "Candia-v2/Candia.hpp"
 #include "Candia-v2/Common.hpp"
 #include "Candia-v2/Distribution.hpp"
+#include "Candia-v2/FuncArrayGrid.hpp"
 using namespace Candia2;
 
 #include <filesystem>
@@ -10,15 +11,17 @@ using namespace Candia2;
 #include <cstdlib>
 #include <memory>
 #include <numeric>
+#include <fstream>
+#include <iostream>
 using namespace std;
 
 using FinalDist = MultiDimVector<double, 2>::type;
 
-void GeneratePlots(std::string_view filename,
+void generatePlots(std::string_view filename,
 				   std::string_view title,
 				   std::vector<int> const& dists,
 				   std::vector<int> const& ntab,
-				   FinalDist const& F,
+				   MultiDimArrayGrid_t<1> & F,
 				   Grid const& grid)
 {
 	string temp{};
@@ -36,7 +39,7 @@ void GeneratePlots(std::string_view filename,
 	for (int k : ntab)
 	{
 		outfile << scientific << setprecision(9);
-		outfile << grid.At(k) << '\t';
+		outfile << grid.at(k) << '\t';
 		outfile << fixed << setprecision(9);
 
 		for (uint j : dists)
@@ -68,17 +71,17 @@ int main(int argc, char *argv[])
 	const double Qf = 200.0;
 	const uint iterations = 12;
 	const uint trunc_idx = 7;
-	DGLAPSolver solver(order, grid, Qf, iterations, trunc_idx, make_shared<LesHouchesDistribution>());
+	DGLAPSolver solver(order, grid, Qf, iterations, trunc_idx, make_unique<LesHouchesDistribution>());
 	
-	FinalDist F = solver.Evolve();
+	auto F = solver.evolve();
 	
 	vector<int> dists{0, 1};
 
-	vector<int> ntab(grid.Size()-1);
+	vector<int> ntab(grid.size()-1);
 	iota(ntab.begin(), ntab.end(), 0);
 
 	stringstream filename_ss{};
 	filename_ss << ((order == 0) ? "lo" : (order == 1) ? "nlo" : "nnlo");
 	filename_ss << ".dat";
-	GeneratePlots(filename_ss.str(), "x \t g \t u", dists, ntab, F, grid);
+	generatePlots(filename_ss.str(), "x \t g \t u", dists, ntab, F, grid);
 }

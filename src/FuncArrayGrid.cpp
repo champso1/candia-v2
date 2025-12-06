@@ -1,8 +1,6 @@
-#include "Candia-v2/FuncArrGrid.hpp"
+#include "Candia-v2/FuncArrayGrid.hpp"
 
 #include <cassert>
-#include <ranges>
-#include <functional>
 #include <cmath>
 #include <print>
 
@@ -23,7 +21,7 @@ namespace Candia2
 	double ArrayGrid::interpolate(double x)
 	{
 		Grid const& grid = _grid.get();
-		int idx = grid.InterpFindIdx(x);
+		int idx = grid.interpFindIdx(x);
 	    base_type proj{_base.begin()+idx, _base.begin()+idx+2*INTERP_POINTS};
 
 		assert(proj.size() == 2*INTERP_POINTS);
@@ -32,7 +30,7 @@ namespace Candia2
 		int ns=0;
 		double y, den, dif, dift, ho, hp, w;
 
-		double const* xa = &(grid.Points().data()[idx]);
+		double const* xa = &(grid.points().data()[idx]);
 		double const* ya = proj.data();
 		
 	    base_type c(n, 0.0);
@@ -66,7 +64,7 @@ namespace Candia2
 				{
 					std::println("[AGRID] Interpolate(): found a denominator equal to 0.0.");
 					std::println("        m,i=({},{}), ho={}, hp={}, xa[i]={}, xa[i+m]={}, x={}", m, i, ho, hp, xa[i], xa[i+m], x);
-					std::println("Grid points: {}", _grid.get().Points());
+					std::println("Grid points: {}", _grid.get().points());
 					exit(EXIT_FAILURE);
 				}
 
@@ -110,7 +108,7 @@ namespace Candia2
 	FunctionGrid::FunctionGrid(Grid const& grid, std::unique_ptr<Expression> expr)
 		: _grid{std::cref(grid)}, _func{std::move(expr)}
 	{
-		addFunctionPoints(_grid.get().Points());
+		addFunctionPoints(_grid.get().points());
 	}
 
 	double FunctionGrid::operator()(double x, uint function_part)
@@ -133,26 +131,26 @@ namespace Candia2
 	void FunctionGrid::addFunctionPoint(double x)
 	{
 		_cache.emplace(x, std::array<double, 3>{
-				_func->Regular(x),
-				_func->Plus(x),
-				_func->Delta(x),
+				_func->regular(x),
+				_func->plus(x),
+				_func->delta(x),
 			});
 	}
 
 
 	double FunctionGrid::convolution(ArrayGrid & A, uint k, bool split_interval)
 	{
-		double x = _grid.get().At(k);
+		double x = _grid.get().at(k);
 		double logx =  std::log(x);
 
-		double res = (_func->Plus(1.0)*std::log1p(-x) + _func->Delta(1.0)) * A[k];
+		double res = (_func->plus(1.0)*std::log1p(-x) + _func->delta(1.0)) * A[k];
 
 		if (!split_interval)
 		{
 			for (uint i=0; i<GAUSS_POINTS; i++)
 			{
-				double y = _grid.get().Abscissae(i);
-				double w = _grid.get().Weights(i);
+				double y = _grid.get().abscissae(i);
+				double w = _grid.get().weights(i);
 
 				double a = std::pow(x, 1.0-y);
 				double b = std::pow(x, y);
@@ -160,14 +158,14 @@ namespace Candia2
 				double interp1 = A(b);
 				double interp2 = A(a);
 
-				res -= w*logx*a*_func->Regular(a)*interp1;
-				res -= w*logx*b*(_func->Plus(b)*interp2 - _func->Plus(1.0)*A[k])/(1.0-b);
+				res -= w*logx*a*_func->regular(a)*interp1;
+				res -= w*logx*b*(_func->plus(b)*interp2 - _func->plus(1.0)*A[k])/(1.0-b);
 			}
 		}
 		else
 		{
-			std::vector<double> const& Xi1{_grid.get().Abscissae(1)};
-			std::vector<double> const& Wi1{_grid.get().Weights(1)};
+			std::vector<double> const& Xi1{_grid.get().abscissae(1)};
+			std::vector<double> const& Wi1{_grid.get().weights(1)};
 			for (uint i=0; i<GAUSS_POINTS; i++)
 			{
 				double y = Xi1[i];
@@ -179,12 +177,12 @@ namespace Candia2
 				double interp1 = A(b);
 				double interp2 = A(a);
 
-				res -= w*logx*a*_func->Regular(a)*interp1;
-				res -= w*logx*b*(_func->Plus(b)*interp2 - _func->Plus(1.0)*A[k])/(1.0-b);
+				res -= w*logx*a*_func->regular(a)*interp1;
+				res -= w*logx*b*(_func->plus(b)*interp2 - _func->plus(1.0)*A[k])/(1.0-b);
 			}
 
-			std::vector<double> const& Xi2{_grid.get().Abscissae(2)};
-			std::vector<double> const& Wi2{_grid.get().Weights(2)};
+			std::vector<double> const& Xi2{_grid.get().abscissae(2)};
+			std::vector<double> const& Wi2{_grid.get().weights(2)};
 			for (uint i=0; i<GAUSS_POINTS; i++)
 			{
 				double y = Xi2[i];
@@ -196,12 +194,12 @@ namespace Candia2
 				double interp1 = A(b);
 				double interp2 = A(a);
 
-				res -= w*logx*a*_func->Regular(a)*interp1;
-				res -= w*logx*b*(_func->Plus(b)*interp2 - _func->Plus(1.0)*A[k])/(1.0-b);
+				res -= w*logx*a*_func->regular(a)*interp1;
+				res -= w*logx*b*(_func->plus(b)*interp2 - _func->plus(1.0)*A[k])/(1.0-b);
 			}
 
-			std::vector<double> const& Xi3{_grid.get().Abscissae(3)};
-			std::vector<double> const& Wi3{_grid.get().Weights(3)};
+			std::vector<double> const& Xi3{_grid.get().abscissae(3)};
+			std::vector<double> const& Wi3{_grid.get().weights(3)};
 			for (uint i=0; i<GAUSS_POINTS; i++)
 			{
 				double y = Xi3[i];
@@ -213,8 +211,8 @@ namespace Candia2
 				double interp1 = A(b);
 				double interp2 = A(a);
 
-				res -= w*logx*a*_func->Regular(a)*interp1;
-				res -= w*logx*b*(_func->Plus(b)*interp2 - _func->Plus(1.0)*A[k])/(1.0-b);
+				res -= w*logx*a*_func->regular(a)*interp1;
+				res -= w*logx*b*(_func->plus(b)*interp2 - _func->plus(1.0)*A[k])/(1.0-b);
 			}
 		}
 			

@@ -3,11 +3,6 @@
 
 #include <algorithm>
 #include <cstdlib>
-#include <functional>
-#include <random>
-#include <iostream>
-#include <iterator>
-#include <limits>
 #include <cmath>
 #include <memory>
 #include <set>
@@ -25,27 +20,27 @@ namespace Candia2
 	{
 		switch (grid_fill_type)
 		{
-			case 1: InitGrid(xtab, nx); break;
-			case 2: InitGrid2(xtab, nx); break;
-			case 3: InitGrid3(xtab, nx); break;
+			case 1: initGrid(xtab, nx); break;
+			case 2: initGrid2(xtab, nx); break;
+			case 3: initGrid3(xtab, nx); break;
 			default:
 			{
 				std::println(stderr, "[DGLAP2] Warning: Invalid grid fill type. Found {}, expected 1, 2, or 3.", grid_fill_type);
 				std::println(stderr, "         Will use default (1).");
-				InitGrid(xtab, nx);
+				initGrid(xtab, nx);
 			}
 		}
 	    
-		InitGauLeg(0.0, 1.0, _Xi, _Wi);
+		initGauLeg(0.0, 1.0, _Xi, _Wi);
 
-		InitGauLeg(0, 1e-1, _Xi1, _Wi1);
-		InitGauLeg(1e-1, 0.7, _Xi2, _Wi2);
-		InitGauLeg(0.7, 1.0, _Xi3, _Wi3);
+		initGauLeg(0, 1e-1, _Xi1, _Wi1);
+		initGauLeg(1e-1, 0.7, _Xi2, _Wi2);
+		initGauLeg(0.7, 1.0, _Xi3, _Wi3);
 	}
 
-	void Grid::InitGrid(std::vector<double> const& xtab, const uint nx)
+	void Grid::initGrid(std::vector<double> const& xtab, const uint nx)
 	{
-		std::cerr << "[GRID] Using InitGrid()\n";
+		std::println("[GRID] Using InitGrid()");
 		
 		const uint xtab_len = xtab.size();
 		std::vector<double> Ntab(xtab_len);
@@ -132,9 +127,9 @@ namespace Candia2
 	}
 
 
-	void Grid::InitGrid2(std::vector<double> const& xtab, uint nx)
+	void Grid::initGrid2(std::vector<double> const& xtab, uint nx)
 	{
-		std::cerr << "[GRID] Using InitGrid2()\n";
+		std::println("[GRID] Using InitGrid2()");
 		
 		std::vector<double> points(nx-xtab.size()+1);
 		const double xmin = xtab.front();
@@ -174,9 +169,9 @@ namespace Candia2
 		}
 	}
 
-	void Grid::InitGrid3(std::vector<double> const& xtab, uint nx)
+	void Grid::initGrid3(std::vector<double> const& xtab, uint nx)
 	{
-		std::cerr << "[GRID] Using InitGrid3()\n";
+		std::println("[GRID] Using InitGrid3()");
 		
 		std::vector<double> points{};
 
@@ -216,7 +211,7 @@ namespace Candia2
 		}
 	}
 
-	void Grid::InitGauLeg(double x1, double x2, std::vector<double> & Xi, std::vector<double> & Wi)
+	void Grid::initGauLeg(double x1, double x2, std::vector<double> & Xi, std::vector<double> & Wi)
 	{
 		const double eps = 3.0e-11; // relative precision
 
@@ -262,7 +257,7 @@ namespace Candia2
 			if (z1 == std::numeric_limits<double>::max() ||
 				pp == std::numeric_limits<double>::max())
 			{
-				std::cerr << "[ERROR] Grid::InitGauleg(): error determining gauss-legendre abscissae/weights\n";
+				std::println("[GRID: ERROR] InitGauleg(): failed to determine gauss-legendre abscissae/weights");
 				exit(EXIT_FAILURE);
 			}
 
@@ -273,33 +268,33 @@ namespace Candia2
 		}
 	}
 
-    uint Grid::InterpFindIdx(double x) const
+    uint Grid::interpFindIdx(double x) const
 	{
 		int k;
 		for (k=0; x>=_points.at(k); k++)
 		{
-			if (k >= static_cast<int>(Size()-1))
+			if (k >= static_cast<int>(size()-1))
 				break;
 		}
 
 		k-=INTERP_POINTS;
 
 		if (k<0) k=0;
-		if (k>static_cast<int>(Size()-2*INTERP_POINTS))
-			k=Size()-2*INTERP_POINTS;
+		if (k>static_cast<int>(size()-2*INTERP_POINTS))
+			k=size()-2*INTERP_POINTS;
 
 		return static_cast<uint>(k);
 	}
 
 	
 
-	double Grid::Interpolate(std::vector<double> const& yy, const double x) const
+	double Grid::interpolate(std::vector<double> const& yy, const double x) const
 	{
 		const static int n = 2*INTERP_POINTS;
 		int ns=0;
 		double y, den, dif, dift, ho, hp, w;
 
-		int k = static_cast<int>(this->InterpFindIdx(x));
+		int k = static_cast<int>(this->interpFindIdx(x));
 
 		double const* xa = &(_points.data()[k]);
 		double const* ya = &(yy.data()[k]);
@@ -333,7 +328,7 @@ namespace Candia2
 				den = ho-hp;
 				if (std::abs(ho-hp) < 1e-15)
 				{
-					std::cerr << "[GRID] Interpolate(): found a denominator equal to 0.0.\n";
+					std::println("[GRID: ERROR] Interpolate(): found a denominator equal to 0.0.");
 					exit(1);
 				}
 
@@ -350,12 +345,12 @@ namespace Candia2
 
 
 
-	double Grid::Convolution(std::vector<double> const& A,
+	double Grid::convolution(std::vector<double> const& A,
 		std::shared_ptr<Expression> E, uint k)
 	{
 		double x = _points.at(k);
 		double logx =  std::log(x);
-		double res = (E->Plus(1.0)*std::log1p(-x) + E->Delta(1.0)) * A.at(k);
+		double res = (E->plus(1.0)*std::log1p(-x) + E->delta(1.0)) * A.at(k);
 		
 		for (uint i=0; i<GAUSS_POINTS; i++)
 		{
@@ -365,11 +360,11 @@ namespace Candia2
 			double a = std::pow(x, 1.0-y);
 			double b = std::pow(x, y);
 
-			double interp1 = Interpolate(A, b);
-			double interp2 = Interpolate(A, a);
+			double interp1 = interpolate(A, b);
+			double interp2 = interpolate(A, a);
 
-			res -= w*logx*a*E->Regular(a)*interp1;
-			res -= w*logx*b*(E->Plus(b)*interp2 - E->Plus(1.0)*A.at(k))/(1.0-b);
+			res -= w*logx*a*E->regular(a)*interp1;
+			res -= w*logx*b*(E->plus(b)*interp2 - E->plus(1.0)*A.at(k))/(1.0-b);
 		}
 		
 		return res;

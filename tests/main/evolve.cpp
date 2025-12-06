@@ -46,10 +46,10 @@ int main(int argc, char *argv[]) {
 	// initialize the solver, evolve to 100.0 GeV
 	// use the Les Houche distribution
 	const double Qf = 100.0;
-	DGLAPSolver solver(order, grid, Qf, iterations, trunc_idx, make_unique<LesHouchesDistribution>(), kr);
+	DGLAPSolver solver(order, grid, Qf, iterations, trunc_idx, make_unique<LesHouchesDistribution>(), kr, true);
 
 	// grab the resultant evolved distributions
-	MultiDimVector<double, 2>::type F = solver.Evolve();
+	auto F = solver.evolve();
 
 	// open the output file, with a filename descriptive of all the provided inputs
 	ostringstream outfile_ss{};
@@ -66,7 +66,7 @@ int main(int argc, char *argv[]) {
 
 	// print also the tabulated x values and their corresponding indices in the grid
 	outfile << scientific << setprecision(1);
-    vector<int> ntab = grid.Ntab();
+    vector<int> ntab = grid.ntab();
 	for (const double x : xtab)
 		outfile << x << ' ';
 	outfile << '\n';
@@ -79,9 +79,9 @@ int main(int argc, char *argv[]) {
 	iota(dists.begin(), dists.end(), 0);
 
 	// print them out
-	for (uint k=0; k<grid.Size(); k++)
+	for (uint k=0; k<grid.size(); k++)
 	{
-		outfile << setw(15) << setprecision(8) << grid.At(k) << ' ';
+		outfile << setw(15) << setprecision(8) << grid.at(k) << ' ';
 		
 		outfile << setprecision(8);	
 		for (const uint j : dists)

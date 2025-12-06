@@ -1,8 +1,3 @@
-/** @file
- *
- *  Contains some other useful mathematical functions.
- */
-
 #ifndef __MATH_HPP
 #define __MATH_HPP
 
@@ -10,11 +5,8 @@
 
 namespace Candia2
 {
-	/** @brief Performs the factorial of @a x.
-	 */
-	extern double Factorial(uint x);
-	
+	double factorial(uint x);
 };
 
 
-#endif // __MATH_HPP
+#endif

@@ -1,12 +1,10 @@
 #include "Candia-v2/Math.hpp"
 #include "Candia-v2/Common.hpp"
 
-#include <cmath>
-
 namespace Candia2
 {
 
-	double Factorial(uint x)
+	double factorial(uint x)
 	{
 		double res = 1.0;
 		while (x > 1.0)
