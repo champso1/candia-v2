@@ -5,7 +5,6 @@
 #include "Candia-v2/Grid.hpp"
 
 #include <functional>
-#include <fstream>
 #include <utility>
 #include <map>
 
@@ -118,7 +117,7 @@ namespace Candia2
 		void addFunctionPoints(std::vector<double> const& X);
 		void addFunctionPoint(double x);
 
-		double convolution(ArrayGrid & A, uint k);
+		double convolution(ArrayGrid & A, uint k, bool split_interval=false);
 
 		inline
 		cache_type const& cache() const { return _cache; }

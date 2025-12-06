@@ -11,20 +11,36 @@
 #include <cmath>
 #include <memory>
 #include <set>
+#include <print>
 
 
 namespace Candia2
 {
-	Grid::Grid(std::vector<double> const& xtab, const uint nx)
-		: _points(nx), 
+	Grid::Grid(std::vector<double> const& xtab, uint nx, int grid_fill_type)
+		: _points(nx), _ntab{},
 		  _Xi(GAUSS_POINTS), _Wi(GAUSS_POINTS),
-		  _Xi_low(GAUSS_POINTS), _Xi_high(GAUSS_POINTS),
-		  _Wi_low(GAUSS_POINTS), _Wi_high(GAUSS_POINTS)
+		  _Xi1(GAUSS_POINTS), _Wi1(GAUSS_POINTS),
+		  _Xi2(GAUSS_POINTS), _Wi2(GAUSS_POINTS),
+		  _Xi3(GAUSS_POINTS), _Wi3(GAUSS_POINTS)
 	{
-		InitGrid(xtab, nx);
+		switch (grid_fill_type)
+		{
+			case 1: InitGrid(xtab, nx); break;
+			case 2: InitGrid2(xtab, nx); break;
+			case 3: InitGrid3(xtab, nx); break;
+			default:
+			{
+				std::println(stderr, "[DGLAP2] Warning: Invalid grid fill type. Found {}, expected 1, 2, or 3.", grid_fill_type);
+				std::println(stderr, "         Will use default (1).");
+				InitGrid(xtab, nx);
+			}
+		}
+	    
 		InitGauLeg(0.0, 1.0, _Xi, _Wi);
-		InitGauLeg(0.0, 0.9, _Xi_low, _Wi_low);
-		InitGauLeg(0.9, 1.0, _Xi_high, _Wi_high);
+
+		InitGauLeg(0, 1e-1, _Xi1, _Wi1);
+		InitGauLeg(1e-1, 0.7, _Xi2, _Wi2);
+		InitGauLeg(0.7, 1.0, _Xi3, _Wi3);
 	}
 
 	void Grid::InitGrid(std::vector<double> const& xtab, const uint nx)
@@ -112,152 +128,13 @@ namespace Candia2
 		_points.at(nx-1) = 1.0;
 		_ntab = ntab;
 
-		// just to be safe, lets print everything out
-		/*
-		std::cout << "Ntab: ";
-		for (const int n : _ntab)
-			std::cout << n << ' ';
-		std::cout << '\n';
-		std::cout << "Corresponding xtab: ";
-		for (const int n : _ntab)
-			std::cout << _points[n] << ' ';
-		std::cout << std::endl;
-		std::cout << "All grid values: [";
-		for (const double x : _points)
-			std::cout << "  " << x << '\n';
-		std::cout << "]\n";
-		*/
 		return;
-
-		// at this point we have all of our grid points (obviously)
-		// but I want to pad the >0.5 range a bit more
-		// 10% of total grid points, ill add to >0.5 randomly,
-		// then do it again for >0.9, so a total of 120% of the
-		// asked-for grid points
-		std::random_device rd{};
-		std::mt19937 gen{rd()};
-		std::uniform_real_distribution<> dis1(0.5, 1.0);
-		std::uniform_real_distribution<> dis2(0.9, 1.0);
-		auto rand1 = std::bind(dis1, gen);
-		auto rand2 = std::bind(dis2, gen);
-		uint num_new_points = _points.size()/10;
-
-		std::vector<double> new_points1{}, new_points2{};
-		for (uint i=0; i<num_new_points; ++i)
-		{
-			new_points1.emplace_back(rand1());
-			new_points2.emplace_back(rand2());
-		}
-
-		std::set<double> points_set{_points.begin(), _points.end()};
-		points_set.insert(new_points1.begin(), new_points1.end());
-		points_set.insert(new_points2.begin(), new_points2.end());
-		_points = std::vector<double>{points_set.begin(), points_set.end()};
-
-		// must recreate ntab
-		_ntab = std::vector<int>{};
-		for (const double x : xtab)
-		{
-			auto it = std::ranges::lower_bound(_points, x);
-			if (it != _points.end() && std::abs(*it - x) < 1e-14)
-				_ntab.emplace_back(std::distance(_points.begin(), it));
-		}
-
-		// just to be safe, lets print everything out
-		std::cout << "Ntab: ";
-		for (const int n : _ntab)
-			std::cout << n << ' ';
-		std::cout << '\n';
-		std::cout << "Corresponding xtab: ";
-		for (const int n : _ntab)
-			std::cout << _points[n] << ' ';
-		std::cout << std::endl;
 	}
 
-	void Grid::InitGrid2(std::vector<double> const& xtab, const uint nx)
+
+	void Grid::InitGrid2(std::vector<double> const& xtab, uint nx)
 	{
 		std::cerr << "[GRID] Using InitGrid2()\n";
-		
-		auto tanh_sinh_map = [](double t) -> double
-		{
-			return 0.5 * (1.0 + std::tanh((M_PI / 2.0) * std::sinh(t)));
-		};
-
-		// fill the array with the grid points
-		// fill with nx-xtab.size(),
-		// since we will fill those in later
-		static const double T = 3.0;
-		uint size = nx - xtab.size();
-		std::vector<double> points(size);
-		double SIZE = static_cast<double>(size), I{};
-		for (uint i=0; i<size; ++i)
-		{
-			I = static_cast<double>(i);
-			double t = -T + (2.0*T)*I / (SIZE-1.0); // linear spacing in t
-			points.at(i) = tanh_sinh_map(t);
-		}
-
-		// scale them between the min tabulated value and 1 - 1e-15;
-		double xmin = xtab.front();
-		double xmax = 1.0-1e-5;
-		double pmin = points.front();
-		double pmax = points.back();
-		double xrange = xmax - xmin;
-		double prange = pmax - pmin;
-		for (double &p : points)
-			p = xmin + (xrange/prange)*(p-pmin);
-
-		
-		// insert the tabulated points
-		std::ranges::sort(points);
-		std::set<double> set{points.begin(), points.end()};
-		set.insert(xtab.begin(), xtab.end());
-
-		// check to make sure we have enough elements
-		// if not just add some random points
-		std::random_device rd{};
-		std::mt19937 gen{rd()};
-		std::uniform_real_distribution<double> dis(points.front(), points.back());
-		if (set.size() < nx)
-		{
-			std::cerr << "[GRID] Grid::InitGrid2(): set size insufficient after inserting xtab.\n";
-			while (nx - set.size() > 0)
-			{
-			    set.insert(dis(gen));
-			}
-		}
-		
-		_points = std::vector<double>{set.begin(), set.end()};
-		std::ranges::sort(_points);
-
-		// build the ntab array
-		for (const double x : xtab)
-		{
-			auto it = std::ranges::lower_bound(_points, x);
-			if (it != _points.end() && std::abs(*it - x) < 1e-14)
-				_ntab.emplace_back(std::distance(_points.begin(), it));
-		}
-
-		// set the absolute last value to exactly 1
-		_points.back() = 1.0;
-
-		auto def_precision = std::cerr.precision();
-		std::cerr.precision(std::numeric_limits<double>::max_digits10);
-		std::cerr << "[GRID] Grid::InitGrid2(): Points array is: [\n";
-		for (const double n : _points)
-			std::cerr << "    " << n << '\n';
-		std::cout << "]\n";
-		std::cerr.precision(def_precision);
-		
-		std::cerr << "[GRID] Grid::InitGrid2(): Ntab array is: [";
-		for (const uint n : _ntab)
-			std::cerr << ' ' << n << ' ';
-		std::cout << "]\n";
-	}
-
-	void Grid::InitGrid3(std::vector<double> const& xtab, uint nx)
-	{
-		std::cerr << "[GRID] Using InitGrid3()\n";
 		
 		std::vector<double> points(nx-xtab.size()+1);
 		const double xmin = xtab.front();
@@ -279,13 +156,54 @@ namespace Candia2
 		std::set<double> set{points.begin(), points.end()};
 		set.insert(xtab.begin(), xtab.end());
 		points = std::vector<double>(set.begin(), set.end());
+		std::ranges::sort(points);
 
-		// fix front and back
-		if (points.front() != xtab.front())
-			points.front() = xtab.front();
-		if (points.back() != xtab.back())
-			points.back() = xtab.back();
+		_points = points;
 
+		// build the ntab array
+		_ntab = std::vector<int>{};
+		for (const double x : xtab)
+		{
+			auto it = std::ranges::find(_points, x);
+			if (it == _points.end())
+			{
+				std::println(stderr, "[GRID] Somehow found a tabulated value ({}) that is not in the ntab array.", x);
+				exit(EXIT_FAILURE);
+			}
+			_ntab.emplace_back(std::distance(_points.begin(), it));
+		}
+	}
+
+	void Grid::InitGrid3(std::vector<double> const& xtab, uint nx)
+	{
+		std::cerr << "[GRID] Using InitGrid3()\n";
+		
+		std::vector<double> points{};
+
+		std::vector<double> log_tab{1e-5, 1e-4, 1e-3, 1e-2, 0.1, 0.7, 1.0};
+		std::vector<double> log_xtab{log_tab};
+		std::ranges::transform(log_xtab, log_xtab.begin(), [](double x) -> double{ return std::log10(x); });
+		int num_grid_points_per_bin = nx / xtab.size();
+
+		for (uint i=0; i<log_xtab.size()-1; ++i)
+		{
+			double logmin = log_xtab[i];
+			double logmax = log_xtab[i+1];
+			double dlog = (logmax-logmin)/static_cast<double>(num_grid_points_per_bin);
+
+			int num = 0;
+			for (double _l=logmin; _l<logmax && num<num_grid_points_per_bin; _l+=dlog, ++num)
+				points.emplace_back(std::pow(10, _l));
+		}
+		
+		// insert the tabulated points
+		// make it a set to avoid duplicate values
+		// then replace the original points array with the new one
+		std::ranges::sort(points);
+		std::set<double> set{points.begin(), points.end()};
+		set.insert_range(xtab);
+		points = std::vector<double>(set.begin(), set.end());
+		
 		_points = points;
 
 		// build the ntab array
@@ -433,66 +351,27 @@ namespace Candia2
 
 
 	double Grid::Convolution(std::vector<double> const& A,
-							 std::shared_ptr<Expression> E,
-							 uint k, bool highorder_conv)
+		std::shared_ptr<Expression> E, uint k)
 	{
 		double x = _points.at(k);
 		double logx =  std::log(x);
-
 		double res = (E->Plus(1.0)*std::log1p(-x) + E->Delta(1.0)) * A.at(k);
-
-		if (!highorder_conv)
+		
+		for (uint i=0; i<GAUSS_POINTS; i++)
 		{
-			// ordinary convolution with one range, (1e-7,1]
-			for (uint i=0; i<GAUSS_POINTS; i++)
-			{
-				double y = _Xi[i];
-				double w = _Wi[i];
+			double y = _Xi[i];
+			double w = _Wi[i];
 
-				double a = std::pow(x, 1.0-y);
-				double b = std::pow(x, y);
+			double a = std::pow(x, 1.0-y);
+			double b = std::pow(x, y);
 
-				double interp1 = Interpolate(A, b);
-				double interp2 = Interpolate(A, a);
+			double interp1 = Interpolate(A, b);
+			double interp2 = Interpolate(A, a);
 
-				res -= w*logx*a*E->Regular(a)*interp1;
-				res -= w*logx*b*(E->Plus(b)*interp2 - E->Plus(1.0)*A.at(k))/(1.0-b);
-			}
+			res -= w*logx*a*E->Regular(a)*interp1;
+			res -= w*logx*b*(E->Plus(b)*interp2 - E->Plus(1.0)*A.at(k))/(1.0-b);
 		}
-		else
-		{
-			// low convolution (<0.9)
-			for (uint i=0; i<GAUSS_POINTS; i++)
-			{
-				double y = _Xi_low[i];
-				double w = _Wi_low[i];
-
-				double a = std::pow(x, 1.0-y);
-				double b = std::pow(x, y);
-
-				double interp1 = Interpolate(A, b);
-				double interp2 = Interpolate(A, a);
-
-				res -= w*logx*a*E->Regular(a)*interp1;
-				res -= w*logx*b*(E->Plus(b)*interp2 - E->Plus(1.0)*A.at(k))/(1.0-b);
-			}
-
-			// high convolution (>0.9)
-			for (uint i=0; i<GAUSS_POINTS; i++)
-			{
-				double y = _Xi_high[i];
-				double w = _Wi_high[i];
-
-				double a = std::pow(x, 1.0-y);
-				double b = std::pow(x, y);
-
-				double interp1 = Interpolate(A, b);
-				double interp2 = Interpolate(A, a);
-
-				res -= w*logx*a*E->Regular(a)*interp1;
-				res -= w*logx*b*(E->Plus(b)*interp2 - E->Plus(1.0)*A.at(k))/(1.0-b);
-			}
-		}
+		
 		return res;
 	}
 

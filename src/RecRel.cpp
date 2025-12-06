@@ -142,7 +142,7 @@ namespace Candia2
 		double conv1 = _grid.Convolution(S0, P0, k);
 		double conv2 = _grid.Convolution(S1, P1, k);
 		double conv3 = _grid.Convolution(S2, P2, k);
-		double conv4 = _grid.Convolution(S3, P3, k, true);
+		double conv4 = _grid.Convolution(S3, P3, k);
 
 		double res = -conv1 * (2.0/_alpha_s.Beta0());
 		res -= conv2 / (PI*_alpha_s.Beta0());
@@ -189,7 +189,7 @@ namespace Candia2
 		double conv1 = P0.convolution(S0, k);
 		double conv2 = P1.convolution(S1, k);
 		double conv3 = P2.convolution(S2, k);
-		double conv4 = P3.convolution(S3, k);
+		double conv4 = P3.convolution(S3, k, true);
 
 		double res = -conv1 * (2.0/_alpha_s.Beta0());
 		res -= conv2 / (PI*_alpha_s.Beta0());
@@ -434,7 +434,7 @@ namespace Candia2
 		double conv0 = _grid.Convolution(D, P0, k);
 		double conv1 = _grid.Convolution(D, P1, k);
 		double conv2 = _grid.Convolution(D, P2, k);
-		double conv3 = _grid.Convolution(D, P3, k, true);
+		double conv3 = _grid.Convolution(D, P3, k);
 
 		const double fac1 = 32.0*PI_2;
 		const double fac2 = 16.0*PI*r1;
@@ -480,7 +480,7 @@ namespace Candia2
 		double conv0 = _grid.Convolution(D, P0, k);
 		double conv1 = _grid.Convolution(D, P1, k);
 		double conv2 = _grid.Convolution(D, P2, k);
-		double conv3 = _grid.Convolution(D, P3, k, true);
+		double conv3 = _grid.Convolution(D, P3, k);
 
 		const double fac1 = -64*PI_2;
 		const double fac2 = -32*PI*r1;
@@ -524,7 +524,7 @@ namespace Candia2
 		double conv0 = _grid.Convolution(D, P0, k);
 		double conv1 = _grid.Convolution(D, P1, k);
 		double conv2 = _grid.Convolution(D, P2, k);
-		double conv3 = _grid.Convolution(D, P3, k, true);
+		double conv3 = _grid.Convolution(D, P3, k);
 
 		const double fac1 = 128*PI_2*(b+r1);
 		const double fac2 = -64*PI*c;
@@ -579,7 +579,7 @@ namespace Candia2
 		double conv0 = P0.convolution(D, k);
 		double conv1 = P1.convolution(D, k);
 		double conv2 = P2.convolution(D, k);
-		double conv3 = P3.convolution(D, k);
+		double conv3 = P3.convolution(D, k, true);
 
 		const double fac1 = 32.0*PI_2;
 		const double fac2 = 16.0*PI*r1;
@@ -625,7 +625,7 @@ namespace Candia2
 		double conv0 =  P0.convolution(D, k);
 		double conv1 =  P1.convolution(D, k);
 		double conv2 =  P2.convolution(D, k);
-		double conv3 =  P3.convolution(D, k);
+		double conv3 =  P3.convolution(D, k, true);
 
 		const double fac1 = -64*PI_2;
 		const double fac2 = -32*PI*r1;
@@ -669,7 +669,7 @@ namespace Candia2
 		double conv0 = P0.convolution(D, k);
 		double conv1 = P1.convolution(D, k);
 		double conv2 = P2.convolution(D, k);
-		double conv3 = P3.convolution(D, k);
+		double conv3 = P3.convolution(D, k, true);
 
 		const double fac1 = 128*PI_2*(b+r1);
 		const double fac2 = -64*PI*c;

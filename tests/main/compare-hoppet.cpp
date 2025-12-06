@@ -12,7 +12,7 @@
 using namespace std;
 namespace fs = filesystem;
 
-#include "Candia-v2/Candia.hpp"
+#include "Candia-v2/Common.hpp"
 using namespace Candia2;
 
 constexpr static char const* HOPPET_DATA_FILE{"out.dat"};
@@ -48,31 +48,34 @@ static char const* const TABLE_HEADER =
 	"    }\n"
 	"    \\begin{center}\n"
 	"    \\vspace{5mm}\n"
-	"    \\begin{tabular}{||c||r|r|r|r|r|r|r|r|}\n"
+	"    \\begin{tabular}{||c||r|r|r|r|r|r|r|r|r|r|r|}\n"
 	"    \\hline \\hline\n"
-	"    \\multicolumn{9}{||c||}{} \\\\[-3mm]\n"
-	"    \\multicolumn{9}{||c||}{$\\, n_f = 3\\ldots 5\\,$,\n"
+	"    \\multicolumn{12}{||c||}{} \\\\[-3mm]\n"
+	"    \\multicolumn{12}{||c||}{$\\, n_f = 3\\ldots 5\\,$,\n"
 	"        $\\,\\mu_{\\rm f}^2 = 10^4 \\mbox{ GeV}^2$} \\\\\n"
-	"    \\multicolumn{9}{||c||}{} \\\\[-0.3cm]\n"
+	"    \\multicolumn{12}{||c||}{} \\\\[-0.3cm]\n"
 	"    \\hline \\hline\n"
-	"    \\multicolumn{9}{||c||}{} \\\\[-3mm]\n"
+	"    \\multicolumn{12}{||c||}{} \\\\[-3mm]\n"
 	"    \\multicolumn{1}{||c||}{$x$} &\n"
-	"    \\multicolumn{1}{c|} {$xu_v$} &\n"
-	"    \\multicolumn{1}{c|} {$xd_v$} &\n"
-	"    \\multicolumn{1}{c|} {$xL_-$} &\n"
-	"    \\multicolumn{1}{c|} {$xL_+$} &\n"
-	"    \\multicolumn{1}{c|} {$xs_+$} &\n"
-	"    \\multicolumn{1}{c|} {$xc_+$} &\n"
-	"    \\multicolumn{1}{c|} {$xb_+$} &\n"
-	"    \\multicolumn{1}{c||}{$xg$} \\\\[0.5mm]\n";
+	"    \\multicolumn{1}{c|} {$xg$} &\n"
+	"    \\multicolumn{1}{c|} {$xu$} &\n"
+	"    \\multicolumn{1}{c|} {$xd$} &\n"
+	"    \\multicolumn{1}{c|} {$xs$} &\n"
+	"    \\multicolumn{1}{c|} {$xc$} &\n"
+	"    \\multicolumn{1}{c|} {$xb$} &\n"
+	"    \\multicolumn{1}{c|} {$xub$} &\n"
+	"    \\multicolumn{1}{c|} {$xdb$} &\n"
+	"    \\multicolumn{1}{c|} {$xsb$} &\n"
+	"    \\multicolumn{1}{c|} {$xcb$} &\n"
+	"    \\multicolumn{1}{c||}{$xbb$} \\\\[0.5mm]\n";
 
 static char const* TABLE_SUBHEADER =
 	"\\hline \\hline\n"
-	"\\multicolumn{9}{||c||}{} \\\\[-3mm]\n"
-	"\\multicolumn{9}{||c||}{$\\mu_{\\rm r}^2 = \\ %KR%\\mu_{\\rm f}^2$} \\\\\n"
-	"\\multicolumn{9}{||c||}{} \\\\[-0.3cm]\n"
+	"\\multicolumn{12}{||c||}{} \\\\[-3mm]\n"
+	"\\multicolumn{12}{||c||}{$\\mu_{\\rm r}^2 = \\ %KR%\\mu_{\\rm f}^2$} \\\\\n"
+	"\\multicolumn{12}{||c||}{} \\\\[-0.3cm]\n"
 	"\\hline \\hline\n"
-	" & & & & & & & & \\\\[-0.3cm]\n";
+	" & & & & & & & & & & & \\\\[-0.3cm]\n";
 
 
 static char const* const TABLE_FOOTER =
@@ -219,9 +222,9 @@ int main(int argc, char *argv[])
 	}
 
 	// fill vectors with zeros
-	// 8 (uv, dv, L-, L+, s+, c+, b+, g)
+	// 11 dists (all of them minus top quark)
 	// and 9 tabulated x values each (1e-5, 1e-4, 1e-3, 1e-2, 0.1, 0.3, 0.5, 0.9)
-	MultiDimVector<double, 2>::type candia_data(8, std::vector<double>(9, 0.0));
+	MultiDimVector<double, 2>::type candia_data(11, std::vector<double>(9, 0.0));
 	MultiDimVector<double, 2>::type	hoppet_data{candia_data};
 	
 	// output vector for relative diffs
@@ -266,14 +269,17 @@ int main(int argc, char *argv[])
 	for (uint ik=0; ik<ntab.size()-1; ++ik)
 	{
 		int k = ntab.at(ik);
-		candia_data.at(0).at(ik) = F[1][k] - F[1+6][k];
-		candia_data.at(1).at(ik) = F[2][k] - F[2+6][k];
-		candia_data.at(2).at(ik) = F[2+6][k] - F[1+6][k];
-		candia_data.at(3).at(ik) = 2.0*(F[1+6][k] + F[2+6][k]);
-		candia_data.at(4).at(ik) = F[3][k] + F[3+6][k];
-		candia_data.at(5).at(ik) = F[4][k] + F[4+6][k];
-		candia_data.at(6).at(ik) = F[5][k] + F[5+6][k];
-		candia_data.at(7).at(ik) = F[0][k];
+		candia_data.at(0).at(ik) =  F[0][k];
+		candia_data.at(1).at(ik) =  F[1][k];
+		candia_data.at(2).at(ik) =  F[2][k];
+		candia_data.at(3).at(ik) =  F[3][k];
+		candia_data.at(4).at(ik) =  F[4][k];
+		candia_data.at(5).at(ik) =  F[5][k];
+		candia_data.at(6).at(ik) =  F[6+1][k];
+		candia_data.at(7).at(ik) =  F[6+2][k];
+		candia_data.at(8).at(ik) =  F[6+3][k];
+		candia_data.at(9).at(ik) =  F[6+4][k];
+		candia_data.at(10).at(ik) = F[6+5][k];
 	}
 
 	ifstream hoppet_stream{hoppet_data_path};
@@ -303,7 +309,7 @@ int main(int argc, char *argv[])
 
 	auto reldiff =
 		[](double candia, double hoppet) -> double {
-			return abs(candia-hoppet)/(abs(candia+hoppet)/2.0);
+			return abs(candia-hoppet)/hoppet;
 		};
 
 	for (uint j=0; j<candia_data.size(); ++j)

@@ -2,6 +2,7 @@
 #include <vector>
 #include <iomanip>
 #include <print>
+#include <fstream>
 #include <chrono>
 using uint = unsigned;
 using namespace std;
@@ -13,30 +14,29 @@ using namespace Candia2;
 
 int main()
 {
-	const uint num_grid_points = 200;
+	const uint num_grid_points = 1250;
 	std::vector<double> xtab{1e-5, 1e-4, 1e-3, 1e-2, 0.1, 0.3, 0.5, 0.7, 0.9, 1.0};
-	Candia2::Grid grid(xtab, num_grid_points);
+	Candia2::Grid grid(xtab, num_grid_points, 3);
 	
 	const double Qf = 100.0;
 	const uint order = 3;
-	const uint iterations = 7;
-	const uint trunc_idx = 7;
+	const uint iterations = 15;
+	const uint trunc_idx = 20;
 	const double kr = 1.0;
-	Candia2::DGLAPSolver solver(order, grid, Qf, iterations, trunc_idx, std::make_unique<Candia2::LesHouchesDistribution>(), kr);
+	Candia2::DGLAPSolver solver(order, grid, Qf, iterations, trunc_idx, std::make_unique<Candia2::LesHouchesDistribution>(), kr, true);
 
 	const auto t0 = chrono::high_resolution_clock::now();
 	auto res = solver.Evolve2();
 	const auto tf = chrono::high_resolution_clock::now();
 	const chrono::duration<double, ratio<60>> duration = tf - t0;
 	println("Full evolution with {} grid points, {} iterations and {} truncated terms took {} minutes.", 
-		num_grid_points, iterations, trunc_idx, duration
-	);
+		num_grid_points, iterations, trunc_idx, duration);
 	
-	for (auto const [i, x] : std::ranges::views::enumerate(grid.Points()))
-		println("{:.3e}   {:.3e}  {:.3e}  {:.3e}", x, res[0][i], res[1][i], res[2][i]);
+	// for (auto const [i, x] : std::ranges::views::enumerate(grid.Points()))
+		// println("{:.3e}   {:.3e}  {:.3e}  {:.3e}", x, res[0][i], res[1][i], res[2][i]);
 
-	return 0;
-
+	// return 0;
+	
 	// open the output file, with a filename descriptive of all the provided inputs
 	ostringstream outfile_ss{};
 	outfile_ss << ((order == 3) ? "n3lo" : (order == 2) ? "nnlo" : (order == 1) ? "nlo" : "lo");

@@ -65,7 +65,7 @@ namespace Candia2
 	const uint GAUSS_POINTS = 30;
 
 	/** @brief Number of interpolation points to use */
-	const uint INTERP_POINTS = 5;
+	const uint INTERP_POINTS = 6;
 
 	/** @brief Number of iterations for non-singlet */
 	const uint DEFAULT_ITERATIONS = 10;

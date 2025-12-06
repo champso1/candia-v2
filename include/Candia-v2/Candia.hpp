@@ -420,7 +420,7 @@ namespace Candia2
 			FunctionGrid& P3);
 		///@}
 
-		
+		bool _multi_thread;
 	public:
 		/** @name Constructors/destructors
 		 */
@@ -437,7 +437,7 @@ namespace Candia2
 	    DGLAPSolver(const uint order, Grid & grid, const double Qf,
 			const uint iterations, const uint trunc_idx,
 			std::unique_ptr<Distribution> initial_dist,
-			double kr = 1.0
+			double kr = 1.0, bool multi_thread = false
 		);
 		~DGLAPSolver();
 		///@}
@@ -562,12 +562,12 @@ namespace Candia2
 
 		void HeavyFlavorTreatment2();
 		void HFT2_NNLO1(ArrayGrid& c, uint j, uint k);
-		void HFT2_NNLO2(ArrayGrid& s1, ArrayGrid& s2, uint k);
-		void HFT2_NNLO3(ArrayGrid& s1, ArrayGrid& s2, uint k);
+		void HFT2_NNLO2(ArrayGrid& g, ArrayGrid& qp, uint k);
+		void HFT2_NNLO3(ArrayGrid& g, ArrayGrid& qp, uint k);
 		void HFT2_N3LO1(ArrayGrid& q, ArrayGrid& qb, uint j, uint k, double SP);
 		void HFT2_N3LO2(ArrayGrid& q, ArrayGrid& qb, uint j, uint k, double SP);
-		void HFT2_N3LO3(ArrayGrid& s1, ArrayGrid& s2, uint k);
-		void HFT2_N3LO4(ArrayGrid& s1, ArrayGrid& s2, uint k);
+		void HFT2_N3LO3(ArrayGrid& g, ArrayGrid& qp, uint k);
+		void HFT2_N3LO4(ArrayGrid& g, ArrayGrid& qp, uint k);
 
 
 	    void _mt_EvolveDistribution_NS_LO(uint j);

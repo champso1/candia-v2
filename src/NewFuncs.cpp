@@ -4,7 +4,7 @@
 #include "Candia-v2/OperatorMatrixElements.hpp"
 
 #include <functional>
-#include <string_view>
+#include <print>
 #include <thread>
 
 namespace Candia2
@@ -1453,6 +1453,7 @@ namespace Candia2
 		const double fac_nnlo = as*as/(16.0*PI_2);
 		const double fac_n3lo = as*as*as/(64.0*PI_3);
 
+		/*
 		const double conv1a = getSplitFunc("A2ns").convolution(q, k);
 		const double conv1b = getSplitFunc("A3nsp").convolution(q, k);
 		const double conv1c = conv1a;
@@ -1467,6 +1468,24 @@ namespace Candia2
 			  ((fac_nnlo*conv1a + fac_n3lo*conv1b) + (fac_nnlo*conv1c + fac_n3lo*conv1d))
 			+ ((fac_nnlo*conv2a + fac_n3lo*conv2b) - (fac_nnlo*conv2c + fac_n3lo*conv2d))
 			+ SP);
+		*/
+		
+		double const conv1a = getSplitFunc("A2ns").convolution(q, k);
+		double const conv1b = getSplitFunc("A3nsp").convolution(q, k, true);
+
+		double const conv2a = getSplitFunc("A2ns").convolution(qb, k);
+		double const conv2b = getSplitFunc("A3nsp").convolution(qb, k, true);
+
+		double const conv3a = conv1a;
+		double const conv3b = getSplitFunc("A3nsm").convolution(q, k, true);
+
+		double const conv4a = conv2a;
+		double const conv4b = getSplitFunc("A3nsm").convolution(qb, k, true);
+
+		_D2[j][0][0][0][0][k] += 0.5*(
+			((fac_nnlo*conv1a + fac_n3lo*conv1b) + (fac_nnlo*conv2a + fac_n3lo*conv2b)) +
+			((fac_nnlo*conv3a + fac_n3lo*conv3b) - (fac_nnlo*conv4a + fac_n3lo*conv4b)) +
+			SP);
 	}
 
     // qbar
@@ -1476,6 +1495,7 @@ namespace Candia2
 		const double fac_nnlo = as*as/(16.0*PI_2);
 		const double fac_n3lo = as*as*as/(64.0*PI_3);
 
+		/*
 		const double conv1a = getSplitFunc("A2ns").convolution(q, k);
 		const double conv1b = getSplitFunc("A3nsp").convolution(q, k);
 		const double conv1c = conv1a;
@@ -1490,38 +1510,56 @@ namespace Candia2
 			((fac_nnlo*conv1a + fac_n3lo*conv1b) - (fac_nnlo*conv1c + fac_n3lo*conv1d))
 			+ ((fac_nnlo*conv2a + fac_n3lo*conv2b) + (fac_nnlo*conv2c + fac_n3lo*conv2d))
 			+ SP);
+		*/
+
+		double const conv1a = getSplitFunc("A2ns").convolution(q, k);
+		double const conv1b = getSplitFunc("A3nsp").convolution(q, k, true);
+
+		double const conv2a = getSplitFunc("A2ns").convolution(qb, k);
+		double const conv2b = getSplitFunc("A3nsp").convolution(qb, k, true);
+
+		double const conv3a = conv1a;
+		double const conv3b = getSplitFunc("A3nsm").convolution(q, k, true);
+
+		double const conv4a = conv2a;
+		double const conv4b = getSplitFunc("A3nsm").convolution(qb, k, true);
+
+		_D2[j][0][0][0][0][k] += 0.5*(
+			((fac_nnlo*conv1a + fac_n3lo*conv1b) + (fac_nnlo*conv2a + fac_n3lo*conv2b)) -
+			((fac_nnlo*conv3a + fac_n3lo*conv3b) - (fac_nnlo*conv4a + fac_n3lo*conv4b)) +
+			SP);
 	}
 
 	// gluon (index 0 in S array)
-	void DGLAPSolver::HFT2_N3LO3(ArrayGrid& s1, ArrayGrid& s2, uint k)
+	void DGLAPSolver::HFT2_N3LO3(ArrayGrid& g, ArrayGrid& qp, uint k)
 	{
 		const double as = _alpha_s.Post(_nf+1);
 		const double fac_nnlo = as*as/(16.0*PI_2);
 		const double fac_n3lo = as*as*as/(64.0*PI_3);
 	    
-		const double conv1a = getSplitFunc("A2gg").convolution(s1, k);
-		const double conv1b = getSplitFunc("A3gg").convolution(s1, k);
-		const double conv2a = getSplitFunc("A2gq").convolution(s2, k);
-		const double conv2b = getSplitFunc("A3gq").convolution(s2, k);
+		const double conv1a = getSplitFunc("A2gq").convolution(qp, k);
+		const double conv1b = getSplitFunc("A3gq").convolution(qp, k, true);
+		const double conv2a = getSplitFunc("A2gg").convolution(g, k);
+		const double conv2b = getSplitFunc("A3gg").convolution(g, k, true);
 		
 		_S2[0][0][0][k] += (fac_nnlo*conv1a + fac_n3lo*conv1b) + (fac_nnlo*conv2a + fac_n3lo*conv2b);
 	}
 
 	// heavy flavor
-	void DGLAPSolver::HFT2_N3LO4(ArrayGrid& s1, ArrayGrid& s2, uint k)
+	void DGLAPSolver::HFT2_N3LO4(ArrayGrid& g, ArrayGrid& qp, uint k)
 	{
 		const double as = _alpha_s.Post(_nf+1);
 		const double fac_nnlo = as*as/(16.0*PI_2);
 		const double fac_n3lo = as*as*as/(64.0*PI_3);
 
-	    const double conv1a = getSplitFunc("A2hq").convolution(s2, k);
-		const double conv1b = getSplitFunc("A3hq").convolution(s2, k);
-		const double conv2a = getSplitFunc("A2hg").convolution(s1, k);
-		const double conv2b = getSplitFunc("A3hg").convolution(s1, k);
+	    const double conv1a = getSplitFunc("A2hq").convolution(qp, k);
+		const double conv1b = getSplitFunc("A3hq").convolution(qp, k, true);
+		const double conv2a = getSplitFunc("A2hg").convolution(g, k);
+		const double conv2b = getSplitFunc("A3hg").convolution(g, k, true);
 		
         const double res = 0.5*((fac_nnlo*conv1a + fac_n3lo*conv1b) + (fac_nnlo*conv2a + fac_n3lo*conv2b));
-		_D2[_nf+1][0][0][0][0][k] = res;
-        _D2[_nf+7][0][0][0][0][k] = res;
+		_D2[(_nf+1)][0][0][0][0][k] = res;
+        _D2[(_nf+1)+6][0][0][0][0][k] = res;
 	}
 
 
@@ -1533,8 +1571,6 @@ namespace Candia2
         std::reference_wrapper<std::vector<ArrayGrid>> arr, 
 			double L1, double L2, double L3, double L4)
 	{
-        using std::string_view_literals::operator""sv;
-
 		switch (_order)
 		{
 			case 0: // LO
@@ -1604,6 +1640,13 @@ namespace Candia2
 			case 3: // N3LO nonsinglet
 			{
 				std::cout << "[THREAD2] Performing N3LO non-singlet evolution threaded.\n";
+
+				for (uint j=26; j<=24+_nf; ++j)
+                    arr.get()[j] = _D2[j][0][0][0][0];
+                for (uint j=32; j<=30+_nf; ++j)
+                    arr.get()[j] = _D2[j][0][0][0][0];
+				arr.get()[25] = _D2[25][0][0][0][0];
+				
 				std::vector<std::thread> threads{};
 
                 std::array<double, 4> L{L1, L2, L3, L4};
@@ -1611,6 +1654,7 @@ namespace Candia2
 				std::array<std::string, 3> nsp{"P1nsp", "P2nsp", "P3nsp"};
 				std::array<std::string, 3> nsv{"P1nsm", "P2nsv", "P3nsv"};
 
+				std::cout << "=============== BEGIN THREAD OUTPUT ====================\n";
 				for (uint j=26; j<=24+_nf; j++)
 					threads.emplace_back(&DGLAPSolver::_mt2_EvolveDistribution_NS_N3LO, this, arr, j, nsm, L);
 				for (uint j=32; j<=30+_nf; j++)
@@ -1620,6 +1664,7 @@ namespace Candia2
 				for (std::thread & t : threads)
 					t.join();
 
+				std::cout << "=============== END THREAD OUTPUT ====================\n";
 				std::cout << "[THREAD2] Finished performing threaded N3LO non-singlet evolution.\n";
 			} break;
 		}
@@ -1750,6 +1795,8 @@ namespace Candia2
         std::reference_wrapper<std::vector<ArrayGrid>> arr, 
 			uint j, std::array<std::string, 3> const& P, std::array<double, 4> const& L)
     {
+		std::println("  [j={}] Beginning evolution...", j);
+		
         double const L1 = L[0];
         double const L2 = L[1];
         double const L3 = L[2];
@@ -1763,6 +1810,7 @@ namespace Candia2
 
         for (uint s=1; s<_iterations; s++)
         {
+			std::println("  [j={}] Iteration {}/{}", j, s, _iterations-1);
             for (uint k=0; k<_grid.Size()-1; k++)
             {
                 // RecRel #1:

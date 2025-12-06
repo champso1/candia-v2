@@ -9,8 +9,8 @@
 using namespace std;
 using uint = unsigned;
 
-const static vector<double> xtab{1e-7, 1e-6, 1e-5, 1e-4, 1e-3, 1e-2, 0.1, 0.3, 0.5, 0.7, 0.9, 1.0};
-const static uint nx = 1000;
+const static vector<double> xtab{1e-5, 1e-4, 1e-3, 1e-2, 0.1, 0.3, 0.5, 0.7, 0.9, 1.0};
+const static uint nx = 800;
 
 pair<vector<double>,vector<int>> gen_grid0()
 {
@@ -206,7 +206,47 @@ pair<vector<double>,vector<int>> gen_grid4()
 	return {x, ntab};
 }
 
-void print_vals(vector<int> ntab, vector<double> x)
+pair<vector<double>,vector<int>> gen_grid5()
+{
+	std::vector<double> points{};
+
+	std::vector<double> log_tab{1e-5, 1e-4, 1e-3, 1e-2, 0.1, 0.5, 1.0};
+	std::vector<double> log_xtab{log_tab};
+	std::ranges::transform(log_xtab, log_xtab.begin(), [](double x) -> double{ return std::log10(x); });
+	int num_grid_points_per_bin = nx / xtab.size();
+
+	for (uint i=0; i<log_xtab.size()-1; ++i)
+	{
+		double logmin = log_xtab[i];
+		double logmax = log_xtab[i+1];
+		double dlog = (logmax-logmin)/static_cast<double>(num_grid_points_per_bin);
+
+		int num = 0;
+		for (double _l=logmin; _l<logmax && num<num_grid_points_per_bin; _l+=dlog, ++num)
+			points.emplace_back(std::pow(10, _l));
+	}
+		
+	// insert the tabulated points
+	// make it a set to avoid duplicate values
+	// then replace the original points array with the new one
+	std::ranges::sort(points);
+	std::set<double> set{points.begin(), points.end()};
+	set.insert(xtab.begin(), xtab.end());
+	points = std::vector<double>(set.begin(), set.end());
+
+	// build the ntab array
+	std::vector<int> ntab{};
+	for (const double x : xtab)
+	{
+		auto it = std::ranges::lower_bound(points, x);
+		if (it != points.end() && std::abs(*it - x) < 1e-14)
+			ntab.emplace_back(std::distance(points.begin(), it));
+	}
+
+	return {points, ntab};
+}
+
+void print_vals(vector<int> const& ntab, vector<double> const& x)
 {
 	println("Ntab values:");
     ranges::for_each(ntab, [](int x){ print("{} ", x); });
@@ -231,14 +271,17 @@ int main()
 {
 	// auto [x1, ntab1] = gen_grid0();
 	// auto [x3, ntab3] = gen_grid3();
-	auto [x4, ntab4] = gen_grid4();
+	// auto [x4, ntab4] = gen_grid4();
+	auto [x5, ntab5] = gen_grid5();
 
 	// print_vals(ntab1, x1);
 	// print_vals(ntab3, x3);
-	print_vals(ntab4, x4);
+	// print_vals(ntab4, x4);
+	print_vals(ntab5, x5);
 
 	// save_vals(x1);
 	// save_vals(x3);
 	// save_vals(x4);
+	save_vals(x5);
 }
 

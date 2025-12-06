@@ -36,13 +36,15 @@ namespace Candia2
 		const uint order, Grid & grid, const double Qf,
 		const uint iterations, const uint trunc_idx,
 		std::unique_ptr<Distribution> initial_dist,
-		double kr
+		double kr, bool multi_thread
 	) : _order{order},  _grid{grid}, _Qf{Qf},
 		_alpha_s{order, initial_dist->Q0(), initial_dist->Alpha0(), initial_dist->Masses(), kr},
 		_mur2_muf2{kr}, _log_mur2_muf2{std::log(kr)},
 		_dist{std::move(initial_dist)},
-		_iterations{iterations}, _trunc_idx{trunc_idx}
+		_iterations{iterations}, _trunc_idx{trunc_idx},
+		_multi_thread{multi_thread}
 	{
+	
 		std::println("[DGLAP] Evolving with log(mu_R / mu_F) = log({:.1}) = {:.4}.", _mur2_muf2, _log_mur2_muf2);
 		
 		// reserve space in all the coefficient arrays
@@ -616,7 +618,7 @@ namespace Candia2
 				std::cerr << "[DGLAP2] Finished singlet evolution and resummation\n";
 
 				std::cerr << "[DGLAP2] Starting non-singlet evolution and resummation.\n";
-				EvolveNonSinglet2(arr, L1, L2, L3, L4);
+				_multi_thread ? EvolveNonSinglet2Threaded(arr, L1, L2, L3, L4) : EvolveNonSinglet2(arr, L1, L2, L3, L4);
 				std::cerr << "[DGLAP2] Finished non-singlet evolution and resummation\n";
 
 				std::cerr << "[DGLAP2] Fixing distributions... \n";
