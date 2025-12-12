@@ -24,9 +24,11 @@ namespace Candia2
 		cache_type _cache{};
 	public:
 		ArrayGrid(Grid const& grid)
-			: _grid{std::cref(grid)}, _base(grid.size(), 0.0) {}
+			: _grid{std::cref(grid)}, _base(grid.size(), 0.0)
+		{}
 		ArrayGrid(Grid const& grid, base_type const& points)
-			: _grid{std::cref(grid)}, _base{points} {}
+			: _grid{std::cref(grid)}, _base{points}
+		{}
 		~ArrayGrid() = default;
 
 		inline base_type  const& base() const noexcept { return _base; }
@@ -34,8 +36,9 @@ namespace Candia2
 	    size_type size() const noexcept;
 		void zero() noexcept;
 		
-		double& operator[](uint idx); // base accessor for points on the grid
-		double& operator()(double x); // accessor for points off the grid
+		double operator[](uint idx) const;  // accessor for points on the grid (const)
+		double& operator[](uint idx);       // ditto (non-const)
+		double& operator()(double x);       // accessor for points off the grid
 
 	private:
 		void addPoint(double x);
@@ -46,14 +49,17 @@ namespace Candia2
 
 	class FunctionGrid final
 	{
-	private:
+	public:
 		using cache_type = std::map<double, std::array<double, 3>>;
 		using grid_type = std::reference_wrapper<const Grid>;
 		using expr_type = std::unique_ptr<Expression>;
 
+	private:
 		cache_type _cache{}; //!< stores evaluated pieces of the function
 		grid_type _grid; //!< underlying grid
 		expr_type _func; //!< unique_ptr to corresponding function
+
+		static bool _split_n3lo_int;
 	public:
 		FunctionGrid(Grid const& grid, expr_type expr);
 		FunctionGrid(FunctionGrid&& other)
@@ -77,9 +83,14 @@ namespace Candia2
 		void addFunctionPoints(std::vector<double> const& X);
 		void addFunctionPoint(double x);
 
-		double convolution(ArrayGrid & A, uint k, bool split_interval=false);
+		double convolution(ArrayGrid & A, uint k);
 
 		inline cache_type const& cache() const noexcept { return _cache; }
+
+		inline static void splitN3LOInt()
+		{
+			_split_n3lo_int = true;
+		}
 	};
 
 

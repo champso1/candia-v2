@@ -15,14 +15,13 @@ using namespace Candia2;
 #include <iostream>
 using namespace std;
 
-using FinalDist = MultiDimVector<double, 2>::type;
-
-void generatePlots(std::string_view filename,
-				   std::string_view title,
-				   std::vector<int> const& dists,
-				   std::vector<int> const& ntab,
-				   MultiDimArrayGrid_t<1> & F,
-				   Grid const& grid)
+void generatePlots(
+	std::string_view filename,
+	std::string_view title,
+	std::vector<int> const& dists,
+	std::vector<int> const& ntab,
+	std::vector<ArrayGrid> & F,
+	Grid const& grid)
 {
 	string temp{};
 	filesystem::path filepath(filename);
@@ -60,21 +59,23 @@ int main(int argc, char *argv[])
 		exit(EXIT_FAILURE);
 	}
     const uint order = stoi(argv[1]);
+	const uint num_grid_points = 1000;
+	const uint iterations = 12;
+	const uint trunc_idx = 15;
+	const double Qf = 100.0;
+	const double kr = 1.0;
 	
 	// define the grid points
-	vector<double> xtab{1e-7, 1e-6, 1e-5, 1e-4, 1e-3, 1e-2, 0.1, 0.3, 0.5, 0.7, 0.9, 1.0};
-	// vector<double> xtab{1e-5, 1e-4, 1e-3, 1e-2, 0.1, 0.3, 0.5, 0.7, 0.9, 1.0};
-	Grid grid(xtab, 401);
+	vector<double> xtab{1e-5, 1e-4, 1e-3, 1e-2, 0.1, 0.3, 0.5, 0.7, 0.9, 1.0};
+	Grid grid{xtab, num_grid_points};
 
-	// initialize the solver, evolve to 100.0
-	// use the Les Houche distribution
-	const double Qf = 200.0;
-	const uint iterations = 12;
-	const uint trunc_idx = 7;
-	DGLAPSolver solver(order, grid, Qf, iterations, trunc_idx, make_unique<LesHouchesDistribution>());
+	std::unique_ptr<LesHouchesDistribution> dist = std::make_unique<LesHouchesDistribution>();
+	AlphaS alphas(order, dist->Q0(), dist->alpha0(), Qf, kr);
+	alphas.setVFNS(dist->masses(), dist->nfi());
+
+	DGLAPSolver solver(order, grid, alphas, Qf, iterations, trunc_idx, *dist, kr, true);
 	
 	auto F = solver.evolve();
-	
 	vector<int> dists{0, 1};
 
 	vector<int> ntab(grid.size()-1);

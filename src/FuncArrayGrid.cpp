@@ -87,6 +87,11 @@ namespace Candia2
 	}
 
 
+	double ArrayGrid::operator[](uint idx) const
+	{
+		return _base[idx];
+	}
+
 	double& ArrayGrid::operator[](uint idx)
 	{
 		return _base[idx];
@@ -104,6 +109,7 @@ namespace Candia2
 	}
 
 
+	bool FunctionGrid::_split_n3lo_int = false;
 
 	FunctionGrid::FunctionGrid(Grid const& grid, std::unique_ptr<Expression> expr)
 		: _grid{std::cref(grid)}, _func{std::move(expr)}
@@ -138,14 +144,14 @@ namespace Candia2
 	}
 
 
-	double FunctionGrid::convolution(ArrayGrid & A, uint k, bool split_interval)
+	double FunctionGrid::convolution(ArrayGrid & A, uint k)
 	{
 		double x = _grid.get().at(k);
 		double logx =  std::log(x);
 
 		double res = (_func->plus(1.0)*std::log1p(-x) + _func->delta(1.0)) * A[k];
 
-		if (!split_interval)
+		if (!_split_n3lo_int)
 		{
 			for (uint i=0; i<GAUSS_POINTS; i++)
 			{

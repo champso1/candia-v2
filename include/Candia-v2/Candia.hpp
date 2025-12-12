@@ -1,9 +1,3 @@
-/** @file
- *
- *  The main file containing the main evolution code. This interface is what the user
- *  will interface with 99% of the time.
- */
-
 #ifndef __CANDIA_HPP
 #define __CANDIA_HPP
 
@@ -31,10 +25,9 @@ namespace Candia2
 		AlphaS _alpha_s; //!< main @a AlphaS object
 		double _mur2_muf2{}; //!< mu_r^2/mu_f^2
 		double _log_mur2_muf2{}; //!< log(_mur2_muf2)
-		uint _qct{}; //!< counter for tabulated Q's (to be removed)
-		
-		std::unique_ptr<Distribution> _dist; //!< main (initial) distribution
 
+		// TODO: remove the nfi and nff variables, they shouldn't be needed anymore
+		// since they are stored inside the alpha_s object
 		uint _nf{}; //!< current active number of massless flavors
 		uint _nfi{}; //!< minimum number based on initial evolution and provided quark masses
 		uint _nff{}; //!< final based on final evolution and provided quark masses
@@ -48,12 +41,18 @@ namespace Candia2
 		MultiDimArrayGrid_t<3> _B2{}; //!< NLO coeffs
 		MultiDimArrayGrid_t<4> _C2{}; //!< NNLO coeffs
 		MultiDimArrayGrid_t<5> _D2{}; //!< N3LO coeffs
-	    MultiDimVector<ArrayGrid, 3>::type _S2{}; //!< singlet coeffs
+	    MultiDimArrayGrid_t<3> _S2{}; //!< singlet coeffs
 		std::vector<ArrayGrid> _F2{}; //!< final distributions
 
 		std::array<double,8> _r1{}; //!< one real solution to N3LO quadratic
 		std::array<double,8> _b{};  //!< -2*Re[r2]
 		std::array<double,8> _c{};  //!< |r2|^2
+
+		// TODO: make this a CMAKE definition or some macro of some kind
+		// that way we can avoid linking with pthread or the Windows equivalent
+		// which would be nice for debug builds, since at the moment
+		// I believe we link with it no matter what
+		bool _multi_thread;
 
 		std::map<std::string, FunctionGrid> _expression_grids{};
 		template <typename TExpr, typename... TExprArgs>
@@ -70,6 +69,62 @@ namespace Candia2
 	    FunctionGrid& getSplitFunc(std::string const& name);
 		FunctionGrid& getOME(std::string const& name);
 		void loadAllExpressions();
+
+	public:
+	    DGLAPSolver(
+			uint order, Grid const& grid, AlphaS const& alpha_s,
+			double Qf, uint iterations, uint trunc_idx,
+			Distribution const& initial_dist,
+			double kr = 1.0, bool multi_thread = false);
+		~DGLAPSolver();
+		
+		inline AlphaS const& getAlphaS() const { return _alpha_s; }
+		inline Grid const& getGrid() const { return _grid; }
+
+		void setEvolutionVariables(uint iterations, uint trunc_idx);
+
+		auto evolve() -> decltype(_F2);
+
+	private:
+		void setInitialConditions(Distribution const& dist);
+		void fillSplittingFunctionCaches();
+		void setupCoefficients();
+		void fixDistributions(
+			bool resum_tab, bool resum_threshold, 
+			std::vector<ArrayGrid>& temp_arr, 
+			std::vector<ArrayGrid>& temp_arr_singlet);
+
+		void evolveSinglet(std::reference_wrapper<std::vector<ArrayGrid>> arr, double L1);
+		void evolveNonSinglet(
+			std::reference_wrapper<std::vector<ArrayGrid>> arr, 
+			double L1, double L2, double L3, double L4);
+		void evolveNonSingletThreaded(
+			std::reference_wrapper<std::vector<ArrayGrid>> arr, 
+			double L1, double L2, double L3, double L4);
+
+	
+		void heavyFlavorTreatment();
+		void HFT_NNLO1(ArrayGrid& c, uint j, uint k);
+		void HFT_NNLO2(ArrayGrid& g, ArrayGrid& qp, uint k);
+		void HFT_NNLO3(ArrayGrid& g, ArrayGrid& qp, uint k);
+		void HFT_N3LO1(ArrayGrid& q, ArrayGrid& qb, uint j, uint k, double SP);
+		void HFT_N3LO2(ArrayGrid& q, ArrayGrid& qb, uint j, uint k, double SP);
+		void HFT_N3LO3(ArrayGrid& g, ArrayGrid& qp, uint k);
+		void HFT_N3LO4(ArrayGrid& g, ArrayGrid& qp, uint k);
+
+		void _mt_EvolveDistribution_NS_LO  (
+			std::reference_wrapper<std::vector<ArrayGrid>> arr, 
+			uint j, double L1);
+	    void _mt_EvolveDistribution_NS_NLO (
+			std::reference_wrapper<std::vector<ArrayGrid>> arr, 
+			uint j, std::string const& P1, std::array<double, 2> const& L);
+	    void _mt_EvolveDistribution_NS_NNLO(
+			std::reference_wrapper<std::vector<ArrayGrid>> arr, 
+			uint j, std::array<std::string, 2> const& P, std::array<double, 3> const& L);
+	    void _mt_EvolveDistribution_NS_N3LO(
+			std::reference_wrapper<std::vector<ArrayGrid>> arr, 
+			uint j, std::array<std::string, 3> const& P, std::array<double, 4> const& L);
+
 
 		double recrelS_1(
 			ArrayGrid & S,
@@ -130,62 +185,6 @@ namespace Candia2
 			ArrayGrid& D,
 			uint k,
 			FunctionGrid& P0, FunctionGrid& P1, FunctionGrid& P2, FunctionGrid& P3);
-
-		bool _multi_thread;
-	public:
-	    DGLAPSolver(
-			uint order, Grid & grid, double Qf,
-			uint iterations, uint trunc_idx,
-			std::unique_ptr<Distribution> initial_dist,
-			double kr = 1.0, bool multi_thread = false);
-		~DGLAPSolver();
-		
-		inline AlphaS const& getAlphaS() const { return _alpha_s; }
-		inline Grid const& getGrid() const { return _grid; }
-
-		void setEvolutionVariables(uint iterations, uint trunc_idx);
-
-		auto evolve() -> decltype(_F2);
-
-	private:
-		void setInitialConditions();
-		void fillSplittingFunctionCaches();
-		void setupCoefficients();
-		void fixDistributions(
-			bool resum_tab, bool resum_threshold, 
-			std::vector<ArrayGrid>& temp_arr, 
-			std::vector<ArrayGrid>& temp_arr_singlet);
-
-		void evolveSinglet(std::reference_wrapper<std::vector<ArrayGrid>> arr, double L1);
-		void evolveNonSinglet(
-			std::reference_wrapper<std::vector<ArrayGrid>> arr, 
-			double L1, double L2, double L3, double L4);
-		void evolveNonSingletThreaded(
-			std::reference_wrapper<std::vector<ArrayGrid>> arr, 
-			double L1, double L2, double L3, double L4);
-
-	
-		void heavyFlavorTreatment();
-		void HFT_NNLO1(ArrayGrid& c, uint j, uint k);
-		void HFT_NNLO2(ArrayGrid& g, ArrayGrid& qp, uint k);
-		void HFT_NNLO3(ArrayGrid& g, ArrayGrid& qp, uint k);
-		void HFT_N3LO1(ArrayGrid& q, ArrayGrid& qb, uint j, uint k, double SP);
-		void HFT_N3LO2(ArrayGrid& q, ArrayGrid& qb, uint j, uint k, double SP);
-		void HFT_N3LO3(ArrayGrid& g, ArrayGrid& qp, uint k);
-		void HFT_N3LO4(ArrayGrid& g, ArrayGrid& qp, uint k);
-
-		void _mt_EvolveDistribution_NS_LO  (
-			std::reference_wrapper<std::vector<ArrayGrid>> arr, 
-			uint j, double L1);
-	    void _mt_EvolveDistribution_NS_NLO (
-			std::reference_wrapper<std::vector<ArrayGrid>> arr, 
-			uint j, std::string const& P1, std::array<double, 2> const& L);
-	    void _mt_EvolveDistribution_NS_NNLO(
-			std::reference_wrapper<std::vector<ArrayGrid>> arr, 
-			uint j, std::array<std::string, 2> const& P, std::array<double, 3> const& L);
-	    void _mt_EvolveDistribution_NS_N3LO(
-			std::reference_wrapper<std::vector<ArrayGrid>> arr, 
-			uint j, std::array<std::string, 3> const& P, std::array<double, 4> const& L);
 	};
 }
 

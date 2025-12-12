@@ -117,16 +117,16 @@ namespace Candia2
 		const double fac_n3lo = as*as*as/(64.0*PI_3);
 
 		double const conv1a = getSplitFunc("A2ns").convolution(q, k);
-		double const conv1b = getSplitFunc("A3nsp").convolution(q, k, true);
+		double const conv1b = getSplitFunc("A3nsp").convolution(q, k);
 
 		double const conv2a = getSplitFunc("A2ns").convolution(qb, k);
-		double const conv2b = getSplitFunc("A3nsp").convolution(qb, k, true);
+		double const conv2b = getSplitFunc("A3nsp").convolution(qb, k);
 
 		double const conv3a = conv1a;
-		double const conv3b = getSplitFunc("A3nsm").convolution(q, k, true);
+		double const conv3b = getSplitFunc("A3nsm").convolution(q, k);
 
 		double const conv4a = conv2a;
-		double const conv4b = getSplitFunc("A3nsm").convolution(qb, k, true);
+		double const conv4b = getSplitFunc("A3nsm").convolution(qb, k);
 
 		_D2[j][0][0][0][0][k] += 0.5*(
 			((fac_nnlo*conv1a + fac_n3lo*conv1b) + (fac_nnlo*conv2a + fac_n3lo*conv2b)) +
@@ -142,16 +142,16 @@ namespace Candia2
 		const double fac_n3lo = as*as*as/(64.0*PI_3);
 
 		double const conv1a = getSplitFunc("A2ns").convolution(q, k);
-		double const conv1b = getSplitFunc("A3nsp").convolution(q, k, true);
+		double const conv1b = getSplitFunc("A3nsp").convolution(q, k);
 
 		double const conv2a = getSplitFunc("A2ns").convolution(qb, k);
-		double const conv2b = getSplitFunc("A3nsp").convolution(qb, k, true);
+		double const conv2b = getSplitFunc("A3nsp").convolution(qb, k);
 
 		double const conv3a = conv1a;
-		double const conv3b = getSplitFunc("A3nsm").convolution(q, k, true);
+		double const conv3b = getSplitFunc("A3nsm").convolution(q, k);
 
 		double const conv4a = conv2a;
-		double const conv4b = getSplitFunc("A3nsm").convolution(qb, k, true);
+		double const conv4b = getSplitFunc("A3nsm").convolution(qb, k);
 
 		_D2[j][0][0][0][0][k] += 0.5*(
 			((fac_nnlo*conv1a + fac_n3lo*conv1b) + (fac_nnlo*conv2a + fac_n3lo*conv2b)) -
@@ -167,9 +167,9 @@ namespace Candia2
 		const double fac_n3lo = as*as*as/(64.0*PI_3);
 	    
 		const double conv1a = getSplitFunc("A2gq").convolution(qp, k);
-		const double conv1b = getSplitFunc("A3gq").convolution(qp, k, true);
+		const double conv1b = getSplitFunc("A3gq").convolution(qp, k);
 		const double conv2a = getSplitFunc("A2gg").convolution(g, k);
-		const double conv2b = getSplitFunc("A3gg").convolution(g, k, true);
+		const double conv2b = getSplitFunc("A3gg").convolution(g, k);
 		
 		_S2[0][0][0][k] += (fac_nnlo*conv1a + fac_n3lo*conv1b) + (fac_nnlo*conv2a + fac_n3lo*conv2b);
 	}
@@ -182,9 +182,9 @@ namespace Candia2
 		const double fac_n3lo = as*as*as/(64.0*PI_3);
 
 	    const double conv1a = getSplitFunc("A2hq").convolution(qp, k);
-		const double conv1b = getSplitFunc("A3hq").convolution(qp, k, true);
+		const double conv1b = getSplitFunc("A3hq").convolution(qp, k);
 		const double conv2a = getSplitFunc("A2hg").convolution(g, k);
-		const double conv2b = getSplitFunc("A3hg").convolution(g, k, true);
+		const double conv2b = getSplitFunc("A3hg").convolution(g, k);
 		
         const double res = 0.5*((fac_nnlo*conv1a + fac_n3lo*conv1b) + (fac_nnlo*conv2a + fac_n3lo*conv2b));
 		_D2[(_nf+1)][0][0][0][0][k] = res;

@@ -11,10 +11,12 @@ namespace Candia2
 {
 	class Grid final
 	{
+	public:
 		using grid_type = std::vector<double>;
 		using gauleg_type = std::vector<double>;
 		using ntab_type = std::vector<int>;
-		
+
+	private:
 		grid_type _points{};
 		ntab_type _ntab;     //!< stores indices for the tabulated grid points
 		

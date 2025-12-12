@@ -6,8 +6,7 @@
 #include <ranges>
 #include <numbers>
 
-typedef unsigned uint;
-
+using uint = unsigned;
 
 #define UNUSED(x) (void)(x)
 

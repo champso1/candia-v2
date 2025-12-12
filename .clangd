@@ -1,5 +1,5 @@
 CompileFlags:
-  CompilationDatabase: ./bin/clang-release-linux
+  CompilationDatabase: ./build
 
 InlayHints:
   Enabled: true

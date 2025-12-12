@@ -8,6 +8,7 @@
 
 #include <cstdlib>
 #include <functional>
+#include <memory>
 #include <print>
 
 
@@ -30,14 +31,13 @@ namespace Candia2
 {
 
 	DGLAPSolver::DGLAPSolver(
-		uint order, Grid & grid, double Qf,
-		uint iterations, uint trunc_idx,
-		std::unique_ptr<Distribution> initial_dist,
+		uint order, Grid const& grid, AlphaS const& alpha_s,
+		double Qf, uint iterations, uint trunc_idx,
+		Distribution const& initial_dist,
 		double kr, bool multi_thread) 
 		: _order{order},  _grid{grid}, _Qf{Qf},
-		  _alpha_s{order, initial_dist->Q0(), initial_dist->alpha0(), initial_dist->masses(), kr},
+		  _alpha_s{alpha_s},
 		  _mur2_muf2{kr}, _log_mur2_muf2{std::log(kr)},
-		  _dist{std::move(initial_dist)},
 		  _iterations{iterations}, _trunc_idx{trunc_idx},
 		  _multi_thread{multi_thread}
 	{
@@ -130,13 +130,7 @@ namespace Candia2
 			DISTS, ArrayGrid{grid}
 		};
 
-		_alpha_s.calculateThresholdValues(Qf);
-		setInitialConditions();
-	    _nfi = _dist->nfi();
-		_nff = _alpha_s.nff(_nfi, _Qf);
-		std::println("[DGLAP] Evolving to {} flavors.", _nff);
-
-		_qct = 0;
+		setInitialConditions(initial_dist);
 	}
 
 	DGLAPSolver::~DGLAPSolver()
@@ -161,20 +155,20 @@ namespace Candia2
 		return _expression_grids.at(name);
 	}
 
-	void DGLAPSolver::setInitialConditions()
+	void DGLAPSolver::setInitialConditions(Distribution const& dist)
 	{
 		std::print("[DGLAP] Setting initial conditions... ");
 	   
 		for (uint k=0; k<_grid.size()-1; k++)
 		{
 			double x = _grid[k];
-			_S2[0][0][0][k] = _dist->xg(x);
+			_S2[0][0][0][k] = dist.xg(x);
 			_S2[0][1][0][k] =
-				_dist->xuv(x)
-				+ 2.0*_dist->xub(x)
-				+ _dist->xdv(x)
-				+ 2.0*_dist->xdb(x)
-				+ 2.0*_dist->xs(x);
+				dist.xuv(x)
+				+ 2.0*dist.xub(x)
+				+ dist.xdv(x)
+				+ 2.0*dist.xdb(x)
+				+ 2.0*dist.xs(x);
 		}
 	    
 		switch (_order)
@@ -184,12 +178,12 @@ namespace Candia2
 				for (uint k=0; k<_grid.size()-1; k++)
 				{
 					double x = _grid[k];
-					_A2[7][0][k] = _dist->xub(x);
-					_A2[1][0][k] = _dist->xuv(x) + _A2[7][0][k];
-					_A2[8][0][k] = _dist->xdb(x);
-					_A2[2][0][k] = _dist->xdv(x) + _A2[8][0][k];
-					_A2[3][0][k] = _dist->xs(x);
-					_A2[9][0][k] = _dist->xs(x);
+					_A2[7][0][k] = dist.xub(x);
+					_A2[1][0][k] = dist.xuv(x) + _A2[7][0][k];
+					_A2[8][0][k] = dist.xdb(x);
+					_A2[2][0][k] = dist.xdv(x) + _A2[8][0][k];
+					_A2[3][0][k] = dist.xs(x);
+					_A2[9][0][k] = dist.xs(x);
 				}
 			} break;
 			case 1:
@@ -197,12 +191,12 @@ namespace Candia2
 				for (uint k=0; k<_grid.size()-1; k++)
 				{
 					double x = _grid[k];
-					_B2[7][0][0][k] = _dist->xub(x);
-					_B2[1][0][0][k] = _dist->xuv(x) + _B2[7][0][0][k];
-					_B2[8][0][0][k] = _dist->xdb(x);
-					_B2[2][0][0][k] = _dist->xdv(x) + _B2[8][0][0][k];
-					_B2[3][0][0][k] = _dist->xs(x);
-					_B2[9][0][0][k] = _dist->xs(x);
+					_B2[7][0][0][k] = dist.xub(x);
+					_B2[1][0][0][k] = dist.xuv(x) + _B2[7][0][0][k];
+					_B2[8][0][0][k] = dist.xdb(x);
+					_B2[2][0][0][k] = dist.xdv(x) + _B2[8][0][0][k];
+					_B2[3][0][0][k] = dist.xs(x);
+					_B2[9][0][0][k] = dist.xs(x);
 				}
 			} break;
 			case 2:
@@ -210,12 +204,12 @@ namespace Candia2
 				for (uint k=0; k<_grid.size()-1; k++)
 				{
 					double x = _grid[k];
-					_C2[7][0][0][0][k] = _dist->xub(x);
-					_C2[1][0][0][0][k] = _dist->xuv(x) + _C2[7][0][0][0][k];
-					_C2[8][0][0][0][k] = _dist->xdb(x);
-					_C2[2][0][0][0][k] = _dist->xdv(x) + _C2[8][0][0][0][k];
-					_C2[3][0][0][0][k] = _dist->xs(x);
-					_C2[9][0][0][0][k] = _dist->xs(x);
+					_C2[7][0][0][0][k] = dist.xub(x);
+					_C2[1][0][0][0][k] = dist.xuv(x) + _C2[7][0][0][0][k];
+					_C2[8][0][0][0][k] = dist.xdb(x);
+					_C2[2][0][0][0][k] = dist.xdv(x) + _C2[8][0][0][0][k];
+					_C2[3][0][0][0][k] = dist.xs(x);
+					_C2[9][0][0][0][k] = dist.xs(x);
 				}
 			} break;
 			case 3:
@@ -223,12 +217,12 @@ namespace Candia2
 				for (uint k=0; k<_grid.size()-1; k++)
 				{
 					double x = _grid[k];
-					_D2[7][0][0][0][0][k] = _dist->xub(x);
-					_D2[1][0][0][0][0][k] = _dist->xuv(x) + _D2[7][0][0][0][0][k];
-					_D2[8][0][0][0][0][k] = _dist->xdb(x);
-					_D2[2][0][0][0][0][k] = _dist->xdv(x) + _D2[8][0][0][0][0][k];
-					_D2[3][0][0][0][0][k] = _dist->xs(x);
-					_D2[9][0][0][0][0][k] = _dist->xs(x);
+					_D2[7][0][0][0][0][k] = dist.xub(x);
+					_D2[1][0][0][0][0][k] = dist.xuv(x) + _D2[7][0][0][0][0][k];
+					_D2[8][0][0][0][0][k] = dist.xdb(x);
+					_D2[2][0][0][0][0][k] = dist.xdv(x) + _D2[8][0][0][0][0][k];
+					_D2[3][0][0][0][0][k] = dist.xs(x);
+					_D2[9][0][0][0][0][k] = dist.xs(x);
 				}
 
 			} break;
@@ -306,6 +300,8 @@ namespace Candia2
 
     void DGLAPSolver::setupCoefficients()
     {
+		;
+		
         switch (_order)
 		{
 			case 0: // LO
@@ -518,10 +514,11 @@ namespace Candia2
 
 	auto DGLAPSolver::evolve() -> decltype(_F2)
 	{
+		std::println("[DGLAP] Evolving to {} flavors.", _alpha_s.nff());
 		using out_type = decltype(_F2);
 		loadAllExpressions();
 
-		std::array<double,1> Qtab{_Qf};
+		//std::array<double,1> Qtab{_Qf};
 		out_type final_dists;
 
 		// temp array for the threshold summation
@@ -540,11 +537,10 @@ namespace Candia2
 		// I create two reference arrays (one for singlet one for non-singlet)
 		// that are updated depending on what we are evolving to
 		// that way we don't have to evaluate if's inside the grid loop
-		// (and just is a bit more readable anyway, assuming I choose a good variable name)
 		std::reference_wrapper<std::vector<ArrayGrid>> arr{std::ref(temp_arr)};
 		std::reference_wrapper<std::vector<ArrayGrid>> arr_singlet{std::ref(temp_arr_singlet)};
 
-		for (_nf=_nfi; ; _nf++)
+		for (_nf=_alpha_s.nfi(); _nf<=_alpha_s.nff(); _nf++)
 		{
 			std::println("[DGLAP] Setting nf={}", _nf);
 
@@ -565,20 +561,14 @@ namespace Candia2
 			SplittingFunction::update(_nf, _alpha_s.beta0());
 			_alpha0 = _alpha_s.post(_nf);
 			_alpha1 = _alpha_s.pre(_nf+1);
-			
-
-			// determine if we are evolving to a
-			// tabulated energy or threshold energy
-			bool resum_tab = _qct<Qtab.size() && Qtab.at(_qct)<=_alpha_s.masses(_nf+1);
+			bool resum_tab = _alpha_s.resumTabulated();
 			bool resum_threshold = !resum_tab;
-			
-			double Q = Qtab[_qct]; // can do this no matter what
 			
 			// alpha1 needs to be manually calculated
 			// if we are evolving to a tabulated energy
 			if (resum_tab)
 			{
-				_alpha1 = _alpha_s.evaluate(_alpha_s.masses(_nf), Q, _alpha0);
+				_alpha1 = _alpha_s.evaluate(_alpha_s.masses(_nf), _Qf, _alpha0);
 				arr = std::ref(_F2);
 				arr_singlet = std::ref(_F2);
 			}
@@ -691,7 +681,7 @@ namespace Candia2
 
 		std::println("[DGLAP] Done!");
 		return final_dists;
-	} // Evolve()
+	} // evolve()
 
 	
 } // namespace Candia2

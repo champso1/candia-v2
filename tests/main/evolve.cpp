@@ -6,15 +6,18 @@
 #include <fstream>
 #include <numeric>
 #include <cstdlib>
+#include <print>
+#include <chrono>
 using namespace std;
 
 #include "Candia-v2/Candia.hpp"
 #include "Candia-v2/Distribution.hpp"
 using namespace Candia2;
+using out_type = std::vector<ArrayGrid>;
 
 static void usage()
 {
-	cout << "[ERROR] Invalid arguments.\n";
+	cout << "[ERROR] evolve.cpp: Invalid arguments.\n";
 	cout << "Usage:\n";
 	cout << "-------------------------------------------------------\n";
 	cout << "./evolve(.exe) <order> <num_grid_points> <iterations> <trunc_idx> <kr>\n";
@@ -26,31 +29,10 @@ static void usage()
 	cout << "-------------------------------------------------------\n\n";
 }
 
-int main(int argc, char *argv[]) {
-	if (argc != 6)
-	{
-		usage();
-		exit(EXIT_FAILURE);
-	}
-
-	const uint order = stoi(argv[1]);
-	const uint num_grid_points = stoi(argv[2]);
-	const uint iterations = stoi(argv[3]);
-	const uint trunc_idx = stoi(argv[4]);
-	const double kr = stold(argv[5]);
-	
-	// define the tabulated grid points
-	vector<double> xtab{1e-5, 1e-4, 1e-3, 1e-2, 0.1, 0.3, 0.5, 0.7, 0.9, 1.0};
-	Grid grid(xtab, num_grid_points);
-
-	// initialize the solver, evolve to 100.0 GeV
-	// use the Les Houche distribution
-	const double Qf = 100.0;
-	DGLAPSolver solver(order, grid, Qf, iterations, trunc_idx, make_unique<LesHouchesDistribution>(), kr, true);
-
-	// grab the resultant evolved distributions
-	auto F = solver.evolve();
-
+static void outputData(
+	out_type const& F, Grid::grid_type const& xtab, Grid const& grid,
+	uint order, uint num_grid_points, uint iterations, uint trunc_idx, double kr)
+{
 	// open the output file, with a filename descriptive of all the provided inputs
 	ostringstream outfile_ss{};
 	outfile_ss << ((order == 3) ? "n3lo" : (order == 2) ? "nnlo" : (order == 1) ? "nlo" : "lo");
@@ -90,4 +72,37 @@ int main(int argc, char *argv[]) {
 		}
 		outfile << '\n';
 	}
+}
+
+int main(int argc, char *argv[]) {
+	if (argc != 6)
+	{
+		usage();
+		exit(EXIT_FAILURE);
+	}
+
+	const uint order = stoi(argv[1]);
+	const uint num_grid_points = stoi(argv[2]);
+	const uint iterations = stoi(argv[3]);
+	const uint trunc_idx = stoi(argv[4]);
+	const double kr = stold(argv[5]);
+	const double Qf = 100.0;
+	
+	vector<double> xtab{1e-5, 1e-4, 1e-3, 1e-2, 0.1, 0.3, 0.5, 0.7, 0.9, 1.0};
+	Grid grid{xtab, num_grid_points};
+
+	std::unique_ptr<LesHouchesDistribution> dist = std::make_unique<LesHouchesDistribution>();
+	AlphaS alphas(order, dist->Q0(), Qf, dist->alpha0(), kr);
+	alphas.setVFNS(dist->masses(), dist->nfi());
+	// alphas.setFFNS(4);
+
+	DGLAPSolver solver(order, grid, alphas, Qf, iterations, trunc_idx, *dist, kr, true);
+
+	auto t0 = chrono::high_resolution_clock::now();
+	auto F = solver.evolve();
+	auto tf = chrono::high_resolution_clock::now();
+	chrono::duration<double, ratio<60>> mins = tf-t0;
+	println("Evolution took {}.", mins);
+	
+	outputData(F, xtab, grid, order, num_grid_points, iterations, trunc_idx, kr);
 }

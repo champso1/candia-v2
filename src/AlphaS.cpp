@@ -8,31 +8,111 @@
 
 namespace Candia2
 {
-	// helper function to ensure that NF is not out of bounds
-	static void __assert_nf(uint nf)
+	void AlphaS::assertNf() const
 	{
-		if (nf > 8)
+		if (_nf > 8)
 		{
-			std::println("[AlphaS: ERROR] __assert_nf(): Found nf value of {}, expected < 8", nf);
+			std::println("[AlphaS: ERROR] assertNf(): Found nf value of {}, expected < 8", _nf);
+			exit(EXIT_FAILURE);
+		}
+	}
+
+	void AlphaS::assertScheme() const
+	{
+		if (_scheme == UNSET)
+		{
+			std::println("[AlphaS: ERROR] assertScheme(): must set a scheme before accessing alpha_s or mass values.");
 			exit(1);
 		}
 	}
+
+
+	void AlphaS::setVFNS(std::array<double, 8> masses, uint nfi)
+	{
+		if (_scheme == FIXED)
+		{
+			std::println("[ALPHAS: WARNING] setVFNS(): scheme previously set to FFNS.");
+		}
+		else if (_scheme == VARIABLE)
+		{
+			std::println("[ALPHAS: WARNING] setVFNS(): scheme already set to VFNS. Overwriting previous masses...");
+		}
+	    _masses = masses;
+		_scheme = VARIABLE;
+		
+		_nfi = nfi;
+		double aux = _Qf;
+		uint i{};
+		
+		for (_nff=6; aux<=_masses[_nff]; _nff--);
+
+		if (aux>_masses[6])
+			i=7;
+		else
+			for (i=nfi+1; aux>_masses[i]; i++);
+
+		_masses[i] = aux;
+		for (uint j=i+1; j<8; j++)
+			_masses[j]=0.;
+
+		calculateThresholdValues();
+	}
+
+	void AlphaS::setFFNS(uint nf)
+	{
+		if (_scheme == FIXED)
+		{
+			std::println("[ALPHAS: WARNING] setFFNS(): scheme already set to FFNS. Overwriting previous value of nf...");
+		}
+		else if (_scheme == VARIABLE)
+		{
+			std::println("[ALPHAS: WARNING] setFFNS(): scheme previously set to VFNS.");
+		}
+		_nf = nf;
+		_nfi = nf;
+		_nff = nf;
+		_scheme = FIXED;
+
+		// ensure the array is cleared
+		_masses = ([]() -> std::array<double, 8>
+		{
+			std::array<double, 8> arr{};
+			for (uint i=0; i<8; ++i)
+				arr[i] = 0.0;
+			return arr;
+		})();
+
+		_masses[_nfi] = _Q0;
+		_masses[_nfi+1] = _Qf;
+
+		// what we setup is the "post-threshold match" at the initial flavor
+		// which is just the initial value of alpha_s, i.e. alpha0
+		// and the "pre-threshold match" at the next flavor
+		// which defines the final value of alpha_s,
+		// this we just calculate.
+		_post[_nfi] = _alpha0;
+		_pre[_nfi+1] = evaluate(_Q0, _Qf, _alpha0);
+	}
+
 	
 	double AlphaS::masses(uint nf) const
 	{
-		__assert_nf(nf);
+		assertNf();
+		assertScheme();
 		return _masses[nf];
 	}
 
 	double AlphaS::pre(uint nf) const
 	{
-		__assert_nf(nf);
+		assertNf();
+		assertScheme();
 		return _pre[nf];
 	}
 
 	double AlphaS::post(uint nf) const
 	{
-		__assert_nf(nf);
+		assertNf();
+		assertScheme();
 		return _post[nf];
 	}
 
@@ -133,46 +213,29 @@ namespace Candia2
 	}
 
 
-	void AlphaS::calculateThresholdValues(double Qf)
+	void AlphaS::calculateThresholdValues()
 	{
-		uint nfi = 3,
-			 nff = 6;
-		uint nf1;
-		const double mu0 = std::sqrt(2.0);
-
 		// here we fix the final value in our masses/energy array
 		// to correspond to the final energy that we are evolving to
-		double temp = Qf;
-		for (nff=6; temp<=_masses[nff]; nff--);
 
-		uint idx;
-		if (temp>_masses[6])
-			idx = 7;
-		else
-			for (idx=nfi+1; temp>_masses[idx]; idx++);
-
-		_masses[idx] = temp;
-		for (uint i=idx+1; i<8; i++)  // TODO: why does this loop inclusive on 8?
-			_masses[i] = 0.0;
-
-		
+		uint nf1{};
 		// set nf1 correctly
-		for (nf1=nff; mu0<_masses[nf1]; nf1--);
-		if (nf1<nfi)
+		for (nf1=_nff; _Q0<_masses[nf1]; nf1--);
+		if (nf1<_nfi)
 			nf1++;
 
 		std::println("[ALPHAS] initial: nf1 = {}\talpha0 = {}", nf1, _alpha0);
 
 		update(nf1);
 
-		_post[nf1] = evaluate(mu0, _masses[nf1], _alpha0);
+		_post[nf1] = evaluate(_Q0, _masses[nf1], _alpha0);
 		_pre[nf1]  = preMatch(_post[nf1], nf1);
 
-		_pre[nf1+1] =  evaluate(mu0, _masses[nf1+1], _alpha0);
+		_pre[nf1+1] =  evaluate(_Q0, _masses[nf1+1], _alpha0);
 		_post[nf1+1] = postMatch(_pre[nf1+1], nf1);
 
 		uint nf;
-		for (nf=nf1-1; nf>=nfi; nf--)
+		for (nf=nf1-1; nf>=_nfi; nf--)
 		{
 			update(nf);
 			
@@ -180,7 +243,7 @@ namespace Candia2
 			_pre[nf]  = preMatch(_post[nf], nf);
 		}
 
-		for (nf=nf1+1; nf<=nff+1; nf++)
+		for (nf=nf1+1; nf<=_nff+1; nf++)
 		{
 			update(nf-1);
 			
@@ -188,9 +251,9 @@ namespace Candia2
 			_post[nf] = postMatch(_pre[nf], nf);
 		}
 
-		std::println("[ALPHAS] Computed alpha_s threshold values. They are:");
+		std::println("[ALPHAS] Computed alpha_s threshold values for VFNS. They are:");
 
-		for (nf=nfi; nf<=nff+1; nf++)
+		for (nf=_nfi; nf<=_nff+1; nf++)
 			std::println("[ALPHAS] {} {:14.9} {:14.9} {:14.9}", nf, _masses[nf], _pre[nf], _post[nf]);
 
 	}
@@ -204,7 +267,7 @@ namespace Candia2
 
 		if (Qf < Qi)
 		{
-			std::println("[ALPHAS: ERROR] Evaluate(): Final energy Qf={} is smaller than initial energy Qi={}.", Qf, Qi);
+			std::println("[ALPHAS: ERROR] evaluate(): Final energy Qf={} is smaller than initial energy Qi={}.", Qf, Qi);
 			exit(EXIT_FAILURE);
 		}
 
@@ -232,37 +295,16 @@ namespace Candia2
 	}
 
 
-
-
 	void AlphaS::update(uint nf)
 	{
+		_nf = nf;
 		_beta0 = calcBeta0(nf);
 		_beta1 = calcBeta1(nf);
 		_beta2 = calcBeta2(nf);
 		_beta3 = calcBeta3(nf);
 	}
 
+	
 
 
-
-
-	uint AlphaS::nff(uint nfi, double Qf)
-	{
-	    double aux = Qf;
-		uint nff, i;
-		
-		for (nff=6; aux<=_masses[nff]; nff--);
-
-		if (aux>_masses[6])
-			i=7;
-		else
-			for (i=nfi+1; aux>_masses[i]; i++);
-
-		_masses[i] = aux;
-		for (uint j=i+1; j<8; j++)
-			_masses[j]=0.;
-
-		return nff;
-	}
-
-}
+} // namespace Candia2
