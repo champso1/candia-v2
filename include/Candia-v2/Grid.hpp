@@ -4,11 +4,13 @@
 #include "Candia-v2/Common.hpp"
 #include "Candia-v2/Expression.hpp"
 
-#include <memory>
+
+#include <string_view>
 #include <vector>
 
 namespace Candia2
 {
+	class ArrayGrid;
 	class Grid final
 	{
 	public:
@@ -28,13 +30,13 @@ namespace Candia2
 		gauleg_type _Xi3{}, _Wi3{};
 	public:
 		Grid() = delete;
-		Grid(std::vector<double> const& xtab, uint nx, int grid_fill_type=1);
+		Grid(grid_type const& xtab, uint nx, int grid_fill_type=1);
 		~Grid() = default;
 
 
 		inline grid_type const& points() const { return _points; }
-		inline double at(const uint idx) const { return _points.at(idx); };
-		inline double operator[](const uint idx) const { return _points.at(idx); }
+		inline double at(uint idx) const { return _points.at(idx); };
+		inline double operator[](uint idx) const { return _points.at(idx); }
 
 		inline gauleg_type const& abscissae() const { return _Xi; }
 		inline double abscissae(uint idx) const { return _Xi[idx]; }
@@ -75,16 +77,15 @@ namespace Candia2
 		}
 
 
-		double interpolate(grid_type const& y, const double x) const;
-		double convolution(
-			grid_type const& A,
-			std::shared_ptr<Expression> P,
-			uint k);
-
+		double interpolate(grid_type const& y, double x);
+		double interpolate(ArrayGrid& y, double x);
+		double convolution(grid_type const& A, Expression &E, uint k);
+		double convolution(ArrayGrid& A, Expression &E, uint k);
+		
 	private:
-		void initGrid(grid_type const& xtab, const uint nx);
-		void initGrid2(grid_type const& xtab, const uint nx);
-		void initGrid3(grid_type const& xtab, const uint nx);
+		void initGrid(grid_type const& xtab, uint nx);
+		void initGrid2(grid_type const& xtab, uint nx);
+		void initGrid3(grid_type const& xtab, uint nx);
 		void initGauLeg(double x1, double x2, std::vector<double> & Xi, std::vector<double> & Wi);
 
 

@@ -54,20 +54,16 @@ namespace Candia2
 		// I believe we link with it no matter what
 		bool _multi_thread;
 
-		std::map<std::string, FunctionGrid> _expression_grids{};
+		std::map<std::string_view, std::unique_ptr<Expression>> _expressions{};
 		template <typename TExpr, typename... TExprArgs>
-		requires std::derived_from<TExpr, Expression>
-		void createExpressionGrid(std::string const& name, Grid const& grid, TExprArgs&&... args)
+		requires (std::derived_from<TExpr, Expression>)
+		void createExpression(std::string_view name, TExprArgs&&... args)
 		{
-			_expression_grids.emplace(
-				std::make_pair(
-					name, FunctionGrid(grid, std::unique_ptr<Expression>(new TExpr(std::forward<TExprArgs>(args)...)))
-				)
+			_expressions.emplace(
+				name, std::make_unique<TExpr>(std::forward<TExprArgs>(args)...)
 			);
 		}
-		
-	    FunctionGrid& getSplitFunc(std::string const& name);
-		FunctionGrid& getOME(std::string const& name);
+		Expression& getExpression(std::string_view name);
 		void loadAllExpressions();
 
 	public:
@@ -127,64 +123,64 @@ namespace Candia2
 
 
 		double recrelS_1(
-			ArrayGrid & S,
+			ArrayGrid& S,
 			uint k,
-			FunctionGrid & P);
+			Expression& P);
 		double recrelS_2(
-			ArrayGrid & S1, ArrayGrid & S2,
+			ArrayGrid& S1, ArrayGrid& S2,
 			uint k,
-			FunctionGrid & P0, FunctionGrid & P1);
+			Expression& P0, Expression& P1);
 		double recrelS_3(
-			ArrayGrid & S1, ArrayGrid & S2, ArrayGrid & S3,
+			ArrayGrid& S1, ArrayGrid& S2, ArrayGrid& S3,
 			uint k,
-			FunctionGrid & P0, FunctionGrid & P1, FunctionGrid & P2);
+			Expression& P0, Expression& P1, Expression& P2);
 		double recrelS_4(
-			ArrayGrid & S1, ArrayGrid & S2, ArrayGrid & S3, ArrayGrid & S4,
+			ArrayGrid& S1, ArrayGrid& S2, ArrayGrid& S3, ArrayGrid& S4,
 			uint k,
-			FunctionGrid & P0, FunctionGrid & P1, FunctionGrid & P2, FunctionGrid & P3);
+			Expression& P0, Expression& P1, Expression& P2, Expression& P3);
 
 		double recrelLO(
-			ArrayGrid & A,
+			ArrayGrid& A,
 			uint k,
-			FunctionGrid & P0);
+			Expression& P0);
 		double recrelNLO_1(
-			ArrayGrid & b,
+			ArrayGrid& B,
 			uint k,
-			FunctionGrid & P0);
+			Expression& P0);
 		double recrelNLO_2(
-			ArrayGrid & B,
+			ArrayGrid& B,
 			uint k,
-			FunctionGrid & P0, FunctionGrid & P1);
+			Expression& P0, Expression& P1);
 
 		double recrelNNLO_1(
-			ArrayGrid & C,
+			ArrayGrid& C,
 			uint k,
-			FunctionGrid& P0);
+			Expression& P0);
 		double recrelNNLO_2(
-			ArrayGrid & C,
+			ArrayGrid& C,
 			uint k,
-			FunctionGrid& P0, FunctionGrid& P1, FunctionGrid& P2);
+			Expression& P0, Expression& P1, Expression& P2);
 		double recrelNNLO_3(
-			ArrayGrid & C,
+			ArrayGrid& C,
 			uint k,
-			FunctionGrid& P0,FunctionGrid& P1);
+			Expression& P0, Expression& P1);
 
 		double recrelN3LO_1(
 			ArrayGrid& D,
 			uint k,
-			FunctionGrid& P0);
+			Expression& P0);
 		double recrelN3LO_2(
 			ArrayGrid& D,
 			uint k,
-			FunctionGrid& P0, FunctionGrid& P1, FunctionGrid& P2, FunctionGrid& P3);
+			Expression& P0, Expression& P1, Expression& P2, Expression& P3);
 		double recrelN3LO_3(
 			ArrayGrid& D,
 			uint k,
-			FunctionGrid& P0, FunctionGrid& P1, FunctionGrid& P2, FunctionGrid& P3);
+			Expression& P0, Expression& P1, Expression& P2, Expression& P3);
 		double recrelN3LO_4(
 			ArrayGrid& D,
 			uint k,
-			FunctionGrid& P0, FunctionGrid& P1, FunctionGrid& P2, FunctionGrid& P3);
+			Expression& P0, Expression& P1, Expression& P2, Expression& P3);
 	};
 }
 

@@ -52,7 +52,7 @@ namespace Candia2
 
 				_A2 = std::vector<std::vector<ArrayGrid>>{
 					DISTS, std::vector<ArrayGrid>{
-						2, ArrayGrid{grid}
+						2, ArrayGrid{grid.size()}
 					}
 				};
 			} break;
@@ -61,7 +61,7 @@ namespace Candia2
 				_B2 = MultiDimArrayGrid_t<3>{
 					DISTS, MultiDimArrayGrid_t<2>{
 						2, MultiDimArrayGrid_t<1>{
-							_iterations, ArrayGrid{grid}
+							_iterations, ArrayGrid{grid.size()}
 						}
 					}
 				};
@@ -73,7 +73,7 @@ namespace Candia2
 					DISTS, MultiDimArrayGrid_t<3>{
 						2, MultiDimArrayGrid_t<2>{
 							_iterations, MultiDimArrayGrid_t<1>{
-								_iterations, ArrayGrid{grid}
+								_iterations, ArrayGrid{grid.size()}
 							}
 						}
 					}
@@ -86,7 +86,7 @@ namespace Candia2
 						2, MultiDimArrayGrid_t<3>{
 							_iterations, MultiDimArrayGrid_t<2>{
 								_iterations, MultiDimArrayGrid_t<1>{
-									_iterations, ArrayGrid{grid}
+									_iterations, ArrayGrid{grid.size()}
 								}
 							}
 						}
@@ -119,7 +119,7 @@ namespace Candia2
 		_S2 = decltype(_S2){
 			trunc_idx+1, std::vector<std::vector<ArrayGrid>>{
 				2, std::vector<ArrayGrid>{
-					2, ArrayGrid{_grid}
+					2, ArrayGrid{_grid.size()}
 				}
 			}
 		};
@@ -127,7 +127,7 @@ namespace Candia2
 
 
 		_F2 = std::vector<ArrayGrid>{
-			DISTS, ArrayGrid{grid}
+			DISTS, ArrayGrid{grid.size()}
 		};
 
 		setInitialConditions(initial_dist);
@@ -138,22 +138,17 @@ namespace Candia2
 		std::println("[DGLAP] Exiting...");
 	}
 
-
-	FunctionGrid& DGLAPSolver::getSplitFunc(std::string const& name)
+	Expression& DGLAPSolver::getExpression(std::string_view name)
 	{
-		auto splitfunc = _expression_grids.find(name);
-		if (splitfunc == _expression_grids.end())
+		auto it = _expressions.find(name);
+		if (it == _expressions.end())
 		{
-			std::println("[DGLAP] Splitting function '{}' does not exist.", name);
+			std::println("[DGLAP: ERROR]: getExpression(): Expression '{}' does not exist.", name);
 			exit(EXIT_FAILURE);
 		}
-		return _expression_grids.at(name);
+		return *it->second;
 	}
 
-	FunctionGrid& DGLAPSolver::getOME(std::string const& name)
-	{
-		return _expression_grids.at(name);
-	}
 
 	void DGLAPSolver::setInitialConditions(Distribution const& dist)
 	{
@@ -244,65 +239,63 @@ namespace Candia2
 
 	void DGLAPSolver::loadAllExpressions()
     {
-        createExpressionGrid<P0ns>("P0ns", _grid);
-        createExpressionGrid<P0qq>("P0qq", _grid);
-        createExpressionGrid<P0qg>("P0qg", _grid);
-        createExpressionGrid<P0gq>("P0gq", _grid);
-        createExpressionGrid<P0gg>("P0gg", _grid);
+        createExpression<P0ns>("P0ns");
+        createExpression<P0qq>("P0qq");
+        createExpression<P0qg>("P0qg");
+        createExpression<P0gq>("P0gq");
+        createExpression<P0gg>("P0gg");
     
         if (_order >= 1)
         {
-            createExpressionGrid<P1nsm>("P1nsm", _grid);
-            createExpressionGrid<P1nsp>("P1nsp", _grid);
-            createExpressionGrid<P1qq>("P1qq", _grid);
-            createExpressionGrid<P1qg>("P1qg", _grid);
-            createExpressionGrid<P1gq>("P1gq", _grid);
-            createExpressionGrid<P1gg>("P1gg", _grid);
+		    createExpression<P1nsm>("P1nsm");
+            createExpression<P1nsp>("P1nsp");
+            createExpression<P1qq>("P1qq");
+            createExpression<P1qg>("P1qg");
+            createExpression<P1gq>("P1gq");
+            createExpression<P1gg>("P1gg");
         }
         if (_order >= 2)
         {
-            createExpressionGrid<P2nsm>("P2nsm", _grid);
-            createExpressionGrid<P2nsp>("P2nsp", _grid);
-            createExpressionGrid<P2nsv>("P2nsv", _grid);
-            createExpressionGrid<P2qq>("P2qq", _grid);
-            createExpressionGrid<P2qg>("P2qg", _grid);
-            createExpressionGrid<P2gq>("P2gq", _grid);
-            createExpressionGrid<P2gg>("P2gg", _grid);
+            createExpression<P2nsm>("P2nsm");
+            createExpression<P2nsp>("P2nsp");
+            createExpression<P2nsv>("P2nsv");
+            createExpression<P2qq>("P2qq");
+            createExpression<P2qg>("P2qg");
+            createExpression<P2gq>("P2gq");
+            createExpression<P2gg>("P2gg");
 
-            createExpressionGrid<A2ns>("A2ns", _grid);
-            createExpressionGrid<A2gq>("A2gq", _grid);
-            createExpressionGrid<A2gg>("A2gg", _grid);
-            createExpressionGrid<A2hq>("A2hq", _grid);
-            createExpressionGrid<A2hg>("A2hg", _grid);
+            createExpression<A2ns>("A2ns");
+            createExpression<A2gq>("A2gq");
+            createExpression<A2gg>("A2gg");
+            createExpression<A2hq>("A2hq");
+            createExpression<A2hg>("A2hg");
         }
         if (_order >= 3)
         {
-            createExpressionGrid<P3nsm>("P3nsm", _grid);
-            createExpressionGrid<P3nsp>("P3nsp", _grid);
-            createExpressionGrid<P3nsv>("P3nsv", _grid);
-            createExpressionGrid<P3qq>("P3qq", _grid);
-            createExpressionGrid<P3qg>("P3qg", _grid);
-            createExpressionGrid<P3gq>("P3gq", _grid);
-            createExpressionGrid<P3gg>("P3gg", _grid);
+            createExpression<P3nsm>("P3nsm");
+            createExpression<P3nsp>("P3nsp");
+            createExpression<P3nsv>("P3nsv");
+            createExpression<P3qq>("P3qq");
+            createExpression<P3qg>("P3qg");
+            createExpression<P3gq>("P3gq");
+            createExpression<P3gg>("P3gg");
 
             
-            createExpressionGrid<OpMatElemN3LO>("A3nsm",  _grid, ome::AqqQNSEven);
-            createExpressionGrid<OpMatElemN3LO>("A3nsp",  _grid, ome::AqqQNSOdd);
-            createExpressionGrid<OpMatElemN3LO>("A3gq",   _grid, ome::AgqQ);
-            createExpressionGrid<OpMatElemN3LO>("A3gg",   _grid, ome::AggQ);
-            createExpressionGrid<OpMatElemN3LO>("A3hq",   _grid, ome::AQqPS);
-            createExpressionGrid<OpMatElemN3LO>("A3hg",   _grid, ome::AQg);
-            createExpressionGrid<OpMatElemN3LO>("A3psqq", _grid, ome::AqqQPS);
-            createExpressionGrid<OpMatElemN3LO>("A3sqg",  _grid, ome::AqgQ);
+            createExpression<OpMatElemN3LO>("A3nsm", ome::AqqQNSEven);
+            createExpression<OpMatElemN3LO>("A3nsp", ome::AqqQNSOdd);
+            createExpression<OpMatElemN3LO>("A3gq", ome::AgqQ);
+            createExpression<OpMatElemN3LO>("A3gg", ome::AggQ);
+            createExpression<OpMatElemN3LO>("A3hq", ome::AQqPS);
+            createExpression<OpMatElemN3LO>("A3hg", ome::AQg);
+            createExpression<OpMatElemN3LO>("A3psqq", ome::AqqQPS);
+            createExpression<OpMatElemN3LO>("A3sqg", ome::AqgQ);
         }
         
     }
 
     void DGLAPSolver::setupCoefficients()
     {
-		;
-		
-        switch (_order)
+	    switch (_order)
 		{
 			case 0: // LO
 			{
@@ -529,8 +522,8 @@ namespace Candia2
 		// so we stick everything into this temp array
 		// during the evolution, then move it into the n=0
 		// part after the full evolution
-		std::vector<ArrayGrid> temp_arr(DISTS, ArrayGrid{_grid});
-		std::vector<ArrayGrid> temp_arr_singlet(DISTS, ArrayGrid{_grid});
+		std::vector<ArrayGrid> temp_arr(DISTS, ArrayGrid{_grid.size()});
+		std::vector<ArrayGrid> temp_arr_singlet(DISTS, ArrayGrid{_grid.size()});
 			
 		// since the only difference during the evolution/resummation to
 		// the tabulated energy or the threshold is what array we append to, 

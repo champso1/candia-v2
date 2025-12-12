@@ -126,7 +126,7 @@ namespace Candia2
             std::println("  [j={}] Iteration {}/{}", j, n, _iterations-1);
 			for (uint k=0; k<_grid.size()-1; k++)
             {
-				_A2[j][1][k] = recrelLO(_A2[j][0], k, getSplitFunc("P0ns"));
+				_A2[j][1][k] = recrelLO(_A2[j][0], k, getExpression("P0ns"));
                 arr.get()[j][k] += _A2[j][1][k]*std::pow(L1, n)/factorial(n);
             }
 			_A2[j][0] = _A2[j][1];
@@ -145,14 +145,14 @@ namespace Candia2
             {
                 for (uint n=1; n<=s; n++)
                 {
-                    _B2[j][1][n][k] = recrelNLO_1(_B2[j][0][n-1], k, getSplitFunc("P0ns"));
+                    _B2[j][1][n][k] = recrelNLO_1(_B2[j][0][n-1], k, getExpression("P0ns"));
                     arr.get()[j][k] += _B2[j][1][n][k]*std::pow(L1,n)*std::pow(L2,s-n)/factorial(n)/factorial(s-n);
                 }
 
                 uint n = 0;
                 double res = recrelNLO_2(_B2[j][0][0], k, 
-                    getSplitFunc("P0ns"), 
-                    getSplitFunc(P1));
+                    getExpression("P0ns"), 
+                    getExpression(P1));
                 _B2[j][1][0][k] = -_B2[j][1][1][k] + res;
                 arr.get()[j][k] += _B2[j][1][0][k]
                     *std::pow(L1,n)*std::pow(L2,s-n)
@@ -180,7 +180,7 @@ namespace Candia2
                 {
                     for (uint n=1; n<=t; n++)
                     {
-                        double recrel = recrelNNLO_1(_C2[j][0][t-1][n-1], k, getSplitFunc("P0ns"));
+                        double recrel = recrelNNLO_1(_C2[j][0][t-1][n-1], k, getExpression("P0ns"));
                         _C2[j][1][t][n][k] = recrel;
 
                         double orig = _C2[j][1][t][n][k];
@@ -196,7 +196,7 @@ namespace Candia2
                 {
                     double fac1 = -0.5*_C2[j][1][s][1][k];
                     double fac2 = recrelNNLO_2(_C2[j][0][s-1][0], k, 
-                        getSplitFunc("P0ns"), getSplitFunc(P[0]), getSplitFunc(P[1]));
+                        getExpression("P0ns"), getExpression(P[0]), getExpression(P[1]));
                     _C2[j][1][s][0][k] = fac1 + fac2;
 
                     uint n = 0;
@@ -219,7 +219,7 @@ namespace Candia2
                 {
                     double fac1 = -2.0*_alpha_s.beta1()*(_C2[j][1][t+1][0][k] + _C2[j][1][t+1][1][k]);
                     double fac2 = recrelNNLO_3(_C2[j][0][t][0], k, 
-                        getSplitFunc("P0ns"), getSplitFunc(P[0]));
+                        getExpression("P0ns"), getExpression(P[0]));
                     _C2[j][1][t][0][k] = fac1 + fac2;
 
                     uint n = 0;
@@ -266,7 +266,7 @@ namespace Candia2
                     {
                         for (uint n=1; n<=m; n++)
                         {
-                            _D2[j][1][t][m][n][k] = recrelN3LO_1(_D2[j][0][t-1][m-1][n-1], k, getSplitFunc("P0ns"));
+                            _D2[j][1][t][m][n][k] = recrelN3LO_1(_D2[j][0][t-1][m-1][n-1], k, getExpression("P0ns"));
 
                             double orig = _D2[j][1][t][m][n][k];
                             double powers =
@@ -292,7 +292,7 @@ namespace Candia2
                         0.5*(16.0*PI_2*_alpha_s.beta1() + 4*PI*r1*_alpha_s.beta2() - (c + b*r1)*_alpha_s.beta3())
                     ) * _D2[j][1][s][s][1][k];
                     double fac2 = recrelN3LO_2(_D2[j][0][s-1][s-1][0], k,
-                        getSplitFunc("P0ns"), getSplitFunc(P[0]), getSplitFunc(P[1]), getSplitFunc(P[2]));
+                        getExpression("P0ns"), getExpression(P[0]), getExpression(P[1]), getExpression(P[2]));
                     _D2[j][1][s][s][0][k] = (fac1 + fac2)/gamma;
 
                     uint t = s;
@@ -321,7 +321,7 @@ namespace Candia2
                         16.0*PI_2*_alpha_s.beta1() + 4.0*PI*r1*_alpha_s.beta2() + r1*r1*_alpha_s.beta3()
                     ) * _D2[j][1][s][m+1][1][k];
                     double fac2 = recrelN3LO_3(_D2[j][0][s-1][m][0], k,
-                        getSplitFunc("P0ns"), getSplitFunc(P[0]), getSplitFunc(P[1]), getSplitFunc(P[2]));
+                        getExpression("P0ns"), getExpression(P[0]), getExpression(P[1]), getExpression(P[2]));
                     _D2[j][1][s][m][0][k] = (fac1 + fac2)/gamma;
 
                     uint t = s;
@@ -351,7 +351,7 @@ namespace Candia2
                         double fac1b = 32*PI_2*(b+r1)*_alpha_s.beta1() - 8*PI*c*_alpha_s.beta2() - 2*c*r1*_alpha_s.beta3();
                         double fac1 = fac1a*_D2[j][1][t+1][m+1][0][k] + fac1b*_D2[j][1][t+1][m+1][1][k];
                         double fac2 = recrelN3LO_4(_D2[j][0][t][m][0], k,
-                            getSplitFunc("P0ns"), getSplitFunc(P[0]), getSplitFunc(P[1]), getSplitFunc(P[2]));
+                            getExpression("P0ns"), getExpression(P[0]), getExpression(P[1]), getExpression(P[2]));
                         _D2[j][1][t][m][0][k] = (fac1 + fac2)/gamma;
 
                         uint n = 0;

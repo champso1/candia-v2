@@ -1,10 +1,10 @@
 #include "Candia-v2/Grid.hpp"
 #include "Candia-v2/Common.hpp"
+#include "Candia-v2/FuncArrayGrid.hpp"
 
 #include <algorithm>
 #include <cstdlib>
 #include <cmath>
-#include <memory>
 #include <set>
 #include <print>
 
@@ -288,7 +288,7 @@ namespace Candia2
 
 	
 
-	double Grid::interpolate(std::vector<double> const& yy, const double x) const
+	double Grid::interpolate(grid_type const& yy, double x)
 	{
 		const static int n = 2*INTERP_POINTS;
 		int ns=0;
@@ -343,14 +343,69 @@ namespace Candia2
 		return y;
 	}
 
+	double Grid::interpolate(ArrayGrid& yy, double x)
+	{
+		const static int n = 2*INTERP_POINTS;
+		int ns=0;
+		double y, den, dif, dift, ho, hp, w;
+
+		int k = static_cast<int>(this->interpFindIdx(x));
+
+		double const* xa = &(_points.data()[k]);
+		double const* ya = &(yy.base().data()[k]);
+		
+		std::vector<double> c(n, 0.0);
+		std::vector<double> d(n, 0.0);
+
+		dif = std::abs(x - xa[0]);
+
+		for (int i=0; i<n; i++)
+		{
+			if ((dift = std::abs(x - xa[i])) < dif)
+			{
+				ns = i;
+				dif = dift;
+			}
+			c[i] = ya[i];
+			d[i] = ya[i];
+		}
+
+		y = ya[ns--];
+
+		for (int m=1; m<n; m++)
+		{
+		    for (int i=0; i<n-m; i++)
+			{
+				ho = xa[i] - x;
+				hp = xa[i+m] - x;
+				w = c[i+1] - d[i];
+
+				den = ho-hp;
+				if (std::abs(ho-hp) < 1e-15)
+				{
+					std::println("[GRID: ERROR] Interpolate(): found a denominator equal to 0.0.");
+					exit(1);
+				}
+
+				den = w/den;
+				d[i] = hp*den;
+				c[i] = ho*den;
+			}
+
+			y += (2*ns < (n-1-m) ? c[ns+1] : d[ns--]);
+		}
+
+		return y;
+	}
 
 
-	double Grid::convolution(std::vector<double> const& A,
-		std::shared_ptr<Expression> E, uint k)
+
+	double Grid::convolution(grid_type const& A, Expression &E, uint k)
 	{
 		double x = _points.at(k);
 		double logx =  std::log(x);
-		double res = (E->plus(1.0)*std::log1p(-x) + E->delta(1.0)) * A.at(k);
+		double eplus = E.plus(1.0);
+		double res = (eplus*std::log1p(-x) + E.delta(1.0)) * A.at(k);
 		
 		for (uint i=0; i<GAUSS_POINTS; i++)
 		{
@@ -363,8 +418,33 @@ namespace Candia2
 			double interp1 = interpolate(A, b);
 			double interp2 = interpolate(A, a);
 
-			res -= w*logx*a*E->regular(a)*interp1;
-			res -= w*logx*b*(E->plus(b)*interp2 - E->plus(1.0)*A.at(k))/(1.0-b);
+			res -= w*logx*a*E.regular(a)*interp1;
+			res -= w*logx*b*(E.plus(b)*interp2 - eplus*A.at(k))/(1.0-b);
+		}
+		
+		return res;
+	}
+
+	double Grid::convolution(ArrayGrid& A, Expression &E, uint k)
+	{
+		double x = _points.at(k);
+		double logx =  std::log(x);
+		double eplus = E.plus(1.0);
+		double res = (eplus*std::log1p(-x) + E.delta(1.0)) * A[k];
+		
+		for (uint i=0; i<GAUSS_POINTS; i++)
+		{
+			double y = _Xi[i];
+			double w = _Wi[i];
+
+			double a = std::pow(x, 1.0-y);
+			double b = std::pow(x, y);
+
+			double interp1 = interpolate(A, b);
+			double interp2 = interpolate(A, a);
+
+			res -= w*logx*a*E.regular(a)*interp1;
+			res -= w*logx*b*(E.plus(b)*interp2 - eplus*A[k])/(1.0-b);
 		}
 		
 		return res;

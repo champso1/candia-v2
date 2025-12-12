@@ -36,9 +36,9 @@ namespace Candia2
 		A2ns() = default;
 		~A2ns()  = default;
 
-		double regular(double x) const override;
-		double plus(double x) const override;
-		double delta(double x) const override;
+		double _reg_func(double x) const override;
+		double _plus_func(double x) const override;
+		double _delta_func(double x) const override;
 	};
 
 	class A2gq final : public OpMatElem
@@ -47,7 +47,7 @@ namespace Candia2
 		A2gq() = default;
 		~A2gq()  = default;
 
-		double regular(double x) const override;
+		double _reg_func(double x) const override;
 	};
 
 	class A2gg final : public OpMatElem
@@ -56,9 +56,9 @@ namespace Candia2
 		A2gg() = default;
 		~A2gg()  = default;
 
-		double regular(double x) const override;
-		double plus(double x) const override;
-		double delta(double x) const override;
+		double _reg_func(double x) const override;
+		double _plus_func(double x) const override;
+		double _delta_func(double x) const override;
 	};
 
 	class A2hq final : public OpMatElem
@@ -67,7 +67,7 @@ namespace Candia2
 		A2hq() = default;
 		~A2hq()  = default;
 
-		double regular(double x) const override;
+		double _reg_func(double x) const override;
 	};
 
 	class A2hg final : public OpMatElem
@@ -76,20 +76,23 @@ namespace Candia2
 		A2hg() = default;
 		~A2hg()  = default;
 
-		double regular(double x) const override;
+		double _reg_func(double x) const override;
 	};
 
 
 	class OpMatElemN3LO final : public OpMatElem
 	{
+	public:
 		using ome_type = ome::rpd_distribution<ome::ome_as_view<double>, ome::ome_as_plus_view<double>, ome::ome_as_const_view<double>>;
+
+	private:
 		ome_type _ome;
 
 	public:
 		OpMatElemN3LO(ome_type const& ome) : _ome{ome} {}
 		~OpMatElemN3LO() = default;
 
-		inline double regular(double x) const override
+		inline double _reg_func(double x) const override
 		{
 			if (!_ome.has_regular())
 				return 0;
@@ -98,7 +101,7 @@ namespace Candia2
 			return reg[3](_lm, _nf, x);
 		}
 
-		inline double plus(double x) const override
+		inline double _plus_func(double x) const override
 		{
 			if (!_ome.has_plus())
 				return 0;
@@ -107,7 +110,7 @@ namespace Candia2
 			return plus[3](_lm, _nf, x);
 		}
 
-		inline double delta(double x) const override
+		inline double _delta_func(double x) const override
 		{
 			UNUSED(x);
 

@@ -19,8 +19,8 @@ namespace Candia2
 		// at the next nf
 		std::print("[DGLAP] Creating copy of pre-threshold distributions... ");
         
-        std::vector<ArrayGrid> arr(13, ArrayGrid{_grid});
-        std::vector<ArrayGrid> arr_singlet(2, ArrayGrid{_grid});
+        std::vector<ArrayGrid> arr(13, ArrayGrid{_grid.size()});
+		std::vector<ArrayGrid> arr_singlet(2, ArrayGrid{_grid.size()});
 
 		for (uint j=0; j<=1; ++j)
 			arr_singlet[j] = _S2[0][j][0];
@@ -66,8 +66,8 @@ namespace Candia2
                 for (uint k=0; k<_grid.size()-1;k++)
 				{
                     const double fac_n3lo = as*as*as/(64.0*PI_3);
-					const double convSPa = getSplitFunc("A3psqq").convolution(arr_singlet[1], k);
-					const double convSPb = getSplitFunc("A3sqg").convolution(arr_singlet[0], k);
+					const double convSPa = _grid.convolution(arr_singlet[1], getExpression("A3psqq"), k);
+					const double convSPb = _grid.convolution(arr_singlet[0], getExpression("A3sqg"), k);
 					const double SP = fac_n3lo*(convSPa + convSPb)/static_cast<double>(_nf);
 
 					// q
@@ -86,23 +86,23 @@ namespace Candia2
     void DGLAPSolver::HFT_NNLO1(ArrayGrid& c, uint j, uint k)
     {
         double const as = _alpha_s.post(_nf+1);
-        double const conv = getSplitFunc("A2ns").convolution(c, k);
+        double const conv = _grid.convolution(c, getExpression("A2ns"), k);
         
 		_C2[j][0][0][0][k] += std::pow(as/(4.0*PI), 2) * conv;
     }
     void DGLAPSolver::HFT_NNLO2(ArrayGrid& s1, ArrayGrid& s2, uint k)
     {
         double const as = _alpha_s.post(_nf+1);
-        double const conv1 = getSplitFunc("A2gq").convolution(s1, k);
-        double const conv2 = getSplitFunc("A2gg").convolution(s2, k);
+        double const conv1 = _grid.convolution(s1, getExpression("A2gq"), k);
+        double const conv2 = _grid.convolution(s2, getExpression("A2gg"), k);
 
 		_S2[0][0][0][k] += std::pow(as/(4.0*PI), 2) * (conv1 + conv2);
     }
     void DGLAPSolver::HFT_NNLO3(ArrayGrid& s1, ArrayGrid& s2, uint k)
     {
         double const as = _alpha_s.post(_nf+1);
-        double const conv1 = getSplitFunc("A2hq").convolution(s1, k);
-        double const conv2 = getSplitFunc("A2hg").convolution(s2, k);
+        double const conv1 = _grid.convolution(s1, getExpression("A2hq"), k);
+        double const conv2 = _grid.convolution(s2, getExpression("A2hg"), k);
 		double const fac = 0.5*std::pow(as/(4.0*PI), 2) * (conv1 + conv2);
 
 		_C2[_nf+1][0][0][0][k] = fac;
@@ -116,17 +116,17 @@ namespace Candia2
 		const double fac_nnlo = as*as/(16.0*PI_2);
 		const double fac_n3lo = as*as*as/(64.0*PI_3);
 
-		double const conv1a = getSplitFunc("A2ns").convolution(q, k);
-		double const conv1b = getSplitFunc("A3nsp").convolution(q, k);
+		double const conv1a = _grid.convolution(q, getExpression("A2ns"), k);
+		double const conv1b = _grid.convolution(q, getExpression("A3nsp"), k);
 
-		double const conv2a = getSplitFunc("A2ns").convolution(qb, k);
-		double const conv2b = getSplitFunc("A3nsp").convolution(qb, k);
+		double const conv2a = _grid.convolution(qb, getExpression("A2ns"), k);
+		double const conv2b = _grid.convolution(qb, getExpression("A3nsp"), k);
 
 		double const conv3a = conv1a;
-		double const conv3b = getSplitFunc("A3nsm").convolution(q, k);
+		double const conv3b = _grid.convolution(q, getExpression("A3nsm"), k);
 
 		double const conv4a = conv2a;
-		double const conv4b = getSplitFunc("A3nsm").convolution(qb, k);
+		double const conv4b = _grid.convolution(qb, getExpression("A3nsm"), k);
 
 		_D2[j][0][0][0][0][k] += 0.5*(
 			((fac_nnlo*conv1a + fac_n3lo*conv1b) + (fac_nnlo*conv2a + fac_n3lo*conv2b)) +
@@ -141,17 +141,17 @@ namespace Candia2
 		const double fac_nnlo = as*as/(16.0*PI_2);
 		const double fac_n3lo = as*as*as/(64.0*PI_3);
 
-		double const conv1a = getSplitFunc("A2ns").convolution(q, k);
-		double const conv1b = getSplitFunc("A3nsp").convolution(q, k);
+		double const conv1a = _grid.convolution(q, getExpression("A2ns"), k);
+		double const conv1b = _grid.convolution(q, getExpression("A3nsp"), k);
 
-		double const conv2a = getSplitFunc("A2ns").convolution(qb, k);
-		double const conv2b = getSplitFunc("A3nsp").convolution(qb, k);
+		double const conv2a = _grid.convolution(qb, getExpression("A2ns"), k);
+		double const conv2b = _grid.convolution(qb, getExpression("A3nsp"), k);
 
 		double const conv3a = conv1a;
-		double const conv3b = getSplitFunc("A3nsm").convolution(q, k);
+		double const conv3b = _grid.convolution(q, getExpression("A3nsm"), k);
 
 		double const conv4a = conv2a;
-		double const conv4b = getSplitFunc("A3nsm").convolution(qb, k);
+		double const conv4b = _grid.convolution(qb, getExpression("A3nsm"), k);
 
 		_D2[j][0][0][0][0][k] += 0.5*(
 			((fac_nnlo*conv1a + fac_n3lo*conv1b) + (fac_nnlo*conv2a + fac_n3lo*conv2b)) -
@@ -166,10 +166,10 @@ namespace Candia2
 		const double fac_nnlo = as*as/(16.0*PI_2);
 		const double fac_n3lo = as*as*as/(64.0*PI_3);
 	    
-		const double conv1a = getSplitFunc("A2gq").convolution(qp, k);
-		const double conv1b = getSplitFunc("A3gq").convolution(qp, k);
-		const double conv2a = getSplitFunc("A2gg").convolution(g, k);
-		const double conv2b = getSplitFunc("A3gg").convolution(g, k);
+		const double conv1a = _grid.convolution(qp, getExpression("A2gq"), k);
+		const double conv1b = _grid.convolution(qp, getExpression("A3gq"), k);
+		const double conv2a = _grid.convolution(g, getExpression("A2gg"), k);
+		const double conv2b = _grid.convolution(g, getExpression("A3gg"), k);
 		
 		_S2[0][0][0][k] += (fac_nnlo*conv1a + fac_n3lo*conv1b) + (fac_nnlo*conv2a + fac_n3lo*conv2b);
 	}
@@ -181,10 +181,10 @@ namespace Candia2
 		const double fac_nnlo = as*as/(16.0*PI_2);
 		const double fac_n3lo = as*as*as/(64.0*PI_3);
 
-	    const double conv1a = getSplitFunc("A2hq").convolution(qp, k);
-		const double conv1b = getSplitFunc("A3hq").convolution(qp, k);
-		const double conv2a = getSplitFunc("A2hg").convolution(g, k);
-		const double conv2b = getSplitFunc("A3hg").convolution(g, k);
+	    const double conv1a = _grid.convolution(qp, getExpression("A2hq"), k);
+		const double conv1b = _grid.convolution(qp, getExpression("A3hq"), k);
+		const double conv2a = _grid.convolution(g, getExpression("A2hg"), k);
+		const double conv2b = _grid.convolution(g, getExpression("A3hg"), k);
 		
         const double res = 0.5*((fac_nnlo*conv1a + fac_n3lo*conv1b) + (fac_nnlo*conv2a + fac_n3lo*conv2b));
 		_D2[(_nf+1)][0][0][0][0][k] = res;

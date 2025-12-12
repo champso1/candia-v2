@@ -5,7 +5,7 @@
 #include "Candia-v2/Expression.hpp"
 
 namespace Candia2
-{	
+{
 	class SplittingFunction : public Expression
 	{
 	protected:
@@ -21,7 +21,6 @@ namespace Candia2
 		inline static double beta0() { return _beta0; }
 		inline static double kr() { return _kr; }
 		inline static void kr(double kr) { _kr = kr; }
-		
 		inline static void update(uint nf, double beta0)
 		{ _nf = nf; _beta0 = beta0; }
 	};
@@ -31,37 +30,37 @@ namespace Candia2
 	class P0ns final : public SplittingFunction
 	{
 	public:
-		double regular(const double x) const override;
-		double plus(const double x) const override;
-		double delta(const double x) const override;
+		double _reg_func(double x) const override;
+		double _plus_func(double x) const override;
+		double _delta_func(double x) const override;
 	};
 
 	class P0qq final: public SplittingFunction
 	{
 	public:
-		double regular(const double x) const override;
-		double plus(const double x) const override;
-		double delta(const double x) const override;
+		double _reg_func(double x) const override;
+		double _plus_func(double x) const override;
+		double _delta_func(double x) const override;
 	};
 
 	class P0qg final: public SplittingFunction
 	{
 	public:
-		double regular(const double x) const override;
+		double _reg_func(double x) const override;
 	};
 
 	class P0gq final: public SplittingFunction
 	{
 	public:
-		double regular(const double x) const override;
+		double _reg_func(double x) const override;
 	};
 
 	class P0gg final: public SplittingFunction
 	{
 	public:
-		double regular(const double x) const override;
-		double plus(const double x) const override;
-		double delta(const double x) const override;
+		double _reg_func(double x) const override;
+		double _plus_func(double x) const override;
+		double _delta_func(double x) const override;
 	};
 
 
@@ -69,45 +68,45 @@ namespace Candia2
 	class P1nsp final: public SplittingFunction
 	{
 	public:
-		double regular(const double x) const override;
-		double plus(const double x) const override;
-		double delta(const double x) const override;
+		double _reg_func(double x) const override;
+		double _plus_func(double x) const override;
+		double _delta_func(double x) const override;
 	};
 
 	class P1nsm final: public SplittingFunction
 	{
 	public:
-		double regular(const double x) const override;
-		double plus(const double x) const override;
-		double delta(const double x) const override;
+		double _reg_func(double x) const override;
+		double _plus_func(double x) const override;
+		double _delta_func(double x) const override;
 	};
 
 	class P1qq final: public SplittingFunction
 	{
 	public:
-		double regular(const double x) const override;
-		double plus(const double x) const override;
-		double delta(const double x) const override;
+		double _reg_func(double x) const override;
+		double _plus_func(double x) const override;
+		double _delta_func(double x) const override;
 	};
 
 	class P1qg final: public SplittingFunction
 	{
 	public:
-		double regular(const double x) const override;
+		double _reg_func(double x) const override;
 	};
 
 	class P1gq final: public SplittingFunction
 	{
 	public:
-		double regular(const double x) const override;
+		double _reg_func(double x) const override;
 	};
 
 	class P1gg final: public SplittingFunction
 	{
 	public:
-		double regular(const double x) const override;
-		double plus(const double x) const override;
-		double delta(const double x) const override;
+		double _reg_func(double x) const override;
+		double _plus_func(double x) const override;
+		double _delta_func(double x) const override;
 	};
 
 
@@ -116,59 +115,59 @@ namespace Candia2
 	class P2nsp final: public SplittingFunction
 	{
 	public:
-		double regular(const double x) const override;
-		double plus(const double x) const override;
-		double delta(const double x) const override;
+		double _reg_func(double x) const override;
+		double _plus_func(double x) const override;
+		double _delta_func(double x) const override;
 	};
 
 	class P2nsm final: public SplittingFunction
 	{
 	public:
-		double regular(const double x) const override;
-		double plus(const double x) const override;
-		double delta(const double x) const override;
+		double _reg_func(double x) const override;
+		double _plus_func(double x) const override;
+		double _delta_func(double x) const override;
 	};
 
 	class P2nsv final: public SplittingFunction
 	{
 	public:
-		double regular(const double x) const override;
-		double plus(const double x) const override;
-		double delta(const double x) const override;
+		double _reg_func(double x) const override;
+		double _plus_func(double x) const override;
+		double _delta_func(double x) const override;
 	};
 
 	class P2ps final: public SplittingFunction
 	{
 	public:
-		double regular(const double x) const override;
+		double _reg_func(double x) const override;
 	};
 
 	class P2qq final: public SplittingFunction
 	{
 	public:
-		double regular(const double x) const override;
-		double plus(const double x) const override;
-		double delta(const double x) const override;
+		double _reg_func(double x) const override;
+		double _plus_func(double x) const override;
+		double _delta_func(double x) const override;
 	};
 
 	class P2qg final: public SplittingFunction
 	{
 	public:
-		double regular(const double x) const override;
+		double _reg_func(double x) const override;
 	};
 
 	class P2gq final: public SplittingFunction
 	{
 	public:
-		double regular(const double x) const override;
+		double _reg_func(double x) const override;
 	};
 
 	class P2gg final: public SplittingFunction
 	{
 	public:
-		double regular(const double x) const override;
-		double plus(const double x) const override;
-		double delta(const double x) const override;
+		double _reg_func(double x) const override;
+		double _plus_func(double x) const override;
+		double _delta_func(double x) const override;
 	};
 
 
@@ -182,9 +181,9 @@ namespace Candia2
 	public:
 		P3nsp(const uint imod=3) : _imod(imod) { }
 
-		double regular(const double x) const override;
-		double plus(const double x) const override;
-		double delta(const double x) const override;
+		double _reg_func(double x) const override;
+		double _plus_func(double x) const override;
+		double _delta_func(double x) const override;
 	};
 
 	class P3nsm final: public SplittingFunction
@@ -195,9 +194,9 @@ namespace Candia2
 	public:
 		P3nsm(const uint imod=3) : _imod(imod)  { }
 
-		double regular(const double x) const override;
-		double plus(const double x) const override;
-		double delta(const double x) const override;
+		double _reg_func(double x) const override;
+		double _plus_func(double x) const override;
+		double _delta_func(double x) const override;
 	};
 
 	class P3nsv final: public SplittingFunction
@@ -208,9 +207,9 @@ namespace Candia2
 	public:
 		P3nsv(const uint imod=3) : _imod(imod) { }
 
-		double regular(const double x) const override;
-		double plus(const double x) const override;
-		double delta(const double x) const override;
+		double _reg_func(double x) const override;
+		double _plus_func(double x) const override;
+		double _delta_func(double x) const override;
 	};
 
 	class P3ps final: public SplittingFunction
@@ -221,7 +220,7 @@ namespace Candia2
 	public:
 		P3ps(const uint imod=3) : _imod(imod) { }
 
-		double regular(const double x) const override;
+		double _reg_func(double x) const override;
 	};
 
 	class P3qq final: public SplittingFunction
@@ -232,9 +231,9 @@ namespace Candia2
 	public:
 		P3qq(const uint imod=3) : _imod(imod) { }
 
-		double regular(const double x) const override;
-		double plus(const double x) const override;
-		double delta(const double x) const override;
+		double _reg_func(double x) const override;
+		double _plus_func(double x) const override;
+		double _delta_func(double x) const override;
 	};
 
 	class P3qg final: public SplittingFunction
@@ -245,7 +244,7 @@ namespace Candia2
 	public:
 		P3qg(const uint imod=3) : _imod(imod) { }
 
-		double regular(const double x) const override;
+		double _reg_func(double x) const override;
 	};
 
 	class P3gq final: public SplittingFunction
@@ -256,7 +255,7 @@ namespace Candia2
 	public:
 		P3gq(const uint imod=3) : _imod(imod) { }
 
-		double regular(const double x) const override;
+		double _reg_func(double x) const override;
 	};
 
 	class P3gg final: public SplittingFunction
@@ -267,9 +266,9 @@ namespace Candia2
 	public:
 		P3gg(const uint imod=3) : _imod(imod) { }
 
-		double regular(const double x) const override;
-		double plus(const double x) const override;
-		double delta(const double x) const override;
+		double _reg_func(double x) const override;
+		double _plus_func(double x) const override;
+		double _delta_func(double x) const override;
 	};
 } // namespace Candia2
 
