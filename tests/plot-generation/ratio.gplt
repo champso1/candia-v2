@@ -1,0 +1,27 @@
+set terminal pdf enhanced color notransparent
+
+set border lw 2
+set size ratio 0.65
+
+set output "ratio.pdf"
+# set label "Ratio of N3LO/NNLO Candia-v2 evolution" at 0.12,0.7
+set ylabel "N3LO/NNLO" offset 2,0
+set xlabel "x" offset 0,0.7
+
+# set logscale x
+# set xrange [0.01:0.3]
+# set yrange [0.4:0.8]
+
+# set format x "%.2f"
+# set xtics ("10@^{-2}" 1e-2, "0.05" 0.05, "0.1" 0.1, "0.15" 0.15, "0.2" 0.2, "0.25" 0.25, "0.3" 0.3)
+
+array names[5]
+names[1] = "u"
+names[2] = "d"
+names[3] = "s"
+names[4] = "c"
+names[5] = "b"
+
+plot for [i=3:7] 'ratio.dat' using 1:i with lines lw 2 title names[i-2]
+
+

@@ -1,88 +1,105 @@
-#include "Candia-v2/Candia.hpp"
-#include "Candia-v2/Common.hpp"
-#include "Candia-v2/Distribution.hpp"
-#include "Candia-v2/FuncArrayGrid.hpp"
-using namespace Candia2;
-
-#include <filesystem>
-#include <format>
-#include <string>
-#include <string_view>
+#include <print>
 #include <cstdlib>
-#include <memory>
-#include <numeric>
+#include <cmath>
+#include <string>
+#include <vector>
 #include <fstream>
-#include <iostream>
+#include <filesystem>
 using namespace std;
+namespace fs = filesystem;
 
-void generatePlots(
-	std::string_view filename,
-	std::string_view title,
-	std::vector<int> const& dists,
-	std::vector<int> const& ntab,
-	std::vector<ArrayGrid> & F,
-	Grid const& grid)
+using vec_type = vector<vector<double>>;
+
+
+static void usage()
 {
-	string temp{};
-	filesystem::path filepath(filename);
-		
-	ofstream outfile(filepath.make_preferred());
-	if (!outfile) {
-		temp = format("[PLOT] GeneratePlots(): output file '{}' failed to open", filename);
-		cerr << temp << endl;
-		exit(EXIT_FAILURE);
-	}
-		
-	
-	outfile << "# " << title << '\n';
-	for (int k : ntab)
-	{
-		outfile << scientific << setprecision(9);
-		outfile << grid.at(k) << '\t';
-		outfile << fixed << setprecision(9);
-
-		for (uint j : dists)
-		{
-			outfile << F[j][k] << '\t';
-		}
-		outfile << '\n';
-	}
-			
-	outfile.close();
+	println("USAGE: ./plot-generation(.exe) <n3lo-datafile> <nnlo-datafile>");
+	exit(EXIT_FAILURE);
 }
+
+tuple<vec_type, vector<double>> read_datafile(fs::path const& path);
+void generate_ratios(vec_type const& n3lo_data, vec_type const& nnlo_data, vector<double> const& X);
 
 int main(int argc, char *argv[])
 {
-	if (argc != 2)
+	if (argc != 3)
+		usage();
+
+	fs::path n3lo_file{argv[1]};
+	fs::path nnlo_file{argv[2]};
+
+    auto [n3lo_data, n3lo_x] = read_datafile(n3lo_file);
+	auto [nnlo_data, nnlo_x] = read_datafile(nnlo_file);
+
+	if (n3lo_data.size() != nnlo_data.size())
 	{
-		cerr << "[PLOT] main(): Must provide an order!" << endl;
+		println("Differing number of grid points in n3lo file ({}) and nnlo file ({}).",
+			n3lo_data.at(0).size(), nnlo_data.at(0).size());
 		exit(EXIT_FAILURE);
 	}
-    const uint order = stoi(argv[1]);
-	const uint num_grid_points = 1000;
-	const uint iterations = 12;
-	const uint trunc_idx = 15;
-	const double Qf = 100.0;
-	const double kr = 1.0;
+
+	generate_ratios(n3lo_data, nnlo_data, n3lo_x);
+}
+
+
+
+
+tuple<vec_type, vector<double>> read_datafile(fs::path const& path)
+{
+	print("Reading data from file '{}'... ", path.filename().string());
 	
-	// define the grid points
-	vector<double> xtab{1e-5, 1e-4, 1e-3, 1e-2, 0.1, 0.3, 0.5, 0.7, 0.9, 1.0};
-	Grid grid{xtab, num_grid_points};
+	ifstream file_stream{path};
+	file_stream.ignore(numeric_limits<streamsize>::max(), '\n'); // ignore the comment line
 
-	std::unique_ptr<LesHouchesDistribution> dist = std::make_unique<LesHouchesDistribution>();
-	AlphaS alphas(order, dist->Q0(), dist->alpha0(), Qf, kr);
-	alphas.setVFNS(dist->masses(), dist->nfi());
-
-	DGLAPSolver solver(order, grid, alphas, Qf, iterations, trunc_idx, *dist, kr, true);
+	vector<double> xtab{};
+	vector<int> ntab{};
 	
-	auto F = solver.evolve();
-	vector<int> dists{0, 1};
+	double temp1{};
+	int temp2{};
+	string line{};
 
-	vector<int> ntab(grid.size()-1);
-	iota(ntab.begin(), ntab.end(), 0);
+	// read in xtab array
+	getline(file_stream, line);
+	istringstream iss{line};
+	while (iss >> temp1)
+		xtab.push_back(temp1);
 
-	stringstream filename_ss{};
-	filename_ss << ((order == 0) ? "lo" : (order == 1) ? "nlo" : "nnlo");
-	filename_ss << ".dat";
-	generatePlots(filename_ss.str(), "x \t g \t u", dists, ntab, F, grid);
+	// read in ntab array
+	getline(file_stream, line);
+	iss = istringstream{line};
+	while (iss >> temp2)
+		ntab.push_back(temp2);
+
+	// read in rest of data points
+	vector<double> X{};
+	vec_type F{};
+	F.resize(13);
+	while (getline(file_stream, line))
+	{
+		iss = istringstream{line};
+		iss >> temp1;
+		X.push_back(temp1);
+		for (int i=0; i<F.size(); ++i)
+		{
+			iss >> temp1;
+			F.at(i).push_back(temp1);
+		}
+	}
+
+	println("Done.");
+	return {F, X};
+}
+
+void generate_ratios(vec_type const& n3lo_data, vec_type const& nnlo_data, vector<double> const& X)
+{
+	ofstream outfile{"ratio.dat"};
+    const uint N = n3lo_data.at(0).size();
+	const uint J = n3lo_data.size();
+	for (uint k=0; k<N; ++k)
+	{
+		outfile << X[k] << ' ';
+		for (uint j=0; j<J; ++j)
+			outfile << std::abs(n3lo_data[j][k]/nnlo_data[j][k]) << ' ';
+		outfile << '\n';
+	}
 }
