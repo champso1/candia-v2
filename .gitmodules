@@ -1,3 +1,0 @@
-[submodule "vendor/libome"]
-	path = vendor/libome
-	url = https://github.com/hoppet-code/libome-fork.git
