@@ -9,6 +9,8 @@ namespace Candia2
     {
 		std::println("[DGLAP] Treating heavy flavors: {}th quark mass threshold (mass {})", _nf+1, _alpha_s.masses(_nf+1));
 		OpMatElem::update(-_log_mur2_muf2, _nf);
+		for (auto& [_, expr] : _expressions)
+			expr->fill(_grid.points(), _grid.abscissae());
 
 		// Copy of pre-threshold distributions
 		// the nf+1 dists are defined in terms of the nf dists,
@@ -32,7 +34,9 @@ namespace Candia2
 				for (uint j=i; j<=i+6; j+=6)
 					arr[j] = _C2[j][0][0][0];
 			}
-		} else if (_order == 3) {
+		}
+		else if (_order == 3)
+		{
             for (uint i=1; i<=_nf; i++)
 			{
 				for (uint j=i; j<=i+6; j+=6)

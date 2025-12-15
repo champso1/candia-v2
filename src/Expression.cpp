@@ -2,43 +2,32 @@
 #include "Candia-v2/Expression.hpp"
 
 #include <print>
+#include <cmath>
 
 namespace Candia2
 {
-	double Expression::regular(double x)
+	void Expression::fill(array_type const& grid_points, array_type const& gauss_points)
 	{
-		if (_reg_cache.find(x) == _reg_cache.end())
+		// no matter what, the plus and delta distributions
+		// are evaluated at 1
+		_plus_cache[1.0] = _plus_func(1.0);
+		_delta_cache[1.0] = _delta_func(1.0);
+
+		for (double x : grid_points)
 		{
-			double res = _reg_func(x);
-			_reg_cache.emplace(x, res);
-			return res;
+			for (double y : gauss_points)
+			{
+				double a = std::pow(x, 1.0-y);
+				double b = std::pow(x, y);
+			
+				_reg_cache[a] = _reg_func(a);
+				_plus_cache[b] = _plus_func(b);
+			}
 		}
-		return _reg_cache[x];
 	}
 
-	double Expression::plus(double x)
-	{
-		if (_plus_cache.find(x) == _plus_cache.end())
-		{
-			double res = _plus_func(x);
-			_plus_cache.emplace(x, res);
-			return res;
-		}
-		return _plus_cache[x];
-	}
 
-	double Expression::delta(double x)
-	{
-		if (_delta_cache.find(x) == _delta_cache.end())
-		{
-			double res = _delta_func(x);
-			_delta_cache.emplace(x, res);
-			return res;
-		}
-		return _delta_cache[x];
-	}
-
-	double Expression::operator()(double x, uint function_part)
+    double Expression::operator()(double x, uint function_part)
 	{
 		switch(function_part)
 		{

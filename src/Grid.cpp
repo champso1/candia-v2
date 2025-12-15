@@ -13,10 +13,7 @@ namespace Candia2
 {
 	Grid::Grid(std::vector<double> const& xtab, uint nx, int grid_fill_type)
 		: _points(nx), _ntab{},
-		  _Xi(GAUSS_POINTS), _Wi(GAUSS_POINTS),
-		  _Xi1(GAUSS_POINTS), _Wi1(GAUSS_POINTS),
-		  _Xi2(GAUSS_POINTS), _Wi2(GAUSS_POINTS),
-		  _Xi3(GAUSS_POINTS), _Wi3(GAUSS_POINTS)
+		  _Xi(GAUSS_POINTS), _Wi(GAUSS_POINTS)
 	{
 		switch (grid_fill_type)
 		{
@@ -25,22 +22,18 @@ namespace Candia2
 			case 3: initGrid3(xtab, nx); break;
 			default:
 			{
-				std::println(stderr, "[DGLAP2] Warning: Invalid grid fill type. Found {}, expected 1, 2, or 3.", grid_fill_type);
-				std::println(stderr, "         Will use default (1).");
+				std::println(stderr, "[GRID: WARNING] Grid(): Invalid grid fill type. Found {}, expected 1, 2, or 3.", grid_fill_type);
+				std::println(stderr, "[GRID: INFO^] Grid(): Will use default (1).");
 				initGrid(xtab, nx);
 			}
 		}
 	    
 		initGauLeg(0.0, 1.0, _Xi, _Wi);
-
-		initGauLeg(0, 1e-1, _Xi1, _Wi1);
-		initGauLeg(1e-1, 0.7, _Xi2, _Wi2);
-		initGauLeg(0.7, 1.0, _Xi3, _Wi3);
 	}
 
 	void Grid::initGrid(std::vector<double> const& xtab, const uint nx)
 	{
-		std::println("[GRID] Using InitGrid()");
+		std::println("[GRID: INFO] initGrid(): Using Candia method.");
 		
 		const uint xtab_len = xtab.size();
 		std::vector<double> Ntab(xtab_len);
@@ -129,7 +122,7 @@ namespace Candia2
 
 	void Grid::initGrid2(std::vector<double> const& xtab, uint nx)
 	{
-		std::println("[GRID] Using InitGrid2()");
+		std::println("[GRID: INFO] initGrid2(): Using method 2.");
 		
 		std::vector<double> points(nx-xtab.size()+1);
 		const double xmin = xtab.front();
@@ -162,7 +155,7 @@ namespace Candia2
 			auto it = std::ranges::find(_points, x);
 			if (it == _points.end())
 			{
-				std::println(stderr, "[GRID] Somehow found a tabulated value ({}) that is not in the ntab array.", x);
+				std::println(stderr, "[GRID: ERROR] initGrid2(): Somehow found a tabulated value ({}) that is not in the ntab array.", x);
 				exit(EXIT_FAILURE);
 			}
 			_ntab.emplace_back(std::distance(_points.begin(), it));
@@ -171,7 +164,7 @@ namespace Candia2
 
 	void Grid::initGrid3(std::vector<double> const& xtab, uint nx)
 	{
-		std::println("[GRID] Using InitGrid3()");
+		std::println("[GRID: INFO] initGrid3(): Using method 3.");
 		
 		std::vector<double> points{};
 
@@ -257,7 +250,7 @@ namespace Candia2
 			if (z1 == std::numeric_limits<double>::max() ||
 				pp == std::numeric_limits<double>::max())
 			{
-				std::println("[GRID: ERROR] InitGauleg(): failed to determine gauss-legendre abscissae/weights");
+				std::println("[GRID: ERROR] initGauLeg(): failed to determine gauss-legendre abscissae/weights");
 				exit(EXIT_FAILURE);
 			}
 
@@ -284,63 +277,6 @@ namespace Candia2
 			k=size()-2*INTERP_POINTS;
 
 		return static_cast<uint>(k);
-	}
-
-	
-
-	double Grid::interpolate(grid_type const& yy, double x)
-	{
-		const static int n = 2*INTERP_POINTS;
-		int ns=0;
-		double y, den, dif, dift, ho, hp, w;
-
-		int k = static_cast<int>(this->interpFindIdx(x));
-
-		double const* xa = &(_points.data()[k]);
-		double const* ya = &(yy.data()[k]);
-		
-		std::vector<double> c(n, 0.0);
-		std::vector<double> d(n, 0.0);
-
-		dif = std::abs(x - xa[0]);
-
-		for (int i=0; i<n; i++)
-		{
-			if ((dift = std::abs(x - xa[i])) < dif)
-			{
-				ns = i;
-				dif = dift;
-			}
-			c[i] = ya[i];
-			d[i] = ya[i];
-		}
-
-		y = ya[ns--];
-
-		for (int m=1; m<n; m++)
-		{
-		    for (int i=0; i<n-m; i++)
-			{
-				ho = xa[i] - x;
-				hp = xa[i+m] - x;
-				w = c[i+1] - d[i];
-
-				den = ho-hp;
-				if (std::abs(ho-hp) < 1e-15)
-				{
-					std::println("[GRID: ERROR] Interpolate(): found a denominator equal to 0.0.");
-					exit(1);
-				}
-
-				den = w/den;
-				d[i] = hp*den;
-				c[i] = ho*den;
-			}
-
-			y += (2*ns < (n-1-m) ? c[ns+1] : d[ns--]);
-		}
-
-		return y;
 	}
 
 	double Grid::interpolate(ArrayGrid& yy, double x)
@@ -398,39 +334,13 @@ namespace Candia2
 		return y;
 	}
 
-
-
-	double Grid::convolution(grid_type const& A, Expression &E, uint k)
-	{
-		double x = _points.at(k);
-		double logx =  std::log(x);
-		double eplus = E.plus(1.0);
-		double res = (eplus*std::log1p(-x) + E.delta(1.0)) * A.at(k);
-		
-		for (uint i=0; i<GAUSS_POINTS; i++)
-		{
-			double y = _Xi[i];
-			double w = _Wi[i];
-
-			double a = std::pow(x, 1.0-y);
-			double b = std::pow(x, y);
-
-			double interp1 = interpolate(A, b);
-			double interp2 = interpolate(A, a);
-
-			res -= w*logx*a*E.regular(a)*interp1;
-			res -= w*logx*b*(E.plus(b)*interp2 - eplus*A.at(k))/(1.0-b);
-		}
-		
-		return res;
-	}
-
 	double Grid::convolution(ArrayGrid& A, Expression &E, uint k)
 	{
 		double x = _points.at(k);
 		double logx =  std::log(x);
-		double eplus = E.plus(1.0);
-		double res = (eplus*std::log1p(-x) + E.delta(1.0)) * A[k];
+		double eplus1 = E.plus(1.0);
+		double ed1 = E.delta(1.0);
+		double res = (eplus1*std::log1p(-x) + ed1) * A[k];
 		
 		for (uint i=0; i<GAUSS_POINTS; i++)
 		{
@@ -443,12 +353,13 @@ namespace Candia2
 			double interp1 = interpolate(A, b);
 			double interp2 = interpolate(A, a);
 
-			res -= w*logx*a*E.regular(a)*interp1;
-			res -= w*logx*b*(E.plus(b)*interp2 - eplus*A[k])/(1.0-b);
+			double erega = E.regular(a);
+			double eplusb = E.plus(b);
+
+			res -= w*logx*a*erega*interp1;
+			res -= w*logx*b*(eplusb*interp2 - eplus1*A[k])/(1.0-b);
 		}
 		
 		return res;
 	}
-
-
 }

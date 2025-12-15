@@ -4,8 +4,6 @@
 #include "Candia-v2/Common.hpp"
 #include "Candia-v2/Expression.hpp"
 
-
-#include <string_view>
 #include <vector>
 
 namespace Candia2
@@ -24,10 +22,6 @@ namespace Candia2
 		
 		gauleg_type _Xi{};
 		gauleg_type _Wi{};
-
-		gauleg_type _Xi1{}, _Wi1{};
-		gauleg_type _Xi2{}, _Wi2{};
-		gauleg_type _Xi3{}, _Wi3{};
 	public:
 		Grid() = delete;
 		Grid(grid_type const& xtab, uint nx, int grid_fill_type=1);
@@ -55,28 +49,8 @@ namespace Candia2
 		inline grid_type::const_iterator end() const { return _points.end(); }
 		inline grid_type::iterator end() { return _points.end(); }
 
-		inline gauleg_type const& abscissae(int idx) const
-		{
-			switch (idx)
-			{
-				case 1: return _Xi1;
-				case 2: return _Xi2;
-				case 3: return _Xi3;
-			}
-			return _Xi;
-		}
-		inline gauleg_type const& weights(int idx) const
-		{
-			switch (idx)
-			{
-				case 1: return _Wi1;
-				case 2: return _Wi2;
-				case 3: return _Wi3;
-			}
-			return _Wi;
-		}
 
-
+		uint interpFindIdx(double x) const;
 		double interpolate(grid_type const& y, double x);
 		double interpolate(ArrayGrid& y, double x);
 		double convolution(grid_type const& A, Expression &E, uint k);
@@ -87,10 +61,6 @@ namespace Candia2
 		void initGrid2(grid_type const& xtab, uint nx);
 		void initGrid3(grid_type const& xtab, uint nx);
 		void initGauLeg(double x1, double x2, std::vector<double> & Xi, std::vector<double> & Wi);
-
-
-	public:
-		uint interpFindIdx(double x) const;
 	};
 }
 

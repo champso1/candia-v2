@@ -19,10 +19,21 @@ namespace Candia2
 		ArrayGrid(base_type const& points)
 			: _base{points}
 		{}
+
+		ArrayGrid(ArrayGrid const& other)
+			: _base(other._base)
+		{}
+		inline void operator=(ArrayGrid const& other)
+		{
+			_base = other._base;
+		}
+
+		ArrayGrid(ArrayGrid&& other) = delete;
+		void operator=(ArrayGrid&& other) = delete;
+
 		~ArrayGrid() = default;
 
 		inline base_type  const& base() const noexcept { return _base; }
-	    // size_type size() const noexcept;
 		void zero() noexcept;
 		
 		double operator[](uint idx) const;  // accessor for points on the grid (const)

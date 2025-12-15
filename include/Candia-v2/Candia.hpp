@@ -57,11 +57,11 @@ namespace Candia2
 		std::map<std::string_view, std::unique_ptr<Expression>> _expressions{};
 		template <typename TExpr, typename... TExprArgs>
 		requires (std::derived_from<TExpr, Expression>)
-		void createExpression(std::string_view name, TExprArgs&&... args)
+		void createExpression(std::string_view name, Grid const& grid, TExprArgs&&... args)
 		{
-			_expressions.emplace(
-				name, std::make_unique<TExpr>(std::forward<TExprArgs>(args)...)
-			);
+			(void)grid; // TODO: remove this
+			std::unique_ptr<Expression> ptr = std::make_unique<TExpr>(std::forward<TExprArgs>(args)...);
+			_expressions.emplace(std::make_pair(name, std::move(ptr)));
 		}
 		Expression& getExpression(std::string_view name);
 		void loadAllExpressions();

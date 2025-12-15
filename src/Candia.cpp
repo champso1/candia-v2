@@ -239,56 +239,56 @@ namespace Candia2
 
 	void DGLAPSolver::loadAllExpressions()
     {
-        createExpression<P0ns>("P0ns");
-        createExpression<P0qq>("P0qq");
-        createExpression<P0qg>("P0qg");
-        createExpression<P0gq>("P0gq");
-        createExpression<P0gg>("P0gg");
+        createExpression<P0ns>("P0ns", _grid);
+        createExpression<P0qq>("P0qq", _grid);
+        createExpression<P0qg>("P0qg", _grid);
+        createExpression<P0gq>("P0gq", _grid);
+        createExpression<P0gg>("P0gg", _grid);
     
         if (_order >= 1)
         {
-		    createExpression<P1nsm>("P1nsm");
-            createExpression<P1nsp>("P1nsp");
-            createExpression<P1qq>("P1qq");
-            createExpression<P1qg>("P1qg");
-            createExpression<P1gq>("P1gq");
-            createExpression<P1gg>("P1gg");
+		    createExpression<P1nsm>("P1nsm", _grid);
+            createExpression<P1nsp>("P1nsp", _grid);
+            createExpression<P1qq>("P1qq", _grid);
+            createExpression<P1qg>("P1qg", _grid);
+            createExpression<P1gq>("P1gq", _grid);
+            createExpression<P1gg>("P1gg", _grid);
         }
         if (_order >= 2)
         {
-            createExpression<P2nsm>("P2nsm");
-            createExpression<P2nsp>("P2nsp");
-            createExpression<P2nsv>("P2nsv");
-            createExpression<P2qq>("P2qq");
-            createExpression<P2qg>("P2qg");
-            createExpression<P2gq>("P2gq");
-            createExpression<P2gg>("P2gg");
+            createExpression<P2nsm>("P2nsm", _grid);
+            createExpression<P2nsp>("P2nsp", _grid);
+            createExpression<P2nsv>("P2nsv", _grid);
+            createExpression<P2qq>("P2qq", _grid);
+            createExpression<P2qg>("P2qg", _grid);
+            createExpression<P2gq>("P2gq", _grid);
+            createExpression<P2gg>("P2gg", _grid);
 
-            createExpression<A2ns>("A2ns");
-            createExpression<A2gq>("A2gq");
-            createExpression<A2gg>("A2gg");
-            createExpression<A2hq>("A2hq");
-            createExpression<A2hg>("A2hg");
+            createExpression<A2ns>("A2ns", _grid);
+            createExpression<A2gq>("A2gq", _grid);
+            createExpression<A2gg>("A2gg", _grid);
+            createExpression<A2hq>("A2hq", _grid);
+            createExpression<A2hg>("A2hg", _grid);
         }
         if (_order >= 3)
         {
-            createExpression<P3nsm>("P3nsm");
-            createExpression<P3nsp>("P3nsp");
-            createExpression<P3nsv>("P3nsv");
-            createExpression<P3qq>("P3qq");
-            createExpression<P3qg>("P3qg");
-            createExpression<P3gq>("P3gq");
-            createExpression<P3gg>("P3gg");
+            createExpression<P3nsm>("P3nsm", _grid);
+            createExpression<P3nsp>("P3nsp", _grid);
+            createExpression<P3nsv>("P3nsv", _grid);
+            createExpression<P3qq>("P3qq", _grid);
+            createExpression<P3qg>("P3qg", _grid);
+            createExpression<P3gq>("P3gq", _grid);
+            createExpression<P3gg>("P3gg", _grid);
 
             
-            createExpression<OpMatElemN3LO>("A3nsm", ome::AqqQNSEven);
-            createExpression<OpMatElemN3LO>("A3nsp", ome::AqqQNSOdd);
-            createExpression<OpMatElemN3LO>("A3gq", ome::AgqQ);
-            createExpression<OpMatElemN3LO>("A3gg", ome::AggQ);
-            createExpression<OpMatElemN3LO>("A3hq", ome::AQqPS);
-            createExpression<OpMatElemN3LO>("A3hg", ome::AQg);
-            createExpression<OpMatElemN3LO>("A3psqq", ome::AqqQPS);
-            createExpression<OpMatElemN3LO>("A3sqg", ome::AqgQ);
+            createExpression<OpMatElemN3LO>("A3nsm", _grid, ome::AqqQNSEven);
+            createExpression<OpMatElemN3LO>("A3nsp", _grid, ome::AqqQNSOdd);
+            createExpression<OpMatElemN3LO>("A3gq", _grid, ome::AgqQ);
+            createExpression<OpMatElemN3LO>("A3gg", _grid, ome::AggQ);
+            createExpression<OpMatElemN3LO>("A3hq", _grid, ome::AQqPS);
+            createExpression<OpMatElemN3LO>("A3hg", _grid, ome::AQg);
+            createExpression<OpMatElemN3LO>("A3psqq", _grid, ome::AqqQPS);
+            createExpression<OpMatElemN3LO>("A3sqg", _grid, ome::AqgQ);
         }
         
     }
@@ -552,6 +552,8 @@ namespace Candia2
 			// update all values
 			_alpha_s.update(_nf);
 			SplittingFunction::update(_nf, _alpha_s.beta0());
+			for (auto& [_, expr] : _expressions)
+				expr->fill(_grid.points(), _grid.abscissae());
 			_alpha0 = _alpha_s.post(_nf);
 			_alpha1 = _alpha_s.pre(_nf+1);
 			bool resum_tab = _alpha_s.resumTabulated();

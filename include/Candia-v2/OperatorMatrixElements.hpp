@@ -15,9 +15,8 @@ namespace Candia2
 	protected:
 		static double _lm; //!< log(m_h^2/mu_r^2) = -log_mur2_muf2  ** NOTE THE MINUS **
 		static uint _nf;   //!< number of active/massless flavors
-
-		OpMatElem() = default;
 	public:
+		OpMatElem() = default;
 		virtual ~OpMatElem() = default;
 
 		inline static void update(double lm, uint nf)
@@ -33,10 +32,7 @@ namespace Candia2
 	class A2ns final : public OpMatElem
 	{
 	public:
-		A2ns() = default;
-		~A2ns()  = default;
-
-		double _reg_func(double x) const override;
+	    double _reg_func(double x) const override;
 		double _plus_func(double x) const override;
 		double _delta_func(double x) const override;
 	};
@@ -44,18 +40,12 @@ namespace Candia2
 	class A2gq final : public OpMatElem
 	{
 	public:
-		A2gq() = default;
-		~A2gq()  = default;
-
 		double _reg_func(double x) const override;
 	};
 
 	class A2gg final : public OpMatElem
 	{
 	public:
-		A2gg() = default;
-		~A2gg()  = default;
-
 		double _reg_func(double x) const override;
 		double _plus_func(double x) const override;
 		double _delta_func(double x) const override;
@@ -64,18 +54,12 @@ namespace Candia2
 	class A2hq final : public OpMatElem
 	{
 	public:
-		A2hq() = default;
-		~A2hq()  = default;
-
 		double _reg_func(double x) const override;
 	};
 
 	class A2hg final : public OpMatElem
 	{
 	public:
-		A2hg() = default;
-		~A2hg()  = default;
-
 		double _reg_func(double x) const override;
 	};
 
