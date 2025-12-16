@@ -15,7 +15,7 @@ namespace fs = filesystem;
 #include "Candia-v2/Common.hpp"
 using namespace Candia2;
 
-constexpr static char const* HOPPET_DATA_FILE{"out-ffns.dat"};
+constexpr static char const* HOPPET_DATA_FILE{"out-nnlo.dat"};
 
 static char const* const TABLE_HEADER =
 	"\\documentclass{article}\n"

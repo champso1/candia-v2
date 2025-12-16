@@ -33,6 +33,7 @@ endif()
 set(resources
   out.dat
   out-ffns.dat
+  out-nnlo.dat
 )
 
 file(COPY ${resources} DESTINATION ${CMAKE_CURRENT_BINARY_DIR})

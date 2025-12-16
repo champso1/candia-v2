@@ -63,6 +63,13 @@ namespace Candia2
 			case 2: // NNLO
 			{
 				std::println("[THREAD] Performing NNLO non-singlet evolution threaded.");
+
+                for (uint j=26; j<=24+_nf; ++j)
+                    arr.get()[j] = _C2[j][0][0][0];
+                for (uint j=32; j<=30+_nf; ++j)
+                    arr.get()[j] = _C2[j][0][0][0];
+				arr.get()[25] = _C2[25][0][0][0];
+
 				std::vector<std::thread> threads{};
 
                 std::array<double, 3> L{L1, L2, L3};
