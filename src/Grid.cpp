@@ -168,7 +168,7 @@ namespace Candia2
 		
 		std::vector<double> points{};
 
-		std::vector<double> log_tab{1e-5, 1e-4, 1e-3, 1e-2, 0.1, 0.7, 1.0};
+		std::vector<double> log_tab{1e-5, 1e-4, 1e-3, 1e-2, 0.1, 0.5, 0.7, 1.0};
 		std::vector<double> log_xtab{log_tab};
 		std::ranges::transform(log_xtab, log_xtab.begin(), [](double x) -> double{ return std::log10(x); });
 		int num_grid_points_per_bin = nx / xtab.size();

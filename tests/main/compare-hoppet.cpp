@@ -15,7 +15,7 @@ namespace fs = filesystem;
 #include "Candia-v2/Common.hpp"
 using namespace Candia2;
 
-constexpr static char const* HOPPET_DATA_FILE{"out-nnlo.dat"};
+constexpr static char const* HOPPET_DATA_FILE{"out-nnlo-ffns.dat"};
 
 static char const* const TABLE_HEADER =
 	"\\documentclass{article}\n"
@@ -69,6 +69,49 @@ static char const* const TABLE_HEADER =
 	"    \\multicolumn{1}{c|} {$xcb$} &\n"
 	"    \\multicolumn{1}{c||}{$xbb$} \\\\[0.5mm]\n";
 
+static char const* const TABLE_HEADER_CANDIAV1 =
+	"\\documentclass{article}\n"
+	"\\usepackage{multicol}\n"
+	"\\usepackage{graphicx} % Required for inserting images\n"
+	"\\usepackage{a4}\n"
+	"\\usepackage{amsmath}\n"
+	"\\usepackage{amssymb}\n"
+	"\\usepackage[\n"
+	"  colorlinks=true\n"
+	"  ,urlcolor=blue\n"
+	"  ,anchorcolor=blue\n"
+	"  ,citecolor=blue\n"
+	"  ,filecolor=blue\n"
+	"  ,linkcolor=blue\n"
+	"  ,menucolor=blue\n"
+	"  ,linktocpage=true\n"
+	"  ,pdfproducer=medialab\n"
+	"  ,pdfa=true\n"
+	"]{hyperref}\n"
+	"\\usepackage[capitalize]{cleveref}\n"
+	"\\newcommand{\\TC}[1]{\\textcolor{ForestGreen}{\\bf[NOTE: TC -- #1]}}\n"
+	"\\textheight 23.0cm \\textwidth 16.5cm\n"
+	"\\oddsidemargin -0.1cm \\evensidemargin -0.1cm\n"
+	"\\topmargin -1.5cm  % for hep-ph\n"
+	"\\begin{document}\n"
+	"\\begin{table}[htp]\n"
+	"    \\caption{\n"
+	"        Percentage error between Candia's results and HOPPET's results.\n"
+	"    }\n"
+	"    \\begin{center}\n"
+	"    \\vspace{5mm}\n"
+	"    \\begin{tabular}{||c||r|r|r|r|r|r|r|r|r|r|r|}\n"
+	"    \\hline \\hline\n"
+	"    \\multicolumn{3}{||c||}{} \\\\[-3mm]\n"
+	"    \\multicolumn{3}{||c||}{$\\, n_f = 3\\ldots 5\\,$,\n"
+	"        $\\,\\mu_{\\rm f}^2 = 10^4 \\mbox{ GeV}^2$} \\\\\n"
+	"    \\multicolumn{3}{||c||}{} \\\\[-0.3cm]\n"
+	"    \\hline \\hline\n"
+	"    \\multicolumn{3}{||c||}{} \\\\[-3mm]\n"
+	"    \\multicolumn{1}{||c||}{$x$} &\n"
+	"    \\multicolumn{1}{c|} {$xg$} &\n"
+	"    \\multicolumn{1}{c||}{$xq^{(-)}$} \\\\[0.5mm]\n";
+
 static char const* TABLE_SUBHEADER =
 	"\\hline \\hline\n"
 	"\\multicolumn{12}{||c||}{} \\\\[-3mm]\n"
@@ -76,6 +119,14 @@ static char const* TABLE_SUBHEADER =
 	"\\multicolumn{12}{||c||}{} \\\\[-0.3cm]\n"
 	"\\hline \\hline\n"
 	" & & & & & & & & & & & \\\\[-0.3cm]\n";
+
+static char const* TABLE_SUBHEADER_CANDIAV1 =
+	"\\hline \\hline\n"
+	"\\multicolumn{3}{||c||}{} \\\\[-3mm]\n"
+	"\\multicolumn{3}{||c||}{$\\mu_{\\rm r}^2 = \\ %KR%\\mu_{\\rm f}^2$} \\\\\n"
+	"\\multicolumn{3}{||c||}{} \\\\[-0.3cm]\n"
+	"\\hline \\hline\n"
+	" & & \\\\[-0.3cm]\n";
 
 
 static char const* const TABLE_FOOTER =

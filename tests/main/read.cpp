@@ -71,6 +71,51 @@ static char const* const TABLE_HEADER =
 	"    \\multicolumn{1}{c|} {$xb_+$} &\n"
 	"    \\multicolumn{1}{c||}{$xg$} \\\\[0.5mm]\n";
 
+static char const* const TABLE_HEADER_CANDIAV1 =
+	"\\documentclass{article}\n"
+	"\\usepackage{multicol}\n"
+	"\\usepackage{graphicx} % Required for inserting images\n"
+	"\\usepackage{a4}\n"
+	"\\usepackage{amsmath}\n"
+	"\\usepackage{amssymb}\n"
+	"\\usepackage[\n"
+	"  colorlinks=true\n"
+	"  ,urlcolor=blue\n"
+	"  ,anchorcolor=blue\n"
+	"  ,citecolor=blue\n"
+	"  ,filecolor=blue\n"
+	"  ,linkcolor=blue\n"
+	"  ,menucolor=blue\n"
+	"  ,linktocpage=true\n"
+	"  ,pdfproducer=medialab\n"
+	"  ,pdfa=true\n"
+	"]{hyperref}\n"
+	"\\usepackage[capitalize]{cleveref}\n"
+	"\\newcommand{\\TC}[1]{\\textcolor{ForestGreen}{\\bf[NOTE: TC -- #1]}}\n"
+	"\\textheight 23.0cm \\textwidth 16.5cm\n"
+	"\\oddsidemargin -0.1cm \\evensidemargin -0.1cm\n"
+	"\\topmargin -1.5cm  % for hep-ph\n"
+	"\\begin{document}\n"
+	"\\begin{table}[htp]\n"
+	"    \\caption{\n"
+	"        Percentage error between Candia's results and MSHT's results,\n"
+	"        both with the FHMRUVV parameterization\n"
+	"    }\n"
+	"    \\label{tab:n3lo_vfns_fhmruvv_msht}\n"
+	"    \\begin{center}\n"
+	"    \\vspace{5mm}\n"
+	"    \\begin{tabular}{||c||r|r|r|r|r|r|r|r||}\n"
+	"    \\hline \\hline\n"
+	"    \\multicolumn{3}{||c||}{} \\\\[-3mm]\n"
+	"    \\multicolumn{3}{||c||}{$\\, n_f = 3\\ldots 5\\,$,\n"
+	"        $\\,\\mu_{\\rm f}^2 = 10^4 \\mbox{ GeV}^2$} \\\\\n"
+	"    \\multicolumn{3}{||c||}{} \\\\[-0.3cm]\n"
+	"    \\hline \\hline\n"
+	"    \\multicolumn{3}{||c||}{} \\\\[-3mm]\n"
+	"    \\multicolumn{1}{||c||}{$x$} &\n"
+	"    \\multicolumn{1}{c|} {$xg$} &\n"
+	"    \\multicolumn{1}{c||}{$xq^{(-)}$} \\\\[0.5mm]\n";
+
 static char const* TABLE_SUBHEADER =
 	"\\hline \\hline\n"
 	"\\multicolumn{9}{||c||}{} \\\\[-3mm]\n"
@@ -78,6 +123,14 @@ static char const* TABLE_SUBHEADER =
 	"\\multicolumn{9}{||c||}{} \\\\[-0.3cm]\n"
 	"\\hline \\hline\n"
 	" & & & & & & & \\\\[-0.3cm]\n";
+
+static char const* TABLE_SUBHEADER_CANDIAV1 =
+	"\\hline \\hline\n"
+	"\\multicolumn{3}{||c||}{} \\\\[-3mm]\n"
+	"\\multicolumn{3}{||c||}{$\\mu_{\\rm r}^2 = \\ %KR%\\mu_{\\rm f}^2$} \\\\\n"
+	"\\multicolumn{3}{||c||}{} \\\\[-0.3cm]\n"
+	"\\hline \\hline\n"
+	" & & \\\\[-0.3cm]\n";
 
 
 static char const* const TABLE_FOOTER =
@@ -196,6 +249,68 @@ std::tuple<DistVec, vector<int>, vector<double>> readDatafile(fs::path path)
 		println("    c+: {} + {}", F[4][k], F[4+6][k]);
 		println("    b+: {} + {}", F[5][k], F[5+6][k]);
 		println("    g:  {}", F[0][k]);
+	}
+	println("Done.");
+	return {dists, ntab, xtab};
+}
+
+std::tuple<DistVec, vector<int>, vector<double>> readDatafile_Candiav1(fs::path path)
+{
+	print("Reading data from file \"{}\"... ", path.filename().string());
+	
+	ifstream file_stream{path};
+	file_stream.ignore(numeric_limits<streamsize>::max(), '\n'); // ignore the comment line
+
+	vector<double> xtab{};
+	vector<int> ntab{};
+	
+	double temp1{};
+	int temp2{};
+	string line{};
+
+	// read in xtab array
+	getline(file_stream, line);
+	istringstream iss{line};
+	while (iss >> temp1)
+		xtab.push_back(temp1);
+
+	// read in ntab array
+	getline(file_stream, line);
+	iss = istringstream{line};
+	while (iss >> temp2)
+		ntab.push_back(temp2);
+
+	// read in rest of data points
+	vector<double> X{};
+	DistVec F{};
+	F.resize(13);
+	while (getline(file_stream, line))
+	{
+		iss = istringstream{line};
+		iss >> temp1;
+		X.push_back(temp1);
+		for (int i=0; i<F.size(); ++i)
+		{
+			iss >> temp1;
+			F.at(i).push_back(temp1);
+		}
+	}
+
+	println("Done.");
+	println("Assigning new distributions in accordance with the table... ");
+
+	// must create required dists from the regular ones
+	DistVec dists(2, vector<double>(9, 0.0));
+	double size = ntab.size();
+	for (uint ik=0; ik<size-1; ++ik) // -1 because we don't want x=1.0
+	{
+		int k = ntab.at(ik);
+		
+		dists.at(0).at(ik) = F[0][k];
+		double res = 0.0;
+		for (uint j=1; j<=6; ++j)
+			res += F[j][k] - F[j+6][k];
+		dists.at(1).at(ik) = res;
 	}
 	println("Done.");
 	return {dists, ntab, xtab};

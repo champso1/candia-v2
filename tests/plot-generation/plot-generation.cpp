@@ -99,7 +99,7 @@ void generate_ratios(vec_type const& n3lo_data, vec_type const& nnlo_data, vecto
 	{
 		outfile << X[k] << ' ';
 		for (uint j=0; j<J; ++j)
-			outfile << std::abs(n3lo_data[j][k]/nnlo_data[j][k]) << ' ';
+			outfile << n3lo_data[j][k]/nnlo_data[j][k] << ' ';
 		outfile << '\n';
 	}
 }
