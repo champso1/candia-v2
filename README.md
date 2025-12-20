@@ -4,23 +4,12 @@
 
 ## Building
 
-`Candia-v2` depends on `libome`, which itself depends on `GSL`. This means that Windows support is limited. If using Windows, WSL is preferred. There is also the option of MSYS2, a set of tools providing a UNIX-like interface as well as many programs typically available on UNIX-like machines (such as GSL).  Additionally, `libome` requires the GNU compilers, namely `g++`, as CLang fails to compile correctly. Lastly, there are many modern C++ features used in `Candia-v2`, and thus it requires C++23 support.
+`Candia-v2` depends on `libome`, which itself depends on `GSL`. This means that Windows support is limited. If using Windows, WSL or the MSYS2 suite is recommended. Further, at the moment, `candia-v2` depends on C++23 features, along with a fortran compiler such as `gfortran`.
 
 Once these requirements are satisfied, building can be done with standard CMake. For ease of use, we have provided a `CMakePresets.json` which allows the user to run, for instance,
 
 ```
-cmake --preset=gcc-release-linux
+cmake --preset={gcc,clang}-{debug,release}-{linux,win}
 ```
 
-to set up all required environment variables to build the library in release mode. This places build files in `bin/gcc-release-linux`. The default build tool is `Ninja`. One then must
-
-```
-cd bin/gcc-release-linux
-ninja
-```
-
-to build the library (and, by default, the examples).
-
-## Examples (TODO)
-
-By default, the above build procedure builds a few examples which illustrate the usage of the library. There are also a few other scripts that are compiled to provide some plotting functionality via the `gnuplot` tool as well as table generation with LaTeX.
+to set up all required environment variables to build the library in debug or release mode using either `clang` or the GNU compilers on a Linux machine or Windows machine. This places build files in `bin`, which can then be compiled with `make`, `ninja`, or whatever build-tool one chooses in the configure step.
