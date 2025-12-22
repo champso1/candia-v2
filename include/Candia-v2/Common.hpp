@@ -33,8 +33,8 @@ namespace Candia2
 	constexpr const double Zeta3 = 1.2020569031595942854;
 
 	constexpr const uint DISTS = 37;
-	constexpr const uint GAUSS_POINTS = 30;
-	constexpr const uint INTERP_POINTS = 4;
+	constexpr const uint GAUSS_POINTS = 50;
+	constexpr const uint INTERP_POINTS = 5;
 	constexpr const uint DEFAULT_ITERATIONS = 10;
 	constexpr const uint DEFAULT_TRUNC_IDX = 5;
 

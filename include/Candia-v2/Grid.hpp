@@ -22,11 +22,20 @@ namespace Candia2
 		
 		gauleg_type _Xi{};
 		gauleg_type _Wi{};
+
+		gauleg_type _Xi_low, _Xi_mid{}, _Xi_high{};
+		gauleg_type _Wi_low, _Wi_mid{}, _Wi_high{};
+
+		static bool _split_n3lo_intervals;
 	public:
 		Grid() = delete;
 		Grid(grid_type const& xtab, uint nx, int grid_fill_type=1);
 		~Grid() = default;
 
+		static inline bool& splitN3LOIntervals() { return _split_n3lo_intervals; }
+		inline gauleg_type const& abscissae_low() const { return _Xi_low; }
+		inline gauleg_type const& abscissae_mid() const { return _Xi_mid; }
+		inline gauleg_type const& abscissae_high() const { return _Xi_high; }
 
 		inline grid_type const& points() const { return _points; }
 		inline double at(uint idx) const { return _points.at(idx); };

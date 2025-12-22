@@ -17,3 +17,7 @@ if (WIN32)
   target_link_libraries(evolve_dglap PRIVATE stdc++exp)
   target_link_libraries(read_table PRIVATE stdc++exp)
 endif()
+
+set(aux
+  ${CMAKE_CURRENT_SOURCE_DIR}/tex-table)
+file(COPY ${aux} DESTINATION ${CMAKE_CURRENT_BINARY_DIR})

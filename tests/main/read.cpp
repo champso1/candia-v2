@@ -1,6 +1,4 @@
-#include <algorithm>
 #include <cstdlib>
-#include <ios>
 #include <iostream>
 #include <ranges>
 #include <sstream>
@@ -9,7 +7,6 @@
 #include <filesystem>
 #include <fstream>
 #include <print>
-#include <unordered_map>
 #include <cmath>
 using uint = unsigned;
 namespace fs = std::filesystem;
@@ -28,7 +25,7 @@ static std::vector<double> XTAB{1e-5, 1e-4, 1e-3, 1e-2, 0.1, 0.3, 0.5, 0.7, 0.9}
 
 static std::string scientificToLatex(double num, int precision)
 {
-	int exponent = std::floor(std::log10(num));
+	int exponent = std::floor(std::log10(std::abs(num)));
 	double mantissa = num / std::pow(10, exponent);
 	return std::vformat("${0: .{1}f}^{{{2:+}}}$",
 		std::make_format_args(mantissa, precision, exponent));

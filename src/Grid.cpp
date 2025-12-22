@@ -11,9 +11,14 @@
 
 namespace Candia2
 {
+	bool Grid::_split_n3lo_intervals = false;
+	
 	Grid::Grid(std::vector<double> const& xtab, uint nx, int grid_fill_type)
 		: _points(nx), _ntab{},
-		  _Xi(GAUSS_POINTS), _Wi(GAUSS_POINTS)
+		  _Xi(GAUSS_POINTS), _Wi(GAUSS_POINTS),
+		  _Xi_low(GAUSS_POINTS), _Wi_low(GAUSS_POINTS),
+		  _Xi_mid(GAUSS_POINTS), _Wi_mid(GAUSS_POINTS),
+		  _Xi_high(GAUSS_POINTS), _Wi_high(GAUSS_POINTS)
 	{
 		switch (grid_fill_type)
 		{
@@ -29,6 +34,10 @@ namespace Candia2
 		}
 	    
 		initGauLeg(0.0, 1.0, _Xi, _Wi);
+
+		initGauLeg(0.0, 0.1, _Xi_low, _Wi_low);
+		initGauLeg(0.1, 0.7, _Xi_mid, _Wi_mid);
+		initGauLeg(0.7, 1.0, _Xi_high, _Wi_high);
 	}
 
 	void Grid::initGrid(std::vector<double> const& xtab, const uint nx)
@@ -168,7 +177,7 @@ namespace Candia2
 		
 		std::vector<double> points{};
 
-		std::vector<double> log_tab{1e-5, 1e-4, 1e-3, 1e-2, 0.1, 0.5, 0.7, 1.0};
+		std::vector<double> log_tab{1e-5, 1e-4, 1e-3, 1e-2, 0.1, 0.5, 0.7, 0.85, 1.0};
 		std::vector<double> log_xtab{log_tab};
 		std::ranges::transform(log_xtab, log_xtab.begin(), [](double x) -> double{ return std::log10(x); });
 		int num_grid_points_per_bin = nx / xtab.size();
@@ -341,23 +350,80 @@ namespace Candia2
 		double eplus1 = E.plus(1.0);
 		double ed1 = E.delta(1.0);
 		double res = (eplus1*std::log1p(-x) + ed1) * A[k];
-		
-		for (uint i=0; i<GAUSS_POINTS; i++)
+
+		if (_split_n3lo_intervals)
 		{
-			double y = _Xi[i];
-			double w = _Wi[i];
+			for (uint i=0; i<GAUSS_POINTS; i++)
+			{
+				double y = _Xi_low[i];
+				double w = _Wi_low[i];
 
-			double a = std::pow(x, 1.0-y);
-			double b = std::pow(x, y);
+				double a = std::pow(x, 1.0-y);
+				double b = std::pow(x, y);
 
-			double interp1 = interpolate(A, b);
-			double interp2 = interpolate(A, a);
+				double interp1 = interpolate(A, b);
+				double interp2 = interpolate(A, a);
 
-			double erega = E.regular(a);
-			double eplusb = E.plus(b);
+				double erega = E.regular(a);
+				double eplusb = E.plus(b);
 
-			res -= w*logx*a*erega*interp1;
-			res -= w*logx*b*(eplusb*interp2 - eplus1*A[k])/(1.0-b);
+				res -= w*logx*a*erega*interp1;
+				res -= w*logx*b*(eplusb*interp2 - eplus1*A[k])/(1.0-b);
+			}
+			for (uint i=0; i<GAUSS_POINTS; i++)
+			{
+				double y = _Xi_mid[i];
+				double w = _Wi_mid[i];
+
+				double a = std::pow(x, 1.0-y);
+				double b = std::pow(x, y);
+
+				double interp1 = interpolate(A, b);
+				double interp2 = interpolate(A, a);
+
+				double erega = E.regular(a);
+				double eplusb = E.plus(b);
+
+				res -= w*logx*a*erega*interp1;
+				res -= w*logx*b*(eplusb*interp2 - eplus1*A[k])/(1.0-b);
+			}
+			for (uint i=0; i<GAUSS_POINTS; i++)
+			{
+				double y = _Xi_high[i];
+				double w = _Wi_high[i];
+
+				double a = std::pow(x, 1.0-y);
+				double b = std::pow(x, y);
+
+				double interp1 = interpolate(A, b);
+				double interp2 = interpolate(A, a);
+
+				double erega = E.regular(a);
+				double eplusb = E.plus(b);
+
+				res -= w*logx*a*erega*interp1;
+				res -= w*logx*b*(eplusb*interp2 - eplus1*A[k])/(1.0-b);
+			}
+		}
+		else
+		{
+			for (uint i=0; i<GAUSS_POINTS; i++)
+			{
+				double y = _Xi[i];
+				double w = _Wi[i];
+
+				double a = std::pow(x, 1.0-y);
+				double b = std::pow(x, y);
+
+				double interp1 = interpolate(A, b);
+				double interp2 = interpolate(A, a);
+
+				double erega = E.regular(a);
+				double eplusb = E.plus(b);
+
+				res -= w*logx*a*erega*interp1;
+				res -= w*logx*b*(eplusb*interp2 - eplus1*A[k])/(1.0-b);
+			}
 		}
 		
 		return res;

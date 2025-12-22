@@ -17,11 +17,11 @@ Compiling follows the standard CMake procedure:
 ```bash
 mkdir build
 cd build
-cmake .. -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=OFF
+cmake .. -DCMAKE_BUILD_TYPE=Release
 make -j
 ```
 
-Specifying a release build will of course make the code run significantly faster. We also specify to not build shared libs, as `libome`'s default is to build a shared library, requiring additional steps to make it available at runtime.
+Specifying a release build will of course make the code run significantly faster.
 
 ## Usage
 

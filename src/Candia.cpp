@@ -512,6 +512,9 @@ namespace Candia2
 		using out_type = decltype(_F2);
 		loadAllExpressions();
 
+		if (_order == 3)
+			Grid::splitN3LOIntervals() = true;
+
 		//std::array<double,1> Qtab{_Qf};
 		out_type final_dists;
 
