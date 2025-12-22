@@ -1,0 +1,18 @@
+set terminal pdf enhanced color notransparent
+
+set border lw 2
+set size ratio 0.65
+
+set output "main.pdf"
+set ylabel "xf(x)" offset 2,0
+set xlabel "x" offset 0,0.7
+
+set yrange [0.0:1.0]
+set logscale x
+set format x "%.0e"
+
+plot ARG1 using 1:($3-$9) with lines lw 2 title "xu_v(x)",\
+'' using 1:($4-$10) with lines lw 2 title "xd_v(x)",\
+'' using 1:($10-$9) with lines lw 2 title "xL_-(x)",\
+'' using 1:((2.0*($10+$9))/10.0) with lines lw 2 title "xL_+(x)",\
+'' using 1:(($5+$11)/10.) with lines lw 2 title "xs_+(x)",\

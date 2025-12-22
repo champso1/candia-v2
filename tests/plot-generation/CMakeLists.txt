@@ -7,7 +7,8 @@ add_executable(plot-generation plot-generation.cpp)
 target_link_libraries(plot-generation PUBLIC candia)
 
 set(gnuplot-scripts
-  ${CMAKE_CURRENT_SOURCE_DIR}/ratio.gplt)
+  ${CMAKE_CURRENT_SOURCE_DIR}/plot-scripts/ratio.gplt
+  ${CMAKE_CURRENT_SOURCE_DIR}/plot-scripts/main.gplt)
 
-file(COPY ${gnuplot-scripts} DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/scripts)
+file(COPY ${gnuplot-scripts} DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/plot-scripts)
 

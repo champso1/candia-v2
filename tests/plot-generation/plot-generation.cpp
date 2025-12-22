@@ -1,6 +1,6 @@
 #include <print>
 #include <cstdlib>
-#include <cmath>
+#include <ranges>
 #include <string>
 #include <vector>
 #include <fstream>
@@ -36,6 +36,14 @@ int main(int argc, char *argv[])
 	{
 		println("Differing number of grid points in n3lo file ({}) and nnlo file ({}).",
 			n3lo_data.at(0).size(), nnlo_data.at(0).size());
+		exit(EXIT_FAILURE);
+	}
+
+	if (auto res = ranges::mismatch(n3lo_x, nnlo_x); res.in1 != n3lo_x.end())
+	{
+		double n3lo_val = *res.in1;
+		double nnlo_val = *res.in2;
+		println("[ERROR] plot-generation.cpp: x values differ: n3lo val={}, nnlo val={}", n3lo_val, nnlo_val);
 		exit(EXIT_FAILURE);
 	}
 
@@ -79,6 +87,8 @@ tuple<vec_type, vector<double>> read_datafile(fs::path const& path)
 	{
 		iss = istringstream{line};
 		iss >> temp1;
+		if (temp1 > 0.95)
+			break;
 		X.push_back(temp1);
 		for (int i=0; i<F.size(); ++i)
 		{
@@ -87,8 +97,20 @@ tuple<vec_type, vector<double>> read_datafile(fs::path const& path)
 		}
 	}
 
+	vec_type dists(6, vector<double>(F.at(0).size(), 0.0));
+	for (uint k=0; k<F.at(0).size(); ++k)
+	{
+		dists[0][k] = F[5][k] + F[6+5][k];
+		dists[1][k] = F[4][k] + F[6+4][k];
+		dists[2][k] = F[3][k] + F[6+3][k];
+		dists[3][k] = F[1][k] - F[6+1][k];
+		dists[4][k] = F[2][k] - F[6+2][k];
+		dists[5][k] = F[0][k];
+	}
+
+
 	println("Done.");
-	return {F, X};
+	return {dists, X};
 }
 
 void generate_ratios(vec_type const& n3lo_data, vec_type const& nnlo_data, vector<double> const& X)
