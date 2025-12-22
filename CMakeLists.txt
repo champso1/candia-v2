@@ -55,18 +55,8 @@ set(sources
 
 add_library(candia STATIC ${sources})
 
-
-option(SANITIZATION "Use undefined/address sanitization (only on UNIX systems!)" off)
-if (SANITIZATION)
-  target_link_libraries(candia PUBLIC asan ubsan gfortran)
-  target_compile_options(candia PRIVATE -Wall -Wextra -fsanitize=undefined,address -fPIC)
-else()
-  #target_link_libraries(candia PUBLIC gfortran)
-  target_compile_options(candia PRIVATE -Wall -Wextra -fPIC)
-endif()
-
 # remove some extraneous warnings that I do not care about
-target_compile_options(candia PRIVATE -Wno-unused-private-field -Wno-readability-misleading-indentation)
+target_compile_options(candia PRIVATE -Wno-unused-private-field -Wno-misleading-indentation -Wno-unused-parameter)
 
 # compile the fortran code for harmonic polylogs
 enable_language(Fortran)
@@ -75,7 +65,7 @@ target_link_libraries(hplog PUBLIC gfortran)
 
 # compile the fortran code for 3-loop splitting functions
 # TODO: remove this; the C++ versions work fine now
-enable_language(Fortran)
+# enable_language(Fortran)
 add_library(p2splitfuncs STATIC src/fortran/xpij2p.f src/fortran/xpns2p.f)
 target_link_libraries(p2splitfuncs PUBLIC gfortran)
 target_compile_options(p2splitfuncs PRIVATE -std=legacy -w)

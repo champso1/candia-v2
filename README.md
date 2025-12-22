@@ -1,5 +1,7 @@
 # Candia-v2
 
+**NOTE: `Candia-v2 is still a work-in-progress. The code works correctly and basic functionality is present, but it is not perfectly optimized, nor is the code very clean or feature-rich. We are actively working hard to expand and improve the code.**
+
 `Candia-v2` is a new and improved version of `Candia`, an algorithm/package to numerical solve the DGLAP evolution equations up to approximate next-to-next-to-next-to leading order (aN3LO) accuracy. `Candia` was originally written primarily in C and was only capable of evolution up to next-to-next-to (NNLO) accuracy. With calculations of the four-loop splitting functions and operator matrix elements being available in an approximate form, `Candia-v2` was developed in C++ in order to implement these functions and make many optimizations not present in its C counterpart.
 
 ## Building
