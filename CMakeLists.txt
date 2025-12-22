@@ -87,8 +87,7 @@ elseif (WIN32)
 endif()
 
 
-
-# compile "tests" as well
+add_subdirectory(examples)
 add_subdirectory(tests)
 
 

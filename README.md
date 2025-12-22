@@ -27,7 +27,7 @@ Specifying a release build will of course make the code run significantly faster
 
 Once `candia-v2` is built, there will be a directory named `examples` in which there are some executables, data files, and other auxiliary files that all demonstrate a lot of the basic functionality, the source files for which are in the `examples` directory in the root of the repository.
 
-- `evolve.cpp`: performs the evolution with the arguments passed in to the executable. Spits out a data file containing all of the resultant distributions.
-- `read.cpp`: accepts a data file on the command line and spits out a PDF file containing a table of the results built with LaTeX. Requires `pdflatex` to be available on the command line.
+- `evolve_dglap.cpp`: performs the evolution with the arguments passed in to the executable. Spits out a data file containing all of the resultant distributions.
+- `read_table.cpp`: accepts a data file on the command line and spits out a PDF file containing a table of the results built with LaTeX. Requires `pdflatex` to be available on the command line.
 
-Running the associated executables with no options will indicate how to use each one. `evolve.cpp` also contains comments on the code related to `candia-v2` (`read.cpp` contains just simple C++ code for file I/O and other non-`candia-v2` related stuff).
+Running the associated executables with no options will indicate how to use each one. `evolve_dglap.cpp` also contains comments on the code related to `candia-v2` (`read_table.cpp` contains just simple C++ code for file I/O and other non-`candia-v2` related stuff).
