@@ -12,11 +12,14 @@ namespace Candia2
 {
 	class OpMatElem : public Expression
 	{
+		using ome_type = ome::rpd_distribution<ome::ome_as_view<double>, ome::ome_as_plus_view<double>, ome::ome_as_const_view<double>>;
+		
 	protected:
 		static double _lm; //!< log(m_h^2/mu_r^2) = -log_mur2_muf2  ** NOTE THE MINUS **
 		static uint _nf;   //!< number of active/massless flavors
-	public:
+
 		OpMatElem() = default;
+	public:
 		virtual ~OpMatElem() = default;
 
 		inline static void update(double lm, uint nf)
@@ -29,6 +32,7 @@ namespace Candia2
 
 
 
+	
 	class A2ns final : public OpMatElem
 	{
 	public:
@@ -63,6 +67,7 @@ namespace Candia2
 		double _reg_func(double x) const override;
 	};
 
+	
 
 	class OpMatElemN3LO final : public OpMatElem
 	{
