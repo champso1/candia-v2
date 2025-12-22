@@ -57,7 +57,7 @@ namespace Candia2
 		// for purposes of comparing with benchmarks,
 		// this flag lets one enable whether or not to use
 		// the n3lo matching conditions in the n3lo evolution
-		bool _use_n3lo_matching_conditions = true;
+		bool _use_n3lo_matching_conditions;
 
 		std::map<std::string_view, std::unique_ptr<Expression>> _expressions{};
 		template <typename TExpr, typename... TExprArgs>
@@ -109,6 +109,7 @@ namespace Candia2
 		void HFT_NNLO1(ArrayGrid& c, uint k, ArrayGrid& q);
 		void HFT_NNLO2(ArrayGrid& g, ArrayGrid& qp, uint k);
 		void HFT_NNLO3(ArrayGrid& g, ArrayGrid& qp, uint k, ArrayGrid& qh, ArrayGrid& qhb);
+		
 		void HFT_N3LO1(ArrayGrid& q, ArrayGrid& qb, uint j, uint k, double SP);
 		void HFT_N3LO2(ArrayGrid& q, ArrayGrid& qb, uint j, uint k, double SP);
 		void HFT_N3LO3(ArrayGrid& g, ArrayGrid& qp, uint k);

@@ -61,8 +61,8 @@ namespace Candia2
 					for (uint j=1+6; j<=_nf+6; j++)
 						HFT_NNLO1(arr[j], k, _C2[j][0][0][0]);
 
-					HFT_NNLO2(arr_singlet[1], arr_singlet[0], k); // gluon
-					HFT_NNLO3(arr_singlet[1], arr_singlet[0], k, _C2[_nf+1][0][0][0], _C2[_nf+1+6][0][0][0]); // heavy flavor
+					HFT_NNLO2(arr_singlet[0], arr_singlet[1], k); // gluon
+					HFT_NNLO3(arr_singlet[0], arr_singlet[1], k, _C2[_nf+1][0][0][0], _C2[_nf+1+6][0][0][0]); // heavy flavor
 				}
 			} break;
             case 3:
@@ -98,8 +98,8 @@ namespace Candia2
 						for (uint j=1+6; j<=_nf+6; j++)
 							HFT_NNLO1(arr[j], k, _D2[j][0][0][0][0]);
 
-						HFT_NNLO2(arr_singlet[1], arr_singlet[0], k); // gluon
-						HFT_NNLO3(arr_singlet[1], arr_singlet[0], k, _D2[_nf+1][0][0][0][0], _D2[_nf+1+6][0][0][0][0]); // heavy flavor
+						HFT_NNLO2(arr_singlet[0], arr_singlet[1], k); // gluon
+						HFT_NNLO3(arr_singlet[0], arr_singlet[1], k, _D2[_nf+1][0][0][0][0], _D2[_nf+1+6][0][0][0][0]); // heavy flavor
 					}
 				}
             } break;
@@ -112,19 +112,19 @@ namespace Candia2
         
 	    q[k] += std::pow(as/(4.0*PI), 2) * conv;
     }
-    void DGLAPSolver::HFT_NNLO2(ArrayGrid& s1, ArrayGrid& s2, uint k)
+    void DGLAPSolver::HFT_NNLO2(ArrayGrid& g, ArrayGrid& qp, uint k)
     {
         double const as = _alpha_s.post(_nf+1);
-        double const conv1 = _grid.convolution(s1, getExpression("A2gq"), k);
-        double const conv2 = _grid.convolution(s2, getExpression("A2gg"), k);
+        double const conv1 = _grid.convolution(qp, getExpression("A2gq"), k);
+        double const conv2 = _grid.convolution(g, getExpression("A2gg"), k);
 
 		_S2[0][0][0][k] += std::pow(as/(4.0*PI), 2) * (conv1 + conv2);
     }
-    void DGLAPSolver::HFT_NNLO3(ArrayGrid& s1, ArrayGrid& s2, uint k, ArrayGrid& qh, ArrayGrid& qhb)
+    void DGLAPSolver::HFT_NNLO3(ArrayGrid& g, ArrayGrid& qp, uint k, ArrayGrid& qh, ArrayGrid& qhb)
     {
         double const as = _alpha_s.post(_nf+1);
-        double const conv1 = _grid.convolution(s1, getExpression("A2hq"), k);
-        double const conv2 = _grid.convolution(s2, getExpression("A2hg"), k);
+        double const conv1 = _grid.convolution(qp, getExpression("A2hq"), k);
+        double const conv2 = _grid.convolution(g, getExpression("A2hg"), k);
 		double const fac = 0.5*std::pow(as/(4.0*PI), 2) * (conv1 + conv2);
 
 		qh[k] = fac;

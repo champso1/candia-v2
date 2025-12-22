@@ -39,7 +39,8 @@ namespace Candia2
 		  _alpha_s{alpha_s},
 		  _mur2_muf2{kr}, _log_mur2_muf2{std::log(kr)},
 		  _iterations{iterations}, _trunc_idx{trunc_idx},
-		  _multi_thread{multi_thread}
+		  _multi_thread{multi_thread},
+		  _use_n3lo_matching_conditions{true}
 	{
 		std::println("[DGLAP] Evolving with log(mu_R / mu_F) = log({:.1}) = {:.4}.", _mur2_muf2, _log_mur2_muf2);
 		
