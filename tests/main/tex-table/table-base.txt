@@ -1,0 +1,36 @@
+\documentclass{article}
+\usepackage{multicol}
+\usepackage{graphicx} % Required for inserting images
+\usepackage{a4}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage[
+  colorlinks=true
+  ,urlcolor=blue
+  ,anchorcolor=blue
+  ,citecolor=blue
+  ,filecolor=blue
+  ,linkcolor=blue
+  ,menucolor=blue
+  ,linktocpage=true
+  ,pdfproducer=medialab
+  ,pdfa=true
+]{hyperref}
+\usepackage[capitalize]{cleveref}
+\newcommand{\TC}[1]{\textcolor{ForestGreen}{\bf[NOTE: TC -- #1]}}
+\textheight 23.0cm \textwidth 16.5cm
+\oddsidemargin -0.1cm \evensidemargin -0.1cm
+\topmargin -1.5cm  % for hep-ph
+\begin{document}
+\begin{table}[htp]
+    \begin{center}
+    \vspace{5mm}
+    \begin{tabular}{||c||^R^}
+    \hline \hline
+    \multicolumn{^COLS^}{||c||}{} \\[-3mm]
+    \multicolumn{^COLS^}{||c||}{$\, n_f = 3\ldots 5\,$,
+        $\,\mu_{\rm f}^2 = 10^4 \mbox{ GeV}^2$} \\
+    \multicolumn{^COLS^}{||c||}{} \\[-0.3cm]
+    \hline \hline
+    \multicolumn{^COLS^}{||c||}{} \\[-3mm]
+	\multicolumn{1}{||c||}{$x$} &

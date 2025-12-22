@@ -7,6 +7,7 @@
 #include <filesystem>
 using namespace std;
 namespace fs = filesystem;
+using uint = unsigned;
 
 using vec_type = vector<vector<double>>;
 

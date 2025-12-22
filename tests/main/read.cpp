@@ -1,459 +1,279 @@
 #include <algorithm>
 #include <cstdlib>
-#include <iomanip>
 #include <ios>
 #include <iostream>
-#include <limits>
 #include <ranges>
 #include <sstream>
 #include <string>
-#include <tuple>
 #include <vector>
 #include <filesystem>
 #include <fstream>
 #include <print>
 #include <unordered_map>
-using namespace std;
+#include <cmath>
 using uint = unsigned;
-namespace fs = filesystem;
-using DistVec = vector<vector<double>>;
+namespace fs = std::filesystem;
+using dist_type = std::vector<std::vector<double>>;
+
+constexpr static char const* TEX_TABLE_DIR{"tex-table"};
+constexpr static char const* TEX_TABLE_TEMPLATE{"table-base.txt"};
+constexpr static char const* TEX_SUBTABLE_TEMPLATE{"table-sub-base.txt"};
+constexpr static char const* TEX_FOOTER_TEMPLATE{"table-footer.txt"};
+constexpr static char const* TEX_TABLE_COL_LINE{"    \\multicolumn{1}{c|} {$^COL^$} &\n"};
+constexpr static char const* TEX_TABLE_COL_LINE_FINAL{"    \\multicolumn{1}{c||}{$^COL^$} \\\\[0.5mm]"};
+constexpr static char const* TEX_TABLE_COL_DEF{"r|"};
+
+static std::vector<double> XTAB{1e-5, 1e-4, 1e-3, 1e-2, 0.1, 0.3, 0.5, 0.7, 0.9};
 
 
-
-static char const* const TABLE_HEADER =
-	"\\documentclass{article}\n"
-	"\\usepackage{multicol}\n"
-	"\\usepackage{graphicx} % Required for inserting images\n"
-	"\\usepackage{a4}\n"
-	"\\usepackage{amsmath}\n"
-	"\\usepackage{amssymb}\n"
-	"\\usepackage[\n"
-	"  colorlinks=true\n"
-	"  ,urlcolor=blue\n"
-	"  ,anchorcolor=blue\n"
-	"  ,citecolor=blue\n"
-	"  ,filecolor=blue\n"
-	"  ,linkcolor=blue\n"
-	"  ,menucolor=blue\n"
-	"  ,linktocpage=true\n"
-	"  ,pdfproducer=medialab\n"
-	"  ,pdfa=true\n"
-	"]{hyperref}\n"
-	"\\usepackage[capitalize]{cleveref}\n"
-	"\\newcommand{\\TC}[1]{\\textcolor{ForestGreen}{\\bf[NOTE: TC -- #1]}}\n"
-	"\\textheight 23.0cm \\textwidth 16.5cm\n"
-	"\\oddsidemargin -0.1cm \\evensidemargin -0.1cm\n"
-	"\\topmargin -1.5cm  % for hep-ph\n"
-	"\\begin{document}\n"
-	"\\begin{table}[htp]\n"
-	"    \\caption{\n"
-	"        Percentage error between Candia's results and MSHT's results,\n"
-	"        both with the FHMRUVV parameterization\n"
-	"    }\n"
-	"    \\label{tab:n3lo_vfns_fhmruvv_msht}\n"
-	"    \\begin{center}\n"
-	"    \\vspace{5mm}\n"
-	"    \\begin{tabular}{||c||r|r|r|r|r|r|r|r||}\n"
-	"    \\hline \\hline\n"
-	"    \\multicolumn{9}{||c||}{} \\\\[-3mm]\n"
-	"    \\multicolumn{9}{||c||}{$\\, n_f = 3\\ldots 5\\,$,\n"
-	"        $\\,\\mu_{\\rm f}^2 = 10^4 \\mbox{ GeV}^2$} \\\\\n"
-	"    \\multicolumn{9}{||c||}{} \\\\[-0.3cm]\n"
-	"    \\hline \\hline\n"
-	"    \\multicolumn{9}{||c||}{} \\\\[-3mm]\n"
-	"    \\multicolumn{1}{||c||}{$x$} &\n"
-	"    \\multicolumn{1}{c|} {$xu_v$} &\n"
-	"    \\multicolumn{1}{c|} {$xd_v$} &\n"
-	"    \\multicolumn{1}{c|} {$xL_-$} &\n"
-	"    \\multicolumn{1}{c|} {$xL_+$} &\n"
-	"    \\multicolumn{1}{c|} {$xs_+$} &\n"
-	"    \\multicolumn{1}{c|} {$xc_+$} &\n"
-	"    \\multicolumn{1}{c|} {$xb_+$} &\n"
-	"    \\multicolumn{1}{c||}{$xg$} \\\\[0.5mm]\n";
-
-static char const* const TABLE_HEADER_CANDIAV1 =
-	"\\documentclass{article}\n"
-	"\\usepackage{multicol}\n"
-	"\\usepackage{graphicx} % Required for inserting images\n"
-	"\\usepackage{a4}\n"
-	"\\usepackage{amsmath}\n"
-	"\\usepackage{amssymb}\n"
-	"\\usepackage[\n"
-	"  colorlinks=true\n"
-	"  ,urlcolor=blue\n"
-	"  ,anchorcolor=blue\n"
-	"  ,citecolor=blue\n"
-	"  ,filecolor=blue\n"
-	"  ,linkcolor=blue\n"
-	"  ,menucolor=blue\n"
-	"  ,linktocpage=true\n"
-	"  ,pdfproducer=medialab\n"
-	"  ,pdfa=true\n"
-	"]{hyperref}\n"
-	"\\usepackage[capitalize]{cleveref}\n"
-	"\\newcommand{\\TC}[1]{\\textcolor{ForestGreen}{\\bf[NOTE: TC -- #1]}}\n"
-	"\\textheight 23.0cm \\textwidth 16.5cm\n"
-	"\\oddsidemargin -0.1cm \\evensidemargin -0.1cm\n"
-	"\\topmargin -1.5cm  % for hep-ph\n"
-	"\\begin{document}\n"
-	"\\begin{table}[htp]\n"
-	"    \\caption{\n"
-	"        Percentage error between Candia's results and MSHT's results,\n"
-	"        both with the FHMRUVV parameterization\n"
-	"    }\n"
-	"    \\label{tab:n3lo_vfns_fhmruvv_msht}\n"
-	"    \\begin{center}\n"
-	"    \\vspace{5mm}\n"
-	"    \\begin{tabular}{||c||r|r|r|r|r|r|r|r||}\n"
-	"    \\hline \\hline\n"
-	"    \\multicolumn{3}{||c||}{} \\\\[-3mm]\n"
-	"    \\multicolumn{3}{||c||}{$\\, n_f = 3\\ldots 5\\,$,\n"
-	"        $\\,\\mu_{\\rm f}^2 = 10^4 \\mbox{ GeV}^2$} \\\\\n"
-	"    \\multicolumn{3}{||c||}{} \\\\[-0.3cm]\n"
-	"    \\hline \\hline\n"
-	"    \\multicolumn{3}{||c||}{} \\\\[-3mm]\n"
-	"    \\multicolumn{1}{||c||}{$x$} &\n"
-	"    \\multicolumn{1}{c|} {$xg$} &\n"
-	"    \\multicolumn{1}{c||}{$xq^{(-)}$} \\\\[0.5mm]\n";
-
-static char const* TABLE_SUBHEADER =
-	"\\hline \\hline\n"
-	"\\multicolumn{9}{||c||}{} \\\\[-3mm]\n"
-	"\\multicolumn{9}{||c||}{$\\mu_{\\rm r}^2 = \\ %KR%\\mu_{\\rm f}^2$} \\\\\n"
-	"\\multicolumn{9}{||c||}{} \\\\[-0.3cm]\n"
-	"\\hline \\hline\n"
-	" & & & & & & & \\\\[-0.3cm]\n";
-
-static char const* TABLE_SUBHEADER_CANDIAV1 =
-	"\\hline \\hline\n"
-	"\\multicolumn{3}{||c||}{} \\\\[-3mm]\n"
-	"\\multicolumn{3}{||c||}{$\\mu_{\\rm r}^2 = \\ %KR%\\mu_{\\rm f}^2$} \\\\\n"
-	"\\multicolumn{3}{||c||}{} \\\\[-0.3cm]\n"
-	"\\hline \\hline\n"
-	" & & \\\\[-0.3cm]\n";
-
-
-static char const* const TABLE_FOOTER =
-	"\\hline \\hline\n"
-	"\\end{tabular}\n"
-	"\\end{center}\n"
-	"\\end{table}\n"
-	"\\end{document}";
-
-
-static string tableSubheader(double _kr)
+static std::string scientificToLatex(double num, int precision)
 {
-	string kr{};
-	if (_kr != 1.0)
+	int exponent = std::floor(std::log10(num));
+	double mantissa = num / std::pow(10, exponent);
+	return std::vformat("${0: .{1}f}^{{{2:+}}}$",
+		std::make_format_args(mantissa, precision, exponent));
+}
+static std::string percentToLatex(double num)
+{
+    return std::format("{:.2f}\\%", num*100.0);
+}
+
+void outputLatexTable(dist_type const& diffs, std::string const& filename, std::vector<std::string> const& cols, std::string const& caption="");
+
+static void usage()
+{
+	std::println("USAGE: ./read <candia-file> <type>");
+	std::println("    <type>: 0=all flavors independently, 1=special combos from benchmark paper");
+	exit(EXIT_FAILURE);
+}
+
+dist_type read_candia_file(fs::path const &path);
+dist_type fix_candia_dists(dist_type const& candia, int type);
+
+int main(int argc, char *argv[])
+{
+	if (argc != 3)
+		usage();
+
+	fs::path datafile_path(argv[1]);
+	int type;
+	std::from_chars(argv[2], argv[2] + 1, type);
+	if (type != 0 && type != 1)
 	{
-		ostringstream oss{};
-		oss << setprecision(1) << _kr;
-		kr = oss.str();
+		std::println("[ERROR] compare.cpp: Invalid type: {}", type);
+		usage();
 	}
+	
+	std::vector<std::string> cols_all_flavors{"g", "xu", "xd", "xs", "xc", "xb", "xub", "xdb", "xsb", "xcb", "xbb"};
+	std::vector<std::string> cols_special_combos{"xuv", "xdv", "xL-", "xL+", "xs+", "xc+", "xb+", "xg"};
 
-	string _subheader{TABLE_SUBHEADER};
-    string find_expr{"%KR%"};
-	string subheader = _subheader.replace(_subheader.find(find_expr), find_expr.size(), kr);
-	return subheader;
+	dist_type candia_dists_raw = read_candia_file(datafile_path);
+	dist_type candia_dists = fix_candia_dists(candia_dists_raw, type);
+
+	std::string basename = datafile_path.filename().string().substr(0, datafile_path.filename().string().rfind('.'));
+	
+	outputLatexTable(candia_dists, basename,
+		type == 0 ? cols_all_flavors : cols_special_combos);
 }
 
-
-
-
-
-static string scientificToLatex(double num, uint precision)
+dist_type read_candia_file(fs::path const &path)
 {
-	ostringstream ss{};
-	ss << scientific << setprecision(precision) << num;
-	string str = ss.str();
-
-	auto e_pos = str.find("e");
+	dist_type dists(13, std::vector<double>{});
+	std::ifstream file(path);
 	
-	string mantissa = str.substr(0, e_pos);
-	int exponent = stoi(str.substr(e_pos+1, string::npos));
-	// ^ we convert to number then back to string here to remove leading zero
+	std::vector<double> xtab{};
+	std::vector<int> ntab{};
+	double temp;
+	int temp2;
+	std::string line{};
 
-	ostringstream out_ss{};
-	out_ss << mantissa << "$^{" << showpos << exponent << "}$";
-	return out_ss.str();
-}
-
-
-std::tuple<DistVec, vector<int>, vector<double>> readDatafile(fs::path path)
-{
-	print("Reading data from file \"{}\"... ", path.filename().string());
+	file.ignore(1000, '\n');
 	
-	ifstream file_stream{path};
-	file_stream.ignore(numeric_limits<streamsize>::max(), '\n'); // ignore the comment line
-
-	vector<double> xtab{};
-	vector<int> ntab{};
+	std::getline(file, line);
+	std::istringstream iss(line);
+	while (iss >> temp)
+		xtab.push_back(temp);
 	
-	double temp1{};
-	int temp2{};
-	string line{};
-
-	// read in xtab array
-	getline(file_stream, line);
-	istringstream iss{line};
-	while (iss >> temp1)
-		xtab.push_back(temp1);
-
-	// read in ntab array
-	getline(file_stream, line);
-	iss = istringstream{line};
+	std::getline(file, line);
+	iss = std::istringstream(line);
 	while (iss >> temp2)
 		ntab.push_back(temp2);
 
-	// read in rest of data points
-	vector<double> X{};
-	DistVec F{};
-	F.resize(13);
-	while (getline(file_stream, line))
+	while (std::getline(file, line))
 	{
-		iss = istringstream{line};
-		iss >> temp1;
-		X.push_back(temp1);
-		for (int i=0; i<F.size(); ++i)
+		iss = std::istringstream(line);
+		iss >> temp;
+		for (int i=0; i<13; ++i)
 		{
-			iss >> temp1;
-			F.at(i).push_back(temp1);
+			iss >> temp;
+			dists.at(i).push_back(temp);
+		}
+
+	}
+	dist_type dists_ntabbed(13, std::vector<double>(ntab.size()-1, 0.0));
+	for (uint i=0; i<13; ++i)
+	{
+		for (uint j=0; j<ntab.size()-1; ++j)
+		{
+			uint idx = ntab[j];
+			dists_ntabbed[i][j] = dists[i][idx];
 		}
 	}
-
-	println("Done.");
-	println("Assigning new distributions in accordance with the table... ");
-
-	// must create required dists from the regular ones
-	DistVec dists(8, vector<double>(11, 0.0));
-	double size = ntab.size();
-	for (uint ik=0; ik<size-1; ++ik) // -1 because we don't want x=1.0
-	{
-		int k = ntab.at(ik);
-		
-		dists.at(0).at(ik) = F[1][k] - F[1+6][k];
-		dists.at(1).at(ik) = F[2][k] - F[2+6][k];
-		dists.at(2).at(ik) = F[2+6][k] - F[1+6][k];
-		dists.at(3).at(ik) = 2.0*(F[2+6][k] + F[1+6][k]);
-		dists.at(4).at(ik) = F[3][k] + F[3+6][k];
-		dists.at(5).at(ik) = F[4][k] + F[4+6][k];
-		dists.at(6).at(ik) = F[5][k] + F[5+6][k];
-		dists.at(7).at(ik) = F[0][k];
-
-		println("x={}:", xtab.at(ik));
-		println("    xv: {} - {}", F[1][k], F[1+6][k]);
-		println("    dv: {} - {}", F[2][k], F[2+6][k]);
-		println("    L-: {} - {}", F[2+6][k], F[1+6][k]);
-		println("    L+: 2({} + {})", F[2+6][k], F[1+6][k]);
-		println("    s+: {} + {}", F[3][k], F[3+6][k]);
-		println("    c+: {} + {}", F[4][k], F[4+6][k]);
-		println("    b+: {} + {}", F[5][k], F[5+6][k]);
-		println("    g:  {}", F[0][k]);
-	}
-	println("Done.");
-	return {dists, ntab, xtab};
+	return dists_ntabbed;
 }
 
-std::tuple<DistVec, vector<int>, vector<double>> readDatafile_Candiav1(fs::path path)
+dist_type fix_candia_dists(dist_type const& candia, int type)
 {
-	print("Reading data from file \"{}\"... ", path.filename().string());
-	
-	ifstream file_stream{path};
-	file_stream.ignore(numeric_limits<streamsize>::max(), '\n'); // ignore the comment line
-
-	vector<double> xtab{};
-	vector<int> ntab{};
-	
-	double temp1{};
-	int temp2{};
-	string line{};
-
-	// read in xtab array
-	getline(file_stream, line);
-	istringstream iss{line};
-	while (iss >> temp1)
-		xtab.push_back(temp1);
-
-	// read in ntab array
-	getline(file_stream, line);
-	iss = istringstream{line};
-	while (iss >> temp2)
-		ntab.push_back(temp2);
-
-	// read in rest of data points
-	vector<double> X{};
-	DistVec F{};
-	F.resize(13);
-	while (getline(file_stream, line))
+	if (type == 0)
 	{
-		iss = istringstream{line};
-		iss >> temp1;
-		X.push_back(temp1);
-		for (int i=0; i<F.size(); ++i)
+		dist_type candia_dists(11, std::vector<double>(candia.at(0).size(), 0.0));
+		for (int k=0; k<candia_dists.at(0).size(); ++k)
 		{
-			iss >> temp1;
-			F.at(i).push_back(temp1);
+			candia_dists.at(0).at(k) =  candia[0][k];
+			candia_dists.at(1).at(k) =  candia[1][k];
+			candia_dists.at(2).at(k) =  candia[2][k];
+			candia_dists.at(3).at(k) =  candia[3][k];
+			candia_dists.at(4).at(k) =  candia[4][k];
+			candia_dists.at(5).at(k) =  candia[5][k];
+			candia_dists.at(6).at(k) =  candia[6+1][k];
+			candia_dists.at(7).at(k) =  candia[6+2][k];
+			candia_dists.at(8).at(k) =  candia[6+3][k];
+			candia_dists.at(9).at(k) =  candia[6+4][k];
+			candia_dists.at(10).at(k) = candia[6+5][k];
 		}
+		return candia_dists;
 	}
-
-	println("Done.");
-	println("Assigning new distributions in accordance with the table... ");
-
-	// must create required dists from the regular ones
-	DistVec dists(2, vector<double>(9, 0.0));
-	double size = ntab.size();
-	for (uint ik=0; ik<size-1; ++ik) // -1 because we don't want x=1.0
+	else
 	{
-		int k = ntab.at(ik);
-		
-		dists.at(0).at(ik) = F[0][k];
-		double res = 0.0;
-		for (uint j=1; j<=6; ++j)
-			res += F[j][k] - F[j+6][k];
-		dists.at(1).at(ik) = res;
+		dist_type candia_dists(8, std::vector<double>(candia.at(0).size(), 0.0));
+		for (int k=0; k<candia_dists.at(0).size(); ++k)
+		{
+			candia_dists.at(0).at(k) = candia[1][k] - candia[6+1][k];
+			candia_dists.at(1).at(k) = candia[2][k] - candia[6+2][k];
+			candia_dists.at(2).at(k) = candia[2+6][k] - candia[6+1][k];
+			candia_dists.at(3).at(k) = 2.0*(candia[2+6][k] + candia[6+1][k]);
+			candia_dists.at(4).at(k) = candia[3][k] + candia[6+3][k];
+			candia_dists.at(5).at(k) = candia[4][k] + candia[6+4][k];
+			candia_dists.at(6).at(k) = candia[5][k] + candia[6+5][k];
+			candia_dists.at(7).at(k) = candia[0][k];
+		}
+		return candia_dists;
 	}
-	println("Done.");
-	return {dists, ntab, xtab};
 }
 
-void outputLatexTable(unordered_map<double, fs::path> const& paths, string const& basename)
+
+void outputLatexTable(dist_type const& data, std::string const& filename, std::vector<std::string> const& cols, std::string const& caption)
 {
-	fs::path latex_build_dir{fs::current_path()/"latex"};
+	fs::path tex_table_dir = fs::current_path()/TEX_TABLE_DIR;
+	fs::path tex_table_base = tex_table_dir/TEX_TABLE_TEMPLATE;
+	fs::path tex_subtable = tex_table_dir/TEX_SUBTABLE_TEMPLATE;
+    fs::path tex_table_footer = tex_table_dir/TEX_FOOTER_TEMPLATE;
+	if (!exists(tex_table_base) || !exists(tex_subtable) || !exists(tex_table_footer))
+	{
+		std::println("[ERROR] compare.cpp: failed to open the tex template files.");
+		exit(EXIT_FAILURE);
+	}
+	
+	std::string ncols = std::format("{}", cols.size()+1);
+	int pos;
+	std::string table_text{};
+	
+	std::ifstream main_table_s(tex_table_base);
+	std::string main_table{std::istreambuf_iterator<char>(main_table_s), std::istreambuf_iterator<char>{}};
+	pos = main_table.find("^R^");
+	std::string col_def{};
+	for (int i=0; i<cols.size(); ++i)
+		col_def += TEX_TABLE_COL_DEF;
+	main_table.replace(pos, 3, col_def);
+	pos = main_table.find("^COLS^");
+	while (pos != std::string::npos)
+	{
+		main_table.replace(pos, 6, ncols);
+		pos = main_table.find("^COLS^", pos);
+	}
+	for (std::string const& col : cols | std::ranges::views::take(cols.size()-1))
+	{
+		std::string line(TEX_TABLE_COL_LINE);
+		pos = line.find("^COL^");
+		line.replace(pos, 5, col);
+		main_table += line;
+	}
+	std::string line_final(TEX_TABLE_COL_LINE_FINAL);
+	pos = line_final.find("^COL^");
+	line_final.replace(pos, 5, cols.back());
+	main_table += line_final;
+	
+	table_text += main_table;
+	
+    std::ifstream sub_table_s(tex_subtable);
+	std::string sub_table{std::istreambuf_iterator<char>(sub_table_s), std::istreambuf_iterator<char>{}};
+	pos = sub_table.find("^KR^");
+	sub_table.replace(pos, 4, "1.0");
+	pos = sub_table.find("^COLS^");
+	while (pos != std::string::npos)
+	{
+		sub_table.replace(pos, 6, ncols);
+		pos = sub_table.find("^COLS^", pos);
+	}
+	std::string amps{};
+	for (int i=0; i<cols.size(); ++i)
+		amps += " &";
+	pos = sub_table.find("^AMPS^");
+	sub_table.replace(pos, 6, amps);
+	
+	table_text += sub_table;
+	
+	fs::path latex_build_dir = fs::current_path()/"latex";
 	if (!fs::exists(latex_build_dir))
 	{
 		if (!fs::create_directory(latex_build_dir))
 		{
-			cerr << "[ERROR] DGLAPSolver::OutputLatexTable(): failed to create latex build directory\n";
+			std::println("[ERROR] compare.cpp: Failed to create latex build directory.");
 			exit(EXIT_FAILURE);
 		}
-		println("\"latex\" directory created.");
+		std::println("[INFO] compare.cpp: 'latex' directory created.");
 	}
 	else
-		println("\"latex\" directory already exists.");
-	
-	string title = basename + ".tex";
-	fs::path latex_file_path{latex_build_dir/title};
-	ofstream latex_file(latex_file_path);
-	if (!latex_file)
+	    std::println("[INFO] compare.cpp: 'latex' directory exists. Continuing.");
+
+	std::print("Printing table information...");
+	for (int i=0; i<data.at(0).size(); ++i)
 	{
-		cerr << "[ERROR] read.cpp: failed to open "
-				  << quoted(latex_file_path.string())
-				  << "\n";
-		exit(EXIT_FAILURE);
-	}
-
-	latex_file << TABLE_HEADER;
-
-	println("Table header has been written.");
-
-		
-	// conventions:
-	// q_v = q - qbar
-	// L- = (dbar - ubar)
-	// L+ = 2(dbar + ubar)
-	// q+ - q + qbar
-	//
-	// 0      gluons         g
-	// 1-6    quarks         u,d,s,c,b,t
-	// 7-12   antiquarks     au,ad,as,ac,ab,at
-	//
-	// the list contains:
-	// xu_v  xd_v  xL-  xL+  xs_v  xs_+  xc_+  xg
-
-    for (pair<double, fs::path> const& x : paths)
-	{
-		auto [dists, ntab, xtab] = readDatafile(x.second);
-		print("Writing data from file \"{}\"... ", x.second.filename().string());
-		string subheader = tableSubheader(x.first);
-		latex_file << subheader;
-		for (uint ix=0; ix<xtab.size()-1; ++ix)
-		{
-			double x = xtab.at(ix);
-			latex_file << scientificToLatex(x, 1) << " & ";
+		double x = XTAB.at(i);
+		table_text += scientificToLatex(x, 1) + " & ";
 				
-			for (uint i=0; i<dists.size()-1; ++i)
-				latex_file << scientificToLatex(dists.at(i).at(ix), 4) << " & ";
-			latex_file << scientificToLatex(dists.at(7).at(ix), 4);
+		for (uint j=0; j<data.size()-1; ++j)
+			table_text += scientificToLatex(data.at(j).at(i), 4) + " & ";
+		table_text += scientificToLatex(data.back().at(i), 4);
 			
-			latex_file << " \\\\\n";
-		}
-		println("Done.");
+		table_text += " \\\\\n";
 	}
-	
-	
-		
-	latex_file << TABLE_FOOTER;
+	std::println("Done.");
+
+	std::ifstream table_footer_s(tex_table_footer);
+	std::string table_footer{std::istreambuf_iterator<char>(table_footer_s), std::istreambuf_iterator<char>{}};
+	table_text += table_footer;
+
+	std::string title = filename + ".tex";
+	fs::path latex_file_path = latex_build_dir/title;
+	std::ofstream latex_file(latex_file_path);
+	latex_file << table_text;
 	latex_file.close();
 
-	print("Wrote table header. Running pdflatex... ");
-	string command = "pdflatex -interaction=batchmode -output-directory latex " + title;
+	std::string command = "pdflatex -interaction=batchmode -output-directory latex " + title;
 	system(command.c_str());
-	println("Cleaning up auxilliary files...");
+	std::println("Cleaning up auxilliary files...");
 
-	fs::path pdf_path{fs::current_path()/"latex"}, new_pdf_path{fs::current_path()};
-	ranges::filter_view tex_pdf_files =
+	fs::path pdf_path(fs::current_path()/fs::path("latex")/fs::path(filename + ".pdf")), new_pdf_path{fs::current_path()};
+	fs::copy(pdf_path, new_pdf_path, fs::copy_options::overwrite_existing);
+	auto dir_view =
 		fs::directory_iterator{fs::current_path()/"latex"}
-		| ranges::views::filter([b = basename](fs::directory_entry const& e)
-		{
-			string filename = e.path().filename().string();
-		    return filename.contains(b);
-		});
-
-	ranges::for_each(tex_pdf_files, [](fs::directory_entry const& e) {
-		fs::path path = e.path();
-	    string filename = path.filename().string();
-		string ext = filename.substr(filename.rfind('.')+1, string::npos);
-		if (ext.compare("pdf") == 0)
-		{
-			fs::path new_pdf_path{fs::current_path()/filename};	
-			fs::copy(path, new_pdf_path, fs::copy_options::overwrite_existing);
-			fs::remove(path);
-		}
-		else if (ext.compare("tex") != 0)
-			fs::remove(path);
-	});
-}
-
-
-int main(int argc, char *argv[])
-{
-	if (argc != 2)
-	{
-	    println("[ERROR] read.cpp: Must provide an evolution to read from.");
-		exit(EXIT_FAILURE);
-	}
-
-	string basename{argv[1]};
-
-	// find all of the associated files
-	unordered_map<double, fs::path> datafiles{};
-	for (fs::directory_entry const& entry : fs::directory_iterator{fs::current_path()})
-	{
-		string _path = entry.path().filename().string();
-		string _ext = _path.substr(_path.rfind('.')+1, string::npos);
-		if ((_path.find(basename) == 0) && (_ext.compare("dat") == 0))
-		{
-			streamsize r_pos = _path.find("-r");
-			streamsize dot_pos = _path.rfind('.');
-			if (r_pos == string::npos || dot_pos == string::npos)
-			{
-				println("[ERROR] read.cpp: Failed to parse the evolution given by: \"{}\".", _path);
-				exit(EXIT_FAILURE);
-			}
-			string kr_extract = _path.substr(r_pos + 2, dot_pos-r_pos-2);
-		    double kr = stold(kr_extract);
-			datafiles[kr] = entry.path();
-		}
-	}
-	println("Found {} datafiles in the current directory corresponding to the evolution \"{}\":", datafiles.size(), basename);
-	ranges::for_each(datafiles, [](std::pair<double, fs::path> const& x) -> void {
-		println("    {:.1} -> \"{}\".", x.first, x.second.filename().string());
-	});
-	if (datafiles.size() == 0)
-	{
-		println(cerr, "No datafiles found. Exiting...");
-		exit(EXIT_FAILURE);
-	}
-
-	outputLatexTable(datafiles, basename);
+		| std::ranges::views::filter([&filename](fs::directory_entry const& e) -> bool
+		    {
+		    	if (e.path().has_extension() && e.path().extension().string() != ".tex" && e.path().filename().string().starts_with(filename))
+		    		return true;
+		    	return false;
+		    });
+	for (fs::directory_entry const& e : dir_view)
+		fs::remove(e.path());
 }

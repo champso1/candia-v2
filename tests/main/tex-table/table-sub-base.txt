@@ -1,0 +1,6 @@
+\hline \hline
+\multicolumn{^COLS^}{||c||}{} \\[-3mm]
+\multicolumn{^COLS^}{||c||}{$\mu_{\rm r}^2 = \ ^KR^\mu_{\rm f}^2$} \\
+\multicolumn{^COLS^}{||c||}{} \\[-0.3cm]
+\hline \hline
+ ^AMPS^ \\[-0.3cm]

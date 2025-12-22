@@ -8,7 +8,9 @@
 #include <cstdlib>
 #include <print>
 #include <chrono>
+#include <filesystem>
 using namespace std;
+namespace fs = filesystem;
 
 #include "Candia-v2/Candia.hpp"
 #include "Candia-v2/Distribution.hpp"
@@ -29,6 +31,8 @@ static void usage()
 	cout << "-------------------------------------------------------\n\n";
 }
 
+static constexpr char const* DATAFILEDIR = "data";
+
 static void outputData(
 	out_type const& F, Grid::grid_type const& xtab, Grid const& grid,
 	uint order, uint num_grid_points, uint iterations, uint trunc_idx, double kr)
@@ -38,7 +42,17 @@ static void outputData(
 	outfile_ss << ((order == 3) ? "n3lo" : (order == 2) ? "nnlo" : (order == 1) ? "nlo" : "lo");
 	outfile_ss << "-g" << num_grid_points << "-i" << iterations << "-t" << trunc_idx << "-r" << setprecision(2) << kr << ".dat";
 	string outfile_name = outfile_ss.str();
-	ofstream outfile(outfile_name);
+	fs::path datafiledir_path = fs::current_path()/DATAFILEDIR;
+	if (!fs::exists(datafiledir_path))
+	{
+		if (!fs::create_directory(datafiledir_path))
+		{
+			println("[ERROR] evolve.cpp: failed to create output directory for datafiles.");
+			exit(EXIT_FAILURE);
+		}
+	}
+	fs::path datafile_path = datafiledir_path/outfile_name;
+	ofstream outfile(datafile_path);
 
 	// print a readable header to list the given inputs
 	outfile << "# using n=" << iterations << " iterations, "
@@ -89,7 +103,7 @@ int main(int argc, char *argv[]) {
 	const double Qf = 100.0;
 	
 	vector<double> xtab{1e-5, 1e-4, 1e-3, 1e-2, 0.1, 0.3, 0.5, 0.7, 0.9, 1.0};
-	Grid grid(xtab, num_grid_points, 3);
+	Grid grid(xtab, num_grid_points);
 
 	std::unique_ptr<LesHouchesDistribution> dist = std::make_unique<LesHouchesDistribution>();
 	AlphaS alphas(order, dist->Q0(), Qf, dist->alpha0(), kr);
@@ -97,6 +111,7 @@ int main(int argc, char *argv[]) {
 	// alphas.setFFNS(4);
 
 	DGLAPSolver solver(order, grid, alphas, Qf, iterations, trunc_idx, *dist, kr, true);
+	// solver.useNNLOMatchingAtN3LO();
 
 	auto t0 = chrono::high_resolution_clock::now();
 	auto F = solver.evolve();
