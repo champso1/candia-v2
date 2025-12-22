@@ -226,77 +226,60 @@ namespace Candia2
                 {
                     std::println("[DGLAP] N3LO Singlet Iteration {}", n);
 
+                    // LO piece
                     for (uint k=0; k<_grid.size()-1; k++)
                     {
-						// LO piece
-                        _S2[0][1][1][k] =
-							recrelS_1(_S2[0][1][0], k, getExpression("P0qq")) +
-							recrelS_1(_S2[0][0][0], k, getExpression("P0qg"));
-                        _S2[0][0][1][k] =
-							recrelS_1(_S2[0][1][0], k, getExpression("P0gq")) +
-							recrelS_1(_S2[0][0][0], k, getExpression("P0gg"));
+                        _S2[0][1][1][k] = recrelS_1(_S2[0][1][0], k, getExpression("P0qq")) + recrelS_1(_S2[0][0][0], k, getExpression("P0qg"));
+                        _S2[0][0][1][k] = recrelS_1(_S2[0][1][0], k, getExpression("P0gq")) + recrelS_1(_S2[0][0][0], k, getExpression("P0gg"));
+                    }
 
-						// NLO convolution piece
-						_S2[1][1][1][k] +=
-							recrelS_2(_S2[0][1][0],_S2[1][1][0],k,getExpression("P0qq"),getExpression("P1qq"))+
-							recrelS_2(_S2[0][0][0],_S2[1][0][0],k,getExpression("P0qg"),getExpression("P1qg"));
-					    _S2[1][0][1][k] +=
-							recrelS_2(_S2[0][1][0],_S2[1][1][0],k,getExpression("P0gq"),getExpression("P1gq"))+
-							recrelS_2(_S2[0][0][0],_S2[1][0][0],k,getExpression("P0gg"),getExpression("P1gg"));
+                    // new NLO piece non-convolution
+                    for (uint k=0; k<_grid.size()-1; k++)
+                    {
+                        for (uint j=0; j<=1; j++)
+                            _S2[1][j][1][k] = -_S2[0][j][1][k] * _alpha_s.beta1()/(4.0*PI*_alpha_s.beta0()) - _S2[1][j][0][k];
+                    }
 
-						// NNLO convolution piece
-						_S2[2][1][1][k] += 
+                    // new NLO piece convolution
+                    for (uint k=0; k<_grid.size()-1; k++)
+                    {
+                        _S2[1][1][1][k]+=recrelS_2(_S2[0][1][0],_S2[1][1][0],k,getExpression("P0qq"),getExpression("P1qq"))+recrelS_2(_S2[0][0][0],_S2[1][0][0],k,getExpression("P0qg"),getExpression("P1qg"));
+					    _S2[1][0][1][k]+=recrelS_2(_S2[0][1][0],_S2[1][1][0],k,getExpression("P0gq"),getExpression("P1gq"))+recrelS_2(_S2[0][0][0],_S2[1][0][0],k,getExpression("P0gg"),getExpression("P1gg"));
+                    }
+
+                    // new NNLO piece non-convolution
+                    for (uint k=0; k<_grid.size()-1; k++)
+                    {
+                        for (uint j=0; j<=1; j++)
+                            _S2[2][j][1][k] =
+                                - (_alpha_s.beta1()/(4.0*PI*_alpha_s.beta0()))*_S2[1][j][1][k]
+                                - (_alpha_s.beta2()/(16.0*PI_2*_alpha_s.beta0()))*_S2[0][j][1][k]
+                                - 2.0*_S2[2][j][0][k]
+                                - (_alpha_s.beta1()/(4.0*PI*_alpha_s.beta0()))*_S2[1][j][0][k];
+                    }
+
+                    // new NNLO piece non-convolution
+                    for (uint k=0; k<_grid.size()-1; k++)
+                    {
+                        _S2[2][1][1][k] += 
                             recrelS_3(
                                 _S2[0][1][0], _S2[1][1][0], _S2[2][1][0], k, 
                                 getExpression("P0qq"), getExpression("P1qq"), getExpression("P2qq")) +
                             recrelS_3(
                                 _S2[0][0][0], _S2[1][0][0], _S2[2][0][0], k,
                                 getExpression("P0qg"), getExpression("P1qg"), getExpression("P2qg"));
+
                         _S2[2][0][1][k] += 
-                            recrelS_3(
-								_S2[0][1][0], _S2[1][1][0], _S2[2][1][0], k,
+                            recrelS_3(_S2[0][1][0], _S2[1][1][0], _S2[2][1][0], k,
                                 getExpression("P0gq"), getExpression("P1gq"), getExpression("P2gq")) +
-                            recrelS_3(
-								_S2[0][0][0], _S2[1][0][0], _S2[2][0][0], k,
+                            recrelS_3(_S2[0][0][0], _S2[1][0][0], _S2[2][0][0], k,
                                 getExpression("P0gg"), getExpression("P1gg"), getExpression("P2gg"));
+                    }
 
-						// N3LO convolution piece
-						_S2[3][1][1][k] += 
-                            recrelS_4(
-								_S2[0][1][0], _S2[1][1][0], _S2[2][1][0], _S2[3][1][0], k,
-                                getExpression("P0qq"), getExpression("P1qq"),
-								getExpression("P2qq"), getExpression("P3qq")) +
-                            recrelS_4(
-								_S2[0][0][0], _S2[1][0][0], _S2[2][0][0], _S2[3][0][0], k,
-                                getExpression("P0qg"), getExpression("P1qg"),
-								getExpression("P2qg"), getExpression("P3qg"));
-                        _S2[3][0][1][k] += 
-                            recrelS_4(
-								_S2[0][1][0], _S2[1][1][0], _S2[2][1][0], _S2[3][1][0], k,
-                                getExpression("P0gq"), getExpression("P1gq"),
-								getExpression("P2gq"), getExpression("P3gq")) +
-                            recrelS_4(
-								_S2[0][0][0], _S2[1][0][0], _S2[2][0][0], _S2[3][0][0], k,
-                                getExpression("P0gg"), getExpression("P1gg"),
-								getExpression("P2gg"), getExpression("P3gg"));
-
-						// other NLO piece
-						for (uint j=0; j<=1; j++)
-                            _S2[1][j][1][k] = -_S2[0][j][1][k] * _alpha_s.beta1()/(4.0*PI*_alpha_s.beta0()) - _S2[1][j][0][k];
-
-						// other NNLO piece
-						for (uint j=0; j<=1; j++)
-						{
-                            _S2[2][j][1][k] =
-                                - (_alpha_s.beta1()/(4.0*PI*_alpha_s.beta0()))*_S2[1][j][1][k]
-                                - (_alpha_s.beta2()/(16.0*PI_2*_alpha_s.beta0()))*_S2[0][j][1][k]
-                                - 2.0*_S2[2][j][0][k]
-                                - (_alpha_s.beta1()/(4.0*PI*_alpha_s.beta0()))*_S2[1][j][0][k];
-						}
-
-						// other N3LO piece
-						for (uint j=0; j<=1; j++)
-						{
+                    // new N3LO piece non-convolution
+                    for (uint k=0; k<_grid.size()-1; k++)
+                    {
+                        for (uint j=0; j<=1; j++)
                             _S2[3][j][1][k] =
                                 - (_alpha_s.beta1()/(4.0*PI*_alpha_s.beta0()))*_S2[2][j][1][k]
                                 - (_alpha_s.beta2()/(16.0*PI_2*_alpha_s.beta0()))*_S2[1][j][1][k]
@@ -304,7 +287,22 @@ namespace Candia2
                                 - 3.0*_S2[3][j][0][k]
                                 - 2.0*(_alpha_s.beta1()/(4.0*PI*_alpha_s.beta0()))*_S2[2][j][0][k]
                                 - (_alpha_s.beta2()/(16.0*PI_2*_alpha_s.beta0()))*_S2[1][j][0][k];
-						}
+                    }
+
+                    // new N3LO piece convolution
+                    for (uint k=0; k<_grid.size()-1; k++)
+                    {
+                        _S2[3][1][1][k] += 
+                            recrelS_4(_S2[0][1][0], _S2[1][1][0], _S2[2][1][0], _S2[3][1][0], k,
+                                getExpression("P0qq"), getExpression("P1qq"), getExpression("P2qq"), getExpression("P3qq")) +
+                            recrelS_4(_S2[0][0][0], _S2[1][0][0], _S2[2][0][0], _S2[3][0][0], k,
+                                getExpression("P0qg"), getExpression("P1qg"), getExpression("P2qg"), getExpression("P3qg"));
+
+                        _S2[3][0][1][k] += 
+                            recrelS_4(_S2[0][1][0], _S2[1][1][0], _S2[2][1][0], _S2[3][1][0], k,
+                                getExpression("P0gq"), getExpression("P1gq"), getExpression("P2gq"), getExpression("P3gq")) +
+                            recrelS_4(_S2[0][0][0], _S2[1][0][0], _S2[2][0][0], _S2[3][0][0], k,
+                                getExpression("P0gg"), getExpression("P1gg"), getExpression("P2gg"), getExpression("P3gg"));
                     }
 
                     for (uint t=4; t<=_trunc_idx; ++t)
@@ -329,23 +327,15 @@ namespace Candia2
                         for (uint k=0; k<_grid.size()-1; k++)
                         {
                             _S2[t][1][1][k] += 
-                                recrelS_4(
-									_S2[t-3][1][0], _S2[t-2][1][0], _S2[t-1][1][0], _S2[t][1][0],k,
-                                    getExpression("P0qq"), getExpression("P1qq"),
-									getExpression("P2qq"), getExpression("P3qq")) +
-                                recrelS_4(
-									_S2[t-3][0][0], _S2[t-2][0][0], _S2[t-1][0][0], _S2[t][0][0],k,
-                                    getExpression("P0qg"), getExpression("P1qg"),
-									getExpression("P2qg"), getExpression("P3qg"));
+                                recrelS_4(_S2[t-3][1][0], _S2[t-2][1][0], _S2[t-1][1][0], _S2[t][1][0],k,
+                                    getExpression("P0qq"), getExpression("P1qq"), getExpression("P2qq"), getExpression("P3qq")) +
+                                recrelS_4(_S2[t-3][0][0], _S2[t-2][0][0], _S2[t-1][0][0], _S2[t][0][0],k,
+                                    getExpression("P0qg"), getExpression("P1qg"), getExpression("P2qg"), getExpression("P3qg"));
                             _S2[t][0][1][k] += 
-                                recrelS_4(
-									_S2[t-3][1][0], _S2[t-2][1][0], _S2[t-1][1][0], _S2[t][1][0],k,
-                                    getExpression("P0gq"), getExpression("P1gq"),
-									getExpression("P2gq"), getExpression("P3gq")) +
-                                recrelS_4(
-									_S2[t-3][0][0], _S2[t-2][0][0], _S2[t-1][0][0], _S2[t][0][0],k,
-                                    getExpression("P0gg"), getExpression("P1gg"),
-									getExpression("P2gg"), getExpression("P3gg"));
+                                recrelS_4(_S2[t-3][1][0], _S2[t-2][1][0], _S2[t-1][1][0], _S2[t][1][0],k,
+                                    getExpression("P0gq"), getExpression("P1gq"), getExpression("P2gq"), getExpression("P3gq")) +
+                                recrelS_4(_S2[t-3][0][0], _S2[t-2][0][0], _S2[t-1][0][0], _S2[t][0][0],k,
+                                    getExpression("P0gg"), getExpression("P1gg"), getExpression("P2gg"), getExpression("P3gg"));
                         }
                     }
 
