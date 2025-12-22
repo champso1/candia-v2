@@ -54,6 +54,11 @@ namespace Candia2
 		// I believe we link with it no matter what
 		bool _multi_thread;
 
+		// for purposes of comparing with benchmarks,
+		// this flag lets one enable whether or not to use
+		// the n3lo matching conditions in the n3lo evolution
+		bool _use_n3lo_matching_conditions = true;
+
 		std::map<std::string_view, std::unique_ptr<Expression>> _expressions{};
 		template <typename TExpr, typename... TExprArgs>
 		requires (std::derived_from<TExpr, Expression>)
@@ -76,7 +81,8 @@ namespace Candia2
 		
 		inline AlphaS const& getAlphaS() const { return _alpha_s; }
 		inline Grid const& getGrid() const { return _grid; }
-
+		inline void useNNLOMatchingAtN3LO() { _use_n3lo_matching_conditions = false;};
+		
 		void setEvolutionVariables(uint iterations, uint trunc_idx);
 
 		auto evolve() -> decltype(_F2);
@@ -100,9 +106,9 @@ namespace Candia2
 
 	
 		void heavyFlavorTreatment();
-		void HFT_NNLO1(ArrayGrid& c, uint j, uint k);
+		void HFT_NNLO1(ArrayGrid& c, uint k, ArrayGrid& q);
 		void HFT_NNLO2(ArrayGrid& g, ArrayGrid& qp, uint k);
-		void HFT_NNLO3(ArrayGrid& g, ArrayGrid& qp, uint k);
+		void HFT_NNLO3(ArrayGrid& g, ArrayGrid& qp, uint k, ArrayGrid& qh, ArrayGrid& qhb);
 		void HFT_N3LO1(ArrayGrid& q, ArrayGrid& qb, uint j, uint k, double SP);
 		void HFT_N3LO2(ArrayGrid& q, ArrayGrid& qb, uint j, uint k, double SP);
 		void HFT_N3LO3(ArrayGrid& g, ArrayGrid& qp, uint k);
