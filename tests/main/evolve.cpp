@@ -103,7 +103,7 @@ int main(int argc, char *argv[]) {
 	const double Qf = 100.0;
 	
 	vector<double> xtab{1e-5, 1e-4, 1e-3, 1e-2, 0.1, 0.3, 0.5, 0.7, 0.9, 1.0};
-	Grid grid(xtab, num_grid_points, 3);
+	Grid grid(xtab, num_grid_points);
 
 	std::unique_ptr<LesHouchesDistribution> dist = std::make_unique<LesHouchesDistribution>();
 	AlphaS alphas(order, dist->Q0(), Qf, dist->alpha0(), kr);
@@ -111,7 +111,7 @@ int main(int argc, char *argv[]) {
 	// alphas.setFFNS(4);
 
 	DGLAPSolver solver(order, grid, alphas, Qf, iterations, trunc_idx, *dist, kr, true);
-	solver.useNNLOMatchingAtN3LO();
+	// solver.useNNLOMatchingAtN3LO();
 
 	auto t0 = chrono::high_resolution_clock::now();
 	auto F = solver.evolve();

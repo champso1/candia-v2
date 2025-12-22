@@ -74,13 +74,8 @@ namespace Candia2
 		_scheme = FIXED;
 
 		// ensure the array is cleared
-		_masses = ([]() -> std::array<double, 8>
-		{
-			std::array<double, 8> arr{};
-			for (uint i=0; i<8; ++i)
-				arr[i] = 0.0;
-			return arr;
-		})();
+	    for (uint i=0; i<8; ++i)
+			_masses[i] = 0.0;
 
 		_masses[_nfi] = _Q0;
 		_masses[_nfi+1] = _Qf;

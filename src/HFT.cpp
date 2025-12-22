@@ -60,61 +60,58 @@ namespace Candia2
 		double as = _alpha_s.post(_nf+1);
 		std::println("[DGLAP] Value of alpha_s post threshold: {}", as);
 
-		switch(_order)
+		if (_order == 2)
 		{
-			case 2:
+			for (uint k=0; k<_grid.size()-1;k++)
+			{
+				// q
+				for (uint j=1; j<=_nf; j++)
+					HFT_NNLO1(arr[j], k, _C2[j][0][0][0]);
+				// qbar
+				for (uint j=1+6; j<=_nf+6; j++)
+					HFT_NNLO1(arr[j], k, _C2[j][0][0][0]);
+
+				HFT_NNLO2(arr_singlet[0], arr_singlet[1], k); // gluon
+				HFT_NNLO3(arr_singlet[0], arr_singlet[1], k, _C2[_nf+1][0][0][0], _C2[_nf+1+6][0][0][0]); // heavy flavor
+			}
+		}
+		else if (_order == 3)
+		{
+			if (_use_n3lo_matching_conditions)
+			{
+				for (uint k=0; k<_grid.size()-1;k++)
+				{
+					const double fac_n3lo = as*as*as/(64.0*PI_3);
+					const double convSPa = _grid.convolution(arr_singlet[1], getExpression("A3psqq"), k);
+					const double convSPb = _grid.convolution(arr_singlet[0], getExpression("A3sqg"), k);
+					const double SP = fac_n3lo*(convSPa + convSPb)/static_cast<double>(_nf);
+
+					// q
+					for (uint j=1; j<=_nf; j++)
+						HFT_N3LO1(arr[j], arr[j+6], j, k, SP);
+					// qbar
+					for (uint j=1+6; j<=_nf+6; j++)
+						HFT_N3LO2(arr[j-6], arr[j], j, k, SP);
+
+					HFT_N3LO3(arr_singlet[0], arr_singlet[1], k); // gluon
+					HFT_N3LO4(arr_singlet[0], arr_singlet[1], k); // heavy flavor
+				}
+			}
+			else
 			{
 				for (uint k=0; k<_grid.size()-1;k++)
 				{
 					// q
 					for (uint j=1; j<=_nf; j++)
-						HFT_NNLO1(arr[j], k, _C2[j][0][0][0]);
+						HFT_NNLO1(arr[j], k, _D2[j][0][0][0][0]);
 					// qbar
 					for (uint j=1+6; j<=_nf+6; j++)
-						HFT_NNLO1(arr[j], k, _C2[j][0][0][0]);
+						HFT_NNLO1(arr[j], k, _D2[j][0][0][0][0]);
 
 					HFT_NNLO2(arr_singlet[0], arr_singlet[1], k); // gluon
-					HFT_NNLO3(arr_singlet[0], arr_singlet[1], k, _C2[_nf+1][0][0][0], _C2[_nf+1+6][0][0][0]); // heavy flavor
+					HFT_NNLO3(arr_singlet[0], arr_singlet[1], k, _D2[_nf+1][0][0][0][0], _D2[_nf+1+6][0][0][0][0]); // heavy flavor
 				}
-			} break;
-            case 3:
-            {
-				if (_use_n3lo_matching_conditions)
-				{
-					for (uint k=0; k<_grid.size()-1;k++)
-					{
-						const double fac_n3lo = as*as*as/(64.0*PI_3);
-						const double convSPa = _grid.convolution(arr_singlet[1], getExpression("A3psqq"), k);
-						const double convSPb = _grid.convolution(arr_singlet[0], getExpression("A3sqg"), k);
-						const double SP = fac_n3lo*(convSPa + convSPb)/static_cast<double>(_nf);
-
-						// q
-						for (uint j=1; j<=_nf; j++)
-							HFT_N3LO1(arr[j], arr[j+6], j, k, SP);
-						// qbar
-						for (uint j=1+6; j<=_nf+6; j++)
-							HFT_N3LO2(arr[j-6], arr[j], j, k, SP);
-
-						HFT_N3LO3(arr_singlet[0], arr_singlet[1], k); // gluon
-						HFT_N3LO4(arr_singlet[0], arr_singlet[1], k); // heavy flavor
-					}
-				}
-				else
-				{
-					for (uint k=0; k<_grid.size()-1;k++)
-					{
-						// q
-						for (uint j=1; j<=_nf; j++)
-							HFT_NNLO1(arr[j], k, _D2[j][0][0][0][0]);
-						// qbar
-						for (uint j=1+6; j<=_nf+6; j++)
-							HFT_NNLO1(arr[j], k, _D2[j][0][0][0][0]);
-
-						HFT_NNLO2(arr_singlet[0], arr_singlet[1], k); // gluon
-						HFT_NNLO3(arr_singlet[0], arr_singlet[1], k, _D2[_nf+1][0][0][0][0], _D2[_nf+1+6][0][0][0][0]); // heavy flavor
-					}
-				}
-            } break;
+			}
 		}
     }
     void DGLAPSolver::HFT_NNLO1(ArrayGrid& c, uint k, ArrayGrid& q)
