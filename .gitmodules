@@ -1,3 +1,3 @@
 [submodule "vendor/libome"]
 	path = vendor/libome
-	url = git@github.com:champso1/libome.git
+	url = git@github.com:champso1/libome-fork.git
