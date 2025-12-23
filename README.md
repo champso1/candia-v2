@@ -31,3 +31,7 @@ Once `candia-v2` is built, there will be a directory named `examples` in which t
 - `read_table.cpp`: accepts a data file on the command line and spits out a PDF file containing a table of the results built with LaTeX. Requires `pdflatex` to be available on the command line.
 
 Running the associated executables with no options will indicate how to use each one. `evolve_dglap.cpp` also contains comments on the code related to `candia-v2` (`read_table.cpp` contains just simple C++ code for file I/O and other non-`candia-v2` related stuff).
+
+## Attributions and License
+
+This code is available under the GPLv3 license, distributed here as [LICENSE](LICENSE). We also are grateful for the code and routines provided for the NNLO and N3LO splitting functions, references to which are provided in the public GitHub repository [here](https://github.com/svenolafmoch/Conformal-EIC), licensed also under the GPLv3 license. We are also grateful for the N3LO operator matrix elements, provided via the `libome` library. The original repository is [here](https://github.com/hoppet-code/libome-fork), and a fork used in `candia-v2` is given [here](tree/test-fpe), also available under the GPLv3 license, with appropriate citations required for usage given in its CITATION file.
