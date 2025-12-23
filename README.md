@@ -38,4 +38,4 @@ This code is available under the GPLv3 license, distributed here as [LICENSE](LI
 
 ## Contacts
 
-Inquiries can be directed to either Casey Hampson at [casey@thehampsons.us](mailto:casey@thehampsons.us) or Dr. Marco Guzzi at [mguzzi@kennesaw.edu](mailto:mguzzi@kennesaw.edu)
+Inquiries can be directed to either Casey Hampson at [champso1@students.kennesaw.edu](mailto:champso1@students.kennesaw.edu) or [casey@thehampsons.us](mailto:casey@thehampsons.us) or Dr. Marco Guzzi at [mguzzi@kennesaw.edu](mailto:mguzzi@kennesaw.edu)
