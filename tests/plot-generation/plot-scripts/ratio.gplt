@@ -2,11 +2,13 @@ set terminal pdf enhanced color notransparent
 
 set border lw 2
 set size ratio 0.65
+set rmargin 0
+set lmargin 0
 
 set output "ratio.pdf"
 set ylabel "N3LO/NNLO" offset 2,0
 set xlabel "x" offset 0,0.7
-set title "N3LO/NNLO from Les Houches initial conditions"
+set title "N3LO/NNLO Candia evolution at 100 GeV"
 
 x0 = 0.1
 f(x) = \
@@ -31,13 +33,14 @@ set xtics (\
 )
 set mxtics 10
 set grid
+set key offset 0,-0.4
 
 
-plot 'ratio.dat' using (f($1)):2 with lines lw 2 title "xb_+",\
-'' using (f($1)):3 with lines lw 2 title "xc_+",\
-'' using (f($1)):4 with lines lw 2 title "xs_+",\
-'' using (f($1)):5 with lines lw 2 title "xu_v",\
-'' using (f($1)):6 with lines lw 2 title "xd_v",\
-'' using (f($1)):7 with lines lw 2 title "xg"
+plot 'ratio.dat' using (f($1)):2 with lines lw 2 dt 4 title "b_+",\
+'' using (f($1)):3 with lines lw 2 dt 2 title "c_+",\
+'' using (f($1)):4 with lines lw 2 lc rgb "red" dt "..--" title "s_+",\
+'' using (f($1)):5 with lines lw 2 dt 3 title "u_v",\
+'' using (f($1)):6 with lines lw 2 lc 6 dt 5 title "d_v",\
+'' using (f($1)):7 with lines lw 2 lc rgb "black" title "g"
 
 
