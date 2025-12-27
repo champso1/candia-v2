@@ -264,7 +264,7 @@ namespace Candia2
             createExpression<P2qg>("P2qg", _grid);
             createExpression<P2gq>("P2gq", _grid);
             createExpression<P2gg>("P2gg", _grid);
-
+			
             createExpression<A2ns>("A2ns", _grid);
             createExpression<A2gq>("A2gq", _grid);
             createExpression<A2gg>("A2gg", _grid);
@@ -281,7 +281,6 @@ namespace Candia2
             createExpression<P3gq>("P3gq", _grid);
             createExpression<P3gg>("P3gg", _grid);
 
-            
             createExpression<OpMatElemN3LO>("A3nsm", _grid, ome::AqqQNSEven);
             createExpression<OpMatElemN3LO>("A3nsp", _grid, ome::AqqQNSOdd);
             createExpression<OpMatElemN3LO>("A3gq", _grid, ome::AgqQ);
