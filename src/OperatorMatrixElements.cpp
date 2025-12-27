@@ -64,7 +64,8 @@ namespace Candia2
 	double A2gg::_delta_func(double x) const
 	{
 		UNUSED(x);
-		return -CF*TR*15.0 + NC*TR*10.0/(9.0*27.0);
+		// return -CF*TR*15.0 + NC*TR*10.0/(9.0*27.0);
+		return -CF*TR*15.0 + NC*TR*10.0/9.0;
 	}
 
 

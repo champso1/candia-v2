@@ -1,181 +1,69 @@
-#include <map>
-#include <memory>
-#include <concepts>
 #include <print>
-using namespace std;
+#include <tuple>
+#include <vector>
+#include <ranges>
 
-#include "Candia-v2/Candia.hpp"
+#include "Candia-v2/OperatorMatrixElements.hpp"
+using ome_type = ome::rpd_distribution<ome::ome_as_view<double>, ome::ome_as_plus_view<double>, ome::ome_as_const_view<double>>;
 using namespace Candia2;
-using arr_type = vector<ArrayGrid>;
 
-#include <gsl/gsl_integration.h>
+static constexpr uint N = 1000;
+static uint NF = 3;
+static double LM = 0.0;
 
-std::map<std::string_view, std::unique_ptr<Expression>> _expressions{};
+static A2ns a2ns_candia{};
+static ome_type a2ns_libome = ome::AqqQNSEven;
 
-template <typename TExpr, typename... TExprArgs>
-requires (std::derived_from<TExpr, Expression>)
-void createExpression(std::string_view name, Grid const& grid, TExprArgs&&... args)
+static A2gq a2gq_candia{};
+static ome_type a2gq_libome = ome::AgqQ;
+
+static A2gg a2gg_candia{};
+static ome_type a2gg_libome = ome::AggQ;
+
+static A2hq a2hq_candia{};
+static ome_type a2hq_libome = ome::AQqPS;
+
+static A2hg a2hg_candia{};
+static ome_type a2hg_libome = ome::AQg;
+
+static void update(uint nf, double lm)
 {
-	std::unique_ptr<Expression> ptr = std::make_unique<TExpr>(std::forward<TExprArgs>(args)...);
-	_expressions.emplace(std::make_pair(name, std::move(ptr)));
-}
-Expression& getExpression(std::string_view name)
-{
-	return *_expressions[name];
-}
-
-static double func(double x, void* params)
-{
-	LesHouchesDistribution dist = *reinterpret_cast<LesHouchesDistribution*>(params);
-	double sigma = dist.xuv(x)
-		+ 2.0*dist.xub(x)
-		+ dist.xdv(x)
-		+ 2.0*dist.xdb(x)
-		+ 2.0*dist.xs(x);
-	double g = dist.xg(x);
-	return sigma + g;
+	OpMatElem::update(lm, nf);
+	NF = nf;
 }
 
-static double funcu(double x, void* params)
+static std::tuple<double,double,double> get_candia(Expression& ome, double x)
 {
-	LesHouchesDistribution dist = *reinterpret_cast<LesHouchesDistribution*>(params);
-	double u = dist.xuv(x) + dist.xub(x);
-	double ub = dist.xub(x);
-	return (u - ub)/x;
+	return {ome._reg_func(x), ome._plus_func(x), ome._delta_func(x)};
 }
 
-static double funcd(double x, void* params)
+static std::tuple<double,double,double> get_libome(ome_type& ome, double x)
 {
-	LesHouchesDistribution dist = *reinterpret_cast<LesHouchesDistribution*>(params);
-	double d = dist.xdv(x) + dist.xdb(x);
-	double db = dist.xdb(x);
-	return (d - db)/x;
+	return {ome.has_regular() ? ome.get_regular().value()[2](LM, NF, x) : 0.0,
+			ome.has_plus() ? ome.get_plus().value()[2](LM, NF, x) : 0.0,
+			ome.has_delta() ? ome.get_delta().value()[2](LM, NF) : 0.0};
 }
 
-
-static void test_sum_rules()
+int main()
 {
-	LesHouchesDistribution _dist{};
-    void * params = reinterpret_cast<void*>(&_dist);
-	gsl_integration_workspace* w = gsl_integration_workspace_alloc(1000);
+	update(3, 0.0);
+	std::vector<double> grid_points = std::ranges::views::iota(1)
+		| std::ranges::views::take(N)
+		| std::ranges::views::transform([=](int i) -> double { return static_cast<double>(i)/N; })
+		| std::ranges::to<std::vector<double>>();
 
+	std::vector<std::tuple<double,double,double>> candia_results{}, libome_results{}, diffs{};
+	for (double x : grid_points)
 	{
-		gsl_function F;
-		F.function = &func;
-		F.params = params;
-		double res{}, error{};
-		gsl_integration_qags(&F, 0.0, 1.0, 0.0, 1e-5, 1000, w, &res, &error);
-		println("Testing momentum sum rule: {} +- {}", res, error);
-	}
-	{
-		gsl_function F;
-		F.function = &funcu;
-		F.params = params;
-		double res{}, error{};
-		gsl_integration_qags(&F, 0.0, 1.0, 0.0, 1e-5, 1000, w, &res, &error);
-		println("Testing valence sum rule (u): {} +- {}", res, error);
-	}
-	{
-		gsl_function F;
-		F.function = &funcd;
-		F.params = params;
-		double res{}, error{};
-		gsl_integration_qags(&F, 0.0, 1.0, 0.0, 1e-5, 1000, w, &res, &error);
-		println("Testing valence sum rule (d): {} +- {}", res, error);
-	}
-	gsl_integration_workspace_free(w);
+		candia_results.emplace_back(get_candia(a2hg_candia, x));
+		libome_results.emplace_back(get_libome(a2hg_libome, x));
 
+	    diffs.emplace_back(
+			std::get<0>(candia_results.back())/std::get<0>(libome_results.back()),
+			std::get<1>(candia_results.back()) == 0.0 ? 0.0 : std::get<1>(candia_results.back())/std::get<1>(libome_results.back()),
+			std::get<2>(candia_results.back()) == 0.0 ? 0.0 : std::get<2>(candia_results.back())/std::get<2>(libome_results.back()));
+	}
 	
-}
-
-struct Params
-{
-	Grid& grid;
-	arr_type& arr;
-};
-
-static double func_final(double x, void* params_)
-{
-	Params params = *reinterpret_cast<Params*>(params_);
-	double res = 0.0;
-	for (uint j=1; j<=5; ++j)
-		res += params.grid.interpolate(params.arr[j], x) + params.grid.interpolate(params.arr[j+6], x);
-	return res + params.grid.interpolate(params.arr[0], x);
-}
-
-static double funcu_final(double x, void* params_)
-{
-    Params params = *reinterpret_cast<Params*>(params_);
-	double u = params.grid.interpolate(params.arr[1], x);
-	double ub = params.grid.interpolate(params.arr[1+6], x);
-	return (u - ub)/x;
-}
-
-static double funcd_final(double x, void* params_)
-{
-	Params params = *reinterpret_cast<Params*>(params_);
-	double d = params.grid.interpolate(params.arr[2], x);
-	double db = params.grid.interpolate(params.arr[2+6], x);
-	return (d - db)/x;
-}
-
-static void test_sum_rules_final(Grid& grid, arr_type& dists)
-{
-	Params params_{grid, dists};
-    void * params = reinterpret_cast<void*>(&params_);
-	gsl_integration_workspace* w = gsl_integration_workspace_alloc(1000);
-
-	{
-		gsl_function F;
-		F.function = &func_final;
-		F.params = params;
-		double res{}, error{};
-		gsl_integration_qags(&F, 0.0, 1.0, 0.0, 1e-5, 1000, w, &res, &error);
-		println("Testing final momentum sum rule: {} +- {}", res, error);
-	}
-	{
-		gsl_function F;
-		F.function = &funcu_final;
-		F.params = params;
-		double res{}, error{};
-		gsl_integration_qags(&F, 0.0, 1.0, 0.0, 1e-5, 1000, w, &res, &error);
-		println("Testing final valence sum rule (u): {} +- {}", res, error);
-	}
-	{
-		gsl_function F;
-		F.function = &funcd_final;
-		F.params = params;
-		double res{}, error{};
-		gsl_integration_qags(&F, 0.0, 1.0, 0.0, 1e-5, 1000, w, &res, &error);
-		println("Testing final valence sum rule (d): {} +- {}", res, error);
-	}
-	gsl_integration_workspace_free(w);
-
-	
-}
-
-
-int main(int argc, char *argv[])
-{
-	(void)argc;
-	(void)argv;
-
-	const uint order = 3;
-	const uint num_grid_points = 800;
-	const uint iterations = 10;
-	const uint trunc_idx = 15;
-	const double kr = 1.0;
-	const double Qf = 100.0;
-	
-	vector<double> xtab{1e-5, 1e-4, 1e-3, 1e-2, 0.1, 0.3, 0.5, 0.7, 0.9, 1.0};
-	Grid grid(xtab, num_grid_points, 3);
-
-	std::unique_ptr<LesHouchesDistribution> dist = std::make_unique<LesHouchesDistribution>();
-	AlphaS alphas(order, dist->Q0(), Qf, dist->alpha0(), kr);
-	alphas.setVFNS(dist->masses(), dist->nfi());
-	// alphas.setFFNS(4);
-
-	DGLAPSolver solver(order, grid, alphas, Qf, iterations, trunc_idx, *dist, kr, true);
-	arr_type arr = solver.evolve();
-	test_sum_rules_final(grid, arr);
+    for (auto t : diffs)
+		std::println("{}", t);
 }
