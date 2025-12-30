@@ -2,7 +2,7 @@
 
 **NOTE: `Candia-v2` is still a work-in-progress. The code works correctly and basic functionality is present, but it is not perfectly optimized, nor is the code very clean or feature-rich. We are actively working hard to expand and improve the code.**
 
-`Candia-v2` is a new and improved version of `Candia` (cfr. C. Hampson, M. Guzzi, arXiv:2512.xxxxx; A. Cafarella, M. Guzzi, C. Coriano', Comp.Phys.Comm. 179 2008; A. Cafarella, M. Guzzi, C. Coriano', Nucl.Phys.B748 2006), a computer code to numerically solve DGLAP evolution for collinear PDFs in the x-space up to next-to-next-to-next-to leading order (N^3LO) accuracy in perturbative QCD. `Candia-v2` currently uses an approximate version of the 4-loop splitting functions as the calculation of their exact analytical form is still in progress. `Candia` was originally written in C and was only capable of evolution up to next-to-next-to (NNLO) accuracy in QCD. New information on the splitting functions and operator matrix elements as well as advancements to C++ led to the development of `Candia-v2`.
+`Candia-v2` is a new and improved version of `Candia` (cfr. C. Hampson, M. Guzzi, arXiv:2512.22667; A. Cafarella, M. Guzzi, C. Coriano', Comp.Phys.Comm. 179 2008; A. Cafarella, M. Guzzi, C. Coriano', Nucl.Phys.B748 2006), a computer code to numerically solve DGLAP evolution for collinear PDFs in the x-space up to next-to-next-to-next-to leading order (N^3LO) accuracy in perturbative QCD. `Candia-v2` currently uses an approximate version of the 4-loop splitting functions as the calculation of their exact analytical form is still in progress. `Candia` was originally written in C and was only capable of evolution up to next-to-next-to (NNLO) accuracy in QCD. New information on the splitting functions and operator matrix elements as well as advancements to C++ led to the development of `Candia-v2`.
 
 ## Building
 
@@ -39,4 +39,5 @@ This code is available under the GPLv3 license, distributed here as [LICENSE](LI
 ## Contacts
 
 Inquiries can be directed to either Casey Hampson at [champso1@students.kennesaw.edu](mailto:champso1@students.kennesaw.edu) or [casey@thehampsons.us](mailto:casey@thehampsons.us) or Dr. Marco Guzzi at [mguzzi@kennesaw.edu](mailto:mguzzi@kennesaw.edu)
+
 
