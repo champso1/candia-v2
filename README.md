@@ -8,7 +8,7 @@
 
 ### Prerequisites
 
-`Candia-v2` depends on `libome`, which is in this repository as a submodule. When cloning this repository, either pass the option `--recurse-submodules` to `git clone`, or after the repository is cloned, run `git submodule init` followed by `git submodule update`. `libome` itself depends on GSL, which means that `candia-v2` can only be built on UNIX-like systems. Windows is supported either via WSL, the MSYS2 suite, or Cygwin (the former two are tested, but Cygwin is not). Lastly, at the moment, there are several C++23 features used throughout, such as `std::print` and the `ranges` suite. We are planning on reverting some of these things in order to have C++17 support, but this is not the case at the moment.
+`Candia-v2` depends on `libome`, which is in this repository as a submodule. When cloning this repository, either pass the option `--recurse-submodules` to `git clone`, or after the repository is cloned, run `git submodule init` followed by `git submodule update`. `libome` itself depends on GSL, which means that `candia-v2` can only be built on UNIX-like systems. Windows is supported either via WSL, the MSYS2 suite, or Cygwin (the former two are tested, but Cygwin is not). Lastly, a compiler that supports the C++20 standard is required.
 
 ### Compiling
 
