@@ -6,7 +6,6 @@
 #include "Candia-v2/SplittingFn.hpp"
 #include "Candia-v2/OperatorMatrixElements.hpp"
 
-#include <cstdlib>
 #include <functional>
 #include <memory>
 
@@ -402,10 +401,23 @@ namespace Candia2
         else if (resum_threshold)
         {
             switch (_order) {
-                case 0:
+                case 0: {
+					for (uint k=0; k<_grid.size()-1; k++) {
+                        temp_arr[19][k] = temp_arr_singlet[31][k];
+                        for (uint j=32; j<=30+_nf; j++)
+                            temp_arr[19][k] += temp_arr[j][k];
+                        temp_arr[19][k] /= Nf;
+
+                        for (uint j=20; j<=18+_nf; j++)
+                            temp_arr[j][k] = temp_arr[19][k] - temp_arr[j+12][k];
+
+                        for (uint j=1; j<=_nf; j++) {
+                            temp_arr[j][k]   = 0.5*(temp_arr[j+18][k] + temp_arr[j+12][k]);
+                            temp_arr[j+6][k] = 0.5*(temp_arr[j+18][k] - temp_arr[j+12][k]);
+                        }
+                    }
+				}; break;
                 case 1: {
-                    // if we resummed to a threshold energy,
-                    // we must fix the temporary array
                     for (uint k=0; k<_grid.size()-1; k++) {
                         temp_arr[19][k] = temp_arr_singlet[31][k];
                         for (uint j=32; j<=30+_nf; j++)
@@ -421,7 +433,30 @@ namespace Candia2
                         }
                     }
                 }; break;
-                case 2:
+                case 2: {
+					for (uint k=0; k<_grid.size()-1; k++) {
+                        temp_arr[13][k] = temp_arr[25][k];
+                        for (uint j=26; j<=24+_nf; j++)
+                            temp_arr[13][k] += temp_arr[j][k];
+                        temp_arr[13][k] /= Nf;
+
+                        for (uint j=14;j<=12+_nf;j++)
+                            temp_arr[j][k] = temp_arr[13][k] - temp_arr[j+12][k];
+
+                        temp_arr[19][k] = temp_arr_singlet[31][k];
+                        for (uint j=32; j<=30+_nf; j++)
+                            temp_arr[19][k] += temp_arr[j][k];
+                        temp_arr[19][k] /= Nf;
+
+                        for (uint j=20; j<=18+_nf; j++)
+                            temp_arr[j][k] = temp_arr[19][k] - temp_arr[j+12][k];
+
+                        for (uint j=1; j<=_nf; j++) {
+                            temp_arr[j][k]  =0.5*(temp_arr[j+18][k]+temp_arr[j+12][k]);
+                            temp_arr[j+6][k]=0.5*(temp_arr[j+18][k]-temp_arr[j+12][k]);
+                        }
+                    }
+				}; break;
                 case 3: {
                     for (uint k=0; k<_grid.size()-1; k++) {
                         temp_arr[13][k] = temp_arr[25][k];

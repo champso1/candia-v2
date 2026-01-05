@@ -39,6 +39,7 @@
                 "CMAKE_CXX_COMPILER": "clang++",
                 "CMAKE_Fortran_COMPILER": "gfortran",
                 "CMAKE_BUILD_TYPE": "Debug",
+                "BUILD_SHARED_LIBS": "NO",
 
                 "CMAKE_C_FLAGS_INIT": "",
                 "CMAKE_CXX_FLAGS_INIT": "-stdlib=libstdc++"

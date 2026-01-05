@@ -122,7 +122,7 @@ namespace Candia2
         std::reference_wrapper<std::vector<ArrayGrid>> arr, 
         uint j, double L1)
     {
-        for (uint n=0; n<_iterations-1; n++) {
+        for (uint n=1; n<_iterations; n++) {
             log(LOG_INFO, "THREAD", "  [j={}] Iteration {}/{}", j, n, _iterations-1);
 			for (uint k=0; k<_grid.size()-1; k++) {
 				_A2[j][1][k] = recrelLO(_A2[j][0], k, getExpression("P0ns"));
