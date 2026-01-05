@@ -1,8 +1,6 @@
 #include "Candia-v2/AlphaS.hpp"
-#include "Candia-v2/Common.hpp"
 
 #include <cstdlib>
-#include <print>
 #include <cmath>
 #include <numbers>
 
@@ -11,32 +9,18 @@ namespace Candia2
 	void AlphaS::assertNf() const
 	{
 		if (_nf > 8)
-		{
-			std::println("[AlphaS: ERROR] assertNf(): Found nf value of {}, expected < 8", _nf);
-			exit(EXIT_FAILURE);
-		}
+			log(LOG_ERROR, "AlphaS::assertNf()", "Found nf value of {}, expected < 8", _nf);
 	}
 
 	void AlphaS::assertScheme() const
 	{
 		if (_scheme == UNSET)
-		{
-			std::println("[AlphaS: ERROR] assertScheme(): must set a scheme before accessing alpha_s or mass values.");
-			exit(1);
-		}
+			log(LOG_ERROR, "AlphaS::assertScheme()", "Must set a scheme before accessing alpha_s or mass values.");
 	}
 
 
 	void AlphaS::setVFNS(std::array<double, 8> masses, uint nfi)
 	{
-		if (_scheme == FIXED)
-		{
-			std::println("[ALPHAS: WARNING] setVFNS(): scheme previously set to FFNS.");
-		}
-		else if (_scheme == VARIABLE)
-		{
-			std::println("[ALPHAS: WARNING] setVFNS(): scheme already set to VFNS. Overwriting previous masses...");
-		}
 	    _masses = masses;
 		_scheme = VARIABLE;
 		
@@ -60,14 +44,6 @@ namespace Candia2
 
 	void AlphaS::setFFNS(uint nf)
 	{
-		if (_scheme == FIXED)
-		{
-			std::println("[ALPHAS: WARNING] setFFNS(): scheme already set to FFNS. Overwriting previous value of nf...");
-		}
-		else if (_scheme == VARIABLE)
-		{
-			std::println("[ALPHAS: WARNING] setFFNS(): scheme previously set to VFNS.");
-		}
 		_nf = nf;
 		_nfi = nf;
 		_nff = nf;
@@ -170,8 +146,7 @@ namespace Candia2
 			res += -a*a*(1.0/6.0)*_L/PI;
 		if (_order >= 2)
 			res += a*a*a*(-(7.0/24.0) - (19.0/24.0)*_L + (1.0/36.0)*_L*_L)/PI_2;
-		if (_order >= 3)
-		{
+		if (_order >= 3) {
 		    res += std::pow(alpha, 4)*(
 				-(58933.0/124416.0) - (2.0/3.0)*Zeta2 - (2.0/9.0)*Zeta2*std::numbers::log2e - (80507.0/27648.0)*Zeta3
 				- (8521.0/1728.0)*_L - (131.0/576.0)*_L*_L - (1.0/216.0)*_L*_L*_L
@@ -194,8 +169,7 @@ namespace Candia2
 			res += a*a*(1.0/6.0)*_L/PI;
 		if (_order >= 2)
 			res += a*a*a*((7.0/24.0) + (19.0/24.0)*_L + (1.0/36.0)*_L*_L)/PI_2;
-		if (_order >= 3)
-		{
+		if (_order >= 3) {
 			res += std::pow(alpha, 4)*(
 				(58933.0/124416.0) + (2.0/3.0)*Zeta2 + (2.0/9.0)*Zeta2*std::numbers::log2e + (80507.0/27648.0)*Zeta3
 				+ (8521.0/1728.0)*_L + (131.0/576.0)*_L*_L + (1.0/216.0)*_L*_L*_L
@@ -217,7 +191,7 @@ namespace Candia2
 		if (nf1<_nfi)
 			nf1++;
 
-		std::println("[ALPHAS] initial: nf1 = {}\talpha0 = {}", nf1, _alpha0);
+		log(LOG_INFO, "AlphaS", "initial: nf1 = {}\talpha0 = {}", nf1, _alpha0);
 
 		update(nf1);
 
@@ -228,26 +202,24 @@ namespace Candia2
 		_post[nf1+1] = postMatch(_pre[nf1+1], nf1);
 
 		uint nf;
-		for (nf=nf1-1; nf>=_nfi; nf--)
-		{
+		for (nf=nf1-1; nf>=_nfi; nf--) {
 			update(nf);
 			
 			_post[nf] = evaluate(_masses[nf+1], _masses[nf], _pre[nf+1]);
 			_pre[nf]  = preMatch(_post[nf], nf);
 		}
 
-		for (nf=nf1+1; nf<=_nff+1; nf++)
-		{
+		for (nf=nf1+1; nf<=_nff+1; nf++) {
 			update(nf-1);
 			
 			_pre[nf]  = evaluate(_masses[nf-1], _masses[nf], _post[nf-1]);
 			_post[nf] = postMatch(_pre[nf], nf);
 		}
 
-		std::println("[ALPHAS] Computed alpha_s threshold values for VFNS. They are:");
+		log(LOG_INFO, "AlphaS", "Computed alpha_s threshold values for VFNS. They are:");
 
 		for (nf=_nfi; nf<=_nff+1; nf++)
-			std::println("[ALPHAS] {} {:14.9} {:14.9} {:14.9}", nf, _masses[nf], _pre[nf], _post[nf]);
+			log(LOG_INFO, "AlphaS", "{} {:14.9} {:14.9} {:14.9}", nf, _masses[nf], _pre[nf], _post[nf]);
 
 	}
 
@@ -259,14 +231,11 @@ namespace Candia2
 			return alpha0;
 
 		if (Qf < Qi)
-		{
-			std::println("[ALPHAS: ERROR] evaluate(): Final energy Qf={} is smaller than initial energy Qi={}.", Qf, Qi);
-			exit(EXIT_FAILURE);
-		}
+			log(LOG_ERROR, "AlphaS::evaluate()", "Final energy Qf={} is smaller than initial energy Qi={}.", Qf, Qi);
 
 		// at LO we have the exact solution
 		if (_order == 0) {
-			return (2.0*PI*alpha0) / (2.0*PI + alpha0*_beta0*log(Qf/Qi));
+			return (2.0*PI*alpha0) / (2.0*PI + alpha0*_beta0*std::log(Qf/Qi));
 		}
 
 		// otherwise, 4th order runge-kutta

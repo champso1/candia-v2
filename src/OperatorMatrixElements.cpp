@@ -1,4 +1,3 @@
-#include "Candia-v2/Common.hpp"
 #include "Candia-v2/OperatorMatrixElements.hpp"
 #include "Candia-v2/SpecialFuncs.hpp"
 

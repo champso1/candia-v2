@@ -1,5 +1,4 @@
 #include "Candia-v2/Candia.hpp"
-#include "Candia-v2/FuncArrayGrid.hpp"
 
 namespace Candia2
 {	
@@ -24,8 +23,7 @@ namespace Candia2
 		double res = conv1 * (2.0/_alpha_s.beta0());
 		res += conv2 / (PI*_alpha_s.beta0());
 
-		if (_log_mur2_muf2 != 0.0)
-		{
+		if (_log_mur2_muf2 != 0.0) {
 		    double convL = _grid.convolution(S1, P0, k);
 			res -= _log_mur2_muf2*convL/(2.0*PI);
 		}
@@ -49,8 +47,7 @@ namespace Candia2
 		res += conv2 / (PI*_alpha_s.beta0());
 		res += conv3 / (2.0*PI_2*_alpha_s.beta0());
 
-		if (_log_mur2_muf2 != 0.0)
-		{
+		if (_log_mur2_muf2 != 0.0) {
 			double convL1 =  _grid.convolution(S2, P0, k);
 			double convL2 =  _grid.convolution(S1, P1, k);
 			double convL3 =  _grid.convolution(S1, P2, k);
@@ -84,8 +81,7 @@ namespace Candia2
 		res -= conv3 / (2.0*PI_2*_alpha_s.beta0());
 		res -= conv4 / (4.0*PI_3*_alpha_s.beta0());
 
-		if (_log_mur2_muf2 != 0.0)
-		{
+		if (_log_mur2_muf2 != 0.0) {
 			const double beta0 = _alpha_s.beta0();
 			const double beta1 = _alpha_s.beta1();
 			const double beta2 = _alpha_s.beta2();
@@ -140,8 +136,7 @@ namespace Candia2
 		double conv = _grid.convolution(B, P1, k);
 		double res = -(4.0/_alpha_s.beta1())*conv;
 
-		if (_log_mur2_muf2 != 0.0)
-		{
+		if (_log_mur2_muf2 != 0.0) {
 			double convL = _grid.convolution(B, P0, k);
 			res += (2.0*_log_mur2_muf2*_alpha_s.beta0()/_alpha_s.beta1()) * convL;
 		}
@@ -168,8 +163,7 @@ namespace Candia2
 		double conv = _grid.convolution(C, P2, k);
 		double res = -4.0/_alpha_s.beta2() * conv;
 
-		if (_log_mur2_muf2 != 0.0)
-		{
+		if (_log_mur2_muf2 != 0.0) {
 			const double beta0 = _alpha_s.beta0();
 			const double beta1 = _alpha_s.beta1();
 			const double beta2 = _alpha_s.beta2();
@@ -193,8 +187,7 @@ namespace Candia2
 		double conv = _grid.convolution(C, P1, k);
 		double res = -8.0 * conv;
 
-		if (_log_mur2_muf2 != 0.0)
-		{
+		if (_log_mur2_muf2 != 0.0) {
 			double convL = _grid.convolution(C, P0, k);
 			res += (4.0*_alpha_s.beta0()*_log_mur2_muf2) * convL;
 		}
@@ -235,8 +228,7 @@ namespace Candia2
 
 		double res = fac1*conv1 + fac2*conv2 + fac3*conv3;
 
-		if (_log_mur2_muf2 != 0.0)
-		{
+		if (_log_mur2_muf2 != 0.0) {
 			const double beta0 = _alpha_s.beta0();
 			const double beta1 = _alpha_s.beta1();
 			const double beta2 = _alpha_s.beta2();
@@ -276,8 +268,7 @@ namespace Candia2
 		const double fac3 = -16*r1*r1;
 		double res = fac1*conv1 + fac2*conv2 + fac3*conv3;
 		
-		if (_log_mur2_muf2 != 0.0)
-		{
+		if (_log_mur2_muf2 != 0.0) {
 			const double beta0 = _alpha_s.beta0();
 			const double beta1 = _alpha_s.beta1();
 			const double beta2 = _alpha_s.beta2();
@@ -317,8 +308,7 @@ namespace Candia2
 		const double fac3 = -32*c*r1;
 		double res = fac1*conv1 + fac2*conv2 + fac3*conv3;
 
-		if (_log_mur2_muf2 != 0.0)
-		{
+		if (_log_mur2_muf2 != 0.0) {
 			const double beta0 = _alpha_s.beta0();
 			const double beta1 = _alpha_s.beta1();
 			const double beta2 = _alpha_s.beta2();

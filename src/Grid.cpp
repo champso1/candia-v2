@@ -6,8 +6,6 @@
 #include <cstdlib>
 #include <cmath>
 #include <set>
-#include <print>
-
 
 namespace Candia2
 {
@@ -25,10 +23,9 @@ namespace Candia2
 			case 1: initGrid(xtab, nx); break;
 			case 2: initGrid2(xtab, nx); break;
 			case 3: initGrid3(xtab, nx); break;
-			default:
-			{
-				std::println(stderr, "[GRID: WARNING] Grid(): Invalid grid fill type. Found {}, expected 1, 2, or 3.", grid_fill_type);
-				std::println(stderr, "[GRID: INFO^] Grid(): Will use default (1).");
+			default: {
+				log(LOG_WARNING, "Grid", "Invalid grid fill type. Found {}, expected 1, 2, or 3.", grid_fill_type);
+				log(LOG_WARNING, "Grid", "Will default to 1 (candia-v1 method)");
 				initGrid(xtab, nx);
 			}
 		}
@@ -42,7 +39,7 @@ namespace Candia2
 
 	void Grid::initGrid(std::vector<double> const& xtab, const uint nx)
 	{
-		std::println("[GRID: INFO] initGrid(): Using Candia method.");
+		log(LOG_INFO, "Grid", "Using Candia-v1 method.");
 		
 		const uint xtab_len = xtab.size();
 		std::vector<double> Ntab(xtab_len);
@@ -55,17 +52,14 @@ namespace Candia2
 
 		ntab[0] = nx-1;
 
-		for (uint i=1; i<xtab_len; i++)
-		{
+		for (uint i=1; i<xtab_len; i++) {
 			ntab[i] =  (int)Ntab[i];
 			Ntab[i] -= (double)ntab[i];
 			ntab[0] -= ntab[i];
 		}
 
-		for (uint i=1; i<xtab_len; i++)
-		{
-			if (ntab[i] == 0)
-			{
+		for (uint i=1; i<xtab_len; i++) {
+			if (ntab[i] == 0) {
 				ntab[i] =  1;
 				Ntab[i] -= 1.0;
 				ntab[0] -= 1;
@@ -73,16 +67,11 @@ namespace Candia2
 		}
 
 		uint n;
-		for ( ; ntab[0]<0; ntab[0]++)
-		{
+		for ( ; ntab[0]<0; ntab[0]++) {
 			n=0;
-
-			for (uint i=1; i<xtab_len; i++)
-			{
-				if (ntab[i] != 1)
-				{
-					if ((n == 0) || (Ntab[i] <= temp))
-					{
+			for (uint i=1; i<xtab_len; i++) {
+				if (ntab[i] != 1) {
+					if ((n == 0) || (Ntab[i] <= temp)) {
 						n = i;
 						temp = Ntab[i];
 					}
@@ -93,14 +82,10 @@ namespace Candia2
 			Ntab[n] += 1.0;
 		}
 
-		for ( ; ntab[0]>0; ntab[0]--)
-		{
+		for ( ; ntab[0]>0; ntab[0]--) {
 			n=0;
-
-			for (uint i=1; i<xtab_len; i++)
-			{
-				if ((n == 0) || (Ntab[i] > temp))
-				{
+			for (uint i=1; i<xtab_len; i++) {
+				if ((n == 0) || (Ntab[i] > temp)) {
 					n = i;
 					temp = Ntab[i];
 				}
@@ -114,9 +99,8 @@ namespace Candia2
 			ntab[i] += ntab[i-1];
 
 		double lstep;
-		for (uint i=0; i<xtab_len-1; i++)
-		{
-			lstep=std::log10(xtab[i+1]/xtab[i])/(double)(ntab[i+1]-ntab[i]);
+		for (uint i=0; i<xtab_len-1; i++) {
+			lstep = std::log10(xtab[i+1]/xtab[i])/(double)(ntab[i+1]-ntab[i]);
 
 			for (int j=ntab[i]; j<ntab[i+1]; j++)
 				_points.at(j) = xtab[i]*std::pow(10.0, lstep*(double)(j-ntab[i]));
@@ -131,15 +115,14 @@ namespace Candia2
 
 	void Grid::initGrid2(std::vector<double> const& xtab, uint nx)
 	{
-		std::println("[GRID: INFO] initGrid2(): Using method 2.");
+		log(LOG_INFO, "Grid", "Using method 2");
 		
 		std::vector<double> points(nx-xtab.size()+1);
 		const double xmin = xtab.front();
 		const double xmax = xtab.back();
 		const double ymin = std::log10(xmin);
 		const double ymax = std::log10(xmax);
-		for (uint i=0; i<nx-xtab.size()+1; ++i)
-		{
+		for (uint i=0; i<nx-xtab.size()+1; ++i) {
 			const double u = static_cast<double>(i)/(static_cast<double>(nx-xtab.size()+1) - 1.0);
 			// double _y = ymin + (ymax-ymin)*0.5*(1.0 - std::cos(PI*u));
 			double _y = ymin + (ymax-ymin)*u;
@@ -159,21 +142,18 @@ namespace Candia2
 
 		// build the ntab array
 		_ntab = std::vector<int>{};
-		for (const double x : xtab)
-		{
+		for (const double x : xtab) {
 			auto it = std::ranges::find(_points, x);
 			if (it == _points.end())
-			{
-				std::println(stderr, "[GRID: ERROR] initGrid2(): Somehow found a tabulated value ({}) that is not in the ntab array.", x);
-				exit(EXIT_FAILURE);
-			}
+				log(LOG_ERROR, "Grid::initGrid2()", "Somehow found a tabulated value ({}) that is not in the ntab array.", x);
+
 			_ntab.emplace_back(std::distance(_points.begin(), it));
 		}
 	}
 
 	void Grid::initGrid3(std::vector<double> const& xtab, uint nx)
 	{
-		std::println("[GRID: INFO] initGrid3(): Using method 3.");
+		log(LOG_INFO, "Grid", "Using method 3");
 		
 		std::vector<double> points{};
 
@@ -182,8 +162,7 @@ namespace Candia2
 		std::ranges::transform(log_xtab, log_xtab.begin(), [](double x) -> double{ return std::log10(x); });
 		int num_grid_points_per_bin = nx / xtab.size();
 
-		for (uint i=0; i<log_xtab.size()-1; ++i)
-		{
+		for (uint i=0; i<log_xtab.size()-1; ++i) {
 			double logmin = log_xtab[i];
 			double logmax = log_xtab[i+1];
 			double dlog = (logmax-logmin)/static_cast<double>(num_grid_points_per_bin);
@@ -198,15 +177,14 @@ namespace Candia2
 		// then replace the original points array with the new one
 		std::ranges::sort(points);
 		std::set<double> set{points.begin(), points.end()};
-		set.insert_range(xtab);
+		set.insert(xtab.begin(), xtab.end());
 		points = std::vector<double>(set.begin(), set.end());
 		
 		_points = points;
 
 		// build the ntab array
 		_ntab = std::vector<int>{};
-		for (const double x : xtab)
-		{
+		for (const double x : xtab) {
 			auto it = std::ranges::lower_bound(_points, x);
 			if (it != _points.end() && std::abs(*it - x) < 1e-14)
 				_ntab.emplace_back(std::distance(_points.begin(), it));
@@ -226,8 +204,7 @@ namespace Candia2
 		double xm = 0.5*(x2+x1);
 		double xl = 0.5*(x2-x1);
 
-		for (uint i=1; i<=m; i++)
-		{
+		for (uint i=1; i<=m; i++) {
 			double I = static_cast<double>(i);
 			double z = std::cos(PI*(I-0.25)/(N+0.5));
 
@@ -238,13 +215,11 @@ namespace Candia2
 
 			double p1, p2, p3;
 			double J;
-			do
-			{
+			do {
 				p1 = 1.0;
 				p2 = 0.0;
 
-				for (uint j=1; j<=n; j++)
-				{
+				for (uint j=1; j<=n; j++) {
 					J = static_cast<double>(j);
 					p3 = p2;
 					p2 = p1;
@@ -258,10 +233,7 @@ namespace Candia2
 
 			if (z1 == std::numeric_limits<double>::max() ||
 				pp == std::numeric_limits<double>::max())
-			{
-				std::println("[GRID: ERROR] initGauLeg(): failed to determine gauss-legendre abscissae/weights");
-				exit(EXIT_FAILURE);
-			}
+				log(LOG_ERROR, "Grid::initGauLeg()", "Failed to determine gauss-legendre abscissae/weights");
 
 			Xi[i-1] = xm - xl*z;
 			Xi[n-i] = xm + xl*z;
@@ -273,8 +245,7 @@ namespace Candia2
     uint Grid::interpFindIdx(double x) const
 	{
 		int k;
-		for (k=0; x>=_points.at(k); k++)
-		{
+		for (k=0; x>=_points.at(k); k++) {
 			if (k >= static_cast<int>(size()-1))
 				break;
 		}
@@ -304,10 +275,8 @@ namespace Candia2
 
 		dif = std::abs(x - xa[0]);
 
-		for (int i=0; i<n; i++)
-		{
-			if ((dift = std::abs(x - xa[i])) < dif)
-			{
+		for (int i=0; i<n; i++) {
+			if ((dift = std::abs(x - xa[i])) < dif) {
 				ns = i;
 				dif = dift;
 			}
@@ -317,20 +286,15 @@ namespace Candia2
 
 		y = ya[ns--];
 
-		for (int m=1; m<n; m++)
-		{
-		    for (int i=0; i<n-m; i++)
-			{
+		for (int m=1; m<n; m++) {
+		    for (int i=0; i<n-m; i++) {
 				ho = xa[i] - x;
 				hp = xa[i+m] - x;
 				w = c[i+1] - d[i];
 
 				den = ho-hp;
 				if (std::abs(ho-hp) < 1e-15)
-				{
-					std::println("[GRID: ERROR] Interpolate(): found a denominator equal to 0.0.");
-					exit(1);
-				}
+					log(LOG_ERROR, "Grid::interpolate()", "found a denominator equal to 0.0.");
 
 				den = w/den;
 				d[i] = hp*den;
@@ -351,10 +315,8 @@ namespace Candia2
 		double ed1 = E.delta(1.0);
 		double res = (eplus1*std::log1p(-x) + ed1) * A[k];
 
-		if (_split_n3lo_intervals)
-		{
-			for (uint i=0; i<GAUSS_POINTS; i++)
-			{
+		if (_split_n3lo_intervals) {
+			for (uint i=0; i<GAUSS_POINTS; i++) {
 				double y = _Xi_low[i];
 				double w = _Wi_low[i];
 
@@ -370,8 +332,7 @@ namespace Candia2
 				res -= w*logx*a*erega*interp1;
 				res -= w*logx*b*(eplusb*interp2 - eplus1*A[k])/(1.0-b);
 			}
-			for (uint i=0; i<GAUSS_POINTS; i++)
-			{
+			for (uint i=0; i<GAUSS_POINTS; i++) {
 				double y = _Xi_mid[i];
 				double w = _Wi_mid[i];
 
@@ -387,8 +348,7 @@ namespace Candia2
 				res -= w*logx*a*erega*interp1;
 				res -= w*logx*b*(eplusb*interp2 - eplus1*A[k])/(1.0-b);
 			}
-			for (uint i=0; i<GAUSS_POINTS; i++)
-			{
+			for (uint i=0; i<GAUSS_POINTS; i++) {
 				double y = _Xi_high[i];
 				double w = _Wi_high[i];
 
@@ -404,11 +364,8 @@ namespace Candia2
 				res -= w*logx*a*erega*interp1;
 				res -= w*logx*b*(eplusb*interp2 - eplus1*A[k])/(1.0-b);
 			}
-		}
-		else
-		{
-			for (uint i=0; i<GAUSS_POINTS; i++)
-			{
+		} else {
+			for (uint i=0; i<GAUSS_POINTS; i++) {
 				double y = _Xi[i];
 				double w = _Wi[i];
 

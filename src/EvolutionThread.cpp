@@ -3,7 +3,6 @@
 
 #include <cmath>
 #include <thread>
-#include <print>
 
 namespace Candia2
 {
@@ -11,11 +10,9 @@ namespace Candia2
         std::reference_wrapper<std::vector<ArrayGrid>> arr, 
 		double L1, double L2, double L3, double L4)
 	{
-		switch (_order)
-		{
-			case 0: // LO
-			{
-				std::println("[THREAD] Performing LO non-singlet evolution threaded.");
+		switch (_order) {
+			case 0: { // LO
+				log(LOG_INFO, "THREAD", "Performing LO non-singlet evolution threaded.");
 
                 for (uint j=13; j<=12+_nf; ++j)
                     arr.get()[j] = _A2[j][0];
@@ -24,7 +21,7 @@ namespace Candia2
                     
 				std::vector<std::thread> threads{};
 
-                std::println("=============== BEGIN THREAD OUTPUT ====================");
+                log(LOG_INFO, "THREAD", "=============== BEGIN THREAD OUTPUT ====================");
 				for (uint j=13; j<=12+_nf; j++)
 					threads.emplace_back(&DGLAPSolver::_mt_EvolveDistribution_NS_LO, this, arr, j, L1);	
 				for (uint j=32; j<=30+_nf; j++)
@@ -33,12 +30,11 @@ namespace Candia2
 			    for (std::thread & t : threads)
 					t.join();
 
-                std::println("=============== END THREAD OUTPUT ====================");
-				std::println("[THREAD] Finished performing threaded LO non-singlet evolution.");
+                log(LOG_INFO, "THREAD", "=============== END THREAD OUTPUT ====================");
+				log(LOG_INFO, "THREAD", "Finished performing threaded LO non-singlet evolution.");
 			} break;
-			case 1: // NLO
-			{
-				std::println("[THREAD] Performing NLO non-singlet evolution threaded.");
+			case 1: { // NLO
+				log(LOG_INFO, "THREAD", "Performing NLO non-singlet evolution threaded.");
 
                 for (uint j=13; j<=12+_nf; ++j)
                     arr.get()[j] = _B2[j][0][0];
@@ -48,7 +44,7 @@ namespace Candia2
 				std::vector<std::thread> threads{};
                 std::array<double, 2> L{L1, L2};
 
-                std::println("=============== BEGIN THREAD OUTPUT ====================");
+                log(LOG_INFO, "THREAD", "=============== BEGIN THREAD OUTPUT ====================");
 				for (uint j=13; j<=12+_nf; j++)
 					threads.emplace_back(&DGLAPSolver::_mt_EvolveDistribution_NS_NLO, this, arr, j, "P1nsm", L);
 				for (uint j=32; j<=30+_nf; j++)
@@ -57,12 +53,11 @@ namespace Candia2
 				for (std::thread & t : threads)
 					t.join();
 
-                std::println("=============== END THREAD OUTPUT ====================");
-				std::println("[THREAD] Finished performing threaded NLO non-singlet evolution.");
+                log(LOG_INFO, "THREAD", "=============== END THREAD OUTPUT ====================");
+				log(LOG_INFO, "THREAD", "Finished performing threaded NLO non-singlet evolution.");
 			} break;
-			case 2: // NNLO
-			{
-				std::println("[THREAD] Performing NNLO non-singlet evolution threaded.");
+			case 2: { // NNLO
+				log(LOG_INFO, "THREAD", "Performing NNLO non-singlet evolution threaded.");
 
                 for (uint j=26; j<=24+_nf; ++j)
                     arr.get()[j] = _C2[j][0][0][0];
@@ -77,7 +72,7 @@ namespace Candia2
 				std::array<std::string, 2> nsp{"P1nsp", "P2nsp"};
 				std::array<std::string, 2> nsv{"P1nsm", "P2nsv"};
 
-                std::println("=============== BEGIN THREAD OUTPUT ====================");
+                log(LOG_INFO, "THREAD", "=============== BEGIN THREAD OUTPUT ====================");
 				for (uint j=26; j<=24+_nf; j++)
 					threads.emplace_back(&DGLAPSolver::_mt_EvolveDistribution_NS_NNLO, this, arr, j, nsm, L);
 				for (uint j=32; j<=30+_nf; j++)
@@ -87,12 +82,11 @@ namespace Candia2
 				for (std::thread & t : threads)
 					t.join();
 
-                std::println("=============== END THREAD OUTPUT ====================");
-				std::println("[THREAD] Finished performing threaded NNLO non-singlet evolution.");
+                log(LOG_INFO, "THREAD", "=============== END THREAD OUTPUT ====================");
+				log(LOG_INFO, "THREAD", "Finished performing threaded NNLO non-singlet evolution.");
 			} break;
-			case 3: // N3LO nonsinglet
-			{
-				std::println("[THREAD] Performing N3LO non-singlet evolution threaded.");
+			case 3: { // N3LO
+				log(LOG_INFO, "THREAD", "Performing N3LO non-singlet evolution threaded.");
 
 				for (uint j=26; j<=24+_nf; ++j)
                     arr.get()[j] = _D2[j][0][0][0][0];
@@ -107,7 +101,7 @@ namespace Candia2
 				std::array<std::string, 3> nsp{"P1nsp", "P2nsp", "P3nsp"};
 				std::array<std::string, 3> nsv{"P1nsm", "P2nsv", "P3nsv"};
 
-				std::println("=============== BEGIN THREAD OUTPUT ====================");
+				log(LOG_INFO, "THREAD", "=============== BEGIN THREAD OUTPUT ====================");
 				for (uint j=26; j<=24+_nf; j++)
 					threads.emplace_back(&DGLAPSolver::_mt_EvolveDistribution_NS_N3LO, this, arr, j, nsm, L);
 				for (uint j=32; j<=30+_nf; j++)
@@ -117,8 +111,8 @@ namespace Candia2
 				for (std::thread & t : threads)
 					t.join();
 
-				std::println("=============== END THREAD OUTPUT ====================");
-				std::println("[THREAD] Finished performing threaded N3LO non-singlet evolution.");
+				log(LOG_INFO, "THREAD", "=============== END THREAD OUTPUT ====================");
+				log(LOG_INFO, "THREAD", "Finished performing threaded N3LO non-singlet evolution.");
 			} break;
 		}
 	}
@@ -128,11 +122,9 @@ namespace Candia2
         std::reference_wrapper<std::vector<ArrayGrid>> arr, 
         uint j, double L1)
     {
-        for (uint n=0; n<_iterations-1; n++)
-		{
-            std::println("  [j={}] Iteration {}/{}", j, n, _iterations-1);
-			for (uint k=0; k<_grid.size()-1; k++)
-            {
+        for (uint n=0; n<_iterations-1; n++) {
+            log(LOG_INFO, "THREAD", "  [j={}] Iteration {}/{}", j, n, _iterations-1);
+			for (uint k=0; k<_grid.size()-1; k++) {
 				_A2[j][1][k] = recrelLO(_A2[j][0], k, getExpression("P0ns"));
                 arr.get()[j][k] += _A2[j][1][k]*std::pow(L1, n)/factorial(n);
             }
@@ -145,13 +137,10 @@ namespace Candia2
     {
         double const L1 = L[0];
         double const L2 = L[1];
-        for (uint s=1; s<_iterations; s++)
-        {
-            std::println("  [j={}] Iteration {}/{}", j, s, _iterations-1);
-            for (uint k=0; k<_grid.size()-1;k++)
-            {
-                for (uint n=1; n<=s; n++)
-                {
+        for (uint s=1; s<_iterations; s++) {
+            log(LOG_INFO, "THREAD", "  [j={}] Iteration {}/{}", j, s, _iterations-1);
+            for (uint k=0; k<_grid.size()-1;k++) {
+                for (uint n=1; n<=s; n++) {
                     _B2[j][1][n][k] = recrelNLO_1(_B2[j][0][n-1], k, getExpression("P0ns"));
                     arr.get()[j][k] += _B2[j][1][n][k]*std::pow(L1,n)*std::pow(L2,s-n)/factorial(n)/factorial(s-n);
                 }
@@ -177,16 +166,12 @@ namespace Candia2
         double const L2 = L[1];
         double const L3 = L[2];
 
-        for (uint s=1; s<_iterations; s++)
-        {
-            std::println("  [j={}] Iteration {}/{}", j, s, _iterations-1);
-            for (uint k=0; k<_grid.size()-1; k++)
-            {
+        for (uint s=1; s<_iterations; s++) {
+            log(LOG_INFO, "THREAD", "  [j={}] Iteration {}/{}", j, s, _iterations-1);
+            for (uint k=0; k<_grid.size()-1; k++) {
                 // recrel #1:
-                for (uint t=1; t<=s; t++)
-                {
-                    for (uint n=1; n<=t; n++)
-                    {
+                for (uint t=1; t<=s; t++) {
+                    for (uint n=1; n<=t; n++) {
                         double recrel = recrelNNLO_1(_C2[j][0][t-1][n-1], k, getExpression("P0ns"));
                         _C2[j][1][t][n][k] = recrel;
 
@@ -222,8 +207,7 @@ namespace Candia2
                 // remaining positive and the loop continues (very bad!)
 
                 // recrel #3:
-                for (int t=s-1; t>=0; t--)
-                {
+                for (int t=s-1; t>=0; t--) {
                     double fac1 = -2.0*_alpha_s.beta1()*(_C2[j][1][t+1][0][k] + _C2[j][1][t+1][1][k]);
                     double fac2 = recrelNNLO_3(_C2[j][0][t][0], k, 
                         getExpression("P0ns"), getExpression(P[0]));
@@ -239,8 +223,7 @@ namespace Candia2
                 }
             }
 
-            for (uint t=0; t<=s; ++t)
-            {
+            for (uint t=0; t<=s; ++t) {
                 for (uint n=0; n<=t; ++n)
                     _C2[j][0][t][n] = _C2[j][1][t][n];
             }
@@ -261,18 +244,13 @@ namespace Candia2
         double c = _c[_nf];
         double gamma = (r1*r1 + r1*b + c)*_alpha_s.beta3();
 
-        for (uint s=1; s<_iterations; s++)
-        {
-			std::println("  [j={}] Iteration {}/{}", j, s, _iterations-1);
-            for (uint k=0; k<_grid.size()-1; k++)
-            {
+        for (uint s=1; s<_iterations; s++) {
+			log(LOG_INFO, "THREAD", "  [j={}] Iteration {}/{}", j, s, _iterations-1);
+            for (uint k=0; k<_grid.size()-1; k++) {
                 // recrel #1:
-                for (uint t=1; t<=s; t++)
-                {
-                    for (uint m=1; m<=t; m++)
-                    {
-                        for (uint n=1; n<=m; n++)
-                        {
+                for (uint t=1; t<=s; t++) {
+                    for (uint m=1; m<=t; m++) {
+                        for (uint n=1; n<=m; n++) {
                             _D2[j][1][t][m][n][k] = recrelN3LO_1(_D2[j][0][t-1][m-1][n-1], k, getExpression("P0ns"));
 
                             double orig = _D2[j][1][t][m][n][k];
@@ -322,8 +300,7 @@ namespace Candia2
                 }
 
                 // recrel #3:
-                for (int m=s-1; m>=0; m--)
-                {
+                for (int m=s-1; m>=0; m--) {
                     double fac1 = -(
                         16.0*PI_2*_alpha_s.beta1() + 4.0*PI*r1*_alpha_s.beta2() + r1*r1*_alpha_s.beta3()
                     ) * _D2[j][1][s][m+1][1][k];
@@ -350,10 +327,8 @@ namespace Candia2
                 }
 
                 // recrel #4:
-                for (int t=s-1; t>=0; t--)
-                {
-                    for (int m=t; m>=0; m--)
-                    {
+                for (int t=s-1; t>=0; t--) {
+                    for (int m=t; m>=0; m--) {
                         double fac1a = -2.0*b*gamma;
                         double fac1b = 32*PI_2*(b+r1)*_alpha_s.beta1() - 8*PI*c*_alpha_s.beta2() - 2*c*r1*_alpha_s.beta3();
                         double fac1 = fac1a*_D2[j][1][t+1][m+1][0][k] + fac1b*_D2[j][1][t+1][m+1][1][k];
@@ -380,10 +355,8 @@ namespace Candia2
                 }
             }
 
-            for (uint t=0; t<=s; ++t)
-            {
-                for (uint m=0; m<=s; ++m)
-                {
+            for (uint t=0; t<=s; ++t) {
+                for (uint m=0; m<=s; ++m) {
                     for (uint n=0; n<=s; ++n)
                         _D2[j][0][t][m][n] = _D2[j][1][t][m][n];
                 }

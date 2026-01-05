@@ -1,7 +1,5 @@
-#include "Candia-v2/Common.hpp"
 #include "Candia-v2/Expression.hpp"
 
-#include <print>
 #include <cmath>
 
 namespace Candia2
@@ -13,10 +11,8 @@ namespace Candia2
 		_plus_cache[1.0] = _plus_func(1.0);
 		_delta_cache[1.0] = _delta_func(1.0);
 
-		for (double x : grid_points)
-		{
-			for (double y : gauss_points)
-			{
+		for (double x : grid_points) {
+			for (double y : gauss_points) {
 				double a = std::pow(x, 1.0-y);
 				double b = std::pow(x, y);
 			
@@ -29,14 +25,13 @@ namespace Candia2
 
     double Expression::operator()(double x, uint function_part)
 	{
-		switch(function_part)
-		{
+		switch(function_part) {
 			case REGULAR: return regular(x);
 			case PLUS: return plus(x);
 			case DELTA: return delta(x);
 		}
-		std::println("[Expression: ERROR] operator()(): Invalid function part ({}).", function_part);
-		exit(EXIT_FAILURE);
+		log(LOG_ERROR, "Expression::operator()()", "Invalid function part ({}).", function_part);
+		return 0.0; // unreachable
 	}
 	
 	double Expression::_reg_func(double x) const

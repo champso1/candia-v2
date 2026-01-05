@@ -4,8 +4,6 @@
 #include "Candia-v2/Common.hpp"
 #include "Candia-v2/Expression.hpp"
 
-#include <print>
-
 #include <ome/ome.h>
 
 namespace Candia2
@@ -24,9 +22,7 @@ namespace Candia2
 
 		inline static void update(double lm, uint nf)
 		{
-			std::println("[OME] Setting L_M = {}, nf = {}", lm, nf);
-			_lm = lm;
-			_nf = nf;
+			log(LOG_INFO, "OME", "Setting L_M = {}, nf = {}", lm, nf);
 		}
 	};
 

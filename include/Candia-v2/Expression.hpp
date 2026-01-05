@@ -30,7 +30,6 @@ namespace Candia2
 		};
 
 		virtual void fill(array_type const& grid_points, array_type const& gauss_points);
-		// virtual void add_point(double x, uint function_part);
 
 		inline virtual double regular(double x) { return _reg_cache[x]; }
 		inline virtual double plus(double x) { return _plus_cache[x]; }

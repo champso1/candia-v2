@@ -996,8 +996,7 @@ namespace Candia2
 		// The selected approximations for nf = 3, 4, 5
 		double P3psApp1 = P3ps01;
 		double P3psApp2 = P3ps01;
-		if (_nf <= 3)
-		{
+		if (_nf <= 3) {
 			P3psApp1 +=
 				+ 67731.  * x1 * dl * xm
 				+ 274100. * x1 * xm
@@ -1020,9 +1019,7 @@ namespace Candia2
 				- 2801.2  * x1 * dlm
 				- 1986.9  * x1 * dlm2
 				- 6005.9  * x1 * x1 * dlm2;
-		}
-		else if (_nf == 4)
-		{
+		} else if (_nf == 4) {
 			P3psApp1 +=
 				+ 90154.  * x1 * dl *xm
 				+ 359084. * x1 * xm
@@ -1045,9 +1042,7 @@ namespace Candia2
 				- 1472.7  * x1 * dlm
 				- 1997.2  * x1 * dlm2
 				- 8123.3  * x1 * x1 * dlm2;
-		}
-		else if (_nf >= 5)
-		{
+		} else if (_nf >= 5) {
 			P3psApp1 +=
 				+ 112481. * x1 * dl * xm
 				+ 440555. * x1 * xm
@@ -1204,8 +1199,7 @@ namespace Candia2
 			// The selected approximations for nf = 3, 4, 5
 			double P3psApp1 = P3ps01;
 			double P3psApp2 = P3ps01;
-			if (_nf <= 3)
-			{
+			if (_nf <= 3) {
 				P3psApp1 +=
 					+ 67731.  * x1 * dl * xm
 					+ 274100. * x1 * xm
@@ -1228,9 +1222,7 @@ namespace Candia2
 					- 2801.2  * x1 * dlm
 					- 1986.9  * x1 * dlm2
 					- 6005.9  * x1 * x1 * dlm2;
-			}
-			else if (_nf == 4)
-			{
+			} else if (_nf == 4) {
 				P3psApp1 +=
 					+ 90154.  * x1 * dl *xm
 					+ 359084. * x1 * xm
@@ -1253,9 +1245,7 @@ namespace Candia2
 					- 1472.7  * x1 * dlm
 					- 1997.2  * x1 * dlm2
 					- 8123.3  * x1 * x1 * dlm2;
-			}
-			else if (_nf >= 5)
-			{
+			} else if (_nf >= 5) {
 				P3psApp1 +=
 					+ 112481. * x1 * dl * xm
 					+ 440555. * x1 * xm
@@ -1403,8 +1393,7 @@ namespace Candia2
 		// The selected approximations for nf = 3, 4, 5
 		double P3qgApp1 = P3qg01;
 		double P3qgApp2 = P3qg01;
-		if (_nf <= 3)
-		{
+		if (_nf <= 3) {
 			P3qgApp1 +=
 				+ 187500. * xm * dl
 				+ 826060. * xm * x1
@@ -1429,9 +1418,7 @@ namespace Candia2
 				- 11425.  * dlm2
 				- 75323.  * dlm
 				+ 282836. * dl * dlm;
-		}
-		else if (_nf == 4)
-		{
+		} else if (_nf == 4) {
 			P3qgApp1 +=
 				+ 250000.  * xm * dl
 				+ 1089180. * xm * x1
@@ -1456,9 +1443,7 @@ namespace Candia2
 				- 13864.  * dlm2
 				- 100922. * dlm
 				+ 343243. * dl * dlm;
-		}
-		else if (_nf >= 5)
-		{
+		} else if (_nf >= 5) {
 			P3qgApp1 +=
 				+ 312500.  * xm * dl
 				+ 1345700. * xm * x1
@@ -1485,8 +1470,6 @@ namespace Candia2
 				+ 385995. * dl * dlm;
 		}
 
-		// We return (for now) one of the two error-band boundaries or the
-		// present best estimate, their average
 		double res = std::numeric_limits<double>::max();
 		if (_imod == 1)
 			res = P3qgApp1;
@@ -1546,8 +1529,7 @@ namespace Candia2
 		// The selected approximations for nf = 3, 4, 5
 		double P3gqApp1 = P3gq01;
 		double P3gqApp2 = P3gq01;
-		if (_nf <= 3)
-		{
+		if (_nf <= 3) {
 			P3gqApp1 +=
 				+ 6.       * bfkl1 * xm * dl
 				- 744384.  * xm * x1
@@ -1572,9 +1554,7 @@ namespace Candia2
 				+ 136063.  * dlm2
 				+ 829482.  * dlm
 				- 2359050. * dl * dlm;
-		}
-		else if (_nf == 4)
-		{
+		} else if (_nf == 4) {
 			P3gqApp1 +=
 				+ 6.       * bfkl1 * xm * dl
 				- 743535.  * xm * x1
@@ -1599,9 +1579,7 @@ namespace Candia2
 				+ 124425.  * dlm2
 				+ 762435.  * dlm
 				- 2193335. * dl * dlm;
-		}
-		else if (_nf >= 5)
-		{
+		} else if (_nf >= 5) {
 			P3gqApp1 +=
 				+ 6.      * bfkl1 * xm * dl
 				- 785864. * xm * x1
@@ -1674,8 +1652,7 @@ namespace Candia2
 		// The selected approximations for nf = 3, 4, 5
 		double P3ggApp1 = P3gg01;
 		double P3ggApp2 = P3gg01;
-		if (_nf <= 3)
-		{
+		if (_nf <= 3) {
 			P3ggApp1 +=
 				+ 3.4     * bfkl1 * dl * xm
 				- 345063. * x1 * xm
@@ -1690,9 +1667,7 @@ namespace Candia2
 				- 1352233. * dl
 				+ 203298.  * x1 * dlm2
 				+ 39112.   * x1 * dlm3;
-		}
-		else if (_nf == 4)
-		{
+		} else if (_nf == 4) {
 			P3ggApp1 +=
 				+ 3.4     * bfkl1 * dl * xm
 				- 342625. * x1 * xm
@@ -1707,9 +1682,7 @@ namespace Candia2
 				- 1334919. * dl
 				+ 191263.  * x1 * dlm2
 				+ 36867.   * x1 * dlm3;
-		}
-		else if (_nf >= 5)
-		{
+		} else if (_nf >= 5) {
 			P3ggApp1 +=
 				+ 3.4     * bfkl1 * dl * xm
 				- 337540. * x1 * xm

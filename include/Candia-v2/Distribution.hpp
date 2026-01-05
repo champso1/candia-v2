@@ -23,7 +23,7 @@ namespace Candia2
 			const double Q0, const double alpha0, const uint nfi,
 			std::array<double,8> const& masses) 
 			: _Q0(Q0), _alpha0(alpha0), _nfi(nfi), _masses(masses) 
-		{ }
+		{}
 		virtual ~Distribution() = default;
 
 		inline double Q0() const { return _Q0; }

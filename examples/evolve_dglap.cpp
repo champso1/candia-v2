@@ -6,7 +6,6 @@
 #include <fstream>
 #include <numeric>
 #include <cstdlib>
-#include <print>
 #include <chrono>
 #include <filesystem>
 using namespace std;
@@ -43,13 +42,9 @@ static void outputData(
 	outfile_ss << "-g" << num_grid_points << "-i" << iterations << "-t" << trunc_idx << "-r" << setprecision(2) << kr << ".dat";
 	string outfile_name = outfile_ss.str();
 	fs::path datafiledir_path = fs::current_path()/DATAFILEDIR;
-	if (!fs::exists(datafiledir_path))
-	{
+	if (!fs::exists(datafiledir_path)) {
 		if (!fs::create_directory(datafiledir_path))
-		{
-			println("[ERROR] evolve.cpp: failed to create output directory for datafiles.");
-			exit(EXIT_FAILURE);
-		}
+			log(LOG_ERROR, "evolve.cpp", "failed to create output directory for datafiles.");
 	}
 	fs::path datafile_path = datafiledir_path/outfile_name;
 	ofstream outfile(datafile_path);
@@ -75,22 +70,18 @@ static void outputData(
 	iota(dists.begin(), dists.end(), 0);
 
 	// print them out
-	for (uint k=0; k<grid.size(); k++)
-	{
+	for (uint k=0; k<grid.size(); k++) {
 		outfile << setw(15) << setprecision(8) << grid.at(k) << ' ';
 		
 		outfile << setprecision(8);	
 		for (const uint j : dists)
-		{
 			outfile << setw(15) << F[j][k] << ' ';
-		}
 		outfile << '\n';
 	}
 }
 
 int main(int argc, char *argv[]) {
-	if (argc != 6)
-	{
+	if (argc != 6) {
 		usage();
 		exit(EXIT_FAILURE);
 	}
@@ -117,7 +108,7 @@ int main(int argc, char *argv[]) {
 	auto F = solver.evolve();
 	auto tf = chrono::high_resolution_clock::now();
 	chrono::duration<double, ratio<60>> mins = tf-t0;
-	println("Evolution took {}.", mins);
+	std::cout << "Evolution took " << mins << std::endl;
 	
 	outputData(F, xtab, grid, order, num_grid_points, iterations, trunc_idx, kr);
 }

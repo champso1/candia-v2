@@ -13,22 +13,12 @@ namespace Candia2
 
 		base_type _base{};
 	public:
-		explicit ArrayGrid(size_type size)
-			: _base(size, 0.0)
-		{}
-		ArrayGrid(base_type const& points)
-			: _base{points}
-		{}
-
-		ArrayGrid(ArrayGrid const& other)
-			: _base(other._base)
-		{}
-		inline void operator=(ArrayGrid const& other)
-		{
-			_base = other._base;
-		}
-
+		explicit ArrayGrid(size_type size) : _base(size, 0.0) {}
+		ArrayGrid(base_type const& points) : _base{points} {}
+		ArrayGrid(ArrayGrid const& other) : _base(other._base) {}
 		ArrayGrid(ArrayGrid&& other) = delete;
+		
+		inline void operator=(ArrayGrid const& other) { _base = other._base; }
 		void operator=(ArrayGrid&& other) = delete;
 
 		~ArrayGrid() = default;

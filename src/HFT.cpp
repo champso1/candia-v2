@@ -1,23 +1,17 @@
 #include "Candia-v2/Candia.hpp"
 #include "Candia-v2/OperatorMatrixElements.hpp"
 
-#include <print>
-
 namespace Candia2
 {
     void DGLAPSolver::heavyFlavorTreatment()
     {
-		std::println("[DGLAP] Treating heavy flavors: {}th quark mass threshold (mass {})", _nf+1, _alpha_s.masses(_nf+1));
+		log(LOG_INFO, "HFT", "Treating heavy flavors: {}th quark mass threshold (mass {})", _nf+1, _alpha_s.masses(_nf+1));
 		OpMatElem::update(-_log_mur2_muf2, _nf);
-		if (!Grid::splitN3LOIntervals())
-		{
+		if (!Grid::splitN3LOIntervals()) {
 			for (auto& [_, expr] : _expressions)
 				expr->fill(_grid.points(), _grid.abscissae());
-		}
-		else
-		{
-			for (auto& [_, expr] : _expressions)
-			{
+		} else {
+			for (auto& [_, expr] : _expressions) {
 				expr->fill(_grid.points(), _grid.abscissae_low());
 				expr->fill(_grid.points(), _grid.abscissae_mid());
 				expr->fill(_grid.points(), _grid.abscissae_high());
@@ -31,7 +25,7 @@ namespace Candia2
 		// we just store them in the s=1 array, and modify the s=0 array
 		// (which are the initial conditions for the next set of iterations
 		// at the next nf
-		std::print("[DGLAP] Creating copy of pre-threshold distributions... ");
+		log(LOG_INFO, "HFT", "Creating copy of pre-threshold distributions... ");
         
         std::vector<ArrayGrid> arr(13, ArrayGrid{_grid.size()});
 		std::vector<ArrayGrid> arr_singlet(2, ArrayGrid{_grid.size()});
@@ -39,31 +33,23 @@ namespace Candia2
 		for (uint j=0; j<=1; ++j)
 			arr_singlet[j] = _S2[0][j][0];
 		
-		if (_order == 2) 
-		{
-			for (uint i=1; i<=_nf; i++)
-			{
+		if (_order == 2) {
+			for (uint i=1; i<=_nf; i++) {
 				for (uint j=i; j<=i+6; j+=6)
 					arr[j] = _C2[j][0][0][0];
 			}
-		}
-		else if (_order == 3)
-		{
-            for (uint i=1; i<=_nf; i++)
-			{
+		} else if (_order == 3) {
+            for (uint i=1; i<=_nf; i++) {
 				for (uint j=i; j<=i+6; j+=6)
 					arr[j] = _D2[j][0][0][0][0];
 			}
         }
-		std::println("Done.");
 
 		double as = _alpha_s.post(_nf+1);
-		std::println("[DGLAP] Value of alpha_s post threshold: {}", as);
+		log(LOG_INFO, "HFT", "Value of alpha_s post threshold: {}", as);
 
-		if (_order == 2)
-		{
-			for (uint k=0; k<_grid.size()-1;k++)
-			{
+		if (_order == 2) {
+			for (uint k=0; k<_grid.size()-1;k++) {
 				// q
 				for (uint j=1; j<=_nf; j++)
 					HFT_NNLO1(arr[j], k, _C2[j][0][0][0]);
@@ -74,13 +60,9 @@ namespace Candia2
 				HFT_NNLO2(arr_singlet[0], arr_singlet[1], k); // gluon
 				HFT_NNLO3(arr_singlet[0], arr_singlet[1], k, _C2[_nf+1][0][0][0], _C2[_nf+1+6][0][0][0]); // heavy flavor
 			}
-		}
-		else if (_order == 3)
-		{
-			if (_use_n3lo_matching_conditions)
-			{
-				for (uint k=0; k<_grid.size()-1;k++)
-				{
+		} else if (_order == 3) {
+			if (_use_n3lo_matching_conditions) {
+				for (uint k=0; k<_grid.size()-1;k++) {
 					const double fac_n3lo = as*as*as/(64.0*PI_3);
 					const double convSPa = _grid.convolution(arr_singlet[1], getExpression("A3psqq"), k);
 					const double convSPb = _grid.convolution(arr_singlet[0], getExpression("A3sqg"), k);
@@ -96,11 +78,8 @@ namespace Candia2
 					HFT_N3LO3(arr_singlet[0], arr_singlet[1], k); // gluon
 					HFT_N3LO4(arr_singlet[0], arr_singlet[1], k); // heavy flavor
 				}
-			}
-			else
-			{
-				for (uint k=0; k<_grid.size()-1;k++)
-				{
+			} else {
+				for (uint k=0; k<_grid.size()-1;k++) {
 					// q
 					for (uint j=1; j<=_nf; j++)
 						HFT_NNLO1(arr[j], k, _D2[j][0][0][0][0]);

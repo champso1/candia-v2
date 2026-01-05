@@ -5,14 +5,14 @@
 #include <concepts>
 #include <ranges>
 #include <numbers>
+#include <format>
+#include <iostream>
 
 using uint = unsigned;
 
 #define UNUSED(x) (void)(x)
-
 #define MAX(x,y) ((x)>=(y)) ? (x) : (y)
 #define MIN(x,y) ((x)<=(y)) ? (x) : (y)
-
 #define EPS 1e-8
 
 
@@ -22,23 +22,19 @@ namespace Candia2
 	constexpr const double CF    = 4.0/3.0;
 	constexpr const double NC    = 3.0;
 	constexpr const double TR    = 0.5;
-
 	constexpr const double MZ    = 91.1876;
-
 	constexpr const double PI = std::numbers::pi;
 	constexpr const double PI_2 = PI*PI;
 	constexpr const double PI_3 = PI*PI*PI;
-
 	constexpr const double Zeta2 = PI*PI/6.0;
 	constexpr const double Zeta3 = 1.2020569031595942854;
 
+	// TODO: better handle defaults
 	constexpr const uint DISTS = 37;
 	constexpr const uint GAUSS_POINTS = 30;
 	constexpr const uint INTERP_POINTS = 4;
 	constexpr const uint DEFAULT_ITERATIONS = 10;
 	constexpr const uint DEFAULT_TRUNC_IDX = 5;
-
-
 
 	template <typename T, uint N>
 	struct MultiDimVector
@@ -61,6 +57,35 @@ namespace Candia2
 
 	template <typename T>
 	concept Arithmetic = std::integral<T> or std::floating_point<T>;
+
+
+	enum LogType : int
+	{
+		LOG_DEBUG = 0,
+		LOG_INFO,
+		LOG_WARNING,
+		LOG_ERROR,
+		LOG_NUM_LOG_TYPES
+	};
+	inline std::array<std::string_view, LOG_NUM_LOG_TYPES> log_string_reps{"DEBUG", "INFO", "WARNING", "ERROR"};
+
+	// TODO: better handle setting global flags
+	inline bool debug_flag{false};
+	inline bool& getDebugFlag() { return debug_flag; }
+
+	template <typename... TArgs>
+	void log(uint log_type, std::string_view prefix, std::format_string<TArgs...> fmt_string, TArgs&& ...args)
+	{
+		if (log_type == LOG_DEBUG && !debug_flag)
+			return;
+			
+		std::string log_text = std::vformat(fmt_string.get(), std::make_format_args(args...));
+		std::string all_text = std::format("[{}] {}: {}\n", log_string_reps[log_type], prefix, log_text);
+		std::cout << all_text;
+
+		if (log_type == LOG_ERROR)
+			exit(EXIT_FAILURE);
+	}
 };
 
 
