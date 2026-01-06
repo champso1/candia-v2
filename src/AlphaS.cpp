@@ -153,6 +153,7 @@ namespace Candia2
 				+ Nf*((2479.0/31104.0) + (1.0/9.0)*Zeta2 + (409.0/1728.0)*_L))/PI_3;
 		}
 
+		log(LOG_INFO, "preMatch()", "--  pre({},{}), L={}, == {}", alpha, _order, _L, res);
 		return res;
 	}
 
@@ -176,17 +177,16 @@ namespace Candia2
 				- Nf*((2479.0/31104.0) + (1.0/9.0)*Zeta2 + (409.0/1728.0)*_L))/PI_3;
 		}
 
+		log(LOG_INFO, "postMatch()", "-- post({},{}), L={}, == {}", alpha, _order, _L, res);
 		return res;
 	}
 
 
 	void AlphaS::calculateThresholdValues()
 	{
-		// here we fix the final value in our masses/energy array
-		// to correspond to the final energy that we are evolving to
-
 		uint nf1{};
 		// set nf1 correctly
+		// TODO: handle kr != 1
 		for (nf1=_nff; _Q0<_masses[nf1]; nf1--);
 		if (nf1<_nfi)
 			nf1++;
@@ -195,25 +195,27 @@ namespace Candia2
 
 		update(nf1);
 
+		// TODO: check some flag to ensure we are doing matching, not just that are >=NNLO
+		// also, we do matching at NLO for mu_R^2/mu_F^2 != 1
 		_post[nf1] = evaluate(_Q0, _masses[nf1], _alpha0);
-		_pre[nf1]  = preMatch(_post[nf1], nf1);
+		_pre[nf1]  = _order >= 2 ? preMatch(_post[nf1], nf1) : _post[nf1];
 
 		_pre[nf1+1] =  evaluate(_Q0, _masses[nf1+1], _alpha0);
-		_post[nf1+1] = postMatch(_pre[nf1+1], nf1);
+		_post[nf1+1] = _order >= 2 ? postMatch(_pre[nf1+1], nf1) : _pre[nf1+1];
 
 		uint nf;
 		for (nf=nf1-1; nf>=_nfi; nf--) {
 			update(nf);
 			
 			_post[nf] = evaluate(_masses[nf+1], _masses[nf], _pre[nf+1]);
-			_pre[nf]  = preMatch(_post[nf], nf);
+			_pre[nf]  = _order >= 2 ? preMatch(_post[nf], nf) : _post[nf];
 		}
 
 		for (nf=nf1+1; nf<=_nff+1; nf++) {
 			update(nf-1);
 			
 			_pre[nf]  = evaluate(_masses[nf-1], _masses[nf], _post[nf-1]);
-			_post[nf] = postMatch(_pre[nf], nf);
+			_post[nf] = _order >= 2 ? postMatch(_pre[nf], nf) : _pre[nf];
 		}
 
 		log(LOG_INFO, "AlphaS", "Computed alpha_s threshold values for VFNS. They are:");
