@@ -17,11 +17,11 @@ Compiling follows the standard CMake procedure:
 ```bash
 mkdir build
 cd build
-cmake .. -DCMAKE_BUILD_TYPE=Release
+cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=<path>
 make -j
 ```
 
-Specifying a release build will of course make the code run significantly faster.
+Specifying a release build will of course make the code run significantly faster. One can specify an installation prefix to install headers and binaries; if not specified, the default location is in a folder called `install` in the root of the project. Installed along with the binaries are some CMake-related files, notably a `candiaConfig.cmake` file -- see [here](#usage-from-other-cmake-projects) for what to do with it.
 
 ## Usage
 
@@ -31,6 +31,20 @@ Once `candia-v2` is built, there will be a directory named `examples` in which t
 - `read_table.cpp`: accepts a data file on the command line and spits out a PDF file containing a table of the results built with LaTeX. Requires `pdflatex` to be available on the command line.
 
 Running the associated executables with no options will indicate how to use each one. `evolve_dglap.cpp` also contains comments on the code related to `candia-v2` (`read_table.cpp` contains just simple C++ code for file I/O and other non-`candia-v2` related stuff).
+
+## Usage from Other CMake Projects
+
+As mentioned in [Compiling][#compiling], installing the project will provide a `candiaConfig.cmake` file. In a `CMakeLists.txt` file in another project, one needs only write
+
+```cmake
+add_executable(main ...)
+# ...
+find_package(candia REQUIRED)
+target_include_directories(main PRIVATE ${CANDIA_INCLUDE_DIR})
+target_link_libraries(main PRIVATE ${CANDIA_LIBRARIES})
+```
+
+CMake will need to know where to find the `candiaConfig.cmake` file, which can be achieved either by appending the installation prefix to the `CMAKE_PREFIX_PATH` variable or specifying the variable `candia_DIR` to point to `<candia-prefix>/lib/cmake/candia`.
 
 ## Attributions and License
 
