@@ -27,8 +27,8 @@ set(sources
 
   src/fortran/hplog.f
   src/fortran/xpij2p.f
-  src/fortran/xpns2p.f
-
+  src/fortran/xpns2p.f)
+set(headers
   include/Candia-v2/AlphaS.hpp
   include/Candia-v2/Candia.hpp
   include/Candia-v2/Common.hpp
@@ -40,23 +40,52 @@ set(sources
   include/Candia-v2/Math.hpp
   include/Candia-v2/OperatorMatrixElements.hpp
   include/Candia-v2/SpecialFuncs.hpp
-  include/Candia-v2/SplittingFn.hpp
-)
+  include/Candia-v2/SplittingFn.hpp)
 
 enable_language(Fortran)
 add_library(hplog STATIC src/fortran/hplog.f)
 target_link_libraries(hplog PUBLIC gfortran)
 
 add_library(candia STATIC)
-target_sources(candia PUBLIC ${sources})
-target_link_libraries(candia PUBLIC hplog ome)
-target_include_directories(candia PUBLIC ${CMAKE_SOURCE_DIR}/include)
+target_sources(candia PRIVATE ${sources})
+target_sources(candia PUBLIC
+  FILE_SET cxx_headers
+  TYPE HEADERS
+  BASE_DIRS ${CMAKE_SOURCE_DIR}/include
+  FILES ${headers})
+
+target_link_libraries(candia PRIVATE hplog ome)
+target_include_directories(candia PUBLIC
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+  $<INSTALL_INTERFACE:include>)
 if (UNIX)
   target_compile_options(candia PUBLIC -pthread)
   target_link_libraries(candia PUBLIC pthread)
 endif()
 
-
-
 add_subdirectory(examples)
 add_subdirectory(tests)
+
+# ====================
+# INSTALLATION
+# ====================
+include(GNUInstallDirs)
+install(TARGETS candia hplog
+  EXPORT candiaTargets
+  FILE_SET cxx_headers DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
+install(EXPORT candiaTargets
+  NAMESPACE candia::
+  FILE candiaTargets.cmake
+  DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/candia)
+
+set(INSTALL_INCLUDE_DIR ${CMAKE_INSTALL_INCLUDEDIR})
+include(CMakePackageConfigHelpers)
+configure_package_config_file(
+  ${CMAKE_CURRENT_SOURCE_DIR}/share/cmake/Config.cmake.in
+  ${CMAKE_CURRENT_BINARY_DIR}/candiaConfig.cmake
+  INSTALL_DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/candia
+  PATH_VARS INSTALL_INCLUDE_DIR)
+install(
+  FILES ${CMAKE_CURRENT_BINARY_DIR}/candiaConfig.cmake
+  DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/candia)
+
