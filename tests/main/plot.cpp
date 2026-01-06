@@ -1,7 +1,6 @@
 #include <cstdlib>
 #include <filesystem>
 #include <fstream>
-#include <print>
 #include <vector>
 #include <algorithm>
 #include <limits>
@@ -11,13 +10,16 @@ using namespace std;
 namespace fs = filesystem;
 using uint = unsigned;
 
+#include "Candia-v2/Common.hpp"
+using namespace Candia2;
+
 static void processFile(fs::path const& p);
 
 int main(int argc, char *argv[])
 {
 	if (argc != 5)
 	{
-		println("[ERROR] please enter the LO, NLO, NNLO, and N3LO data files (in that order).");
+		log(LOG_ERROR, "plot.cpp", "Please enter the LO, NLO, NNLO, and N3LO data files (in that order).");
 		exit(EXIT_FAILURE);
 	}
 
@@ -28,10 +30,7 @@ int main(int argc, char *argv[])
 		filenames,
 		[](fs::path const& p) -> void {
 		if (!fs::exists(p))
-		{
-			println("[ERROR] File \"{}\" does not exist.", p.string());
-			exit(EXIT_FAILURE);
-		}
+			log(LOG_ERROR, "plot.cpp", "File '{}' does not exist.", p.string());
 	});	
 }
 
@@ -48,8 +47,7 @@ static void processFile(fs::path const& p)
 	string line{};
 	istringstream iss{};
 	double x{};
-	while (getline(file_stream, line))
-	{
+	while (getline(file_stream, line)) {
 		iss = istringstream{line};
 		iss >> x; // X value
 		X.emplace_back(x);
@@ -63,22 +61,13 @@ static void processFile(fs::path const& p)
 
 	// make a temporary plots directly to save data file in
 	fs::path plot_path{"plot"};
-	if (!fs::exists(plot_path) || !fs::is_directory(plot_path))
-	{
+	if (!fs::exists(plot_path) || !fs::is_directory(plot_path)) {
 		if (!fs::create_directory(plot_path))
-		{
-			println("[ERROR] Failed to create directory \"{}\".", plot_path.string());
-			exit(EXIT_FAILURE);
-		}
+			log(LOG_ERROR, "plot.cpp", "Failed to create directory '{}'.", plot_path.string());
 	}
-
-
-	
-
 	
 	streampos dash_pos = p.string().find('-');
 	string outfile_name = p.string().substr(0, dash_pos);
 	plot_path /= fs::path{outfile_name};
 	std::ofstream outfile{plot_path};
-
 }

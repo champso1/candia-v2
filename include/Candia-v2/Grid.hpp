@@ -19,17 +19,17 @@ namespace Candia2
 	private:
 		grid_type _points{};
 		ntab_type _ntab;     //!< stores indices for the tabulated grid points
-		
+
+		uint _gauss_points;
 		gauleg_type _Xi{};
 		gauleg_type _Wi{};
-
 		gauleg_type _Xi_low, _Xi_mid{}, _Xi_high{};
 		gauleg_type _Wi_low, _Wi_mid{}, _Wi_high{};
 
 		static bool _split_n3lo_intervals;
 	public:
 		Grid() = delete;
-		Grid(grid_type const& xtab, uint nx, int grid_fill_type=1);
+		Grid(grid_type const& xtab, uint nx, uint gauss_points, int grid_fill_type=1);
 		~Grid() = default;
 
 		static inline bool& splitN3LOIntervals() { return _split_n3lo_intervals; }

@@ -6,11 +6,13 @@
 #include <vector>
 #include <filesystem>
 #include <fstream>
-#include <print>
 #include <cmath>
 using uint = unsigned;
 namespace fs = std::filesystem;
 using dist_type = std::vector<std::vector<double>>;
+
+#include "Candia-v2/Common.hpp"
+using namespace Candia2;
 
 constexpr static char const* TEX_TABLE_DIR{"tex-table"};
 constexpr static char const* TEX_TABLE_TEMPLATE{"table-base.txt"};
@@ -39,8 +41,8 @@ void outputLatexTable(dist_type const& diffs, std::string const& filename, std::
 
 static void usage()
 {
-	std::println("USAGE: ./read <candia-file> <type>");
-	std::println("    <type>: 0=all flavors independently, 1=special combos from benchmark paper");
+	log(LOG_INFO, "read.cpp", "USAGE: ./read <candia-file> <type>");
+	log(LOG_INFO, "read.cpp", "    <type>: 0=all flavors independently, 1=special combos from benchmark paper");
 	exit(EXIT_FAILURE);
 }
 
@@ -56,10 +58,7 @@ int main(int argc, char *argv[])
 	int type;
 	std::from_chars(argv[2], argv[2] + 1, type);
 	if (type != 0 && type != 1)
-	{
-		std::println("[ERROR] compare.cpp: Invalid type: {}", type);
-		usage();
-	}
+		log(LOG_ERROR, "compare.cpp", "[ERROR] compare.cpp: Invalid type: {}", type);
 	
 	std::vector<std::string> cols_all_flavors{"g", "xu", "xd", "xs", "xc", "xb", "xub", "xdb", "xsb", "xcb", "xbb"};
 	std::vector<std::string> cols_special_combos{"xuv", "xdv", "xL-", "xL+", "xs+", "xc+", "xb+", "xg"};
@@ -96,22 +95,18 @@ dist_type read_candia_file(fs::path const &path)
 	while (iss >> temp2)
 		ntab.push_back(temp2);
 
-	while (std::getline(file, line))
-	{
+	while (std::getline(file, line)) {
 		iss = std::istringstream(line);
 		iss >> temp;
-		for (int i=0; i<13; ++i)
-		{
+		for (int i=0; i<13; ++i) {
 			iss >> temp;
 			dists.at(i).push_back(temp);
 		}
 
 	}
 	dist_type dists_ntabbed(13, std::vector<double>(ntab.size()-1, 0.0));
-	for (uint i=0; i<13; ++i)
-	{
-		for (uint j=0; j<ntab.size()-1; ++j)
-		{
+	for (uint i=0; i<13; ++i) {
+		for (uint j=0; j<ntab.size()-1; ++j) {
 			uint idx = ntab[j];
 			dists_ntabbed[i][j] = dists[i][idx];
 		}
@@ -121,11 +116,9 @@ dist_type read_candia_file(fs::path const &path)
 
 dist_type fix_candia_dists(dist_type const& candia, int type)
 {
-	if (type == 0)
-	{
+	if (type == 0) {
 		dist_type candia_dists(11, std::vector<double>(candia.at(0).size(), 0.0));
-		for (int k=0; k<candia_dists.at(0).size(); ++k)
-		{
+		for (int k=0; k<candia_dists.at(0).size(); ++k) {
 			candia_dists.at(0).at(k) =  candia[0][k];
 			candia_dists.at(1).at(k) =  candia[1][k];
 			candia_dists.at(2).at(k) =  candia[2][k];
@@ -139,12 +132,9 @@ dist_type fix_candia_dists(dist_type const& candia, int type)
 			candia_dists.at(10).at(k) = candia[6+5][k];
 		}
 		return candia_dists;
-	}
-	else
-	{
+	} else {
 		dist_type candia_dists(8, std::vector<double>(candia.at(0).size(), 0.0));
-		for (int k=0; k<candia_dists.at(0).size(); ++k)
-		{
+		for (int k=0; k<candia_dists.at(0).size(); ++k) {
 			candia_dists.at(0).at(k) = candia[1][k] - candia[6+1][k];
 			candia_dists.at(1).at(k) = candia[2][k] - candia[6+2][k];
 			candia_dists.at(2).at(k) = candia[2+6][k] - candia[6+1][k];
@@ -166,10 +156,7 @@ void outputLatexTable(dist_type const& data, std::string const& filename, std::v
 	fs::path tex_subtable = tex_table_dir/TEX_SUBTABLE_TEMPLATE;
     fs::path tex_table_footer = tex_table_dir/TEX_FOOTER_TEMPLATE;
 	if (!exists(tex_table_base) || !exists(tex_subtable) || !exists(tex_table_footer))
-	{
-		std::println("[ERROR] compare.cpp: failed to open the tex template files.");
-		exit(EXIT_FAILURE);
-	}
+		log(LOG_ERROR, "compare.cpp", "Failed to open the tex template files.");
 	
 	std::string ncols = std::format("{}", cols.size()+1);
 	int pos;
@@ -183,13 +170,11 @@ void outputLatexTable(dist_type const& data, std::string const& filename, std::v
 		col_def += TEX_TABLE_COL_DEF;
 	main_table.replace(pos, 3, col_def);
 	pos = main_table.find("^COLS^");
-	while (pos != std::string::npos)
-	{
+	while (pos != std::string::npos) {
 		main_table.replace(pos, 6, ncols);
 		pos = main_table.find("^COLS^", pos);
 	}
-	for (std::string const& col : cols | std::ranges::views::take(cols.size()-1))
-	{
+	for (std::string const& col : cols | std::ranges::views::take(cols.size()-1)) {
 		std::string line(TEX_TABLE_COL_LINE);
 		pos = line.find("^COL^");
 		line.replace(pos, 5, col);
@@ -207,8 +192,7 @@ void outputLatexTable(dist_type const& data, std::string const& filename, std::v
 	pos = sub_table.find("^KR^");
 	sub_table.replace(pos, 4, "1.0");
 	pos = sub_table.find("^COLS^");
-	while (pos != std::string::npos)
-	{
+	while (pos != std::string::npos) {
 		sub_table.replace(pos, 6, ncols);
 		pos = sub_table.find("^COLS^", pos);
 	}
@@ -221,21 +205,16 @@ void outputLatexTable(dist_type const& data, std::string const& filename, std::v
 	table_text += sub_table;
 	
 	fs::path latex_build_dir = fs::current_path()/"latex";
-	if (!fs::exists(latex_build_dir))
-	{
+	if (!fs::exists(latex_build_dir)) {
 		if (!fs::create_directory(latex_build_dir))
-		{
-			std::println("[ERROR] compare.cpp: Failed to create latex build directory.");
-			exit(EXIT_FAILURE);
-		}
-		std::println("[INFO] compare.cpp: 'latex' directory created.");
+			log(LOG_ERROR, "compare.cpp", "Failed to create latex build directory.");
+		log(LOG_INFO, "compare.cpp", "'latex' directory created.");
+	} else {
+	    log(LOG_INFO, "compare.cpp", "'latex' directory exists. Continuing.");
 	}
-	else
-	    std::println("[INFO] compare.cpp: 'latex' directory exists. Continuing.");
 
-	std::print("Printing table information...");
-	for (int i=0; i<data.at(0).size(); ++i)
-	{
+	log(LOG_INFO, "read.cpp", "Printing table information...");
+	for (int i=0; i<data.at(0).size(); ++i) {
 		double x = XTAB.at(i);
 		table_text += scientificToLatex(x, 1) + " & ";
 				
@@ -245,7 +224,6 @@ void outputLatexTable(dist_type const& data, std::string const& filename, std::v
 			
 		table_text += " \\\\\n";
 	}
-	std::println("Done.");
 
 	std::ifstream table_footer_s(tex_table_footer);
 	std::string table_footer{std::istreambuf_iterator<char>(table_footer_s), std::istreambuf_iterator<char>{}};
@@ -259,18 +237,17 @@ void outputLatexTable(dist_type const& data, std::string const& filename, std::v
 
 	std::string command = "pdflatex -interaction=batchmode -output-directory latex " + title;
 	system(command.c_str());
-	std::println("Cleaning up auxilliary files...");
+	log(LOG_INFO, "read.cpp", "Cleaning up auxilliary files...");
 
 	fs::path pdf_path(fs::current_path()/fs::path("latex")/fs::path(filename + ".pdf")), new_pdf_path{fs::current_path()};
 	fs::copy(pdf_path, new_pdf_path, fs::copy_options::overwrite_existing);
 	auto dir_view =
 		fs::directory_iterator{fs::current_path()/"latex"}
-		| std::ranges::views::filter([&filename](fs::directory_entry const& e) -> bool
-		    {
-		    	if (e.path().has_extension() && e.path().extension().string() != ".tex" && e.path().filename().string().starts_with(filename))
-		    		return true;
-		    	return false;
-		    });
+		| std::ranges::views::filter([&filename](fs::directory_entry const& e) -> bool {
+			if (e.path().has_extension() && e.path().extension().string() != ".tex" && e.path().filename().string().starts_with(filename))
+				return true;
+			return false;
+		});
 	for (fs::directory_entry const& e : dir_view)
 		fs::remove(e.path());
 }

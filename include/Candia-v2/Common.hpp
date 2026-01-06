@@ -31,7 +31,6 @@ namespace Candia2
 
 	// TODO: better handle defaults
 	constexpr const uint DISTS = 37;
-	constexpr const uint GAUSS_POINTS = 30;
 	constexpr const uint INTERP_POINTS = 4;
 	constexpr const uint DEFAULT_ITERATIONS = 10;
 	constexpr const uint DEFAULT_TRUNC_IDX = 5;
@@ -65,9 +64,10 @@ namespace Candia2
 		LOG_INFO,
 		LOG_WARNING,
 		LOG_ERROR,
+		LOG_ERROR_NOQUIT,
 		LOG_NUM_LOG_TYPES
 	};
-	inline std::array<std::string_view, LOG_NUM_LOG_TYPES> log_string_reps{"DEBUG", "INFO", "WARNING", "ERROR"};
+	inline std::array<std::string_view, LOG_NUM_LOG_TYPES> log_string_reps{"DEBUG", "INFO", "WARNING", "ERROR", "ERROR"};
 
 	// TODO: better handle setting global flags
 	inline bool debug_flag{false};

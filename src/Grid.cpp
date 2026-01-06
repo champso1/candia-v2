@@ -11,12 +11,13 @@ namespace Candia2
 {
 	bool Grid::_split_n3lo_intervals = false;
 	
-	Grid::Grid(std::vector<double> const& xtab, uint nx, int grid_fill_type)
+	Grid::Grid(std::vector<double> const& xtab, uint nx, uint gauss_points, int grid_fill_type)
 		: _points(nx), _ntab{},
-		  _Xi(GAUSS_POINTS), _Wi(GAUSS_POINTS),
-		  _Xi_low(GAUSS_POINTS), _Wi_low(GAUSS_POINTS),
-		  _Xi_mid(GAUSS_POINTS), _Wi_mid(GAUSS_POINTS),
-		  _Xi_high(GAUSS_POINTS), _Wi_high(GAUSS_POINTS)
+		  _gauss_points(gauss_points),
+		  _Xi(gauss_points), _Wi(gauss_points),
+		  _Xi_low(gauss_points), _Wi_low(gauss_points),
+		  _Xi_mid(gauss_points), _Wi_mid(gauss_points),
+		  _Xi_high(gauss_points), _Wi_high(gauss_points)
 	{
 		switch (grid_fill_type)
 		{
@@ -157,7 +158,7 @@ namespace Candia2
 		
 		std::vector<double> points{};
 
-		std::vector<double> log_tab{1e-5, 1e-4, 1e-3, 1e-2, 0.1, 0.5, 0.7, 0.85, 1.0};
+		std::vector<double> log_tab{1e-5, 1e-4, 1e-3, 1e-2, 0.1, 0.5, 0.8, 1.0};
 		std::vector<double> log_xtab{log_tab};
 		std::ranges::transform(log_xtab, log_xtab.begin(), [](double x) -> double{ return std::log10(x); });
 		int num_grid_points_per_bin = nx / xtab.size();
@@ -196,7 +197,7 @@ namespace Candia2
 		const double eps = 3.0e-11; // relative precision
 
 		// abscissae are symmetric:
-		uint n = GAUSS_POINTS; // simpler to type
+		uint n = _gauss_points; // simpler to type
 		double N = static_cast<double>(n);
 		uint m = (n+1)/2;
 		// double x2 = 1.0;
@@ -316,7 +317,7 @@ namespace Candia2
 		double res = (eplus1*std::log1p(-x) + ed1) * A[k];
 
 		if (_split_n3lo_intervals) {
-			for (uint i=0; i<GAUSS_POINTS; i++) {
+			for (uint i=0; i<_gauss_points; i++) {
 				double y = _Xi_low[i];
 				double w = _Wi_low[i];
 
@@ -332,7 +333,7 @@ namespace Candia2
 				res -= w*logx*a*erega*interp1;
 				res -= w*logx*b*(eplusb*interp2 - eplus1*A[k])/(1.0-b);
 			}
-			for (uint i=0; i<GAUSS_POINTS; i++) {
+			for (uint i=0; i<_gauss_points; i++) {
 				double y = _Xi_mid[i];
 				double w = _Wi_mid[i];
 
@@ -348,7 +349,7 @@ namespace Candia2
 				res -= w*logx*a*erega*interp1;
 				res -= w*logx*b*(eplusb*interp2 - eplus1*A[k])/(1.0-b);
 			}
-			for (uint i=0; i<GAUSS_POINTS; i++) {
+			for (uint i=0; i<_gauss_points; i++) {
 				double y = _Xi_high[i];
 				double w = _Wi_high[i];
 
@@ -365,7 +366,7 @@ namespace Candia2
 				res -= w*logx*b*(eplusb*interp2 - eplus1*A[k])/(1.0-b);
 			}
 		} else {
-			for (uint i=0; i<GAUSS_POINTS; i++) {
+			for (uint i=0; i<_gauss_points; i++) {
 				double y = _Xi[i];
 				double w = _Wi[i];
 
