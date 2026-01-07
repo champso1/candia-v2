@@ -59,6 +59,8 @@ namespace Candia2
 		// the n3lo matching conditions in the n3lo evolution
 		bool _use_n3lo_matching_conditions;
 
+		bool _disable_matching{false}; 
+
 		std::map<std::string_view, std::unique_ptr<Expression>> _expressions{};
 		template <typename TExpr, typename... TExprArgs>
 		requires (std::derived_from<TExpr, Expression>)
@@ -81,6 +83,7 @@ namespace Candia2
 		inline AlphaS const& getAlphaS() const { return _alpha_s; }
 		inline Grid const& getGrid() const { return _grid; }
 		inline void useNNLOMatchingAtN3LO() { _use_n3lo_matching_conditions = false;};
+		inline void disableMatching() { _disable_matching = true; }
 		
 		void setEvolutionVariables(uint iterations, uint trunc_idx);
 

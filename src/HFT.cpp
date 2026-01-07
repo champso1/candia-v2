@@ -5,6 +5,11 @@ namespace Candia2
 {
     void DGLAPSolver::heavyFlavorTreatment()
     {
+		if (_disable_matching) {
+			log(LOG_WARNING, "HFT", "Matching has been disabled.");
+			return;
+		}
+		
 		log(LOG_INFO, "HFT", "Treating heavy flavors: {}th quark mass threshold (mass {})", _nf+1, _alpha_s.masses(_nf+1));
 		OpMatElem::update(-_log_mur2_muf2, _nf);
 		if (!Grid::splitN3LOIntervals()) {
