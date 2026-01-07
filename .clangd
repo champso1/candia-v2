@@ -3,7 +3,7 @@ CompileFlags:
 
 InlayHints:
   Enabled: true
-  ParameterNames: true
+  ParameterNames: false
   DeducedTypes: false
   Designators: false
   BlockEnd: false

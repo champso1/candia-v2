@@ -100,6 +100,7 @@ int main(int argc, char *argv[]) {
 	// alphas.setFFNS(4);
 
 	DGLAPSolver solver(order, grid, alphas, Qf, iterations, trunc_idx, *dist, kr, true);
+	solver.disableMatching();
 	// solver.useNNLOMatchingAtN3LO();
 
 	auto t0 = chrono::high_resolution_clock::now();

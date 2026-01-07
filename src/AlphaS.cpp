@@ -153,7 +153,6 @@ namespace Candia2
 				+ Nf*((2479.0/31104.0) + (1.0/9.0)*Zeta2 + (409.0/1728.0)*_L))/PI_3;
 		}
 
-		log(LOG_INFO, "preMatch()", "--  pre({},{}), L={}, == {}", alpha, _order, _L, res);
 		return res;
 	}
 
@@ -177,7 +176,6 @@ namespace Candia2
 				- Nf*((2479.0/31104.0) + (1.0/9.0)*Zeta2 + (409.0/1728.0)*_L))/PI_3;
 		}
 
-		log(LOG_INFO, "postMatch()", "-- post({},{}), L={}, == {}", alpha, _order, _L, res);
 		return res;
 	}
 
