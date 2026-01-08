@@ -172,8 +172,7 @@ namespace Candia2
                 // recrel #1:
                 for (uint t=1; t<=s; t++) {
                     for (uint n=1; n<=t; n++) {
-                        double recrel = recrelNNLO_1(_C2[j][0][t-1][n-1], k, getExpression("P0ns"));
-                        _C2[j][1][t][n][k] = recrel;
+                        _C2[j][1][t][n][k] = recrelNNLO_1(_C2[j][0][t-1][n-1], k, getExpression("P0ns"));
 
                         double orig = _C2[j][1][t][n][k];
                         double powers = std::pow(L1,n)*std::pow(L2,(t-n))*std::pow(L3,(s-t));

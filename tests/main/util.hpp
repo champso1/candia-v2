@@ -113,8 +113,6 @@ static dist_type fix_dists(dist_type const& dists, int type)
 					if (j > 5)
 						idx += 1;
 					dists_fixed.at(j).at(k) = dists[idx][k];
-					
-					std::cout << "-- (" << j << ',' << idx << ") " << cols[type].get()[j] << " = " << dists[idx][k] << '\n';
 				}
 			}
 			return dists_fixed;

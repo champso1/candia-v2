@@ -141,7 +141,7 @@ namespace Candia2
                                 - (_alpha_s.beta1()/(4.0*PI*_alpha_s.beta0()))*_S2[1][j][0][k];
                     }
 
-                    // new NNLO piece non-convolution
+                    // new NNLO piece convolution
                     for (uint k=0; k<_grid.size()-1; k++) {
                         _S2[2][1][1][k] += 
                             recrelS_3(_S2[0][1][0], _S2[1][1][0], _S2[2][1][0], k,
