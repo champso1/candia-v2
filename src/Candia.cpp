@@ -85,23 +85,30 @@ namespace Candia2
 						}
 					}
 				};
-			
-				// also initialize the N3LO coefficients we will need
-				_r1[3] = -1.11203;
-				_b[3] = -2.0 * 0.221422;
-				_c[3] = std::pow(0.221422, 2) + std::pow(1.13108, 2);
 
-				_r1[4] = -1.20902;
-				_b[4] = -2.0 * 0.286759;
-				_c[4] = std::pow(0.286759, 2) + std::pow(1.27279, 2);
+				_r1[1] = -0.965105642503553;
+				_b[1] = -2.0 * 0.1629296392275606;
+				_c[1] = std::pow(0.1629296392275606, 2) + std::pow(0.9535744823175397, 2);
+
+				_r1[2] = -1.0315080774348302;
+				_b[2] = -2.0 * 0.18523659836580222;
+				_c[2] = std::pow(0.18523659836580222, 2) + std::pow(1.0299109343730084, 2);
 				
-				_r1[5] = -1.32059;
-				_b[5] = -2.0 * 0.42477;
-				_c[5] = std::pow(0.42477, 2) + std::pow(1.48548, 2);
+				_r1[3] = -1.1120253073038324;
+				_b[3] = -2.0 * 0.2214224000789979;
+				_c[3] = std::pow(0.2214224000789979, 2) + std::pow(1.131077812338495, 2);
+
+				_r1[4] = -1.2090185772488318;
+				_b[4] = -2.0 * 0.2867586032664649;
+				_c[4] = std::pow(0.2867586032664649, 2) + std::pow(1.272794345339416, 2);
 				
-				_r1[6] = -1.4278;
-				_b[6] = -2.0 * 0.796497;
-				_c[6] = std::pow(0.796497, 2) + std::pow(1.81681, 2);
+				_r1[5] = -1.3205899823870375;
+				_b[5] = -2.0 * 0.42477034063852415;
+				_c[5] = std::pow(0.42477034063852415, 2) + std::pow(1.4854822725151384, 2);
+				
+				_r1[6] = -1.4277979273114205;
+				_b[6] = -2.0 * 0.7964970177083996;
+				_c[6] = std::pow(0.7964970177083996, 2) + std::pow(1.816809978388145, 2);
 			} break;
 			default: {
 				log(LOG_INFO, "DGLAPSolver::DGLAPSolver()", "Found {} for the order, expected a value in range [0, 3].", order);
@@ -480,7 +487,7 @@ namespace Candia2
                             temp_arr[j+6][k]=0.5*(temp_arr[j+18][k]-temp_arr[j+12][k]);
                         }
                     }
-                }
+                } break;
             }
         }
     }
@@ -560,20 +567,19 @@ namespace Candia2
 				L2 = std::log((_alpha1*beta1 + 4.0*PI*beta0)
 								/(_alpha0*beta1 + 4.0*PI*beta0));
 			} else if (_order == 2) {
-				L2 = std::log((16.0*PI_2*beta0 + 4.*PI*_alpha1*beta1 + _alpha1*_alpha1*beta2)
-							/(16.*PI_2*beta0 + 4.*PI*_alpha0*beta1 + _alpha0*_alpha0*beta2));
+				L2 = std::log((16.0*PI_2*beta0 + 4.0*PI*_alpha1*beta1 + _alpha1*_alpha1*beta2)
+							 /(16.0*PI_2*beta0 + 4.0*PI*_alpha0*beta1 + _alpha0*_alpha0*beta2));
 				
 				// analytic continuation for arctan
 				double aux=4.0*beta0*beta2 - beta1*beta1;
-				if (aux >= 0) {
-					L3 = std::atan(
-						2.0*PI*(_alpha1-_alpha0)*std::sqrt(aux)
-						/(2.*PI*(8.*PI*beta0+(_alpha1+_alpha0))+_alpha1*_alpha0*beta2)
+				if (aux > 0) {
+					L3 = std::atan(2.0*PI*(_alpha1-_alpha0)*std::sqrt(aux)
+						          /(2.*PI*(8.*PI*beta0+(_alpha1+_alpha0)*beta1)+_alpha1*_alpha0*beta2)
 					)/std::sqrt(aux);
 				} else {
-					L3 = std::tanh(
-						2.*PI*(_alpha1-_alpha0)*std::sqrt(-aux)
-						/(2.*PI*(8.*PI*beta0+(_alpha1+_alpha0))+_alpha1*_alpha0*beta2)
+					log(LOG_INFO, "DGLAP", "Encountered argument of square root that is <0. Doing analytic continuation.");
+					L3 = std::atanh(2.*PI*(_alpha1-_alpha0)*std::sqrt(-aux)
+						           /(2.*PI*(8.*PI*beta0+(_alpha1+_alpha0)*beta1)+_alpha1*_alpha0*beta2)
 					)/std::sqrt(-aux);
 				}
 			} else if (_order == 3) {

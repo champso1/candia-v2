@@ -57,11 +57,11 @@ namespace Candia2
                     // new NLO piece convolution
                     for (uint k=0; k<_grid.size()-1; k++) {
                         _S2[1][1][1][k] +=
-							recrelS_2(_S2[0][1][0],_S2[1][1][0],k,getExpression("P0qq"),getExpression("P1qq")) +
-							recrelS_2(_S2[0][0][0],_S2[1][0][0],k,getExpression("P0qg"),getExpression("P1qg"));
+							recrelS_2(_S2[1][1][0],_S2[0][1][0],k,getExpression("P0qq"),getExpression("P1qq")) +
+							recrelS_2(_S2[1][0][0],_S2[0][0][0],k,getExpression("P0qg"),getExpression("P1qg"));
 					    _S2[1][0][1][k] +=
-							recrelS_2(_S2[0][1][0],_S2[1][1][0],k,getExpression("P0gq"),getExpression("P1gq")) +
-							recrelS_2(_S2[0][0][0],_S2[1][0][0],k,getExpression("P0gg"),getExpression("P1gg"));
+							recrelS_2(_S2[1][1][0],_S2[0][1][0],k,getExpression("P0gq"),getExpression("P1gq")) +
+							recrelS_2(_S2[1][0][0],_S2[0][0][0],k,getExpression("P0gg"),getExpression("P1gg"));
                     }
 
                     // NLO truncation terms
@@ -80,11 +80,11 @@ namespace Candia2
                         // convolution piece
                         for (uint k=0; k<_grid.size()-1; k++) {
                             _S2[t][1][1][k] += 
-								recrelS_2(_S2[t-1][1][0],_S2[t][1][0],k,getExpression("P0qq"),getExpression("P1qq")) +
-								recrelS_2(_S2[t-1][0][0],_S2[t][0][0],k,getExpression("P0qg"),getExpression("P1qg"));
+								recrelS_2(_S2[t][1][0],_S2[t-1][1][0],k,getExpression("P0qq"),getExpression("P1qq")) +
+								recrelS_2(_S2[t][0][0],_S2[t-1][0][0],k,getExpression("P0qg"),getExpression("P1qg"));
                             _S2[t][0][1][k] += 
-								recrelS_2(_S2[t-1][1][0],_S2[t][1][0],k,getExpression("P0gq"),getExpression("P1gq")) +
-								recrelS_2(_S2[t-1][0][0],_S2[t][0][0],k,getExpression("P0gg"),getExpression("P1gg"));
+								recrelS_2(_S2[t][1][0],_S2[t-1][1][0],k,getExpression("P0gq"),getExpression("P1gq")) +
+								recrelS_2(_S2[t][0][0],_S2[t-1][0][0],k,getExpression("P0gg"),getExpression("P1gg"));
                         }
                     }
 
@@ -124,11 +124,11 @@ namespace Candia2
                     // new NLO piece convolution
                     for (uint k=0; k<_grid.size()-1; k++) {
                         _S2[1][1][1][k] +=
-							recrelS_2(_S2[0][1][0],_S2[1][1][0],k,getExpression("P0qq"),getExpression("P1qq"))+
-							recrelS_2(_S2[0][0][0],_S2[1][0][0],k,getExpression("P0qg"),getExpression("P1qg"));
+							recrelS_2(_S2[1][1][0],_S2[0][1][0],k,getExpression("P0qq"),getExpression("P1qq"))+
+							recrelS_2(_S2[1][0][0],_S2[0][0][0],k,getExpression("P0qg"),getExpression("P1qg"));
 					    _S2[1][0][1][k] +=
-							recrelS_2(_S2[0][1][0],_S2[1][1][0],k,getExpression("P0gq"),getExpression("P1gq"))+
-							recrelS_2(_S2[0][0][0],_S2[1][0][0],k,getExpression("P0gg"),getExpression("P1gg"));
+							recrelS_2(_S2[1][1][0],_S2[0][1][0],k,getExpression("P0gq"),getExpression("P1gq"))+
+							recrelS_2(_S2[1][0][0],_S2[0][0][0],k,getExpression("P0gg"),getExpression("P1gg"));
                     }
 
                     // new NNLO piece non-convolution
@@ -144,14 +144,14 @@ namespace Candia2
                     // new NNLO piece convolution
                     for (uint k=0; k<_grid.size()-1; k++) {
                         _S2[2][1][1][k] += 
-                            recrelS_3(_S2[0][1][0], _S2[1][1][0], _S2[2][1][0], k,
+                            recrelS_3(_S2[2][1][0], _S2[1][1][0], _S2[0][1][0], k,
 								getExpression("P0qq"), getExpression("P1qq"), getExpression("P2qq")) +
-                            recrelS_3(_S2[0][0][0], _S2[1][0][0], _S2[2][0][0], k,
+                            recrelS_3(_S2[2][0][0], _S2[1][0][0], _S2[0][0][0], k,
                                 getExpression("P0qg"), getExpression("P1qg"), getExpression("P2qg"));
                         _S2[2][0][1][k] += 
-                            recrelS_3(_S2[0][1][0], _S2[1][1][0], _S2[2][1][0], k,
+                            recrelS_3(_S2[2][1][0], _S2[1][1][0], _S2[0][1][0], k,
                                 getExpression("P0gq"), getExpression("P1gq"), getExpression("P2gq")) +
-                            recrelS_3(_S2[0][0][0], _S2[1][0][0], _S2[2][0][0], k,
+                            recrelS_3(_S2[2][0][0], _S2[1][0][0], _S2[0][0][0], k,
                                 getExpression("P0gg"), getExpression("P1gg"), getExpression("P2gg"));
                     }
 
@@ -172,14 +172,14 @@ namespace Candia2
                         // convolution piece
                         for (uint k=0; k<_grid.size()-1; k++) {
                             _S2[t][1][1][k] += 
-                                recrelS_3(_S2[t-2][1][0], _S2[t-1][1][0], _S2[t][1][0], k,
+                                recrelS_3(_S2[t][1][0], _S2[t-1][1][0], _S2[t-2][1][0], k,
                                     getExpression("P0qq"), getExpression("P1qq"), getExpression("P2qq")) +
-                                recrelS_3(_S2[t-2][0][0], _S2[t-1][0][0], _S2[t][0][0], k,
+                                recrelS_3(_S2[t][0][0], _S2[t-1][0][0], _S2[t-2][0][0], k,
                                     getExpression("P0qg"), getExpression("P1qg"), getExpression("P2qg"));
                             _S2[t][0][1][k] += 
-                                recrelS_3(_S2[t-2][1][0], _S2[t-1][1][0], _S2[t][1][0], k,
+                                recrelS_3(_S2[t][1][0], _S2[t-1][1][0], _S2[t-2][1][0], k,
                                     getExpression("P0gq"), getExpression("P1gq"), getExpression("P2gq"))+
-                                recrelS_3(_S2[t-2][0][0], _S2[t-1][0][0], _S2[t][0][0], k,
+                                recrelS_3(_S2[t][0][0], _S2[t-1][0][0], _S2[t-2][0][0], k,
                                     getExpression("P0gg"), getExpression("P1gg"), getExpression("P2gg"));
                         }
                     }
@@ -220,11 +220,11 @@ namespace Candia2
                     // new NLO piece convolution
                     for (uint k=0; k<_grid.size()-1; k++) {
                         _S2[1][1][1][k] +=
-							recrelS_2(_S2[0][1][0],_S2[1][1][0],k,getExpression("P0qq"),getExpression("P1qq"))+
-							recrelS_2(_S2[0][0][0],_S2[1][0][0],k,getExpression("P0qg"),getExpression("P1qg"));
+							recrelS_2(_S2[1][1][0],_S2[0][1][0],k,getExpression("P0qq"),getExpression("P1qq"))+
+							recrelS_2(_S2[1][0][0],_S2[0][0][0],k,getExpression("P0qg"),getExpression("P1qg"));
 					    _S2[1][0][1][k] +=
-							recrelS_2(_S2[0][1][0],_S2[1][1][0],k,getExpression("P0gq"),getExpression("P1gq"))+
-							recrelS_2(_S2[0][0][0],_S2[1][0][0],k,getExpression("P0gg"),getExpression("P1gg"));
+							recrelS_2(_S2[1][1][0],_S2[0][1][0],k,getExpression("P0gq"),getExpression("P1gq"))+
+							recrelS_2(_S2[1][0][0],_S2[0][0][0],k,getExpression("P0gg"),getExpression("P1gg"));
                     }
 
                     // new NNLO piece non-convolution
@@ -240,16 +240,15 @@ namespace Candia2
                     // new NNLO piece non-convolution
                     for (uint k=0; k<_grid.size()-1; k++) {
                         _S2[2][1][1][k] += 
-                            recrelS_3(_S2[0][1][0], _S2[1][1][0], _S2[2][1][0], k, 
+                            recrelS_3(_S2[2][1][0], _S2[1][1][0], _S2[0][1][0], k, 
                                 getExpression("P0qq"), getExpression("P1qq"), getExpression("P2qq")) +
-                            recrelS_3(
-                                _S2[0][0][0], _S2[1][0][0], _S2[2][0][0], k,
+                            recrelS_3(_S2[2][0][0], _S2[1][0][0], _S2[0][0][0], k,
                                 getExpression("P0qg"), getExpression("P1qg"), getExpression("P2qg"));
 
                         _S2[2][0][1][k] += 
-                            recrelS_3(_S2[0][1][0], _S2[1][1][0], _S2[2][1][0], k,
+                            recrelS_3(_S2[2][1][0], _S2[1][1][0], _S2[0][1][0], k,
                                 getExpression("P0gq"), getExpression("P1gq"), getExpression("P2gq")) +
-                            recrelS_3(_S2[0][0][0], _S2[1][0][0], _S2[2][0][0], k,
+                            recrelS_3(_S2[2][0][0], _S2[1][0][0], _S2[0][0][0], k,
                                 getExpression("P0gg"), getExpression("P1gg"), getExpression("P2gg"));
                     }
 
@@ -268,17 +267,17 @@ namespace Candia2
                     // new N3LO piece convolution
                     for (uint k=0; k<_grid.size()-1; k++) {
                         _S2[3][1][1][k] += 
-                            recrelS_4(_S2[0][1][0], _S2[1][1][0], _S2[2][1][0], _S2[3][1][0], k,
+                            recrelS_4(_S2[3][1][0], _S2[2][1][0], _S2[1][1][0], _S2[0][1][0], k,
                                 getExpression("P0qq"), getExpression("P1qq"),
 								getExpression("P2qq"), getExpression("P3qq")) +
-                            recrelS_4(_S2[0][0][0], _S2[1][0][0], _S2[2][0][0], _S2[3][0][0], k,
+                            recrelS_4(_S2[3][0][0], _S2[2][0][0], _S2[1][0][0], _S2[0][0][0], k,
                                 getExpression("P0qg"), getExpression("P1qg"),
 								getExpression("P2qg"), getExpression("P3qg"));
                         _S2[3][0][1][k] += 
-                            recrelS_4(_S2[0][1][0], _S2[1][1][0], _S2[2][1][0], _S2[3][1][0], k,
+                            recrelS_4(_S2[3][1][0], _S2[2][1][0], _S2[1][1][0], _S2[0][1][0], k,
                                 getExpression("P0gq"), getExpression("P1gq"),
 								getExpression("P2gq"), getExpression("P3gq")) +
-                            recrelS_4(_S2[0][0][0], _S2[1][0][0], _S2[2][0][0], _S2[3][0][0], k,
+                            recrelS_4(_S2[3][0][0], _S2[2][0][0], _S2[1][0][0], _S2[0][0][0], k,
                                 getExpression("P0gg"), getExpression("P1gg"),
 								getExpression("P2gg"), getExpression("P3gg"));
                     }
@@ -302,17 +301,17 @@ namespace Candia2
                         // convolution piece
                         for (uint k=0; k<_grid.size()-1; k++) {
                             _S2[t][1][1][k] += 
-                                recrelS_4(_S2[t-3][1][0], _S2[t-2][1][0], _S2[t-1][1][0], _S2[t][1][0],k,
+                                recrelS_4(_S2[t][1][0], _S2[t-1][1][0], _S2[t-2][1][0], _S2[t-3][1][0],k,
                                     getExpression("P0qq"), getExpression("P1qq"),
 									getExpression("P2qq"), getExpression("P3qq")) +
-                                recrelS_4(_S2[t-3][0][0], _S2[t-2][0][0], _S2[t-1][0][0], _S2[t][0][0],k,
+                                recrelS_4(_S2[t][0][0], _S2[t-1][0][0], _S2[t-2][0][0], _S2[t-3][0][0],k,
                                     getExpression("P0qg"), getExpression("P1qg"),
 									getExpression("P2qg"), getExpression("P3qg"));
                             _S2[t][0][1][k] += 
-                                recrelS_4(_S2[t-3][1][0], _S2[t-2][1][0], _S2[t-1][1][0], _S2[t][1][0],k,
+                                recrelS_4(_S2[t][1][0], _S2[t-1][1][0], _S2[t-2][1][0], _S2[t-3][1][0],k,
                                     getExpression("P0gq"), getExpression("P1gq"),
 									getExpression("P2gq"), getExpression("P3gq")) +
-                                recrelS_4(_S2[t-3][0][0], _S2[t-2][0][0], _S2[t-1][0][0], _S2[t][0][0],k,
+                                recrelS_4(_S2[t][0][0], _S2[t-1][0][0], _S2[t-2][0][0], _S2[t-3][0][0],k,
                                     getExpression("P0gg"), getExpression("P1gg"),
 									getExpression("P2gg"), getExpression("P3gg"));
                         }

@@ -11,46 +11,53 @@ namespace Candia2
 		return -(2.0/_alpha_s.beta0()) * conv;
 	}
 	
-	double DGLAPSolver::recrelS_2(ArrayGrid& S1,
-		ArrayGrid& S2,
+	double DGLAPSolver::recrelS_2(ArrayGrid& S_i,
+		ArrayGrid& S_im1,
 		uint k,
 		Expression& P0,
 		Expression& P1)
 	{
-		double conv1 = _grid.convolution(S2, P0, k);
-		double conv2 = _grid.convolution(S1, P1, k);
+		// S1 -> S_i
+		// S2 -> S_im1
+		double conv1 = _grid.convolution(S_i, P0, k);
+		double conv2 = _grid.convolution(S_im1, P1, k);
 		
 		double res = conv1 * (2.0/_alpha_s.beta0());
 		res += conv2 / (PI*_alpha_s.beta0());
 
+		// TODO: check to make sure it is S_im1, not S_i, that is convoluted here
 		if (_log_mur2_muf2 != 0.0) {
-		    double convL = _grid.convolution(S1, P0, k);
+		    double convL = _grid.convolution(S_im1, P0, k);
 			res -= _log_mur2_muf2*convL/(2.0*PI);
 		}
 		
 		return -res;
 	}
 
-	double DGLAPSolver::recrelS_3(ArrayGrid& S1,
-		ArrayGrid& S2,
-		ArrayGrid& S3,
+	double DGLAPSolver::recrelS_3(ArrayGrid& S_i,
+		ArrayGrid& S_im1,
+		ArrayGrid& S_im2,
 		uint k,
 		Expression& P0,
 		Expression& P1,
 		Expression& P2)
 	{
-		double conv1 = _grid.convolution(S3, P0, k);
-		double conv2 = _grid.convolution(S2, P1, k);
-		double conv3 = _grid.convolution(S1, P2, k);
+		// S1 -> S_i
+		// S2 -> S_im1
+		// S3 -> S_im2
+		double conv1 = _grid.convolution(S_i, P0, k);
+		double conv2 = _grid.convolution(S_im1, P1, k);
+		double conv3 = _grid.convolution(S_im2, P2, k);
 
-		double res = conv1 * 2.0/_alpha_s.beta0();
-		res += conv2 / (PI*_alpha_s.beta0());
-		res += conv3 / (2.0*PI_2*_alpha_s.beta0());
+		double res = conv1 * (-2.0/_alpha_s.beta0());
+		res -= conv2 / (PI*_alpha_s.beta0());
+		res -= conv3 / (2.0*PI_2*_alpha_s.beta0());
 
+		// TODO: make sure the correct vectors are being convoluted
 		if (_log_mur2_muf2 != 0.0) {
-			double convL1 =  _grid.convolution(S2, P0, k);
-			double convL2 =  _grid.convolution(S1, P1, k);
-			double convL3 =  _grid.convolution(S1, P2, k);
+			double convL1 =  _grid.convolution(S_im1, P0, k);
+			double convL2 =  _grid.convolution(S_i, P1, k);
+			double convL3 =  _grid.convolution(S_i, P2, k);
 
 			res -= _log_mur2_muf2*convL1/(2.0*PI);
 			res += _log_mur2_muf2*convL2 * (_alpha_s.beta0()*_log_mur2_muf2 - (_alpha_s.beta1()/_alpha_s.beta0()))/(8.0*PI_2);
@@ -58,41 +65,47 @@ namespace Candia2
 		}
 		
 		
-		return -res;
+		return res;
 	}
 
-	double DGLAPSolver::recrelS_4(ArrayGrid& S3, // S^{i-3}
-		ArrayGrid& S2, // S^{i-2}
-		ArrayGrid& S1, // S^{i-1}
-		ArrayGrid& S0, // S^{i}
+	// TODO: rename this like the others
+	double DGLAPSolver::recrelS_4(ArrayGrid& S_i,
+		ArrayGrid& S_im1,
+		ArrayGrid& S_im2,
+		ArrayGrid& S_im3,
 		uint k,
 		Expression& P0,
 		Expression& P1,
 		Expression& P2,
 		Expression& P3)
 	{
-		double conv1 = _grid.convolution(S0, P0, k);
-		double conv2 = _grid.convolution(S1, P1, k);
-		double conv3 = _grid.convolution(S2, P2, k);
-		double conv4 = _grid.convolution(S3, P3, k);
+		// S3 -> S_i
+		// S2 -> S_im1
+		// S1 -> S_im2
+		// S0 -> S_im3
+		double conv1 = _grid.convolution(S_i, P0, k);
+		double conv2 = _grid.convolution(S_im1, P1, k);
+		double conv3 = _grid.convolution(S_im2, P2, k);
+		double conv4 = _grid.convolution(S_im3, P3, k);
 
 		double res = -conv1 * (2.0/_alpha_s.beta0());
 		res -= conv2 / (PI*_alpha_s.beta0());
 		res -= conv3 / (2.0*PI_2*_alpha_s.beta0());
 		res -= conv4 / (4.0*PI_3*_alpha_s.beta0());
 
+		// TODO: check if these are the right vectors to be convoluted
 		if (_log_mur2_muf2 != 0.0) {
 			const double beta0 = _alpha_s.beta0();
 			const double beta1 = _alpha_s.beta1();
 			const double beta2 = _alpha_s.beta2();
 			const double L = _log_mur2_muf2;
 			
-		    double convL1 =  _grid.convolution(S1, P0, k);
-			double convL2a = _grid.convolution(S2, P1, k);
-			double convL2b = _grid.convolution(S2, P0, k);
-			double convL3a = _grid.convolution(S3, P2, k);
-			double convL3b = _grid.convolution(S3, P1, k);
-			double convL3c = _grid.convolution(S3, P0, k);
+		    double convL1 =  _grid.convolution(S_im2, P0, k);
+			double convL2a = _grid.convolution(S_im1, P1, k);
+			double convL2b = _grid.convolution(S_im1, P0, k);
+			double convL3a = _grid.convolution(S_i, P2, k);
+			double convL3b = _grid.convolution(S_i, P1, k);
+			double convL3c = _grid.convolution(S_i, P0, k);
 
 			res += (L/(2.0*PI)) * convL1;
 			res += (L/(2.0*PI_2)) * convL2a;
@@ -163,6 +176,7 @@ namespace Candia2
 		double conv = _grid.convolution(C, P2, k);
 		double res = -4.0/_alpha_s.beta2() * conv;
 
+		/*
 		if (_log_mur2_muf2 != 0.0) {
 			const double beta0 = _alpha_s.beta0();
 			const double beta1 = _alpha_s.beta1();
@@ -175,6 +189,7 @@ namespace Candia2
 			res += (4.0*(beta0/beta2)*_log_mur2_muf2) * convL1;
 			res += ((beta1*_log_mur2_muf2 - beta0*beta0*_log_mur2_muf2*_log_mur2_muf2)/beta2) * convL2;
 		}
+		*/
 			
 	    return res;
 	}
@@ -187,10 +202,12 @@ namespace Candia2
 		double conv = _grid.convolution(C, P1, k);
 		double res = -8.0 * conv;
 
+		/*
 		if (_log_mur2_muf2 != 0.0) {
 			double convL = _grid.convolution(C, P0, k);
 			res += (4.0*_alpha_s.beta0()*_log_mur2_muf2) * convL;
 		}
+		*/
 		
 		return res;
 	}

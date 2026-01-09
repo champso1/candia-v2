@@ -136,15 +136,15 @@ namespace Candia2
 			uint k,
 			Expression& P);
 		double recrelS_2(
-			ArrayGrid& S1, ArrayGrid& S2,
+			ArrayGrid& S_i, ArrayGrid& S_im1,
 			uint k,
 			Expression& P0, Expression& P1);
 		double recrelS_3(
-			ArrayGrid& S1, ArrayGrid& S2, ArrayGrid& S3,
+			ArrayGrid& S_i, ArrayGrid& S_im1, ArrayGrid& S_im2,
 			uint k,
 			Expression& P0, Expression& P1, Expression& P2);
 		double recrelS_4(
-			ArrayGrid& S1, ArrayGrid& S2, ArrayGrid& S3, ArrayGrid& S4,
+			ArrayGrid& S_i, ArrayGrid& S_im1, ArrayGrid& S_im2, ArrayGrid& S_im3,
 			uint k,
 			Expression& P0, Expression& P1, Expression& P2, Expression& P3);
 
