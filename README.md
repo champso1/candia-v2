@@ -17,11 +17,13 @@ Compiling follows the standard CMake procedure:
 ```bash
 mkdir build
 cd build
-cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=<path>
+cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=<path> -DENABLE_THREADING=ON
 make -j
 ```
 
 Specifying a release build will of course make the code run significantly faster. One can specify an installation prefix to install headers and binaries; if not specified, the default location is in a folder called `install` in the root of the project. Installed along with the binaries are some CMake-related files, notably a `candiaConfig.cmake` file -- see [here](#usage-from-other-cmake-projects) for what to do with it.
+
+The `ENABLE_THREADING` flag is, by default, off, and will not compile in any threading-relating libraries e.g. pthread on UNIX-like systems. As discussed in the paper, threading can massively increase the speed of the non-singlet evolution, and if your computer is capable, specifying this flag to be `ON` is recommended.
 
 ## Usage
 
