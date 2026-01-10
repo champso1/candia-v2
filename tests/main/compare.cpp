@@ -12,7 +12,11 @@ static std::vector<double> XTAB{1e-5, 1e-4, 1e-3, 1e-2, 0.1, 0.3, 0.5, 0.7, 0.9}
 
 static void usage()
 {
-	log(LOG_INFO, "compare.cpp", "USAGE: ./compare <candia-file> <other-file> <type>");
+	log(LOG_INFO, "compare.cpp", "USAGE: ./compare <candia-file> <other-file> <format> <type>");
+	log(LOG_INFO, "compare.cpp", "    <candia-file>: path to the candia datafile");
+	log(LOG_INFO, "compare.cpp", "    <other-file>: path to the other datafile (should contain only tabulated values)");
+	log(LOG_INFO, "compare.cpp", "    <format>: 0=benchmark format (0.1 -> 1.0^{{-1}}");
+	log(LOG_INFO, "compare.cpp", "              1=normal format (0.1 -> 1e-1)");
 	log(LOG_INFO, "compare.cpp", "    <type>: 0=all flavors independently");
 	log(LOG_INFO, "compare.cpp", "    		  1=special combos from benchmark paper");
 	log(LOG_INFO, "compare.cpp", "    		  2=special combos from benchmark paper with q(-)");
@@ -23,15 +27,16 @@ dist_type compute_diffs(dist_type const& candia, dist_type const& other);
 
 int main(int argc, char *argv[])
 {
-	if (argc != 4)
+	if (argc != 5)
 		usage();
 
 	fs::path candia_filepath{argv[1]}, other_filepath{argv[2]};
 	file_exists(candia_filepath);
 	file_exists(other_filepath);
 
-	int type;
-	std::from_chars(argv[3], argv[3] + 1, type);
+	int type{}, format{};
+	std::from_chars(argv[3], argv[3] + 1, format);
+	std::from_chars(argv[4], argv[4] + 1, type);
 
 	int ncols = cols[type].get().size();
 	
@@ -53,7 +58,7 @@ int main(int argc, char *argv[])
     
 	std::string identifier = candia_filepath.filename().string().substr(0, candia_filepath.filename().string().rfind('.'));
 	std::string latex_filename = std::format("diffs-other-{}", identifier);
-	outputLatexTable(XTAB, diffs, latex_filename, cols[type].get(), true);
+	outputLatexTable(XTAB, diffs, latex_filename, cols[type].get(), true, format == 0);
 }
 
 

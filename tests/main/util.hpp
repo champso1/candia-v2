@@ -13,12 +13,18 @@ namespace fs = std::filesystem;
 using namespace Candia2;
 using dist_type = std::vector<std::vector<double>>;
 
-static std::string scientificToLatex(double num, int precision)
+static std::string scientificToLatex(double num, int precision, bool benchmark_format)
 {
 	int exponent = std::floor(std::log10(std::abs(num)));
 	double mantissa = num / std::pow(10, exponent);
-	return std::vformat("${0: .{1}f}^{{{2:+}}}$",
-		std::make_format_args(mantissa, precision, exponent));
+	if (benchmark_format) {
+		return std::vformat("${0: .{1}f}^{{{2:+}}}$",
+			std::make_format_args(mantissa, precision, exponent));
+	} else {
+		int precision_new = precision-1;
+		return std::vformat("{0: .{1}f}e${2:+}$",
+			std::make_format_args(mantissa, precision_new, exponent));
+	}
 }
 static std::string percentToLatex(double num)
 {
@@ -183,7 +189,7 @@ constexpr static char const* TEX_TABLE_COL_DEF{"r|"};
 static void outputLatexTable(
 	std::vector<double> const& xtab,
 	dist_type const& diffs, std::string const& filename,
-	std::vector<std::string> const& cols, bool use_percentages)
+	std::vector<std::string> const& cols, bool use_percentages, bool benchmark_format)
 {
 	fs::path tex_table_dir = fs::current_path()/TEX_TABLE_DIR;
 	fs::path tex_table_base = tex_table_dir/TEX_TABLE_TEMPLATE;
@@ -247,17 +253,17 @@ static void outputLatexTable(
 	    log(LOG_INFO, "util.hpp", "'latex' directory exists. Continuing.");
 	}
 
-	auto format_val = [b=use_percentages](double val) -> std::string {
+	auto format_val = [b=use_percentages,f=benchmark_format](double val) -> std::string {
 		if (b)
 			return percentToLatex(val);
 		else
-			return scientificToLatex(val, 4);
+			return scientificToLatex(val, 4, f);
 	};
 
 	log(LOG_INFO, "util.hpp", "Printing table information.");
 	for (int i=0; i<diffs.at(0).size(); ++i) {
 		double x = xtab.at(i);
-		table_text += scientificToLatex(x, 1) + " & ";
+		table_text += scientificToLatex(x, 1, benchmark_format) + " & ";
 				
 		for (uint j=0; j<diffs.size()-1; ++j)
 			table_text += format_val(diffs.at(j).at(i)) + " & ";
