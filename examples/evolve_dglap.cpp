@@ -101,7 +101,7 @@ int main(int argc, char *argv[]) {
 	alphas.setVFNS(dist->masses(), dist->nfi());
 	// alphas.setFFNS(4);
 
-	DGLAPSolver solver(order, grid, alphas, Qf, iterations, trunc_idx, *dist, kr, true);
+	DGLAPSolver solver(order, grid, alphas, Qf, iterations, trunc_idx, *dist, kr);
 	solver.useNNLOMatchingAtN3LO();
 
 	auto t0 = chrono::high_resolution_clock::now();

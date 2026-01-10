@@ -5,6 +5,12 @@ set(CMAKE_INSTALL_PREFIX ${CMAKE_SOURCE_DIR}/install)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 
+option(ENABLE_THREADING "Enable multi-threading support" OFF)
+
+if (ENABLE_THREADING)
+  message("candia-v2: Compiling with threading support.")
+endif()
+
 # build all vendor projects first before touching candia
 add_subdirectory(vendor)
 
@@ -13,7 +19,7 @@ set(sources
   src/Candia.cpp
   src/Distribution.cpp
   src/Evolution.cpp
-  src/EvolutionThread.cpp
+#  src/EvolutionThread.cpp
   src/Expression.cpp
   src/FuncArrayGrid.cpp
   src/Grid.cpp
@@ -46,6 +52,8 @@ enable_language(Fortran)
 add_library(hplog STATIC src/fortran/hplog.f)
 target_link_libraries(hplog PUBLIC gfortran)
 
+
+
 add_library(candia STATIC)
 target_sources(candia PRIVATE ${sources})
 target_sources(candia PUBLIC
@@ -54,14 +62,19 @@ target_sources(candia PUBLIC
   BASE_DIRS ${CMAKE_SOURCE_DIR}/include
   FILES ${headers})
 
+if(ENABLE_THREADING)
+  find_package(Threads REQUIRED)
+  target_sources(candia PRIVATE src/EvolutionThread.cpp)
+  target_link_libraries(candia PRIVATE Threads::Threads)
+  target_compile_definitions(candia PRIVATE ENABLE_THREADING=1)
+else()
+  target_compile_definitions(candia PRIVATE ENABLE_THREADING=0)
+endif()
+
 target_link_libraries(candia PRIVATE hplog ome)
 target_include_directories(candia PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:include>)
-if (UNIX)
-  target_compile_options(candia PUBLIC -pthread)
-  target_link_libraries(candia PUBLIC pthread)
-endif()
 
 add_subdirectory(examples)
 add_subdirectory(tests)

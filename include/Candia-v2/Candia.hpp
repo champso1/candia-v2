@@ -48,17 +48,10 @@ namespace Candia2
 		std::array<double,8> _b{};  //!< -2*Re[r2]
 		std::array<double,8> _c{};  //!< |r2|^2
 
-		// TODO: make this a CMAKE definition or some macro of some kind
-		// that way we can avoid linking with pthread or the Windows equivalent
-		// which would be nice for debug builds, since at the moment
-		// I believe we link with it no matter what
-		bool _multi_thread;
-
 		// for purposes of comparing with benchmarks,
 		// this flag lets one enable whether or not to use
 		// the n3lo matching conditions in the n3lo evolution
 		bool _use_n3lo_matching_conditions;
-
 		bool _disable_matching{false}; 
 
 		std::map<std::string_view, std::unique_ptr<Expression>> _expressions{};
@@ -77,7 +70,7 @@ namespace Candia2
 			uint order, Grid const& grid, AlphaS const& alpha_s,
 			double Qf, uint iterations, uint trunc_idx,
 			Distribution const& initial_dist,
-			double kr = 1.0, bool multi_thread = false);
+			double kr = 1.0);
 		~DGLAPSolver();
 		
 		inline AlphaS const& getAlphaS() const { return _alpha_s; }
@@ -102,9 +95,12 @@ namespace Candia2
 		void evolveNonSinglet(
 			std::reference_wrapper<std::vector<ArrayGrid>> arr, 
 			double L1, double L2, double L3, double L4);
+
+#if ENABLE_THREADING
 		void evolveNonSingletThreaded(
 			std::reference_wrapper<std::vector<ArrayGrid>> arr, 
 			double L1, double L2, double L3, double L4);
+#endif
 
 	
 		void heavyFlavorTreatment();

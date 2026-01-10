@@ -32,12 +32,11 @@ namespace Candia2
 		uint order, Grid const& grid, AlphaS const& alpha_s,
 		double Qf, uint iterations, uint trunc_idx,
 		Distribution const& initial_dist,
-		double kr, bool multi_thread) 
+		double kr) 
 		: _order{order},  _grid{grid}, _Qf{Qf},
 		  _alpha_s{alpha_s},
 		  _mur2_muf2{kr}, _log_mur2_muf2{std::log(kr)},
 		  _iterations{iterations}, _trunc_idx{trunc_idx},
-		  _multi_thread{multi_thread},
 		  _use_n3lo_matching_conditions{true}
 	{
 		log(LOG_INFO, "DGLAP", "Evolving with log(mu_R / mu_F) = log({:.1}) = {:.4}.", _mur2_muf2, _log_mur2_muf2);
@@ -602,9 +601,12 @@ namespace Candia2
 				log(LOG_INFO, "DGLAP", "Finished singlet evolution and resummation.");
 
 				log(LOG_INFO, "DGLAP", "Starting non-singlet evolution and resummation...");
-				_multi_thread ? 
-					evolveNonSingletThreaded(arr, L1, L2, L3, L4) : 
-					evolveNonSinglet(arr, L1, L2, L3, L4);
+				
+#if ENABLE_THREADING
+				evolveNonSingletThreaded(arr, L1, L2, L3, L4);
+#else
+				evolveNonSinglet(arr, L1, L2, L3, L4);
+#endif
 				log(LOG_INFO, "DGLAP", "Finished non-singlet evolution and resummation.");
 
 				log(LOG_INFO, "DGLAP", "Fixing distributions...");
