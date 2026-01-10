@@ -34,7 +34,7 @@ Running the associated executables with no options will indicate how to use each
 
 ## Usage from Other CMake Projects
 
-As mentioned in [Compiling][#compiling], installing the project will provide a `candiaConfig.cmake` file. In a `CMakeLists.txt` file in another project, one needs only write
+As mentioned in [Compiling](#compiling), installing the project will provide a `candiaConfig.cmake` file. In a `CMakeLists.txt` file in another project, one needs only write
 
 ```cmake
 add_executable(main ...)
