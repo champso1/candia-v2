@@ -4,40 +4,51 @@
 #include "Candia-v2/Common.hpp"
 
 #include <array>
+#include <memory>
 #include <numbers>
+
+#include "LHAPDF/LHAPDF.h"
 
 namespace Candia2
 {
 
 	class Distribution
 	{
-	protected:
-		double _Q0; //!< chosen initial energy to evaluate alpha_s at
-		double _alpha0; //!< value of alpha_s at chosen initial energy
-		uint _nfi; //!< initial number of massless flavors
-		std::array<double,8> _masses; //!< chosen quark masses
 	public:
-
-		Distribution() = delete; //!< must provide arguments
-		Distribution(
-			const double Q0, const double alpha0, const uint nfi,
-			std::array<double,8> const& masses) 
-			: _Q0(Q0), _alpha0(alpha0), _nfi(nfi), _masses(masses) 
+		using masses_type = std::array<double, 8>;
+	protected:
+		double _Q0{}; //!< chosen initial energy to evaluate alpha_s at
+		double _alpha0{}; //!< value of alpha_s at chosen initial energy
+		uint _nfi{}; //!< initial number of massless flavors
+		masses_type _masses{}; //!< chosen quark masses
+	public:
+		Distribution() = default;	
+		Distribution(double Q0, double a0, uint nfi, masses_type const& masses)	
+			: _Q0{Q0}, _alpha0{a0}, _nfi{nfi}, _masses{masses}
 		{}
 		virtual ~Distribution() = default;
 
 		inline double Q0() const { return _Q0; }
 		inline double alpha0() const { return _alpha0; }
 		inline uint nfi() const { return _nfi; }
-		inline std::array<double,8> const& masses() const { return _masses; }
-		inline double masses(const uint idx) const { return _masses[idx]; }
+		inline masses_type const& masses() const { return _masses; }
+		inline double masses(uint idx) const { return _masses[idx]; }
 
-		virtual double xuv(const double x) const = 0;
-		virtual double xdv(const double x) const = 0;
-		virtual double xg (const double x) const = 0;
-		virtual double xdb(const double x) const = 0;
-		virtual double xub(const double x) const = 0;
-		virtual double xs (const double x) const = 0;
+		virtual double xuv(double x) const = 0;
+		virtual double xdv(double x) const = 0;
+		virtual double xg (double x) const = 0;
+		virtual double xdb(double x) const = 0;
+		virtual double xub(double x) const = 0;
+		virtual double xs (double x) const = 0;
+
+		inline virtual double xu(double x) const { return xuv(x) + xub(x); }
+		inline virtual double xd(double x) const { return xdv(x) + xdb(x); }
+		inline virtual double xqplus(double x) const
+		{ 
+			return xuv(x) + 2.0*xub(x)
+				+ xdv(x) + 2.0*xdb(x)
+				+ 2.0*xs(x);
+		}
 	};
 
 
@@ -51,15 +62,43 @@ namespace Candia2
 	public:
 		LesHouchesDistribution()
 			: Distribution(std::numbers::sqrt2, 0.35, 3, _leshouche_masses)
-		{ }
-		
-		double xuv(const double x) const override;
-		double xdv(const double x) const override;
-		double xg (const double x) const override;
-		double xdb(const double x) const override;
-		double xub(const double x) const override;
-		double xs (const double x) const override;
-	}; // class Distribution
+		{}
+
+		double xuv(double x) const override;
+		double xdv(double x) const override;
+		double xg (double x) const override;
+		double xdb(double x) const override;
+		double xub(double x) const override;
+		double xs (double x) const override;
+	}; 
+
+	class LHAPDFDistribution final : public Distribution
+	{
+	private:
+		static constexpr auto _lhapdf_pdf_deleter = [](LHAPDF::PDF* pdf){ delete pdf; };
+		using lhapdf_pdf_deleter_type = decltype(_lhapdf_pdf_deleter);
+		using lhapdf_pdf_ptr_type = std::unique_ptr<LHAPDF::PDF, lhapdf_pdf_deleter_type>;
+
+		lhapdf_pdf_ptr_type _pdf; //!< actual lhapdf pdf object
+		std::vector<int> _pids;
+
+	public:
+		LHAPDFDistribution(lhapdf_pdf_ptr_type lhapdf_pdf, double Q0);
+
+		static inline lhapdf_pdf_ptr_type make_lhapdf_pdf(std::string const& setname, int num)
+		{
+			return lhapdf_pdf_ptr_type(LHAPDF::mkPDF(setname, num));
+		}
+
+		inline LHAPDF::PDF const& pdf() const { return *_pdf; }
+
+		double xuv(double x) const override;
+		double xdv(double x) const override;
+		double xg (double x) const override;
+		double xdb(double x) const override;
+		double xub(double x) const override;
+		double xs (double x) const override;
+	};
 	
 } // namespace Candia2
 
