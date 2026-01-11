@@ -270,8 +270,8 @@ namespace Candia2
 		double const* xa = &(_points.data()[k]);
 		double const* ya = &(yy.base().data()[k]);
 		
-		static std::array<double, 2*INTERP_POINTS> c{};
-		static std::array<double, 2*INTERP_POINTS> d{};
+		std::array<double, 2*INTERP_POINTS> c{};
+		std::array<double, 2*INTERP_POINTS> d{};
 
 		dif = std::abs(x - xa[0]);
 
