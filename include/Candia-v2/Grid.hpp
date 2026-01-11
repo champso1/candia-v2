@@ -59,7 +59,7 @@ namespace Candia2
 		inline grid_type::iterator end() { return _points.end(); }
 
 
-		uint interpFindIdx(double x) const;
+		int interpFindIdx(double x);
 		double interpolate(grid_type const& y, double x);
 		double interpolate(ArrayGrid& y, double x);
 		double convolution(grid_type const& A, Expression &E, uint k);

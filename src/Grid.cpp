@@ -243,21 +243,20 @@ namespace Candia2
 		}
 	}
 
-    uint Grid::interpFindIdx(double x) const
+    int Grid::interpFindIdx(double x)
 	{
-		int k;
-		for (k=0; x>=_points.at(k); k++) {
-			if (k >= static_cast<int>(size()-1))
-				break;
-		}
+		const static int n = static_cast<int>(size());
+		const static int max_k = static_cast<int>(n-2*INTERP_POINTS);
 
-		k-=INTERP_POINTS;
+		auto it = std::upper_bound(_points.begin(), _points.end(), x);
+		int k = static_cast<int>(it - _points.begin()) - INTERP_POINTS;
+		
+		if (k < 0)
+			k = 0;
+		else if (k > max_k)
+			k = max_k;
 
-		if (k<0) k=0;
-		if (k>static_cast<int>(size()-2*INTERP_POINTS))
-			k=size()-2*INTERP_POINTS;
-
-		return static_cast<uint>(k);
+		return k;
 	}
 
 	double Grid::interpolate(ArrayGrid& yy, double x)
@@ -266,13 +265,13 @@ namespace Candia2
 		int ns=0;
 		double y, den, dif, dift, ho, hp, w;
 
-		int k = static_cast<int>(this->interpFindIdx(x));
+		int k = interpFindIdx(x);
 
 		double const* xa = &(_points.data()[k]);
 		double const* ya = &(yy.base().data()[k]);
 		
-		std::vector<double> c(n, 0.0);
-		std::vector<double> d(n, 0.0);
+		static std::array<double, 2*INTERP_POINTS> c{};
+		static std::array<double, 2*INTERP_POINTS> d{};
 
 		dif = std::abs(x - xa[0]);
 

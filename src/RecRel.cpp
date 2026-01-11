@@ -176,7 +176,7 @@ namespace Candia2
 		double conv = _grid.convolution(C, P2, k);
 		double res = -4.0/_alpha_s.beta2() * conv;
 
-		/*
+		
 		if (_log_mur2_muf2 != 0.0) {
 			const double beta0 = _alpha_s.beta0();
 			const double beta1 = _alpha_s.beta1();
@@ -189,7 +189,7 @@ namespace Candia2
 			res += (4.0*(beta0/beta2)*_log_mur2_muf2) * convL1;
 			res += ((beta1*_log_mur2_muf2 - beta0*beta0*_log_mur2_muf2*_log_mur2_muf2)/beta2) * convL2;
 		}
-		*/
+		
 			
 	    return res;
 	}
