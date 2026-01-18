@@ -97,6 +97,9 @@ namespace Candia2
 			double L1, double L2, double L3, double L4);
 
 #if ENABLE_THREADING
+		void evolveSingletThreaded(
+			std::reference_wrapper<std::vector<ArrayGrid>> arr,
+			double L1);
 		void evolveNonSingletThreaded(
 			std::reference_wrapper<std::vector<ArrayGrid>> arr, 
 			double L1, double L2, double L3, double L4);
@@ -113,6 +116,8 @@ namespace Candia2
 		void HFT_N3LO3(ArrayGrid& g, ArrayGrid& qp, uint k);
 		void HFT_N3LO4(ArrayGrid& g, ArrayGrid& qp, uint k);
 
+		void _mt_EvolveDistributions_S_N3LO(uint t, uint min, uint max);
+		
 		void _mt_EvolveDistribution_NS_LO  (
 			std::reference_wrapper<std::vector<ArrayGrid>> arr, 
 			uint j, double L1);

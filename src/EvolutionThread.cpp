@@ -1,11 +1,348 @@
 #include "Candia-v2/Candia.hpp"
+#include "Candia-v2/FuncArrayGrid.hpp"
 #include "Candia-v2/Math.hpp"
 
 #include <cmath>
+#include <functional>
 #include <thread>
 
 namespace Candia2
 {
+	void DGLAPSolver::evolveSingletThreaded(
+        std::reference_wrapper<std::vector<ArrayGrid>> arr, double L1)
+	{
+        for (uint j=0; j<=1; ++j)
+            arr.get()[j*31] = _S2[0][j][0];
+
+		using clock = std::chrono::high_resolution_clock;
+		using time_type = std::chrono::duration<double>;
+		int print_count = 5;
+
+        switch (_order) {
+            case 0: {
+                for (uint n=1; n<_iterations; n++) {
+					log(LOG_INFO, "DGLAP", "LO Singlet Iteration {}", n);
+                    
+                    for (uint k=0; k<_grid.size()-1; k++) {
+                        _S2[0][1][1][k] =
+							recrelS_1(_S2[0][1][0], k, getExpression("P0qq")) +
+							recrelS_1(_S2[0][0][0], k, getExpression("P0qg"));
+                        _S2[0][0][1][k] =
+							recrelS_1(_S2[0][1][0], k, getExpression("P0gq")) +
+							recrelS_1(_S2[0][0][0], k, getExpression("P0gg"));
+
+						for (uint j=0; j<=1; j++)
+							arr.get()[j*31][k] += _S2[0][j][1][k] * std::pow(L1, n)/factorial(n);
+                    }
+
+                    for (uint j=0; j<=1; ++j)
+                        _S2[0][j][0] = _S2[0][j][1];
+                }
+            } break;
+            case 1: {
+			    for (uint n=1; n<_iterations; n++) {
+					log(LOG_INFO, "DGLAP", "NLO Singlet Iteration {}", n);
+
+                    // LO piece (non truncated)
+                    for (uint k=0; k<_grid.size()-1; k++) {
+                        _S2[0][1][1][k] = 
+							recrelS_1(_S2[0][1][0], k, getExpression("P0qq")) +
+							recrelS_1(_S2[0][0][0], k, getExpression("P0qg"));
+                        _S2[0][0][1][k] = 
+							recrelS_1(_S2[0][1][0], k, getExpression("P0gq")) +
+							recrelS_1(_S2[0][0][0], k, getExpression("P0gg"));
+                    }
+
+                    // new NLO piece non-convolution
+                    for (uint k=0; k<_grid.size()-1; k++) {
+                        for (uint j=0; j<=1; j++)
+                            _S2[1][j][1][k] = -_S2[0][j][1][k] * _alpha_s.beta1()/(4.0*PI*_alpha_s.beta0()) - _S2[1][j][0][k];
+                    }
+
+                    // new NLO piece convolution
+                    for (uint k=0; k<_grid.size()-1; k++) {
+                        _S2[1][1][1][k] +=
+							recrelS_2(_S2[1][1][0],_S2[0][1][0],k,getExpression("P0qq"),getExpression("P1qq")) +
+							recrelS_2(_S2[1][0][0],_S2[0][0][0],k,getExpression("P0qg"),getExpression("P1qg"));
+					    _S2[1][0][1][k] +=
+							recrelS_2(_S2[1][1][0],_S2[0][1][0],k,getExpression("P0gq"),getExpression("P1gq")) +
+							recrelS_2(_S2[1][0][0],_S2[0][0][0],k,getExpression("P0gg"),getExpression("P1gg"));
+                    }
+
+                    // NLO truncation terms
+                    for (uint t=2; t<=_trunc_idx; ++t) {
+                        double T = static_cast<double>(t);
+
+                        // non-convolution piece:
+                        for (uint k=0; k<_grid.size()-1; k++) {
+                            for (uint j=0; j<=1; j++)
+                                _S2[t][j][1][k] =
+                                    - (_alpha_s.beta1()/(4.0*PI*_alpha_s.beta0()))*_S2[t-1][j][1][k]
+                                    - T*_S2[t][j][0][k]
+                                    - (T-1.0)*(_alpha_s.beta1()/(4.0*PI*_alpha_s.beta0()))*_S2[t-1][j][0][k];
+                        }
+
+                        // convolution piece
+                        for (uint k=0; k<_grid.size()-1; k++) {
+                            _S2[t][1][1][k] += 
+								recrelS_2(_S2[t][1][0],_S2[t-1][1][0],k,getExpression("P0qq"),getExpression("P1qq")) +
+								recrelS_2(_S2[t][0][0],_S2[t-1][0][0],k,getExpression("P0qg"),getExpression("P1qg"));
+                            _S2[t][0][1][k] += 
+								recrelS_2(_S2[t][1][0],_S2[t-1][1][0],k,getExpression("P0gq"),getExpression("P1gq")) +
+								recrelS_2(_S2[t][0][0],_S2[t-1][0][0],k,getExpression("P0gg"),getExpression("P1gg"));
+                        }
+                    }
+
+                    for (uint t=0; t<=_trunc_idx; ++t) {
+                        for (uint j=0; j<=1; ++j) {
+                            for (uint k=0; k<_grid.size()-1; k++)
+                                arr.get()[j*31][k] += _S2[t][j][1][k] * std::pow(_alpha1, t) * std::pow(L1, n)/factorial(n);        
+                        }
+                    }
+                
+                    for (uint t=0; t<=_trunc_idx; ++t) {
+                        for (uint j=0; j<=1; ++j)
+                            _S2[t][j][0] = _S2[t][j][1];
+                    }
+                }
+            } break;
+            case 2: {
+                for (uint n=1; n<_iterations; n++) {
+					log(LOG_INFO, "DGLAP", "NNLO Singlet Iteration {}", n);
+
+                    // LO piece (non truncated)
+                    for (uint k=0; k<_grid.size()-1; k++) {
+                        _S2[0][1][1][k] =
+							recrelS_1(_S2[0][1][0], k, getExpression("P0qq")) +
+							recrelS_1(_S2[0][0][0], k, getExpression("P0qg"));
+                        _S2[0][0][1][k] =
+							recrelS_1(_S2[0][1][0], k, getExpression("P0gq")) +
+							recrelS_1(_S2[0][0][0], k, getExpression("P0gg"));
+                    }
+
+                    // new NLO piece non-convolution
+                    for (uint k=0; k<_grid.size()-1; k++) {
+                        for (uint j=0; j<=1; j++)
+                            _S2[1][j][1][k] = -_S2[0][j][1][k] * _alpha_s.beta1()/(4.0*PI*_alpha_s.beta0()) - _S2[1][j][0][k];
+                    }
+
+                    // new NLO piece convolution
+                    for (uint k=0; k<_grid.size()-1; k++) {
+                        _S2[1][1][1][k] +=
+							recrelS_2(_S2[1][1][0],_S2[0][1][0],k,getExpression("P0qq"),getExpression("P1qq"))+
+							recrelS_2(_S2[1][0][0],_S2[0][0][0],k,getExpression("P0qg"),getExpression("P1qg"));
+					    _S2[1][0][1][k] +=
+							recrelS_2(_S2[1][1][0],_S2[0][1][0],k,getExpression("P0gq"),getExpression("P1gq"))+
+							recrelS_2(_S2[1][0][0],_S2[0][0][0],k,getExpression("P0gg"),getExpression("P1gg"));
+                    }
+
+                    // new NNLO piece non-convolution
+                    for (uint k=0; k<_grid.size()-1; k++) {
+                        for (uint j=0; j<=1; j++)
+                            _S2[2][j][1][k] =
+                                - (_alpha_s.beta1()/(4.0*PI*_alpha_s.beta0()))*_S2[1][j][1][k]
+                                - (_alpha_s.beta2()/(16.0*PI_2*_alpha_s.beta0()))*_S2[0][j][1][k]
+                                - 2.0*_S2[2][j][0][k]
+                                - (_alpha_s.beta1()/(4.0*PI*_alpha_s.beta0()))*_S2[1][j][0][k];
+                    }
+
+                    // new NNLO piece convolution
+                    for (uint k=0; k<_grid.size()-1; k++) {
+                        _S2[2][1][1][k] += 
+                            recrelS_3(_S2[2][1][0], _S2[1][1][0], _S2[0][1][0], k,
+								getExpression("P0qq"), getExpression("P1qq"), getExpression("P2qq")) +
+                            recrelS_3(_S2[2][0][0], _S2[1][0][0], _S2[0][0][0], k,
+                                getExpression("P0qg"), getExpression("P1qg"), getExpression("P2qg"));
+                        _S2[2][0][1][k] += 
+                            recrelS_3(_S2[2][1][0], _S2[1][1][0], _S2[0][1][0], k,
+                                getExpression("P0gq"), getExpression("P1gq"), getExpression("P2gq")) +
+                            recrelS_3(_S2[2][0][0], _S2[1][0][0], _S2[0][0][0], k,
+                                getExpression("P0gg"), getExpression("P1gg"), getExpression("P2gg"));
+                    }
+
+                    for (uint t=3; t<=_trunc_idx; ++t) {
+                        double T = static_cast<double>(t);
+
+                        // non-convolution piece:
+                        for (uint k=0; k<_grid.size()-1; k++) {
+                            for (uint j=0; j<=1; j++)
+                                _S2[t][j][1][k] =
+                                    - (_alpha_s.beta1()/(4.0*PI*_alpha_s.beta0()))*_S2[t-1][j][1][k]
+                                    - (_alpha_s.beta2()/(16.0*PI_2*_alpha_s.beta0()))*_S2[t-2][j][1][k]
+                                    - T*_S2[t][j][0][k]
+                                    - (T-1.0)*(_alpha_s.beta1()/(4.0*PI*_alpha_s.beta0()))*_S2[t-1][j][0][k]
+                                    - (T-2.0)*(_alpha_s.beta2()/(16.0*PI_2*_alpha_s.beta0()))*_S2[t-2][j][0][k];
+                        }
+
+                        // convolution piece
+                        for (uint k=0; k<_grid.size()-1; k++) {
+                            _S2[t][1][1][k] += 
+                                recrelS_3(_S2[t][1][0], _S2[t-1][1][0], _S2[t-2][1][0], k,
+                                    getExpression("P0qq"), getExpression("P1qq"), getExpression("P2qq")) +
+                                recrelS_3(_S2[t][0][0], _S2[t-1][0][0], _S2[t-2][0][0], k,
+                                    getExpression("P0qg"), getExpression("P1qg"), getExpression("P2qg"));
+                            _S2[t][0][1][k] += 
+                                recrelS_3(_S2[t][1][0], _S2[t-1][1][0], _S2[t-2][1][0], k,
+                                    getExpression("P0gq"), getExpression("P1gq"), getExpression("P2gq"))+
+                                recrelS_3(_S2[t][0][0], _S2[t-1][0][0], _S2[t-2][0][0], k,
+                                    getExpression("P0gg"), getExpression("P1gg"), getExpression("P2gg"));
+                        }
+                    }
+
+                    for (uint t=0; t<=_trunc_idx; ++t) {
+                        for (uint j=0; j<=1; ++j) {
+                            for (uint k=0; k<_grid.size()-1; k++)
+                                arr.get()[j*31][k] += _S2[t][j][1][k] * std::pow(_alpha1, t) * std::pow(L1, n)/factorial(n);        
+                        }
+                    }
+                
+                    for (uint t=0; t<=_trunc_idx; ++t) {
+                        for (uint j=0; j<=1; ++j)
+                            _S2[t][j][0] = _S2[t][j][1];
+                    }
+                }
+            } break;
+            case 3: {
+				uint size = _grid.size()-1;
+				uint part_size = size/5;
+				
+                for (uint n=1; n<_iterations; n++) {
+					log(LOG_INFO, "DGLAP", "N3LO Singlet Iteration {}", n);
+
+                    // LO piece
+                    for (uint k=0; k<_grid.size()-1; k++) {
+                        _S2[0][1][1][k] =
+							recrelS_1(_S2[0][1][0], k, getExpression("P0qq")) +
+							recrelS_1(_S2[0][0][0], k, getExpression("P0qg"));
+                        _S2[0][0][1][k] =
+							recrelS_1(_S2[0][1][0], k, getExpression("P0gq")) +
+							recrelS_1(_S2[0][0][0], k, getExpression("P0gg"));
+                    }
+
+                    // new NLO piece non-convolution
+                    for (uint k=0; k<_grid.size()-1; k++) {
+                        for (uint j=0; j<=1; j++)
+                            _S2[1][j][1][k] = -_S2[0][j][1][k] * _alpha_s.beta1()/(4.0*PI*_alpha_s.beta0()) - _S2[1][j][0][k];
+                    }
+
+                    // new NLO piece convolution
+                    for (uint k=0; k<_grid.size()-1; k++) {
+                        _S2[1][1][1][k] +=
+							recrelS_2(_S2[1][1][0],_S2[0][1][0],k,getExpression("P0qq"),getExpression("P1qq"))+
+							recrelS_2(_S2[1][0][0],_S2[0][0][0],k,getExpression("P0qg"),getExpression("P1qg"));
+					    _S2[1][0][1][k] +=
+							recrelS_2(_S2[1][1][0],_S2[0][1][0],k,getExpression("P0gq"),getExpression("P1gq"))+
+							recrelS_2(_S2[1][0][0],_S2[0][0][0],k,getExpression("P0gg"),getExpression("P1gg"));
+                    }
+
+                    // new NNLO piece non-convolution
+                    for (uint k=0; k<_grid.size()-1; k++) {
+                        for (uint j=0; j<=1; j++)
+                            _S2[2][j][1][k] =
+                                - (_alpha_s.beta1()/(4.0*PI*_alpha_s.beta0()))*_S2[1][j][1][k]
+                                - (_alpha_s.beta2()/(16.0*PI_2*_alpha_s.beta0()))*_S2[0][j][1][k]
+                                - 2.0*_S2[2][j][0][k]
+                                - (_alpha_s.beta1()/(4.0*PI*_alpha_s.beta0()))*_S2[1][j][0][k];
+                    }
+
+                    // new NNLO piece non-convolution
+                    for (uint k=0; k<_grid.size()-1; k++) {
+                        _S2[2][1][1][k] += 
+                            recrelS_3(_S2[2][1][0], _S2[1][1][0], _S2[0][1][0], k, 
+                                getExpression("P0qq"), getExpression("P1qq"), getExpression("P2qq")) +
+                            recrelS_3(_S2[2][0][0], _S2[1][0][0], _S2[0][0][0], k,
+                                getExpression("P0qg"), getExpression("P1qg"), getExpression("P2qg"));
+
+                        _S2[2][0][1][k] += 
+                            recrelS_3(_S2[2][1][0], _S2[1][1][0], _S2[0][1][0], k,
+                                getExpression("P0gq"), getExpression("P1gq"), getExpression("P2gq")) +
+                            recrelS_3(_S2[2][0][0], _S2[1][0][0], _S2[0][0][0], k,
+                                getExpression("P0gg"), getExpression("P1gg"), getExpression("P2gg"));
+                    }
+
+                    // new N3LO piece non-convolution
+                    for (uint k=0; k<_grid.size()-1; k++) {
+                        for (uint j=0; j<=1; j++)
+                            _S2[3][j][1][k] =
+                                - (_alpha_s.beta1()/(4.0*PI*_alpha_s.beta0()))*_S2[2][j][1][k]
+                                - (_alpha_s.beta2()/(16.0*PI_2*_alpha_s.beta0()))*_S2[1][j][1][k]
+                                - (_alpha_s.beta3()/(64.0*PI_3*_alpha_s.beta0()))*_S2[0][j][1][k]
+                                - 3.0*_S2[3][j][0][k]
+                                - 2.0*(_alpha_s.beta1()/(4.0*PI*_alpha_s.beta0()))*_S2[2][j][0][k]
+                                - (_alpha_s.beta2()/(16.0*PI_2*_alpha_s.beta0()))*_S2[1][j][0][k];
+                    }
+
+					{
+						std::vector<std::thread> threads{};
+						for (uint i=0; i<4; ++i)
+							threads.emplace_back(&DGLAPSolver::_mt_EvolveDistributions_S_N3LO, this, 3, i*part_size, (i+1)*part_size);
+						threads.emplace_back(&DGLAPSolver::_mt_EvolveDistributions_S_N3LO, this, 3, 4*part_size, size);
+
+						for (std::thread& t : threads)
+							t.join();
+					}
+
+                    for (uint t=4; t<=_trunc_idx; ++t) {
+                        double T = static_cast<double>(t);
+
+                        // non-convolution piece:
+                        for (uint k=0; k<_grid.size()-1; k++) {
+                            for (uint j=0; j<=1; j++)
+                                _S2[t][j][1][k] =
+                                    - (_alpha_s.beta1()/(4.0*PI*_alpha_s.beta0()))*_S2[t-1][j][1][k]
+                                    - (_alpha_s.beta2()/(16.0*PI_2*_alpha_s.beta0()))*_S2[t-2][j][1][k]
+                                    - (_alpha_s.beta3()/(64.0*PI_3*_alpha_s.beta0()))*_S2[t-3][j][1][k]
+                                    - T*_S2[t][j][0][k]
+                                    - (T-1.0)*(_alpha_s.beta1()/(4.0*PI*_alpha_s.beta0()))*_S2[t-1][j][0][k]
+                                    - (T-2.0)*(_alpha_s.beta2()/(16.0*PI_2*_alpha_s.beta0()))*_S2[t-2][j][0][k]
+                                    - (T-3.0)*(_alpha_s.beta3()/(64.0*PI_3*_alpha_s.beta0()))*_S2[t-3][j][0][k];
+                        }
+
+						std::vector<std::thread> threads{};
+						for (uint i=0; i<4; ++i)
+							threads.emplace_back(&DGLAPSolver::_mt_EvolveDistributions_S_N3LO, this, t, i*part_size, (i+1)*part_size);
+						threads.emplace_back(&DGLAPSolver::_mt_EvolveDistributions_S_N3LO, this, t, 4*part_size, size);
+
+						for (std::thread& t : threads)
+							t.join();
+                    }
+
+                    for (uint t=0; t<=_trunc_idx; ++t) {
+                        for (uint j=0; j<=1; ++j) {
+                            for (uint k=0; k<_grid.size()-1; k++)
+                                arr.get()[j*31][k] += _S2[t][j][1][k] * std::pow(_alpha1, t) * std::pow(L1, n)/factorial(n);        
+                        }
+                    }
+                
+                    for (uint t=0; t<=_trunc_idx; ++t) {
+                        for (uint j=0; j<=1; ++j)
+                            _S2[t][j][0] = _S2[t][j][1];
+                    }
+                }
+            } break;
+        }
+    }
+
+	void DGLAPSolver::_mt_EvolveDistributions_S_N3LO(uint t, uint min, uint max)
+	{
+		for (uint k=min; k<max; k++) {
+			_S2[t][1][1][k] += 
+				recrelS_4(_S2[t][1][0], _S2[t-1][1][0], _S2[t-2][1][0], _S2[t-3][1][0], k,
+					getExpression("P0qq"), getExpression("P1qq"),
+					getExpression("P2qq"), getExpression("P3qq")) +
+				recrelS_4(_S2[t][0][0], _S2[t-1][0][0], _S2[t-2][0][0], _S2[t-3][0][0], k,
+					getExpression("P0qg"), getExpression("P1qg"),
+					getExpression("P2qg"), getExpression("P3qg"));
+			_S2[t][0][1][k] += 
+				recrelS_4(_S2[t][1][0], _S2[t-1][1][0], _S2[t-2][1][0], _S2[t-3][1][0], k,
+					getExpression("P0gq"), getExpression("P1gq"),
+					getExpression("P2gq"), getExpression("P3gq")) +
+				recrelS_4(_S2[t][0][0], _S2[t-1][0][0], _S2[t-2][0][0], _S2[t-3][0][0], k,
+					getExpression("P0gg"), getExpression("P1gg"),
+					getExpression("P2gg"), getExpression("P3gg"));
+		}
+	}
+	
 	void DGLAPSolver::evolveNonSingletThreaded(
         std::reference_wrapper<std::vector<ArrayGrid>> arr, 
 		double L1, double L2, double L3, double L4)

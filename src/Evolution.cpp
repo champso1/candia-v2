@@ -4,6 +4,7 @@
 
 #include <cmath>
 #include <functional>
+#include <chrono>
 
 namespace Candia2
 {
@@ -12,6 +13,10 @@ namespace Candia2
     ) {
         for (uint j=0; j<=1; ++j)
             arr.get()[j*31] = _S2[0][j][0];
+
+		using clock = std::chrono::high_resolution_clock;
+		using time_type = std::chrono::duration<double>;
+		int print_count = 5;
 
         switch (_order) {
             case 0: {
@@ -35,8 +40,10 @@ namespace Candia2
                 }
             } break;
             case 1: {
-                for (uint n=1; n<_iterations; n++) {
+			    for (uint n=1; n<_iterations; n++) {
 					log(LOG_INFO, "DGLAP", "NLO Singlet Iteration {}", n);
+
+					clock::time_point t0 = clock::now();
                     
                     // LO piece (non truncated)
                     for (uint k=0; k<_grid.size()-1; k++) {
@@ -64,6 +71,8 @@ namespace Candia2
 							recrelS_2(_S2[1][0][0],_S2[0][0][0],k,getExpression("P0gg"),getExpression("P1gg"));
                     }
 
+					clock::time_point t1 = clock::now();
+
                     // NLO truncation terms
                     for (uint t=2; t<=_trunc_idx; ++t) {
                         double T = static_cast<double>(t);
@@ -88,6 +97,8 @@ namespace Candia2
                         }
                     }
 
+					clock::time_point t2 = clock::now();
+
                     for (uint t=0; t<=_trunc_idx; ++t) {
                         for (uint j=0; j<=1; ++j) {
                             for (uint k=0; k<_grid.size()-1; k++)
@@ -99,6 +110,17 @@ namespace Candia2
                         for (uint j=0; j<=1; ++j)
                             _S2[t][j][0] = _S2[t][j][1];
                     }
+
+					clock::time_point t3 = clock::now();
+
+					time_type dt1 = std::chrono::duration_cast<time_type>(t1-t0);
+					time_type dt2 = std::chrono::duration_cast<time_type>(t2-t1);
+					time_type dt3 = std::chrono::duration_cast<time_type>(t3-t2);
+
+					log(LOG_INFO, "DGLAP", "    - NLO terms (no truncated terms): {}", dt1.count());
+					log(LOG_INFO, "DGLAP", "    - Truncation terms: {}", dt2.count());
+					log(LOG_INFO, "DGLAP", "    - Cleanup/copy to new dists: {}", dt3.count());
+					log(LOG_INFO, "DGLAP", "    - Per truncation term: {}", dt2.count()/static_cast<double>(_trunc_idx-1));
                 }
             } break;
             case 2: {
@@ -201,6 +223,8 @@ namespace Candia2
                 for (uint n=1; n<_iterations; n++) {
 					log(LOG_INFO, "DGLAP", "N3LO Singlet Iteration {}", n);
 
+					clock::time_point t0 = clock::now();
+					
                     // LO piece
                     for (uint k=0; k<_grid.size()-1; k++) {
                         _S2[0][1][1][k] =
@@ -252,6 +276,8 @@ namespace Candia2
                                 getExpression("P0gg"), getExpression("P1gg"), getExpression("P2gg"));
                     }
 
+					clock::time_point ta = clock::now();
+					
                     // new N3LO piece non-convolution
                     for (uint k=0; k<_grid.size()-1; k++) {
                         for (uint j=0; j<=1; j++)
@@ -263,6 +289,8 @@ namespace Candia2
                                 - 2.0*(_alpha_s.beta1()/(4.0*PI*_alpha_s.beta0()))*_S2[2][j][0][k]
                                 - (_alpha_s.beta2()/(16.0*PI_2*_alpha_s.beta0()))*_S2[1][j][0][k];
                     }
+
+					clock::time_point tb = clock::now();
 
                     // new N3LO piece convolution
                     for (uint k=0; k<_grid.size()-1; k++) {
@@ -281,6 +309,8 @@ namespace Candia2
                                 getExpression("P0gg"), getExpression("P1gg"),
 								getExpression("P2gg"), getExpression("P3gg"));
                     }
+
+					clock::time_point t1 = clock::now();
 
                     for (uint t=4; t<=_trunc_idx; ++t) {
                         double T = static_cast<double>(t);
@@ -317,6 +347,8 @@ namespace Candia2
                         }
                     }
 
+					clock::time_point t2 = clock::now();
+
                     for (uint t=0; t<=_trunc_idx; ++t) {
                         for (uint j=0; j<=1; ++j) {
                             for (uint k=0; k<_grid.size()-1; k++)
@@ -328,6 +360,22 @@ namespace Candia2
                         for (uint j=0; j<=1; ++j)
                             _S2[t][j][0] = _S2[t][j][1];
                     }
+
+					clock::time_point t3 = clock::now();
+
+					time_type dt1 = std::chrono::duration_cast<time_type>(t1-t0);
+					time_type dt2 = std::chrono::duration_cast<time_type>(t2-t1);
+					time_type dt3 = std::chrono::duration_cast<time_type>(t3-t2);
+
+					time_type dta = std::chrono::duration_cast<time_type>(tb-ta);
+					time_type dtb = std::chrono::duration_cast<time_type>(t1-tb);
+
+					log(LOG_INFO, "DGLAP", "    - N3LO terms (no truncated terms): {}", dt1.count());
+					log(LOG_INFO, "DGLAP", "    - Truncation terms: {}", dt2.count());
+					log(LOG_INFO, "DGLAP", "    - Per truncation term: {}", dt2.count()/static_cast<double>(_trunc_idx-1));
+
+					log(LOG_INFO, "DGLAP", "    - N3LO Constant terms: {}", dta.count());
+					log(LOG_INFO, "DGLAP", "    - N3LO Conv.    terms: {}", dtb.count());
                 }
             } break;
         }

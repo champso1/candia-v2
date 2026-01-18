@@ -597,11 +597,14 @@ namespace Candia2
 			// (i.e. energy scales are different)
 			if (_alpha0 != _alpha1) {
 				log(LOG_INFO, "DGLAP", "Starting singlet evolution and resummation...");
+#if ENABLE_THREADING
+				evolveSingletThreaded(arr_singlet, L1);
+#else
 				evolveSinglet(arr_singlet, L1);
+#endif
 				log(LOG_INFO, "DGLAP", "Finished singlet evolution and resummation.");
 
 				log(LOG_INFO, "DGLAP", "Starting non-singlet evolution and resummation...");
-				
 #if ENABLE_THREADING
 				evolveNonSingletThreaded(arr, L1, L2, L3, L4);
 #else

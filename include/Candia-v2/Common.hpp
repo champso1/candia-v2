@@ -1,6 +1,7 @@
 #ifndef __COMMON_HPP
 #define __COMMON_HPP
 
+#include <functional>
 #include <vector>
 #include <concepts>
 #include <ranges>
@@ -72,6 +73,10 @@ namespace Candia2
 	// TODO: better handle setting global flags
 	inline bool debug_flag{false};
 	inline bool& getDebugFlag() { return debug_flag; }
+	
+	inline bool use_log_output_stream = false;
+	inline std::reference_wrapper<std::ostream> log_output_stream = std::ref(std::cout);
+	inline void set_log_output_stream(std::ostream& os) { log_output_stream = os; use_log_output_stream = true; }
 
 	template <typename... TArgs>
 	void log(uint log_type, std::string_view prefix, std::format_string<TArgs...> fmt_string, TArgs&& ...args)
@@ -81,6 +86,8 @@ namespace Candia2
 			
 		std::string log_text = std::vformat(fmt_string.get(), std::make_format_args(args...));
 		std::string all_text = std::format("[{}] {}: {}\n", log_string_reps[log_type], prefix, log_text);
+		if (use_log_output_stream)
+			log_output_stream.get() << all_text;
 		std::cout << all_text;
 
 		if (log_type == LOG_ERROR)

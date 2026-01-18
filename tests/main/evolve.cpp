@@ -1,3 +1,4 @@
+#include "Candia-v2/Common.hpp"
 #include <iomanip>
 #include <iostream>
 #include <memory>
@@ -90,6 +91,18 @@ int main(int argc, char *argv[]) {
 	const uint trunc_idx = stoi(argv[4]);
 	const double kr = stold(argv[5]);
 	const double Qf = 100.0;
+
+	ostringstream logfile_ss{};
+	logfile_ss << ((order == 3) ? "n3lo" : (order == 2) ? "nnlo" : (order == 1) ? "nlo" : "lo");
+	logfile_ss << "-g" << num_grid_points << "-i" << iterations << "-t" << trunc_idx << "-r" << setprecision(2) << kr << ".log";
+	if (!fs::exists("log")) {
+		if (!fs::create_directory("log"))
+			log(LOG_ERROR, "evolve.cpp", "Failed to create log output directory");
+	}
+	fs::path log_path = fs::current_path()/"log"/logfile_ss.str();
+	std::ofstream log_output_file(log_path);
+	set_log_output_stream(log_output_file);
+	
 	
 	vector<double> xtab{1e-5, 1e-4, 1e-3, 1e-2, 0.1, 0.3, 0.5, 0.7, 0.9, 1.0};
 	Grid grid(xtab, num_grid_points, 50, 3);
