@@ -152,25 +152,7 @@ namespace Candia2
 		
 		std::vector<double> points{};
 
-		std::vector<double> log_tab_new{};
-		if (xtab.front() < 1.0)
-			log_tab_new.emplace_back(xtab.back());
-		else
-			log(LOG_WARNING, "Grid", "xtab array doesn't contain anything below x=0.1. Are you sure?");
-		
-		auto mid = std::ranges::lower_bound(xtab, 0.1);
-		std::span lower(xtab.begin(), mid);
-		std::span upper(mid, xtab.end());
-
-		std::ostringstream ss{};
-		std::ranges::copy(lower, std::ostream_iterator<double>(ss, ", "));
-		log(LOG_DEBUG, "Grid", "Lower array: {}", ss.str());
-		ss = {};
-		std::ranges::copy(upper, std::ostream_iterator<double>(ss, ", "));
-		log(LOG_DEBUG, "Grid", "Upper array: {}", ss.str());
-		
 		std::vector<double> log_tab{1e-5, 1e-4, 1e-3, 1e-2, 0.1, 0.5, 0.8, 1.0};
-		
 		std::vector<double> log_xtab{log_tab};
 		std::ranges::transform(log_xtab, log_xtab.begin(), [](double x) -> double{ return std::log10(x); });
 		int num_grid_points_per_bin = nx / xtab.size();
@@ -203,7 +185,6 @@ namespace Candia2
 				_ntab.emplace_back(std::distance(_points.begin(), it));
 		}
 	}
-
 
 	void Grid::initGauLeg(double x1, double x2, std::vector<double>& Xi, std::vector<double>& Wi)
 	{
