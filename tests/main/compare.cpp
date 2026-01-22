@@ -1,14 +1,14 @@
+#include <algorithm>
 #include <charconv>
 #include <cstdlib>
 #include <cmath>
 #include <vector>
 #include <filesystem>
+#include <sstream>
+#include <iterator>
 using dist_type = std::vector<std::vector<double>>;
 
 #include "util.hpp"
-
-
-static std::vector<double> XTAB{1e-5, 1e-4, 1e-3, 1e-2, 0.1, 0.3, 0.5, 0.7, 0.9};
 
 static void usage()
 {
@@ -40,8 +40,19 @@ int main(int argc, char *argv[])
 
 	int ncols = cols[type].get().size();
 	
-	dist_type candia_dists_raw = read_candia_file(candia_filepath, 13);
-	dist_type other_dists_raw = read_other_file(other_filepath, 13);
+	auto [xtab_candia, candia_dists_raw] = read_candia_file(candia_filepath, 13);
+	auto [xtab_other, other_dists_raw] = read_other_file(other_filepath, 13);
+	if (!std::ranges::equal(xtab_candia, xtab_other)) {
+		log(LOG_ERROR_NOQUIT, "compare.cpp", "Two xtab arrays for the candia and other datafile are not equivalent:");
+
+		std::ostringstream ss{};
+		std::ranges::copy(xtab_candia, std::ostream_iterator<double>(ss, ", "));
+		log(LOG_INFO, "compare.cpp", "Candia xtab: {}", ss.str());
+		ss = {};
+		std::ranges::copy(xtab_other, std::ostream_iterator<double>(ss, ", "));
+		log(LOG_INFO, "compare.cpp", "Other xtab: {}", ss.str());
+		exit(EXIT_FAILURE);
+	}
 	dist_type candia_dists = fix_dists(candia_dists_raw, type);
 	dist_type other_dists = fix_dists(other_dists_raw, type);
 	
@@ -58,7 +69,7 @@ int main(int argc, char *argv[])
     
 	std::string identifier = candia_filepath.filename().string().substr(0, candia_filepath.filename().string().rfind('.'));
 	std::string latex_filename = std::format("diffs-other-{}", identifier);
-	outputLatexTable(XTAB, diffs, latex_filename, cols[type].get(), true, format == 0);
+	outputLatexTable(xtab_candia, diffs, latex_filename, cols[type].get(), true, format == 0);
 }
 
 

@@ -85,6 +85,7 @@ int main(int argc, char *argv[]) {
 	if (argc != 6)
 		usage();
 
+	getDebugFlag() = true;
 	const uint order = stoi(argv[1]);
 	const uint num_grid_points = stoi(argv[2]);
 	const uint iterations = stoi(argv[3]);

@@ -12,6 +12,7 @@ namespace fs = std::filesystem;
 #include "Candia-v2/Common.hpp"
 using namespace Candia2;
 using dist_type = std::vector<std::vector<double>>;
+using xtab_type = std::vector<double>;
 
 static std::string scientificToLatex(double num, int precision, bool benchmark_format)
 {
@@ -65,7 +66,7 @@ static std::vector<std::string> cols_special_combos_qm{"xuv", "xdv", "xL-", "xL+
 static std::vector<std::reference_wrapper<const std::vector<std::string>>> cols{
 	std::cref(cols_all_flavors),  std::cref(cols_special_combos), std::cref(cols_special_combos_qm)};
 
-static dist_type read_candia_file(fs::path const &path, int size)
+static std::pair<xtab_type, dist_type> read_candia_file(fs::path const &path, int size)
 {
 	dist_type dists(size, std::vector<double>{});
 	std::ifstream file(path);
@@ -104,7 +105,7 @@ static dist_type read_candia_file(fs::path const &path, int size)
 			dists_ntabbed[i][j] = dists[i][idx];
 		}
 	}
-	return dists_ntabbed;
+	return {xtab, dists_ntabbed};
 }
 
 static dist_type fix_dists(dist_type const& dists, int type)
@@ -159,23 +160,25 @@ static dist_type fix_dists(dist_type const& dists, int type)
 	return {};
 }
 
-static dist_type read_other_file(fs::path const &path, int size)
+static std::pair<xtab_type, dist_type> read_other_file(fs::path const &path, int size)
 {
 	dist_type dists(size, std::vector<double>{});
 	std::ifstream file(path);
 	file.ignore(1000, '\n');
 
+	xtab_type xtab{};
 	std::string line;
 	double temp;
 	while (std::getline(file, line)) {
 		std::istringstream iss(line);
 		iss >> temp;
+		xtab.emplace_back(temp);
 		for (int i=0; i<size; ++i) {
 			iss >> temp;
 			dists.at(i).emplace_back(temp);
 		}
 	}
-	return dists;
+	return {xtab, dists};
 }
 
 constexpr static char const* TEX_TABLE_DIR{"tex-table"};

@@ -10,9 +10,6 @@ using namespace Candia2;
 
 #include "util.hpp"
 
-
-static std::vector<double> XTAB{1e-5, 1e-4, 1e-3, 1e-2, 0.1, 0.3, 0.5, 0.7, 0.9};
-
 static void usage()
 {
 	log(LOG_INFO, "read.cpp", "USAGE: ./read <candia-file> <origin> <format> <type>");
@@ -38,10 +35,10 @@ int main(int argc, char *argv[])
 	std::from_chars(argv[2], argv[2] + 1, origin);
 	std::from_chars(argv[3], argv[3] + 1, format);
 	std::from_chars(argv[4], argv[4] + 1, type);
-	
-	dist_type dists_raw = origin == 0 ? read_candia_file(datafile_path, 13) : read_other_file(datafile_path, 13);
+
+	auto [xtab, dists_raw] = origin == 0 ? read_candia_file(datafile_path, 13) : read_other_file(datafile_path, 13);
 	dist_type dists = fix_dists(dists_raw, type);
 
 	std::string basename = datafile_path.filename().string().substr(0, datafile_path.filename().string().rfind('.'));	
-	outputLatexTable(XTAB, dists, basename, cols[type].get(), false, format == 0);
+	outputLatexTable(xtab, dists, basename, cols[type].get(), false, format == 0);
 }

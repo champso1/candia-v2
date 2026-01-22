@@ -19,6 +19,7 @@ namespace Candia2
 	private:
 		grid_type _points{};
 		ntab_type _ntab;     //!< stores indices for the tabulated grid points
+		grid_type _xtab;
 
 		uint _gauss_points;
 		gauleg_type _Xi{};
@@ -36,6 +37,9 @@ namespace Candia2
 		inline gauleg_type const& abscissae_low() const { return _Xi_low; }
 		inline gauleg_type const& abscissae_mid() const { return _Xi_mid; }
 		inline gauleg_type const& abscissae_high() const { return _Xi_high; }
+
+		inline grid_type& xtab() { return _xtab; }
+		inline grid_type const& xtab() const { return _xtab; }
 
 		inline grid_type const& points() const { return _points; }
 		inline double at(uint idx) const { return _points.at(idx); };

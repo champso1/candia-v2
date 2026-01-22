@@ -5,25 +5,33 @@
 #include <algorithm>
 #include <cstdlib>
 #include <cmath>
+#include <iterator>
 #include <set>
+#include <span>
+#include <sstream>
 
 namespace Candia2
 {
 	bool Grid::_split_n3lo_intervals = false;
 	
 	Grid::Grid(std::vector<double> const& xtab, uint nx, uint gauss_points, int grid_fill_type)
-		: _points(nx), _ntab{},
+		: _points(nx), _ntab{}, _xtab{xtab},
 		  _gauss_points(gauss_points),
 		  _Xi(gauss_points), _Wi(gauss_points),
 		  _Xi_low(gauss_points), _Wi_low(gauss_points),
 		  _Xi_mid(gauss_points), _Wi_mid(gauss_points),
 		  _Xi_high(gauss_points), _Wi_high(gauss_points)
 	{
+		if (!std::ranges::is_sorted(xtab)) {
+			log(LOG_WARNING, "Grid", "xtab array was not sorted. will sort it and continue");
+			std::ranges::sort(_xtab);
+		}
+		
 		switch (grid_fill_type)
 		{
-			case 1: initGrid(xtab, nx); break;
-			case 2: initGrid2(xtab, nx); break;
-			case 3: initGrid3(xtab, nx); break;
+			case 1: initGrid(_xtab, nx); break;
+			case 2: initGrid2(_xtab, nx); break;
+			case 3: initGrid3(_xtab, nx); break;
 			default: {
 				log(LOG_WARNING, "Grid", "Invalid grid fill type. Found {}, expected 1, 2, or 3.", grid_fill_type);
 				log(LOG_WARNING, "Grid", "Will default to 1 (candia-v1 method)");
@@ -116,40 +124,26 @@ namespace Candia2
 
 	void Grid::initGrid2(std::vector<double> const& xtab, uint nx)
 	{
-		log(LOG_INFO, "Grid", "Using method 2");
+	    log(LOG_INFO, "Grid", "Using method 2");
 		
-		std::vector<double> points(nx-xtab.size()+1);
-		const double xmin = xtab.front();
-		const double xmax = xtab.back();
-		const double ymin = std::log10(xmin);
-		const double ymax = std::log10(xmax);
-		for (uint i=0; i<nx-xtab.size()+1; ++i) {
-			const double u = static_cast<double>(i)/(static_cast<double>(nx-xtab.size()+1) - 1.0);
-			// double _y = ymin + (ymax-ymin)*0.5*(1.0 - std::cos(PI*u));
-			double _y = ymin + (ymax-ymin)*u;
-			points[i] = std::pow(10.0, _y);
-		}
+		std::vector<double> log_points{};
+		if (!(xtab.front() < 0.1))
+			log(LOG_ERROR, "Grid", "Method 4 requires tabulated points below and above 0.1");
 
-		// insert the tabulated points
-		// make it a set to avoid duplicate values
-		// then replace the original points array with the new one
-		std::ranges::sort(points);
-		std::set<double> set{points.begin(), points.end()};
-		set.insert(xtab.begin(), xtab.end());
-		points = std::vector<double>(set.begin(), set.end());
-		std::ranges::sort(points);
+		double log_min = std::log10(xtab.front());
+		double log_max = std::log10(0.1);
+		uint num_log_intervals = std::round((log_max-log_min)/static_cast<double>(nx));
+		
+		double lin_min = 0.1;
+		double lin_max = xtab.back();
+		uint num_lin_intervals = std::clamp<uint>(static_cast<uint>(lin_max*5.0-1), 1, 5);
 
-		_points = points;
+		uint total_intervals = num_log_intervals + num_lin_intervals;
+		double interval_size = static_cast<double>(nx)/static_cast<double>(total_intervals);
 
-		// build the ntab array
-		_ntab = std::vector<int>{};
-		for (const double x : xtab) {
-			auto it = std::ranges::find(_points, x);
-			if (it == _points.end())
-				log(LOG_ERROR, "Grid::initGrid2()", "Somehow found a tabulated value ({}) that is not in the ntab array.", x);
+		
 
-			_ntab.emplace_back(std::distance(_points.begin(), it));
-		}
+		log(LOG_ERROR, "Grid", "Method 2 unfinished. Use 1 (original candia method) or 3 (similar, but more points packed at higher x)");
 	}
 
 	void Grid::initGrid3(std::vector<double> const& xtab, uint nx)
@@ -158,7 +152,25 @@ namespace Candia2
 		
 		std::vector<double> points{};
 
+		std::vector<double> log_tab_new{};
+		if (xtab.front() < 1.0)
+			log_tab_new.emplace_back(xtab.back());
+		else
+			log(LOG_WARNING, "Grid", "xtab array doesn't contain anything below x=0.1. Are you sure?");
+		
+		auto mid = std::ranges::lower_bound(xtab, 0.1);
+		std::span lower(xtab.begin(), mid);
+		std::span upper(mid, xtab.end());
+
+		std::ostringstream ss{};
+		std::ranges::copy(lower, std::ostream_iterator<double>(ss, ", "));
+		log(LOG_DEBUG, "Grid", "Lower array: {}", ss.str());
+		ss = {};
+		std::ranges::copy(upper, std::ostream_iterator<double>(ss, ", "));
+		log(LOG_DEBUG, "Grid", "Upper array: {}", ss.str());
+		
 		std::vector<double> log_tab{1e-5, 1e-4, 1e-3, 1e-2, 0.1, 0.5, 0.8, 1.0};
+		
 		std::vector<double> log_xtab{log_tab};
 		std::ranges::transform(log_xtab, log_xtab.begin(), [](double x) -> double{ return std::log10(x); });
 		int num_grid_points_per_bin = nx / xtab.size();
@@ -192,7 +204,8 @@ namespace Candia2
 		}
 	}
 
-	void Grid::initGauLeg(double x1, double x2, std::vector<double> & Xi, std::vector<double> & Wi)
+
+	void Grid::initGauLeg(double x1, double x2, std::vector<double>& Xi, std::vector<double>& Wi)
 	{
 		const double eps = 3.0e-11; // relative precision
 
