@@ -27,6 +27,20 @@
                 "CMAKE_BUILD_TYPE": "Release",
                 "ENABLE_THREADING": "ON"
             }
-        }
+        },
+		{
+			"name": "clang-testing",
+            "displayName": "clang-testing",
+            "description": "Using compilers: C = clang, CXX = clang++",
+            "generator": "Ninja Multi-Config",
+            "binaryDir": "${sourceDir}/build",
+            "cacheVariables": {
+                "CMAKE_INSTALL_PREFIX": "${sourceDir}/install/${presetName}",
+                "CMAKE_C_COMPILER": "clang",
+                "CMAKE_CXX_COMPILER": "clang++",
+                "CMAKE_CONFIGURATION_TYPES": "Release;Debug",
+                "ENABLE_THREADING": "ON"
+            }
+		}
     ]
 }
