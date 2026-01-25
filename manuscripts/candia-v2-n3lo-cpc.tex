@@ -1,0 +1,322 @@
+%% This template can be used to write a paper for
+%% Computer Physics Communications using LaTeX.
+%% For authors who want to write a computer program description,
+%% an example Program Summary is included that only has to be
+%% completed and which will give the correct layout in the
+%% preprint and the journal.
+%% The `elsarticle' style is used and more information on this style
+%% can be found at 
+%% http://www.elsevier.com/wps/find/authorsview.authors/elsarticle.
+%%
+%%
+\documentclass[preprint,12pt]{elsarticle}
+
+%% Use the option review to obtain double line spacing
+%% \documentclass[preprint,review,12pt]{elsarticle}
+
+%% Use the options 1p,twocolumn; 3p; 3p,twocolumn; 5p; or 5p,twocolumn
+%% for a journal layout:
+%% \documentclass[final,1p,times]{elsarticle}
+%% \documentclass[final,1p,times,twocolumn]{elsarticle}
+%% \documentclass[final,3p,times]{elsarticle}
+%% \documentclass[final,3p,times,twocolumn]{elsarticle}
+%% \documentclass[final,5p,times]{elsarticle}
+%% \documentclass[final,5p,times,twocolumn]{elsarticle}
+
+\usepackage{graphicx}
+\usepackage{amssymb}
+\usepackage{minted}
+\usepackage{xcolor}
+\definecolor{nicered}{rgb}{0.5,0.,0.}
+\definecolor{nicegreen}{rgb}{0.,0.5,0.}
+\definecolor{niceblue}{rgb}{0.,0.,0.5}
+\usepackage{hyperref}
+\hypersetup{colorlinks,citecolor=nicegreen,linkcolor=nicered,urlcolor=niceblue}
+\usepackage{siunitx}
+
+%% The lineno packages adds line numbers. Start line numbering with
+%% \begin{linenumbers}, end it with \end{linenumbers}. Or switch it on
+%% for the whole article with \linenumbers after \end{frontmatter}.
+%% \usepackage{lineno}
+
+%% natbib.sty is loaded by default. However, natbib options can be
+%% provided with \biboptions{...} command. Following options are
+%% valid:
+
+%%   round  -  round parentheses are used (default)
+%%   square -  square brackets are used   [option]
+%%   curly  -  curly braces are used      {option}
+%%   angle  -  angle brackets are used    <option>
+%%   semicolon  -  multiple citations separated by semi-colon
+%%   colon  - same as semicolon, an earlier confusion
+%%   comma  -  separated by comma
+%%   numbers-  selects numerical citations
+%%   super  -  numerical citations as superscripts
+%%   sort   -  sorts multiple citations according to order in ref. list
+%%   sort&compress   -  like sort, but also compresses numerical citations
+%%   compress - compresses without sorting
+%%
+%% \biboptions{comma,round}
+
+% \biboptions{}
+
+%% This list environment is used for the references in the
+%% Program Summary
+%%
+\newcounter{bla}
+\newenvironment{refnummer}{%
+\list{[\arabic{bla}]}%
+{\usecounter{bla}%
+ \setlength{\itemindent}{0pt}%
+ \setlength{\topsep}{0pt}%
+ \setlength{\itemsep}{0pt}%
+ \setlength{\labelsep}{2pt}%
+ \setlength{\listparindent}{0pt}%
+ \settowidth{\labelwidth}{[9]}%
+ \setlength{\leftmargin}{\labelwidth}%
+ \addtolength{\leftmargin}{\labelsep}%
+ \setlength{\rightmargin}{0pt}}}
+ {\endlist}
+
+\journal{Computer Physics Communications}
+
+\begin{document}
+
+\begin{frontmatter}
+
+%% Title, authors and addresses
+
+%% use the tnoteref command within \title for footnotes;
+%% use the tnotetext command for the associated footnote;
+%% use the fnref command within \author or \address for footnotes;
+%% use the fntext command for the associated footnote;
+%% use the corref command within \author for corresponding author footnotes;
+%% use the cortext command for the associated footnote;
+%% use the ead command for the email address,
+%% and the form \ead[url] for the home page:
+%%
+%% \title{Title\tnoteref{label1}}
+%% \tnotetext[label1]{}
+%% \author{Name\corref{cor1}\fnref{label2}}
+%% \ead{email address}
+%% \ead[url]{home page}
+%% \fntext[label2]{}
+%% \cortext[cor1]{}
+%% \address{Address\fnref{label3}}
+%% \fntext[label3]{}
+
+\title{\texttt{Candia-v2}: Logarithmic expansions for DGLAP evolution in $x$-space}
+
+%% use optional labels to link authors explicitly to addresses:
+%% \author[label1,label2]{<author name>}
+%% \address[label1]{<address>}
+%% \address[label2]{<address>}
+
+\author[a]{First Author\corref{author}}
+\author[a,b]{Second Author}
+\author[b]{Third Author}
+
+\cortext[author] {Corresponding author.\\\textit{E-mail address:} firstAuthor@somewhere.edu}
+\address[a]{First Address}
+\address[b]{Second Address}
+
+\begin{abstract}
+%% Text of abstract
+A submitted program is expected to satisfy the following criteria: it must be of benefit to other physicists, or be an exemplar of good programming practice, or illustrate new or novel programming techniques which are of importance to computational physics community; it should be implemented in a language and executable on hardware that is widely available and well documented; it should meet accepted standards for scientific programming; it should be adequately documented and, where appropriate, supplied with a separate User Manual, which together with the manuscript should make clear the structure, functionality, installation, and operation of the program.
+
+Your manuscript and figure sources should be submitted through Editorial Manager (EM) by using the online submission tool at \\
+https://www.editorialmanager.com/comphy/.
+
+In addition to the manuscript you must supply: the program source code; a README file giving the names and a brief description of the files/directory structure that make up the package and clear instructions on the installation and execution of the program; sample input and output data for at least one comprehensive test run; and, where appropriate, a user manual.
+
+A compressed archive program file or files, containing these items, should be uploaded at the "Attach Files" stage of the EM submission.
+
+For files larger than 1Gb, if difficulties are encountered during upload the author should contact the Technical Editor at cpc.mendeley@gmail.com.
+\\
+
+% All CPiP articles must contain the following
+% PROGRAM SUMMARY.
+
+\noindent \textbf{PROGRAM SUMMARY/NEW VERSION PROGRAM SUMMARY}
+  %Delete as appropriate.
+
+\begin{small}
+\noindent
+{\em Program Title:} Candia-v2                       \\
+{\em CPC Library link to program files:} (to be added by Technical Editor) \\
+{\em Developer's repository link:} https://github.com/champso1/candia-v2 \\
+{\em Licensing provisions(please choose one):} GPLv3  \\
+{\em Programming language:} C++/Fortran                        \\
+{\em Supplementary material:} \textcolor{red}{TODO}    \\
+  % Fill in if necessary, otherwise leave out.
+{\em Journal reference of previous version:} https://doi.org/10.48550/arXiv.2512.22667    \\
+  %Only required for a New Version summary, otherwise leave out.
+{\em Does the new version supersede the previous version?:} Yes \\
+  %Only required for a New Version summary, otherwise leave out.
+{\em Reasons for the new version:} Availability of N3LO operator matrix elements, matching conditions, and approximate kernels \\
+  %Only required for a New Version summary, otherwise leave out.
+{\em Summary of revisions:} Conversion from C to C++, optimizations with convolution/interpolation routines, N$^3$LO evolution, and possibility for LHAPDF inputs \\
+  %Only required for a New Version summary, otherwise leave out.
+{\em Nature of problem(approx. 50-250 words):} This program solves the DGLAP evolution equations in $x$-space for parton distributions functions up to approximate N$^3$LO \\
+  %Describe the nature of the problem here. \\
+{\em Solution method(approx. 50-250 words):} The algorithm is based upon a logarithmic expansion of the solution in $x$-space and a set of recursion relations for unknown coefficients. \\
+  %Describe the method solution here.
+{\em Additional comments including restrictions and unusual features (approx. 50-250 words):}\\
+  %Provide any additional comments here.
+  Due to the dependency on the GNU Scientific Library (GSL), which doesn't provide native binaries for Windows and is also difficult to build from source, WSL is recommended if using on Windows.
+   \\
+   
+
+
+\begin{thebibliography}{0}
+\bibitem{1}Reference 1         % This list should only contain those items referenced in the                 
+\bibitem{2}Reference 2         % Program Summary section.   
+\bibitem{3}Reference 3         % Type references in text as [1], [2], etc.
+                               % This list is different from the bibliography at the end of 
+                               % the Long Write-Up.
+\end{thebibliography}
+* Items marked with an asterisk are only required for new versions
+of programs previously published in the CPC Program Library.\\
+\end{small}
+   \end{abstract}
+\end{frontmatter}
+
+\section{Description of the Program}
+\label{sec:prog-desc}
+
+\subsection{Requirements and Dependencies}
+\label{subsec:reqs-and-deps}
+
+There are some version requirements and dependencies one needs to install in order to successfully compile and run the code. They are:
+%
+\begin{itemize}
+  \item CMake >= 3.20,
+  \item C++20 compatibility. Among the standard compilers, one would need GCC >= 13 or CLang >= 17. Other compilers like Apple CLang or Intel compilers haven't been tested,
+  \item A Fortran compiler such as GFortran,
+  \item GSL (GNU Scientific Library): Required as one of the convolution options as well as in the \texttt{libome} package,
+  \item (Optional) LaTeX utilities: if one wants to build this manuscript and the one submitted to Physical Review D,
+  \item (Optional) Doxygen: if one wants to build the code documentation.
+\end{itemize}
+
+For the latter two optional dependencies, see Section~\ref{subsec:acq-and-build} for descriptions of the CMake flags needed to enable these features.
+
+\subsection{Acquiring and Building}
+\label{subsec:acq-and-build}
+
+The code is publically available on \href{GitHub}{https://github.com/champso1/candia-v2}.
+There are a number of active branches in which various new features are being added/tested, but by default the \mintinline{cfg}{main} branch contains the most stable version. One can also checkout a specific release/tag with the \mintinline{bash}{git checkout} command.
+After cloning the source code (use the \mintinline{bash}{--recurse-submodules} when cloning, or issue \mintinline{bash}{git submodule init} and \mintinline{bash}{git submodule update} to initialize all parts of the program), one follows the standard CMake building process:
+%
+\begin{minted}{bash}
+git clone https://github.com/champso1/candia-v2
+cd candia-v2
+git submodule init
+git submodule update
+mkdir build && cd build
+cmake .. [-G <Generator>] \
+         -DCMAKE_INSTALL_PREFIX=<prefix> \
+         [<other options>]
+cmake --build .
+cmake --install .
+\end{minted}
+%
+Among the optional \mintinline{bash}{<other options>} are the standard CMake options such as \mintinline{cfg}{CMAKE_CXX_COMPILER}, or \mintinline{cfg}{CMAKE_BUILD_TYPE} if one wants to build in anything other than Release mode, which is the default.
+There are also a few additional options that are specific to this program. They are:
+%
+\begin{itemize}
+  \item \textbf{\mintinline{cfg}{ENABLE_THREADING}}: Due to the nature of the algorithm, the non-singlet distributions are entirely independent, and in the singlet sector, the grid can be split up and evolved independently as well. This option enables building the code with the appropriate threading libraries, allowing the program to place these independent evolutions on separate threads such that they run concurrently.
+  This option is off by default for compatibility with older systems, but is recommended to be enabled if the computer has multiple CPU cores.
+  \item \textbf{\mintinline{cfg}{BUILD_MANUSCRIPTS}}: Contained in the \mintinline{cfg}{manuscripts} directory in the root of the project is this manuscript as well as the manuscript submitted to Physical Review D, containing a higher level description of the algorithm. If this option is enabled, then a new target \mintinline{cfg}{manuscripts_pdf} is generated which will build both of these manuscripts.
+  Requires LaTeX utilities (PdfLaTeX, Biber) and some standard packages.
+  This option is off by default.
+  \item \textbf{\mintinline{cfg}{BUILD_DOCS}}: Use Doxygen to build the documentation for the code. This option is off by default.
+\end{itemize}
+
+\subsection{Usage: Example Program and Building/Linking}
+\label{subsec:ex-prog}
+
+In Listing~\ref{lst:ex-prog} is a full C++ program that will perform the DGLAP evolution at N$^3$LO starting from the standard benchmark initial conditions.
+The output is stored in an \mintinline{cpp}{std::vector<ArrayGrid>}, which the user can handle however they need; the \mintinline{cpp}{ArrayGrid} is a class that, for the purposes of accessing elements, behaves like an ordinary array, e.g. it has \mintinline{cpp}{operator[]} methods. See \textcolor{red}{TODO} for a further description of this class.
+%
+\begin{listing}
+  \inputminted{cpp}{res/example.cpp}
+  \caption{Example program that performs a full DGLAP evolution at N$^3$LO starting from the standard benchmark initial conditions and ending at $\qty{100}{\GeV}$.}
+  \label{lst:ex-prog}
+\end{listing}
+%
+In the code, the user first includes the header \mintinline{cpp}{Candia-v2/Candia.hpp}. This is the main header to include, and all required utilities the user need interact with is included within that header.
+We also define the following variables:
+\begin{itemize}
+  \item \mintinline{cpp}{num_grid_points}: the number of points to place on the interpolation/convolution grid.
+  \item \mintinline{cpp}{order}: the perturbative order of the solution. this number is the $m$ in N$^m$LO.
+  \item \mintinline{cpp}{Qf}: the final energy to evolve to.
+  \item \mintinline{cpp}{kr}: the ratio of factorization and renormalization scales.
+  \item \mintinline{cpp}{iterations}: the number of total iterations to complete. this number corresponds to the $s$ index \textcolor{red}{TODO}
+  \item \mintinline{cpp}{trunc_idx}: the truncation index to use for the singlet solution. this number corresponds to the variable $\kappa$ \textcolor{red}{TODO}.
+\end{itemize}
+%
+We also define an \mintinline{cpp}{std::vector} called \mintinline{cpp}{xtab}, which specifies a set of points which are directly placed on the grid and are able to be directly retrieved later, for benchmarking purposes. This avoids interpolating to get the value of the distributions at these points.
+We then create the \mintinline{cpp}{Distribution} which contains the initial value of $\alpha_s$, the initial energy, as well as the functions defining the initial values for the distributions. \mintinline{cpp}{LesHouchesDistribution} defines the set of initial conditions used in \textcolor{red}{TODO}.
+We use these values to create an \mintinline{cpp}{AlphaS} object, containing the information to evolve/match $\alpha_s$.
+Lastly, we create a \mintinline{cpp}{DGLAPSolver} object, and pass it these parameters, and call \mintinline{cpp}{.evolve()} to perform the evolution and grab the distributions.
+
+\subsection{Program Structure}
+\label{subsec:prog-struct}
+
+We now describe the main implementation details of the source code itself.
+
+\subsubsection{Splitting Functions and OMEs}
+\label{subsec:splitfuncs-and-omes}
+
+Structurally, the splitting functions and the OMEs have the following structure:
+%
+\begin{equation}
+  A(x) + \frac{B(x)}{(1-x)^+} + C\delta(1-x),
+\end{equation}
+
+i.e. a "regular" piece, given by the $A$ coefficient, a "plus" piece, given by the $B$ coefficient (\textit{not} including the plus-distribution itself), and a "delta" piece, given by the $C$ coefficient (also \textit{not} including the delta function). For the purposes of convolutions with these objects, we can keep one generic convolution function and utilize C++ OOP to define a generic \mintinline{cpp}{Expression} class that contains these three methods.
+We then have that the classes \mintinline{cpp}{SplittingFunction} and \mintinline{cpp}{OpMatElem} inherit from this and implement the required methods.
+
+Importantly, since the convolutions proceed via a Gauss-Legendre quadrature, there are a set of fixed points at which these objects are evaluated, which is known before the evolution begins. Therefore, \mintinline{cpp}{Expression} objects contain a cache (implemented as an \mintinline{cpp}{std::map}) of these fixed points and the values of the evaluated expression that is filled at the start of the evolution. This is especially helpful for higher orders where the expressions become very complex, and saves a lot of time, requiring a couple of conditional evaluations during the evolution as opposed to dozens of mathematical subroutines and potentially calls to harmonic polylogarithm evaluation routines.
+
+%% The Appendices part is started with the command \appendix;
+%% appendix sections are then done as normal sections
+%% \appendix
+
+%% \section{}
+%% \label{}
+
+%% References
+%%
+%% Following citation commands can be used in the body text:
+%% Usage of \cite is as follows:
+%%   \cite{key}         ==>>  [#]
+%%   \cite[chap. 2]{key} ==>> [#, chap. 2]
+%%
+
+%% References with bibTeX database:
+
+\bibliographystyle{elsarticle-num}
+\bibliography{sources.bib}
+
+%% Authors are advised to submit their bibtex database files. They are
+%% requested to list a bibtex style file in the manuscript if they do
+%% not want to use elsarticle-num.bst.
+
+%% References without bibTeX database:
+
+% \begin{thebibliography}{00}
+
+%% \bibitem must have the following form:
+%%   \bibitem{key}...
+%%
+
+% \bibitem{}
+
+% \end{thebibliography}
+
+
+\end{document}
+
+%%
+%% End of file 

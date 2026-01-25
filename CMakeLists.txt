@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.30)
+cmake_minimum_required(VERSION 3.20)
 project(candia_v2)
 set(CMAKE_EXPORT_COMPILE_COMMANDS on)
 set(CMAKE_INSTALL_PREFIX ${CMAKE_SOURCE_DIR}/install)
@@ -9,6 +9,12 @@ option(ENABLE_THREADING "Enable multi-threading support" OFF)
 
 if (ENABLE_THREADING)
   message("candia-v2: Compiling with threading support.")
+endif()
+
+option(BUILD_MANUSCRIPTS "Use pdflatex/bibtex to compile the available manuscripts" OFF)
+if (BUILD_MANUSCRIPTS)
+  message("candia-v2: building manuscripts")
+  add_subdirectory(manuscripts)
 endif()
 
 # build all vendor projects first before touching candia
