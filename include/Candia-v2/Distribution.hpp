@@ -72,20 +72,19 @@ namespace Candia2
 		double xs (double x) const override;
 	}; 
 
+	// TODO: this might be unnecessary
+	using lhapdf_pdf_ptr_type = std::unique_ptr<LHAPDF::PDF>;
+
 	class LHAPDFDistribution final : public Distribution
 	{
 	private:
-		static constexpr auto _lhapdf_pdf_deleter = [](LHAPDF::PDF* pdf){ delete pdf; };
-		using lhapdf_pdf_deleter_type = decltype(_lhapdf_pdf_deleter);
-		using lhapdf_pdf_ptr_type = std::unique_ptr<LHAPDF::PDF, lhapdf_pdf_deleter_type>;
-
 		lhapdf_pdf_ptr_type _pdf; //!< actual lhapdf pdf object
 		std::vector<int> _pids;
 
 	public:
 		LHAPDFDistribution(lhapdf_pdf_ptr_type lhapdf_pdf, double Q0);
 
-		static inline lhapdf_pdf_ptr_type make_lhapdf_pdf(std::string const& setname, int num)
+		static inline lhapdf_pdf_ptr_type make_lhapdf_pdf(std::string const& setname, int num=0)
 		{
 			return lhapdf_pdf_ptr_type(LHAPDF::mkPDF(setname, num));
 		}
