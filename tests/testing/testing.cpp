@@ -1,8 +1,9 @@
 #include "Candia-v2/Distribution.hpp"
 #include "Candia-v2/Common.hpp"
-#include "LHAPDF/LHAGlue.h"
 #include <charconv>
 #include <cstring>
+#include <iterator>
+#include <sstream>
 using namespace Candia2;
 
 static void usage()
@@ -27,7 +28,11 @@ int main(int argc, char *argv[])
 	std::from_chars(argv[2], argv[2] + strlen(argv[2]), Q0);
 	std::from_chars(argv[3], argv[3] + strlen(argv[3]), x);
 
-	
-	auto pdf = LHAPDFDistribution::make_lhapdf_pdf(setname, 0);
-	pdf->
+	log(LOG_INFO, "testing.cpp", "Setname={}, energy scale={}, momentum fraction={}", setname, Q0, x);
+
+	LHAPDFDistribution dist(LHAPDFDistribution::make_lhapdf_pdf(setname), Q0);
+	auto masses = dist.masses();
+	std::ostringstream ss{};
+	std::copy(masses.begin(), masses.end(), std::ostream_iterator<double>(ss, ", "));
+	log(LOG_INFO, "testing.cpp", "Masses looks like: {}", ss.str());
 }
