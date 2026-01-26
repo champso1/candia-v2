@@ -147,24 +147,16 @@ namespace Candia2
 	void DGLAPSolver::setInitialConditions(Distribution const& dist)
 	{
 		log(LOG_INFO, "DGLAP", "Setting initial conditions... ");
-	   
+
+		/*
 		for (uint k=0; k<_grid.size()-1; k++) {
 			double x = _grid[k];
 			_S2[0][0][0][k] = dist.xg(x);
 			_S2[0][1][0][k] = dist.xqplus(x);
 		}
+		*/
 
-		auto get_dist = [&](uint j, uint k) -> double& {
-			switch (_order) {
-				case 0: return _A2[j][0][k]; break;
-				case 1: return _B2[j][0][0][k]; break;
-				case 2: return _C2[j][0][0][0][k]; break;
-				case 3: return _D2[j][0][0][0][0][k]; break;
-				default:
-					exit(EXIT_FAILURE); // unreachable
-			}
-		};
-
+		/*
 		for (uint k=0; k<_grid.size()-1; k++) {
 			double x = _grid[k];
 			get_dist(1, k) = dist.xu(x);  // u
@@ -174,6 +166,22 @@ namespace Candia2
 			get_dist(8, k) = dist.xdb(x); // db
 			get_dist(9, k) = dist.xs(x);  // sb ( = s)
 		}
+		*/
+
+		dist.fillSingletCoeffs(
+			[&](uint j, uint k) -> double& {
+				return _S2[0][j][0][k]; },
+			_grid.points());
+		dist.fillNonSingletCoeffs(
+			[&](uint j, uint k) -> double& {
+			switch (_order) {
+				case 0: return _A2[j][0][k]; break;
+				case 1: return _B2[j][0][0][k]; break;
+				case 2: return _C2[j][0][0][0][k]; break;
+				case 3: return _D2[j][0][0][0][0][k]; break;
+				default:
+					exit(EXIT_FAILURE); }},
+			_grid.points());
 	}
 
 	void DGLAPSolver::loadAllExpressions()

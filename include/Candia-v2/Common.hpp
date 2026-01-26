@@ -8,6 +8,8 @@
 #include <numbers>
 #include <format>
 #include <iostream>
+#include <sstream>
+#include <iterator>
 
 using uint = unsigned;
 
@@ -92,6 +94,23 @@ namespace Candia2
 
 		if (log_type == LOG_ERROR)
 			exit(EXIT_FAILURE);
+	}
+
+	template <typename TContainer>
+	concept CContainer = requires(TContainer&& t)
+	{
+		typename TContainer::value_type;
+	    { std::begin(t) } -> std::input_or_output_iterator;
+		{ std::end(t) } -> std::sentinel_for<decltype(std::begin(t))>;
+	};
+	
+	template <CContainer TContainer>
+	std::string vec_to_str(TContainer const& vec)
+	{
+		using value_type = TContainer::value_type;
+		std::ostringstream ss{};
+		std::copy(vec.begin(), vec.end(), std::ostream_iterator<value_type>(ss, ", "));
+		return std::move(ss.str());
 	}
 };
 
