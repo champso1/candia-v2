@@ -75,16 +75,14 @@ namespace Candia2
 		
 		inline AlphaS const& getAlphaS() const { return _alpha_s; }
 		inline Grid const& getGrid() const { return _grid; }
+		
 		inline void useNNLOMatchingAtN3LO() { _use_n3lo_matching_conditions = false;};
 		inline void disableMatching() { _disable_matching = true; }
 		
-		void setEvolutionVariables(uint iterations, uint trunc_idx);
-
 		auto evolve() -> decltype(_F2);
 
 	private:
 		void setInitialConditions(Distribution const& dist);
-		void fillSplittingFunctionCaches();
 		void setupCoefficients();
 		void fixDistributions(
 			bool resum_tab, bool resum_threshold, 

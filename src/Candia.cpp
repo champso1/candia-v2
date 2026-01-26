@@ -147,71 +147,41 @@ namespace Candia2
 	void DGLAPSolver::setInitialConditions(Distribution const& dist)
 	{
 		log(LOG_INFO, "DGLAP", "Setting initial conditions... ");
-	   
+
+		/*
 		for (uint k=0; k<_grid.size()-1; k++) {
 			double x = _grid[k];
 			_S2[0][0][0][k] = dist.xg(x);
-			_S2[0][1][0][k] =
-				dist.xuv(x)
-				+ 2.0*dist.xub(x)
-				+ dist.xdv(x)
-				+ 2.0*dist.xdb(x)
-				+ 2.0*dist.xs(x);
+			_S2[0][1][0][k] = dist.xqplus(x);
 		}
-	    
-		switch (_order) {
-			case 0: {
-				for (uint k=0; k<_grid.size()-1; k++) {
-					double x = _grid[k];
-					_A2[7][0][k] = dist.xub(x);
-					_A2[1][0][k] = dist.xuv(x) + _A2[7][0][k];
-					_A2[8][0][k] = dist.xdb(x);
-					_A2[2][0][k] = dist.xdv(x) + _A2[8][0][k];
-					_A2[3][0][k] = dist.xs(x);
-					_A2[9][0][k] = dist.xs(x);
-				}
-			} break;
-			case 1: {
-				for (uint k=0; k<_grid.size()-1; k++) {
-					double x = _grid[k];
-					_B2[7][0][0][k] = dist.xub(x);
-					_B2[1][0][0][k] = dist.xuv(x) + _B2[7][0][0][k];
-					_B2[8][0][0][k] = dist.xdb(x);
-					_B2[2][0][0][k] = dist.xdv(x) + _B2[8][0][0][k];
-					_B2[3][0][0][k] = dist.xs(x);
-					_B2[9][0][0][k] = dist.xs(x);
-				}
-			} break;
-			case 2: {
-				for (uint k=0; k<_grid.size()-1; k++) {
-					double x = _grid[k];
-					_C2[7][0][0][0][k] = dist.xub(x);
-					_C2[1][0][0][0][k] = dist.xuv(x) + _C2[7][0][0][0][k];
-					_C2[8][0][0][0][k] = dist.xdb(x);
-					_C2[2][0][0][0][k] = dist.xdv(x) + _C2[8][0][0][0][k];
-					_C2[3][0][0][0][k] = dist.xs(x);
-					_C2[9][0][0][0][k] = dist.xs(x);
-				}
-			} break;
-			case 3: {
-				for (uint k=0; k<_grid.size()-1; k++) {
-					double x = _grid[k];
-					_D2[7][0][0][0][0][k] = dist.xub(x);
-					_D2[1][0][0][0][0][k] = dist.xuv(x) + _D2[7][0][0][0][0][k];
-					_D2[8][0][0][0][0][k] = dist.xdb(x);
-					_D2[2][0][0][0][0][k] = dist.xdv(x) + _D2[8][0][0][0][0][k];
-					_D2[3][0][0][0][0][k] = dist.xs(x);
-					_D2[9][0][0][0][0][k] = dist.xs(x);
-				}
+		*/
 
-			} break;
+		/*
+		for (uint k=0; k<_grid.size()-1; k++) {
+			double x = _grid[k];
+			get_dist(1, k) = dist.xu(x);  // u
+			get_dist(2, k) = dist.xd(x);  // d
+			get_dist(3, k) = dist.xs(x);  // s
+			get_dist(7, k) = dist.xub(x); // ub
+			get_dist(8, k) = dist.xdb(x); // db
+			get_dist(9, k) = dist.xs(x);  // sb ( = s)
 		}
-	}
+		*/
 
-	void DGLAPSolver::setEvolutionVariables(uint iterations, uint trunc_idx)
-	{
-		_iterations = iterations;
-		_trunc_idx = trunc_idx;
+		dist.fillSingletCoeffs(
+			[&](uint j, uint k) -> double& {
+				return _S2[0][j][0][k]; },
+			_grid.points());
+		dist.fillNonSingletCoeffs(
+			[&](uint j, uint k) -> double& {
+			switch (_order) {
+				case 0: return _A2[j][0][k]; break;
+				case 1: return _B2[j][0][0][k]; break;
+				case 2: return _C2[j][0][0][0][k]; break;
+				case 3: return _D2[j][0][0][0][0][k]; break;
+				default:
+					exit(EXIT_FAILURE); }},
+			_grid.points());
 	}
 
 	void DGLAPSolver::loadAllExpressions()
@@ -268,95 +238,37 @@ namespace Candia2
 
     void DGLAPSolver::setupCoefficients()
     {
-	    switch (_order) {
-			case 0: { // LO
-				for (uint k=0; k<_grid.size(); k++) {
-                    for (uint j=13; j<=18; j++)
-                        _A2[j][0][k] = _A2[j-12][0][k]-_A2[j-6][0][k];
-                
-                    _A2[25][0][k]=0.;
-                    for (uint j=13; j<=18; j++)
-                        _A2[25][0][k] += _A2[j][0][k];
-
-                    for (uint j=26; j<=30; j++)
-                        _A2[j][0][k] = _A2[13][0][k]-_A2[j-12][0][k];
-
-                    for (uint j=19; j<=24; j++)
-                        _A2[j][0][k] = _A2[j-18][0][k]+_A2[j-12][0][k];
-
-                    _S2[0][1][0][k] = 0.0;
-                    for (uint j=19; j<=24; j++)
-                        _S2[0][1][0][k] += _A2[j][0][k];
-                
-                    for (uint j=32; j<=36; j++)
-                        _A2[j][0][k]=_A2[19][0][k]-_A2[j-12][0][k];
-                }
-			} break;
-			case 1: { // NNLO
-				for (uint k=0; k<_grid.size(); k++) {
-					for (uint j=13; j<=18; j++)
-						_B2[j][0][0][k] = _B2[j-12][0][0][k]-_B2[j-6][0][0][k];
-			
-					_B2[25][0][0][k]=0.;
-					for (uint j=13; j<=18; j++)
-						_B2[25][0][0][k] += _B2[j][0][0][k];
-					for (uint j=26; j<=30; j++)
-						_B2[j][0][0][k] = _B2[13][0][0][k]-_B2[j-12][0][0][k];
-					for (uint j=19; j<=24; j++)
-						_B2[j][0][0][k] = _B2[j-18][0][0][k]+_B2[j-12][0][0][k];
-
-					_S2[0][1][0][k] = 0.0;
-					for (uint j=19; j<=24; j++)
-						_S2[0][1][0][k] += _B2[j][0][0][k];
-			
-					for (uint j=32; j<=36; j++)
-						_B2[j][0][0][k] = _B2[19][0][0][k]-_B2[j-12][0][0][k];
-				}
-			} break;
-			case 2:  { // NNLO
-				for (uint k=0; k<_grid.size(); k++) {
-					for (uint j=13; j<=18; j++)
-						_C2[j][0][0][0][k] = _C2[j-12][0][0][0][k]-_C2[j-6][0][0][0][k];
-			
-					_C2[25][0][0][0][k]=0.0;
-					for (uint j=13; j<=18; j++)
-						_C2[25][0][0][0][k] += _C2[j][0][0][0][k];
-
-					for (uint j=26; j<=30; j++)
-						_C2[j][0][0][0][k] = _C2[13][0][0][0][k]-_C2[j-12][0][0][0][k];
-
-					for (uint j=19; j<=24; j++)
-						_C2[j][0][0][0][k] = _C2[j-18][0][0][0][k]+_C2[j-12][0][0][0][k];
-
-					_S2[0][1][0][k] = 0.0;
-					for (uint j=19; j<=24; j++)
-						_S2[0][1][0][k] += _C2[j][0][0][0][k];
-			
-					for (uint j=32; j<=36; j++)
-						_C2[j][0][0][0][k] = _C2[19][0][0][0][k]-_C2[j-12][0][0][0][k];
-				}
-			} break;
-			case 3: { // N3LO
-				for (uint k=0; k<_grid.size(); k++) {
-					for (uint j=13; j<=18; j++)
-						_D2[j][0][0][0][0][k] = _D2[j-12][0][0][0][0][k]-_D2[j-6][0][0][0][0][k];
-			
-					_D2[25][0][0][0][0][k]=0.;
-					for (uint j=13; j<=18; j++)
-						_D2[25][0][0][0][0][k] += _D2[j][0][0][0][0][k];
-					for (uint j=26; j<=30; j++)
-						_D2[j][0][0][0][0][k] = _D2[13][0][0][0][0][k]-_D2[j-12][0][0][0][0][k];
-					for (uint j=19; j<=24; j++)
-						_D2[j][0][0][0][0][k] = _D2[j-18][0][0][0][0][k]+_D2[j-12][0][0][0][0][k];
-
-					_S2[0][1][0][k] = 0.0;
-					for (uint j=19; j<=24; j++)
-						_S2[0][1][0][k] += _D2[j][0][0][0][0][k];
-			
-					for (uint j=32; j<=36; j++)
-						_D2[j][0][0][0][0][k] = _D2[19][0][0][0][0][k]-_D2[j-12][0][0][0][0][k];
-				}
+		auto get_dist = [&](uint j, uint k) -> double& {
+			switch (_order) {
+				case 0: return _A2[j][0][k]; break;
+				case 1: return _B2[j][0][0][k]; break;
+				case 2: return _C2[j][0][0][0][k]; break;
+				case 3: return _D2[j][0][0][0][0][k]; break;
+				default:
+					exit(EXIT_FAILURE); // unreachable
 			}
+		};
+
+		for (uint k=0; k<_grid.size(); k++) {
+			for (uint j=13; j<=18; j++)
+				get_dist(j, k) = get_dist(j-12, k)-get_dist(j-6, k);
+		
+			get_dist(25, k)=0.;
+			for (uint j=13; j<=18; j++)
+				get_dist(25, k) += get_dist(j, k);
+
+			for (uint j=26; j<=30; j++)
+				get_dist(j, k) = get_dist(13, k)-get_dist(j-12, k);
+
+			for (uint j=19; j<=24; j++)
+				get_dist(j, k) = get_dist(j-18, k)+get_dist(j-12, k);
+
+			_S2[0][1][0][k] = 0.0;
+			for (uint j=19; j<=24; j++)
+				_S2[0][1][0][k] += get_dist(j, k);
+		
+			for (uint j=32; j<=36; j++)
+				get_dist(j, k)=get_dist(19, k)-get_dist(j-12, k);
 		}
     }
 

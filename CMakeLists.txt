@@ -19,12 +19,10 @@ set(sources
   src/Candia.cpp
   src/Distribution.cpp
   src/Evolution.cpp
-#  src/EvolutionThread.cpp
   src/Expression.cpp
   src/FuncArrayGrid.cpp
   src/Grid.cpp
   src/HFT.cpp
-#  src/HPLog.cpp
   src/Math.cpp
   src/OperatorMatrixElements.cpp
   src/RecRel.cpp
@@ -42,7 +40,6 @@ set(headers
   include/Candia-v2/Expression.hpp
   include/Candia-v2/FuncArrayGrid.hpp
   include/Candia-v2/Grid.hpp
-#  include/Candia-v2/HPLog.hpp
   include/Candia-v2/Math.hpp
   include/Candia-v2/OperatorMatrixElements.hpp
   include/Candia-v2/SpecialFuncs.hpp
@@ -52,7 +49,11 @@ enable_language(Fortran)
 add_library(hplog STATIC src/fortran/hplog.f)
 target_link_libraries(hplog PUBLIC gfortran)
 
+find_package(GSL REQUIRED)
 
+option(LHAPDF_ROOT_DIR "Path to the installation root/prefix of LHAPDF." "/usr")
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/share/cmake")
+find_package(LHAPDF REQUIRED)
 
 add_library(candia STATIC)
 target_sources(candia PRIVATE ${sources})
@@ -71,11 +72,11 @@ else()
   target_compile_definitions(candia PRIVATE ENABLE_THREADING=0)
 endif()
 
-target_link_libraries(candia PRIVATE hplog ome)
+target_link_libraries(candia PRIVATE hplog ome ${LHAPDF_LIBRARIES} GSL::gsl)
 target_include_directories(candia PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:include>)
-
+target_include_directories(candia PUBLIC ${LHAPDF_INCLUDE_DIR})
 add_subdirectory(examples)
 add_subdirectory(tests)
 
