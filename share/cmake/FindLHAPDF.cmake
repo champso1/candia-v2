@@ -1,6 +1,6 @@
 find_program(LHAPDF_CONFIG
-  NAMES lhapdf-config
-  HINTS ${LHAPDF_DIR}
+  NAMES bin/lhapdf-config
+  HINTS ${LHAPDF_ROOT_DIR}
   REQUIRED) 
 if (LHAPDF_CONFIG)
   execute_process(

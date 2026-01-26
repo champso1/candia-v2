@@ -322,7 +322,7 @@ namespace Candia2
 
 	double Grid::convolution(ArrayGrid& A, Expression &E, uint k)
 	{
-		double x = _points.at(k);
+		double x = _points[k];
 		double logx =  std::log(x);
 		double eplus1 = E.plus(1.0);
 		double ed1 = E.delta(1.0);

@@ -8,6 +8,7 @@
 namespace Candia2
 {
 
+	class LHAPDFDistribution;
 	class AlphaS
 	{
 	private:
@@ -37,7 +38,7 @@ namespace Candia2
 		{}
 
 		void setFFNS(uint nf);
-		void setVFNS(std::array<double, 8>, uint nfi);
+		void setVFNS(std::array<double, 8> const& masses, uint nfi);
 
 		double masses(uint nf) const;
 		inline uint nfi() const { return _nfi; }

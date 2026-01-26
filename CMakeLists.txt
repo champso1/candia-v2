@@ -23,7 +23,6 @@ set(sources
   src/FuncArrayGrid.cpp
   src/Grid.cpp
   src/HFT.cpp
-  src/LHAPDFDistribution.cpp
   src/Math.cpp
   src/OperatorMatrixElements.cpp
   src/RecRel.cpp
@@ -52,6 +51,7 @@ target_link_libraries(hplog PUBLIC gfortran)
 
 find_package(GSL REQUIRED)
 
+option(LHAPDF_ROOT_DIR "Path to the installation root/prefix of LHAPDF." "/usr")
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/share/cmake")
 find_package(LHAPDF REQUIRED)
 
