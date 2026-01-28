@@ -34,6 +34,8 @@
 \hypersetup{colorlinks,citecolor=nicegreen,linkcolor=nicered,urlcolor=niceblue}
 \usepackage{siunitx}
 
+\newcommand{\dd}{\mathrm{d}}
+
 %% The lineno packages adds line numbers. Start line numbering with
 %% \begin{linenumbers}, end it with \end{linenumbers}. Or switch it on
 %% for the whole article with \linenumbers after \end{frontmatter}.
@@ -278,6 +280,25 @@ i.e. a "regular" piece, given by the $A$ coefficient, a "plus" piece, given by t
 We then have that the classes \mintinline{cpp}{SplittingFunction} and \mintinline{cpp}{OpMatElem} inherit from this and implement the required methods.
 
 Importantly, since the convolutions proceed via a Gauss-Legendre quadrature, there are a set of fixed points at which these objects are evaluated, which is known before the evolution begins. Therefore, \mintinline{cpp}{Expression} objects contain a cache (implemented as an \mintinline{cpp}{std::map}) of these fixed points and the values of the evaluated expression that is filled at the start of the evolution. This is especially helpful for higher orders where the expressions become very complex, and saves a lot of time, requiring a couple of conditional evaluations during the evolution as opposed to dozens of mathematical subroutines and potentially calls to harmonic polylogarithm evaluation routines.
+
+\subsubsection{Initial Distributions}
+\label{subsec:init-dists}
+
+Initial distributions supply the values of the parton distributions at some initial energy $Q_0$, as well as the initial value of $\alpha_s$. Currently, there are two pre-defined options built into the program: the standard benchmark initial conditions used in \textcolor{red}{REF}, and an LHAPDF distribution. Due to LHAPDF being an external dependency that is often finnicky on systems other than Linux systems, there is a CMake flag one can specify when compiling to enable building with LHAPDF. Of course, not specifying this to be true will remove the latter initial distribution option from the program.
+
+Similar to the splitting functions and OMEs, we leverage OOP to define a set of standard behavior that every initial distribution should supply: a list of the values of the quark masses, the initial value of $\alpha_s$, functions for $xf_p(x)$ where $p$ is any parton (except the top), and a way to determine the initial value of $n_f$ given an initial energy $Q_0$. This means that the user can create their own distribution with their own rules so long as they implement these specific features, and very easily supply the solver with it.
+
+\subsubsection{The \texorpdfstring{\mintinline{cpp}{AlphaS}}{AlphaS} Class}
+\label{subsec:alphas}
+
+The behavior of the QCD running coupling $\alpha_s$ is stored within the \mintinline{cpp}{AlphaS} class, including the values of the various $\beta$-coefficients and a routine to evaluate the coupling at some other arbitrary scale given its value at an initial scale by solving the Cauchy problem
+
+\begin{equation}
+  \frac{\dd \alpha_s(t)}{\dd t} = \beta(\alpha_s).
+\end{equation}
+
+At LO, this has an exact solution, while at higher orders a fourth-order Runge Kutta method is used. Additionally, this class also contains the necessary information and methods to perform the matching of the coupling at the quark thresholds at NNLO and above, assuming the on-shell scheme. It keeps an internal set of arrays that contain the values of the coupling pre- and post-threshold for each relevant $n_f$; for this reason, its constructor requires the mass array which is suppied by the initial distribution.
+
 
 %% The Appendices part is started with the command \appendix;
 %% appendix sections are then done as normal sections

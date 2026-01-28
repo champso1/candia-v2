@@ -9,6 +9,9 @@ add_latex_document(DGLAP-N3LO.tex
     IMAGE_DIRS res/
     TARGET_NAME prd)
 
+  set_property(TARGET prd_pdf PROPERTY COMPILER_FLAGS "-shell-escape")
+  set_property(TARGET cpc_pdf PROPERTY COMPILER_FLAGS "-shell-escape")
+  
 file(COPY res DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 
 add_custom_target(manuscripts_pdf DEPENDS cpc_pdf prd_pdf)
