@@ -1,5 +1,5 @@
 #include "Candia-v2/Candia.hpp"
-#include "Candia-v2/FuncArrayGrid.hpp"
+#include "Candia-v2/ArrayGrid.hpp"
 #include "Candia-v2/Math.hpp"
 
 #include <cmath>

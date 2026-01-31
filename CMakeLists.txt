@@ -20,7 +20,7 @@ set(sources
   src/Distribution.cpp
   src/Evolution.cpp
   src/Expression.cpp
-  src/FuncArrayGrid.cpp
+  src/ArrayGrid.cpp
   src/Grid.cpp
   src/HFT.cpp
   src/Math.cpp
@@ -38,7 +38,7 @@ set(headers
   include/Candia-v2/Common.hpp
   include/Candia-v2/Distribution.hpp
   include/Candia-v2/Expression.hpp
-  include/Candia-v2/FuncArrayGrid.hpp
+  include/Candia-v2/ArrayGrid.hpp
   include/Candia-v2/Grid.hpp
   include/Candia-v2/Math.hpp
   include/Candia-v2/OperatorMatrixElements.hpp

@@ -1,4 +1,4 @@
-#include "Candia-v2/FuncArrayGrid.hpp"
+#include "Candia-v2/ArrayGrid.hpp"
 
 namespace Candia2
 {

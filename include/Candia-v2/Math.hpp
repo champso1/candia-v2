@@ -1,3 +1,8 @@
+/**
+ *  @file Math.hpp
+ *  @brief Contains miscellaneous mathematical routines
+ */
+
 #ifndef __MATH_HPP
 #define __MATH_HPP
 
@@ -5,6 +10,10 @@
 
 namespace Candia2
 {
+	/**
+	 *  @brief Performs \f$x!\f$
+	 *  @param x the value to get the factorial of
+	 */
 	double factorial(uint x);
 };
 

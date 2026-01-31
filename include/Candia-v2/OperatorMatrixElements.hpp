@@ -1,3 +1,8 @@
+/**
+ *  @file OperatorMatrixElements.hpp
+ *  @brief Contains the @a OpMatElem class, a derivation of @a Expression, to handle the operator matrix elements.
+ */
+
 #ifndef __OPERATOR_MATRIX_ELEMENTS_HPP
 #define __OPERATOR_MATRIX_ELEMENTS_HPP
 
@@ -8,27 +13,37 @@
 
 namespace Candia2
 {
+	/**
+	 *  @brief Class to handle the implementation of the operator matrix elements.
+	 */
 	class OpMatElem : public Expression
 	{
-		using ome_type = ome::rpd_distribution<ome::ome_as_view<double>, ome::ome_as_plus_view<double>, ome::ome_as_const_view<double>>;
-		
 	protected:
 		static double _lm; //!< log(m_h^2/mu_r^2) = -log_mur2_muf2  ** NOTE THE MINUS **
 		static uint _nf;   //!< number of active/massless flavors
 
-		OpMatElem() = default;
+		OpMatElem() = default; //!< default constructor
 	public:
-		virtual ~OpMatElem() = default;
+		virtual ~OpMatElem() = default; //!< default destructor
 
+		/** Updates the internally stored value of @a lm and @a nf */
 		inline static void update(double lm, uint nf)
 		{
 			log(LOG_INFO, "OME", "Setting L_M = {}, nf = {}", lm, nf);
+			_lm = lm;
+			_nf = nf;
 		}
 	};
 
+	/**
+	 *  @defgroup nnloopmatelems NNLO Operator Matrix Elements
+	 *  @defgroup n3loopmatelems N3LO Operator Matrix Elements
+	 */
 
-
-	
+	/**
+	 *  @brief Implements \f$A_{qq,h}^{\mathrm{NS},(2)}\f$
+	 *  @ingroup nnloopmatelems
+	 */
 	class A2ns final : public OpMatElem
 	{
 	public:
@@ -37,12 +52,20 @@ namespace Candia2
 		double _delta_func(double x) const override;
 	};
 
+	/**
+	 *  @brief Implements \f$A_{gq,h}^{(2)}\f$
+	 *  @ingroup nnloopmatelems
+	 */
 	class A2gq final : public OpMatElem
 	{
 	public:
 		double _reg_func(double x) const override;
 	};
 
+	/**
+	 *  @brief Implements \f$A_{gg,h}^{(2)}\f$
+	 *  @ingroup nnloopmatelems
+	 */
 	class A2gg final : public OpMatElem
 	{
 	public:
@@ -51,12 +74,20 @@ namespace Candia2
 		double _delta_func(double x) const override;
 	};
 
+	/**
+	 *  @brief Implements \f$A_{hq,h}^{(2)}\f$
+	 *  @ingroup nnloopmatelems
+	 */
 	class A2hq final : public OpMatElem
 	{
 	public:
 		double _reg_func(double x) const override;
 	};
 
+	/**
+	 *  @brief Implements \f$A_{hg,h}^{(2)}\f$
+	 *  @ingroup nnloopmatelems
+	 */
 	class A2hg final : public OpMatElem
 	{
 	public:
@@ -65,17 +96,23 @@ namespace Candia2
 
 	
 
+	/**
+	 *  @brief Implements the N3LO operator matrix elements using an underlying libome interface.
+	 *  @ingroup n3loopmatelems
+	 */
 	class OpMatElemN3LO final : public OpMatElem
 	{
 	public:
+		/** Alias for underlying libome type */
 		using ome_type = ome::rpd_distribution<ome::ome_as_view<double>, ome::ome_as_plus_view<double>, ome::ome_as_const_view<double>>;
 
 	private:
-		ome_type _ome;
+		ome_type _ome; //!< underlying libome interface
 
 	public:
+		/** constructs an @a OpMatElemN3LO with the specified libome type */
 		OpMatElemN3LO(ome_type const& ome) : _ome{ome} {}
-		~OpMatElemN3LO() = default;
+		~OpMatElemN3LO() = default; //!< default deconstructor
 
 		inline double _reg_func(double x) const override
 		{

@@ -1,10 +1,13 @@
+/**
+ *  @file Common.hpp
+ *  @brief Contains type definitions, constants, logging, and other misc definitions.
+ */
+
 #ifndef __COMMON_HPP
 #define __COMMON_HPP
 
 #include <functional>
 #include <vector>
-#include <concepts>
-#include <ranges>
 #include <numbers>
 #include <format>
 #include <iostream>
@@ -14,14 +17,15 @@
 using uint = unsigned;
 
 #define UNUSED(x) (void)(x)
-#define MAX(x,y) ((x)>=(y)) ? (x) : (y)
-#define MIN(x,y) ((x)<=(y)) ? (x) : (y)
 #define EPS 1e-8
 
 
-/// @brief 
 namespace Candia2
 {
+	/**
+	 *  @defgroup constants Constants
+	 *  @{
+	 */
 	constexpr const double CF    = 4.0/3.0;
 	constexpr const double NC    = 3.0;
 	constexpr const double TR    = 0.5;
@@ -31,13 +35,22 @@ namespace Candia2
 	constexpr const double PI_3 = PI*PI*PI;
 	constexpr const double Zeta2 = PI*PI/6.0;
 	constexpr const double Zeta3 = 1.2020569031595942854;
+	/** @} */
 
 	// TODO: better handle defaults
+	/**
+	 *  @defgroup defaults Program Defaults
+	 *  @{
+	 */
 	constexpr const uint DISTS = 37;
 	constexpr const uint INTERP_POINTS = 4;
 	constexpr const uint DEFAULT_ITERATIONS = 10;
 	constexpr const uint DEFAULT_TRUNC_IDX = 5;
+	/** @{ */
 
+	/**
+	 *  @brief Template class for more easily typing an @a std::vector with multiple layers of nesting.
+	 */
 	template <typename T, uint N>
 	struct MultiDimVector
 	{
@@ -50,17 +63,7 @@ namespace Candia2
 		typedef std::vector<T> type;
 	};
 
-
-	template<typename T>
-	concept Iterable = requires(T t) {
-		{ std::ranges::begin(t) } -> std::input_or_output_iterator;
-		{ std::ranges::end(t) } -> std::sentinel_for<decltype(std::ranges::begin(t))>;
-	};
-
-	template <typename T>
-	concept Arithmetic = std::integral<T> or std::floating_point<T>;
-
-
+	/** Enum for defining a set of standard logging types. */
 	enum LogType : int
 	{
 		LOG_DEBUG = 0,
@@ -73,13 +76,22 @@ namespace Candia2
 	inline std::array<std::string_view, LOG_NUM_LOG_TYPES> log_string_reps{"DEBUG", "INFO", "WARNING", "ERROR", "ERROR"};
 
 	// TODO: better handle setting global flags
-	inline bool debug_flag{false};
+	inline bool debug_flag{false}; //!< whether to print logged messaged tagged with LOG_DEBUG
+	/** Getter/Setter for the debug flag */
 	inline bool& getDebugFlag() { return debug_flag; }
 	
-	inline bool use_log_output_stream = false;
-	inline std::reference_wrapper<std::ostream> log_output_stream = std::ref(std::cout);
+	inline bool use_log_output_stream{false}; //!< flag for whether to use an additional logging output stream
+	inline std::reference_wrapper<std::ostream> log_output_stream = std::ref(std::cout); //!< additional output stream
+	/** Setter for the additional logging output stream */
 	inline void set_log_output_stream(std::ostream& os) { log_output_stream = os; use_log_output_stream = true; }
 
+	/**
+	 *  @brief Prints a message to standard out and possibly an additional stream with a nice prefix.
+	 *  @param log_type a type as in the enum @a LogType
+	 *  @param prefix an identifier of some kind to include within the message, often a function name
+	 *  @param fmt_string the format string of the log message, as used in std::format
+	 *  @param args args used to format the string, as used in std::format
+	 */
 	template <typename... TArgs>
 	void log(uint log_type, std::string_view prefix, std::format_string<TArgs...> fmt_string, TArgs&& ...args)
 	{
@@ -96,6 +108,9 @@ namespace Candia2
 			exit(EXIT_FAILURE);
 	}
 
+	/**
+	 *  @brief a concept to require that a type has a @a value_type as well as begin and end iterators
+	 */
 	template <typename TContainer>
 	concept CContainer = requires(TContainer&& t)
 	{
@@ -103,7 +118,11 @@ namespace Candia2
 	    { std::begin(t) } -> std::input_or_output_iterator;
 		{ std::end(t) } -> std::sentinel_for<decltype(std::begin(t))>;
 	};
-	
+
+	/**
+	 *  @brief Returns a string with the values of the container separated by a comma and a space
+	 *  @param vec The vector to turn into a string
+	 */
 	template <CContainer TContainer>
 	std::string vec_to_str(TContainer const& vec)
 	{
@@ -112,7 +131,7 @@ namespace Candia2
 		std::copy(vec.begin(), vec.end(), std::ostream_iterator<value_type>(ss, ", "));
 		return std::move(ss.str());
 	}
-};
+}; // namespace Candia2
 
 
 #endif // __COMMON_HPP
