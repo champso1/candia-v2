@@ -45,14 +45,14 @@ namespace Candia2
 			case 0: {
 				_trunc_idx = 0; // LO has exact singlet solution, do not add additional terms
 
-				_A2 = std::vector<std::vector<ArrayGrid>>{
+				_A = std::vector<std::vector<ArrayGrid>>{
 					DISTS, std::vector<ArrayGrid>{
 						2, ArrayGrid{grid.size()}
 					}
 				};
 			} break;
 			case 1: {
-				_B2 = MultiDimArrayGrid_t<3>{
+				_B = MultiDimArrayGrid_t<3>{
 					DISTS, MultiDimArrayGrid_t<2>{
 						2, MultiDimArrayGrid_t<1>{
 							_iterations, ArrayGrid{grid.size()}
@@ -62,7 +62,7 @@ namespace Candia2
 
 			} break;
 			case 2: {
-				_C2 = MultiDimArrayGrid_t<4>{
+				_C = MultiDimArrayGrid_t<4>{
 					DISTS, MultiDimArrayGrid_t<3>{
 						2, MultiDimArrayGrid_t<2>{
 							_iterations, MultiDimArrayGrid_t<1>{
@@ -73,7 +73,7 @@ namespace Candia2
 				};
 			} break;
 			case 3: {
-				_D2 = MultiDimArrayGrid_t<5>{
+				_D = MultiDimArrayGrid_t<5>{
 					DISTS, MultiDimArrayGrid_t<4>{
 						2, MultiDimArrayGrid_t<3>{
 							_iterations, MultiDimArrayGrid_t<2>{
@@ -113,7 +113,7 @@ namespace Candia2
 				log(LOG_INFO, "DGLAPSolver::DGLAPSolver()", "Found {} for the order, expected a value in range [0, 3].", order);
 			}
 		}
-		_S2 = decltype(_S2){
+		_S = decltype(_S){
 			trunc_idx+1, std::vector<std::vector<ArrayGrid>>{
 				2, std::vector<ArrayGrid>{
 					2, ArrayGrid{_grid.size()}
@@ -123,7 +123,7 @@ namespace Candia2
 		log(LOG_INFO, "DGLAP", "Reserved space in coefficient arrays.");
 
 
-		_F2 = std::vector<ArrayGrid>{
+		_F = std::vector<ArrayGrid>{
 			DISTS, ArrayGrid{grid.size()}
 		};
 
@@ -151,8 +151,8 @@ namespace Candia2
 		/*
 		for (uint k=0; k<_grid.size()-1; k++) {
 			double x = _grid[k];
-			_S2[0][0][0][k] = dist.xg(x);
-			_S2[0][1][0][k] = dist.xqplus(x);
+			_S[0][0][0][k] = dist.xg(x);
+			_S[0][1][0][k] = dist.xqplus(x);
 		}
 		*/
 
@@ -170,15 +170,15 @@ namespace Candia2
 
 		dist.fillSingletCoeffs(
 			[&](uint j, uint k) -> double& {
-				return _S2[0][j][0][k]; },
+				return _S[0][j][0][k]; },
 			_grid.points());
 		dist.fillNonSingletCoeffs(
 			[&](uint j, uint k) -> double& {
 			switch (_order) {
-				case 0: return _A2[j][0][k]; break;
-				case 1: return _B2[j][0][0][k]; break;
-				case 2: return _C2[j][0][0][0][k]; break;
-				case 3: return _D2[j][0][0][0][0][k]; break;
+				case 0: return _A[j][0][k]; break;
+				case 1: return _B[j][0][0][k]; break;
+				case 2: return _C[j][0][0][0][k]; break;
+				case 3: return _D[j][0][0][0][0][k]; break;
 				default:
 					exit(EXIT_FAILURE); }},
 			_grid.points());
@@ -240,10 +240,10 @@ namespace Candia2
     {
 		auto get_dist = [&](uint j, uint k) -> double& {
 			switch (_order) {
-				case 0: return _A2[j][0][k]; break;
-				case 1: return _B2[j][0][0][k]; break;
-				case 2: return _C2[j][0][0][0][k]; break;
-				case 3: return _D2[j][0][0][0][0][k]; break;
+				case 0: return _A[j][0][k]; break;
+				case 1: return _B[j][0][0][k]; break;
+				case 2: return _C[j][0][0][0][k]; break;
+				case 3: return _D[j][0][0][0][0][k]; break;
 				default:
 					exit(EXIT_FAILURE); // unreachable
 			}
@@ -263,9 +263,9 @@ namespace Candia2
 			for (uint j=19; j<=24; j++)
 				get_dist(j, k) = get_dist(j-18, k)+get_dist(j-12, k);
 
-			_S2[0][1][0][k] = 0.0;
+			_S[0][1][0][k] = 0.0;
 			for (uint j=19; j<=24; j++)
-				_S2[0][1][0][k] += get_dist(j, k);
+				_S[0][1][0][k] += get_dist(j, k);
 		
 			for (uint j=32; j<=36; j++)
 				get_dist(j, k)=get_dist(19, k)-get_dist(j-12, k);
@@ -277,7 +277,7 @@ namespace Candia2
         for (uint t=1; t<=_trunc_idx; ++t) {
             for (uint j=0; j<=1; ++j) {
                 for (uint n=0; n<=1; ++n)
-                    _S2[t][j][n].zero();
+                    _S[t][j][n].zero();
             }
         }
 
@@ -285,34 +285,34 @@ namespace Candia2
         if (resum_tab) {
             for (uint k=0; k<_grid.size()-1;k++) {
                 if (_order>=2) {
-                    _F2[13][k]=_F2[25][k];
+                    _F[13][k]=_F[25][k];
                     for (uint j=26; j<=24+_nf; j++)
-                        _F2[13][k] += _F2[j][k];
-                    _F2[13][k] /= Nf;
+                        _F[13][k] += _F[j][k];
+                    _F[13][k] /= Nf;
                     for (uint j=14; j<=12+_nf; j++)
-                        _F2[j][k] = _F2[13][k] - _F2[j+12][k];
+                        _F[j][k] = _F[13][k] - _F[j+12][k];
                 }
 
-                _F2[19][k] = _F2[31][k];
+                _F[19][k] = _F[31][k];
                 for (uint j=32; j<=30+_nf; j++)
-                    _F2[19][k] += _F2[j][k];
-                _F2[19][k] /= Nf;
+                    _F[19][k] += _F[j][k];
+                _F[19][k] /= Nf;
 
                 for (uint j=20; j<=18+_nf; j++)
-                    _F2[j][k] = _F2[19][k] - _F2[j+12][k];
+                    _F[j][k] = _F[19][k] - _F[j+12][k];
 
                 for (uint j=1; j<=_nf; j++) {
-                    _F2[j][k]   =0.5*(_F2[j+18][k] + _F2[j+12][k]);
-                    _F2[j+6][k] =0.5*(_F2[j+18][k] - _F2[j+12][k]);
+                    _F[j][k]   =0.5*(_F[j+18][k] + _F[j+12][k]);
+                    _F[j+6][k] =0.5*(_F[j+18][k] - _F[j+12][k]);
                 }
 
                 if (_order<2) {
-                    _F2[25][k]=0.0;
+                    _F[25][k]=0.0;
                     for (uint j=13; j<=12+_nf; j++)
-                        _F2[25][k] += _F2[j][k];
+                        _F[25][k] += _F[j][k];
 
                     for (uint j=26; j<=24+_nf; j++)
-                        _F2[j][k] = _F2[13][k] - _F2[j-12][k];
+                        _F[j][k] = _F[13][k] - _F[j-12][k];
                 }
             }
         }
@@ -403,10 +403,10 @@ namespace Candia2
         }
     }
 
-	auto DGLAPSolver::evolve() -> decltype(_F2)
+	auto DGLAPSolver::evolve() -> decltype(_F)
 	{
 		log(LOG_INFO, "DGLAP", "Evolving to {} flavors.", _alpha_s.nff());
-		using out_type = decltype(_F2);
+		using out_type = decltype(_F);
 		loadAllExpressions();
 
 		//std::array<double,1> Qtab{_Qf};
@@ -459,8 +459,8 @@ namespace Candia2
 			// if we are evolving to a tabulated energy
 			if (resum_tab) {
 				_alpha1 = _alpha_s.evaluate(_alpha_s.masses(_nf), _Qf, _alpha0);
-				arr = std::ref(_F2);
-				arr_singlet = std::ref(_F2);
+				arr = std::ref(_F);
+				arr_singlet = std::ref(_F);
 			} else {
 				arr = std::ref(temp_arr);
 				arr_singlet = std::ref(temp_arr_singlet);
@@ -529,10 +529,10 @@ namespace Candia2
 				log(LOG_INFO, "DGLAP", "Finished fixing distributions.");
 
 				// if we just resummed to a tabulated value,
-				// _F2 contains our final distributions
+				// _F contains our final distributions
 				// we can just copy
 				if (resum_tab) {
-					final_dists = _F2;
+					final_dists = _F;
 				} else if (resum_threshold) {
 					// if we just resummed to a threshold energy,
 					// then we need to recopy the resultant distributions
@@ -540,15 +540,15 @@ namespace Candia2
 					// back to the n=0 piece
 					for (uint j=0; j<DISTS; ++j) {
 						switch (_order) {
-							case 0: _A2[j][0] 		   = temp_arr[j]; break;
-							case 1: _B2[j][0][0] 	   = temp_arr[j]; break;
-							case 2: _C2[j][0][0][0]    = temp_arr[j]; break;
-							case 3: _D2[j][0][0][0][0] = temp_arr[j]; break;
+							case 0: _A[j][0] 		   = temp_arr[j]; break;
+							case 1: _B[j][0][0] 	   = temp_arr[j]; break;
+							case 2: _C[j][0][0][0]    = temp_arr[j]; break;
+							case 3: _D[j][0][0][0][0] = temp_arr[j]; break;
 						}
 						
 					}
 					for (uint j=0; j<=1; ++j)
-						_S2[0][j][0] = temp_arr_singlet[j*31];
+						_S[0][j][0] = temp_arr_singlet[j*31];
 				}
 			} // if (alpha0 != alpha1)
 

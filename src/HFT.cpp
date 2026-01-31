@@ -12,16 +12,8 @@ namespace Candia2
 		
 		log(LOG_INFO, "HFT", "Treating heavy flavors: {}th quark mass threshold (mass {})", _nf+1, _alpha_s.masses(_nf+1));
 		OpMatElem::update(-_log_mur2_muf2, _nf);
-		if (!Grid::splitN3LOIntervals()) {
-			for (auto& [_, expr] : _expressions)
-				expr->fill(_grid.points(), _grid.abscissae());
-		} else {
-			for (auto& [_, expr] : _expressions) {
-				expr->fill(_grid.points(), _grid.abscissae_low());
-				expr->fill(_grid.points(), _grid.abscissae_mid());
-				expr->fill(_grid.points(), _grid.abscissae_high());
-			}
-		}
+		for (auto& [_, expr] : _expressions)
+			expr->fill(_grid.points(), _grid.abscissae());
 
 		// Copy of pre-threshold distributions
 		// the nf+1 dists are defined in terms of the nf dists,
@@ -36,17 +28,17 @@ namespace Candia2
 		std::vector<ArrayGrid> arr_singlet(2, ArrayGrid{_grid.size()});
 
 		for (uint j=0; j<=1; ++j)
-			arr_singlet[j] = _S2[0][j][0];
+			arr_singlet[j] = _S[0][j][0];
 		
 		if (_order == 2) {
 			for (uint i=1; i<=_nf; i++) {
 				for (uint j=i; j<=i+6; j+=6)
-					arr[j] = _C2[j][0][0][0];
+					arr[j] = _C[j][0][0][0];
 			}
 		} else if (_order == 3) {
             for (uint i=1; i<=_nf; i++) {
 				for (uint j=i; j<=i+6; j+=6)
-					arr[j] = _D2[j][0][0][0][0];
+					arr[j] = _D[j][0][0][0][0];
 			}
         }
 
@@ -57,13 +49,13 @@ namespace Candia2
 			for (uint k=0; k<_grid.size()-1;k++) {
 				// q
 				for (uint j=1; j<=_nf; j++)
-					HFT_NNLO1(arr[j], k, _C2[j][0][0][0]);
+					HFT_NNLO1(arr[j], k, _C[j][0][0][0]);
 				// qbar
 				for (uint j=1+6; j<=_nf+6; j++)
-					HFT_NNLO1(arr[j], k, _C2[j][0][0][0]);
+					HFT_NNLO1(arr[j], k, _C[j][0][0][0]);
 
 				HFT_NNLO2(arr_singlet[0], arr_singlet[1], k); // gluon
-				HFT_NNLO3(arr_singlet[0], arr_singlet[1], k, _C2[_nf+1][0][0][0], _C2[_nf+1+6][0][0][0]); // heavy flavor
+				HFT_NNLO3(arr_singlet[0], arr_singlet[1], k, _C[_nf+1][0][0][0], _C[_nf+1+6][0][0][0]); // heavy flavor
 			}
 		} else if (_order == 3) {
 			if (_use_n3lo_matching_conditions) {
@@ -87,13 +79,13 @@ namespace Candia2
 				for (uint k=0; k<_grid.size()-1;k++) {
 					// q
 					for (uint j=1; j<=_nf; j++)
-						HFT_NNLO1(arr[j], k, _D2[j][0][0][0][0]);
+						HFT_NNLO1(arr[j], k, _D[j][0][0][0][0]);
 					// qbar
 					for (uint j=1+6; j<=_nf+6; j++)
-						HFT_NNLO1(arr[j], k, _D2[j][0][0][0][0]);
+						HFT_NNLO1(arr[j], k, _D[j][0][0][0][0]);
 
 					HFT_NNLO2(arr_singlet[0], arr_singlet[1], k); // gluon
-					HFT_NNLO3(arr_singlet[0], arr_singlet[1], k, _D2[_nf+1][0][0][0][0], _D2[_nf+1+6][0][0][0][0]); // heavy flavor
+					HFT_NNLO3(arr_singlet[0], arr_singlet[1], k, _D[_nf+1][0][0][0][0], _D[_nf+1+6][0][0][0][0]); // heavy flavor
 				}
 			}
 		}
@@ -111,7 +103,7 @@ namespace Candia2
         double const conv1 = _grid.convolution(qp, getExpression("A2gq"), k);
         double const conv2 = _grid.convolution(g, getExpression("A2gg"), k);
 
-		_S2[0][0][0][k] += std::pow(as/(4.0*PI), 2) * (conv1 + conv2);
+		_S[0][0][0][k] += std::pow(as/(4.0*PI), 2) * (conv1 + conv2);
     }
     void DGLAPSolver::HFT_NNLO3(ArrayGrid& g, ArrayGrid& qp, uint k, ArrayGrid& qh, ArrayGrid& qhb)
     {
@@ -143,7 +135,7 @@ namespace Candia2
 		double const conv4a = conv2a;
 		double const conv4b = _grid.convolution(qb, getExpression("A3nsm"), k);
 
-		_D2[j][0][0][0][0][k] += 0.5*(
+		_D[j][0][0][0][0][k] += 0.5*(
 			((fac_nnlo*conv1a + fac_n3lo*conv1b) + (fac_nnlo*conv2a + fac_n3lo*conv2b)) +
 			((fac_nnlo*conv3a + fac_n3lo*conv3b) - (fac_nnlo*conv4a + fac_n3lo*conv4b)) +
 			SP);
@@ -168,7 +160,7 @@ namespace Candia2
 		double const conv4a = conv2a;
 		double const conv4b = _grid.convolution(qb, getExpression("A3nsm"), k);
 
-		_D2[j][0][0][0][0][k] += 0.5*(
+		_D[j][0][0][0][0][k] += 0.5*(
 			((fac_nnlo*conv1a + fac_n3lo*conv1b) + (fac_nnlo*conv2a + fac_n3lo*conv2b)) -
 			((fac_nnlo*conv3a + fac_n3lo*conv3b) - (fac_nnlo*conv4a + fac_n3lo*conv4b)) +
 			SP);
@@ -186,7 +178,7 @@ namespace Candia2
 		const double conv2a = _grid.convolution(g, getExpression("A2gg"), k);
 		const double conv2b = _grid.convolution(g, getExpression("A3gg"), k);
 		
-		_S2[0][0][0][k] += (fac_nnlo*conv1a + fac_n3lo*conv1b) + (fac_nnlo*conv2a + fac_n3lo*conv2b);
+		_S[0][0][0][k] += (fac_nnlo*conv1a + fac_n3lo*conv1b) + (fac_nnlo*conv2a + fac_n3lo*conv2b);
 	}
 
 	// heavy flavor
@@ -202,7 +194,7 @@ namespace Candia2
 		const double conv2b = _grid.convolution(g, getExpression("A3hg"), k);
 		
         const double res = 0.5*((fac_nnlo*conv1a + fac_n3lo*conv1b) + (fac_nnlo*conv2a + fac_n3lo*conv2b));
-		_D2[(_nf+1)][0][0][0][0][k] = res;
-        _D2[(_nf+1)+6][0][0][0][0][k] = res;
+		_D[(_nf+1)][0][0][0][0][k] = res;
+        _D[(_nf+1)+6][0][0][0][0][k] = res;
 	}
 } // namespace Candia2

@@ -7,6 +7,7 @@
 #include <format>
 #include <filesystem>
 #include <fstream>
+#include <ranges>
 namespace fs = std::filesystem;
 
 #include "Candia-v2/Common.hpp"

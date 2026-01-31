@@ -35,6 +35,7 @@ namespace Candia2
 		uint _nfi{}; //!< initial number of massless flavors
 		masses_type _masses{}; //!< chosen quark masses
 	public:
+		Distribution() = default; //!< default constructor for dists that manually setup values
 		/**
 		 *  @brief sets up some initial values for the distribution
 		 *  @param Q0 the initial evolution energy
