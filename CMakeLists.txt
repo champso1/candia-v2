@@ -81,6 +81,24 @@ add_subdirectory(examples)
 add_subdirectory(tests)
 
 # ====================
+# DOXYGEN
+# ====================
+
+option(BUILD_DOCS "Build Doxygen documentation" OFF)
+
+if(BUILD_DOCS)
+  find_package(Doxygen)
+  if (DOXYGEN_FOUND)
+	set(DOXYGEN_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/docs)
+	set(DOXYGEN_GENERATE_TREEVIEW YES)
+	set(DOXYGEN_HAVE_DOT YES)
+	doxygen_add_docs(doxygen
+	  ${headers} ${sources}
+	  ALL)
+  endif(DOXYGEN_FOUND)
+endif(BUILD_DOCS)
+
+# ====================
 # INSTALLATION
 # ====================
 include(GNUInstallDirs)
