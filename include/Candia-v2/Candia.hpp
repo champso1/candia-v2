@@ -249,6 +249,20 @@ namespace Candia2
 		 *  @{
 		 */
 		/**
+		 *  @brief Performs the NLO evolution of the coefficients
+		 *  @param t truncation index
+		 *  @param min minimum grid index
+		 *  @param max maximum grid index
+		 */
+		void _mt_EvolveDistributions_S_NLO(uint t, uint min, uint max);
+		/**
+		 *  @brief Performs the NNLO evolution of the coefficients
+		 *  @param t truncation index
+		 *  @param min minimum grid index
+		 *  @param max maximum grid index
+		 */
+		void _mt_EvolveDistributions_S_NNLO(uint t, uint min, uint max);
+		/**
 		 *  @brief Performs the N3LO evolution of the coefficients
 		 *  @param t truncation index
 		 *  @param min minimum grid index
