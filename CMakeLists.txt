@@ -57,10 +57,6 @@ target_link_libraries(hplog PUBLIC gfortran)
 
 find_package(GSL REQUIRED)
 
-option(LHAPDF_ROOT_DIR "Path to the installation root/prefix of LHAPDF." "/usr")
-list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/share/cmake")
-find_package(LHAPDF REQUIRED)
-
 add_library(candia STATIC)
 target_sources(candia PRIVATE ${sources})
 target_sources(candia PUBLIC
@@ -68,6 +64,22 @@ target_sources(candia PUBLIC
   TYPE HEADERS
   BASE_DIRS ${CMAKE_SOURCE_DIR}/include
   FILES ${headers})
+
+option(WITH_LHAPDF "Compile in LHAPDF interface" OFF)
+if (WITH_LHAPDF)
+  option(LHAPDF_ROOT_DIR "Path to the installation root/prefix of LHAPDF." "/usr")
+  list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/share/cmake")
+  find_package(LHAPDF REQUIRED)
+  target_include_directories(candia PUBLIC ${LHAPDF_INCLUDE_DIR})
+  target_link_libraries(candia PUBLIC ${LHAPDF_LIBRARIES})
+
+  target_sources(candia PUBLIC
+	FILE_SET cxx_headers
+	TYPE HEADERS
+	BASE_DIRS ${CMAKE_SOURCE_DIR}/include
+	FILES include/Candia-v2/LHAPDFDistribution.hpp)
+  target_sources(candia PRIVATE src/LHAPDFDistribution.cpp)
+endif()
 
 if(ENABLE_THREADING)
   find_package(Threads REQUIRED)
@@ -78,11 +90,10 @@ else()
   target_compile_definitions(candia PRIVATE ENABLE_THREADING=0)
 endif()
 
-target_link_libraries(candia PRIVATE hplog ome ${LHAPDF_LIBRARIES} GSL::gsl)
+target_link_libraries(candia PRIVATE hplog ome GSL::gsl)
 target_include_directories(candia PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:include>)
-target_include_directories(candia PUBLIC ${LHAPDF_INCLUDE_DIR})
 add_subdirectory(examples)
 add_subdirectory(tests)
 
