@@ -108,18 +108,12 @@ int main(int argc, char *argv[]) {
 	vector<double> xtab{1e-5, 1e-4, 1e-3, 1e-2, 0.1, 0.3, 0.5, 0.7, 0.9, 1.0};
 	Grid grid(xtab, num_grid_points, 50, 3);
 
-	std::unique_ptr<Distribution> dist{nullptr};
-	{
-	    dist = std::make_unique<LesHouchesDistribution>();
-	}
-	{
-		dist = std::make_unique<LHAPDFDistribution>(make_lhapdf_pdf("CT18NNLO"), std::numbers::sqrt2, Qf);
-	}
-	AlphaS alphas(order, dist->Q0(), Qf, dist->alpha0(), kr);
-	alphas.setVFNS(dist->masses(), dist->nfi());
+	LesHouchesDistribution dist{};
+	AlphaS alphas(order, dist.Q0(), Qf, dist.alpha0(), kr);
+	alphas.setVFNS(dist.masses(), dist.nfi());
 	// alphas.setFFNS(4);
 
-	DGLAPSolver solver(order, grid, alphas, Qf, iterations, trunc_idx, *dist, kr);
+	DGLAPSolver solver(order, grid, alphas, Qf, iterations, trunc_idx, dist, kr);
 	// solver.disableMatching();
 	// solver.useNNLOMatchingAtN3LO();
 

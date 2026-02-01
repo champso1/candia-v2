@@ -106,7 +106,7 @@ static std::pair<xtab_type, dist_type> read_candia_file(fs::path const &path, in
 			dists_ntabbed[i][j] = dists[i][idx];
 		}
 	}
-	return {xtab, dists_ntabbed};
+	return {{xtab.begin(), xtab.end()-1}, dists_ntabbed};
 }
 
 static dist_type fix_dists(dist_type const& dists, int type)

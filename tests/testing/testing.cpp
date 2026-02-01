@@ -1,10 +1,11 @@
 #include "Candia-v2/Candia.hpp"
+#include "Candia-v2/LHAPDFDistribution.hpp"
 using namespace Candia2;
 
 int main()
 {
 	getDebugFlag() = true;
-	LHAPDF::setVerbosity(0); // this line segfaults??
+	LHAPDF::setVerbosity(0);
 
 	std::unique_ptr<LHAPDF::PDF> pdf = make_lhapdf_pdf("CT18NNLO");
 	std::unique_ptr<Distribution> dist = std::make_unique<LHAPDFDistribution>(std::move(pdf), std::numbers::sqrt2, 100.0);
