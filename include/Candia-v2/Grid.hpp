@@ -108,7 +108,7 @@ namespace Candia2
 	private:
 		/** Fills the grid according to the original candia-v2 method (log-spaced) */
 		void initGrid(grid_type const& xtab, uint nx);
-		/** Fills the grid with log-spacing and a calculated set of additional points from \f$0.1<x<1.0\f$ */
+		/** Fills the grid with log-spacing and a calculated set of additional linear points from \f$0.1<x<1.0\f$ */
 		void initGrid2(grid_type const& xtab, uint nx);
 		/** Fills the grid with log-spacing and a pre-defined additional set of points from \f$0.1<x<1.0\f$ */
 		void initGrid3(grid_type const& xtab, uint nx);

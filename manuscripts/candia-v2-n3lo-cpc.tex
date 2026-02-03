@@ -180,8 +180,18 @@ For files larger than 1Gb, if difficulties are encountered during upload the aut
 * Items marked with an asterisk are only required for new versions
 of programs previously published in the CPC Program Library.\\
 \end{small}
-   \end{abstract}
+\end{abstract}
 \end{frontmatter}
+
+\section{Introduction}
+\label{sec:intro}
+
+We present a generalization of the $x$-space \texttt{Candia} algorithm to next-to-next-to-next-to-leading order (N$^3$LO) accuracy in Quantum Chromodynamics (QCD) for solving the DGLAP evolution equations for unpolarized parton densities in the nucleon.
+The algorithm is based on logarithmic expansions of the solution and can be extended to all orders in QCD. 
+An expansion equivalent to the exact solution of the DGLAP equation at N$^3$LO is presented in the non-singlet sector. 
+Results for approximate N$^3$LO PDFs, evolved using the most recent approximations to the N$^3$LO DGLAP splitting functions, 
+are provided for benchmarking. The new version of the code, \texttt{Candia-v2}, 
+is publicly available at \url{https://github.com/champso1/candia-v2}~\cite{candiav2}.
 
 \section{Description of the Program}
 \label{sec:prog-desc}
@@ -192,13 +202,13 @@ of programs previously published in the CPC Program Library.\\
 There are some version requirements and dependencies one needs to install in order to successfully compile and run the code. They are:
 %
 \begin{itemize}
-  \item CMake >= 3.20,
+  \item \href{https://cmake.org/}{CMake} >= 3.20,
   \item C++20 compatibility. Among the standard compilers, one would need GCC >= 13 or CLang >= 17. Other compilers like Apple CLang or Intel compilers haven't been tested; MSVC is incompatible and will not work,
   \item A Fortran compiler such as GFortran,
   \item GSL (GNU Scientific Library): Required as a dependency of the \texttt{libome} package,
   \item (Optional) LaTeX utilities (PDFLatex/Biber): if one wants to build this manuscript and other relevant ones included in the repository,
-  \item (Optional) Doxygen: if one wants to build the code documentation.
-  \item (Optional) LHAPDF: if one wants to interface with LHAPDF
+  \item (Optional) \href{https://www.doxygen.nl/}{Doxygen}: if one wants to build the code documentation.
+  \item (Optional) \href{https://lhapdf.hepforge.org/}{LHAPDF}: if one wants to interface with LHAPDF
 \end{itemize}
 
 For the latter three optional dependencies, see Section~\ref{subsec:acq-and-build} for descriptions of the CMake flags needed to enable these features.
@@ -207,23 +217,23 @@ For the latter three optional dependencies, see Section~\ref{subsec:acq-and-buil
 \label{subsec:acq-and-build}
 
 The code is publically available on \href{GitHub}{https://github.com/champso1/candia-v2}.
-There are a number of active branches in which various new features are being added/tested, but by default the \mintinline{cfg}{main} branch contains the most stable version. It is preferrable to either download the source from the Releases page, or checkout the corresponding tag from the cloned repository.
-After acquiring the source code (use the \mintinline{bash}{--recurse-submodules} when cloning, or issue \mintinline{bash}{git submodule init} and \mintinline{bash}{git submodule update} to initialize all parts of the program), one follows the standard CMake building process:
+There are a number of active branches in which various new features are being added/tested, but by default the \mintinline{cfg}{main} branch contains the most stable version. While one can at any time build from this branch, it is preferrable to either download the source from the Releases page, or checkout the corresponding tag from the cloned repository.
+After acquiring the source code, one follows the standard CMake building process:
 %
 \begin{minted}{bash}
 git clone https://github.com/champso1/candia-v2
 cd candia-v2
-git submodule init
+git submodule init 
 git submodule update
 mkdir build && cd build
 cmake .. [-G <Generator>] \
-         -DCMAKE_INSTALL_PREFIX=<prefix> \
          [<other options>]
 cmake --build .
 cmake --install .
 \end{minted}
 %
-Among the optional \mintinline{bash}{<other options>} are the standard CMake options such as \mintinline{cfg}{CMAKE_CXX_COMPILER}, or \mintinline{cfg}{CMAKE_BUILD_TYPE} if one wants to build in anything other than Release mode, which is the default.
+Note the commands related to git submodules, which will correctly initialize the \texttt{libome} repository.
+Among the optional \mintinline{bash}{<other options>} are the standard CMake options such as \mintinline{cfg}{CMAKE_CXX_COMPILER} or \mintinline{cfg}{CMAKE_BUILD_TYPE} if one wants to build in anything other than Release mode, which is the default.
 There are also a few additional options that are specific to this program. They are:
 %
 \begin{itemize}
@@ -233,7 +243,7 @@ There are also a few additional options that are specific to this program. They 
   Requires LaTeX utilities (PdfLaTeX, Biber) and some standard packages.
   This option is off by default.
 \item \textbf{\mintinline{cmake}{BUILD_DOCS}}: Use Doxygen to build the documentation for the code. This option is off by default.
-\item \textbf{\mintinline{cmake}{WITH_LHAPDF} / \mintinline{cmake}{LHAPDF_ROOT_DIR}}: Enabling the former will compile in all the features relying on LHAPDF; the latter is optional unless if the user has installed LHAPDF into a nonstandard location, that being anywhere but \mintinline{bash}{/usr/local}, the default installation directory.
+\item \textbf{\mintinline{cmake}{WITH_LHAPDF} / \mintinline{cmake}{LHAPDF_ROOT_DIR}}: Enabling the former will compile in all the features relying on LHAPDF; the latter is optional unless if the user has installed LHAPDF into a nonstandard location, that being anywhere but \mintinline{bash}{/usr/local}, the default installation directory. These options are off/empty by default.
 \end{itemize}
 
 \subsection{Usage: Example Program and Building/Linking}
@@ -269,6 +279,25 @@ Lastly, we create a \mintinline{cpp}{DGLAPSolver} object, and pass it these para
 
 We now describe the main implementation details of the source code itself.
 
+\subsubsection{The \texorpdfstring{\mintinline{cpp}{ArrayGrid}}{ArrayGrid} Class}
+\label{subsec:arraygrid}
+
+The \mintinline{cpp}{ArrayGrid} class is simply a wrapper over an ordinary \mintinline{cpp}{std::vector} with a few convenience methods, though largely behaves identically. This means that one can do, for instance, list-initialization and access using the \mintinline{cpp}{operator[]} method, as seen in Listing~\ref{lst:arraygrid-ex}.
+%
+\begin{listing}[h!]
+\begin{minted}{cpp}
+ArrayGrid arr1{1.0, 2.0, 3.0}; // list-initialization
+ArrayGrid arr2(20); // 20 elements, all zeroed
+arr2[0] = arr1[0]; // const and non-const ref
+for (double& x : arr1) // begin/end iterators
+    x *= x;
+\end{minted}
+\caption{Demonstration of the \mintinline{cpp}{ArrayGrid} class.}
+\label{lst:arraygrid-ex}
+\end{listing}
+%
+This is used as the datatype for the PDFs.
+
 \subsubsection{Splitting Functions and OMEs}
 \label{subsec:splitfuncs-and-omes}
 
@@ -277,77 +306,94 @@ Structurally, the splitting functions and the OMEs have the following structure:
 \begin{equation}
   A(x) + \frac{B(x)}{(1-x)^+} + C\delta(1-x),
 \end{equation}
-
-i.e. a "regular" piece, given by the $A$ coefficient, a "plus" piece, given by the $B$ coefficient (\textit{not} including the plus-distribution itself), and a "delta" piece, given by the $C$ coefficient (also \textit{not} including the delta function). For the purposes of convolutions with these objects, we can keep one generic convolution function and utilize C++ OOP to define a generic \mintinline{cpp}{Expression} class that contains these three methods.
-We then have that the classes \mintinline{cpp}{SplittingFunction} and \mintinline{cpp}{OpMatElem} inherit from this and implement the required methods.
-
-Importantly, since the convolutions proceed via a Gauss-Legendre quadrature, there are a set of fixed points at which these objects are evaluated, which is known before the evolution begins. Therefore, \mintinline{cpp}{Expression} objects contain a cache (implemented as an \mintinline{cpp}{std::map}) of these fixed points and the values of the evaluated expression that is filled at the start of the evolution. This is especially helpful for higher orders where the expressions become very complex, and saves a lot of time, requiring a couple of conditional evaluations during the evolution as opposed to dozens of mathematical subroutines and potentially calls to harmonic polylogarithm evaluation routines.
+%
+i.e. a "regular" piece, given by the $A$ coefficient, a "plus" piece, given by the $B$ coefficient (\textit{not} including the plus-distribution itself), and a "delta" piece, given by the $C$ coefficient (also \textit{not} including the delta function).
+For the purposes of convolutions with these objects, we can keep one generic convolution function and utilize C++ OOP to define a generic \mintinline{cpp}{Expression} class that contains these three methods.
+We then have that the classes \mintinline{cpp}{SplittingFunction} and \mintinline{cpp}{OpMatElem} inherit from this and implement the required 
+%
+Importantly, since the convolutions proceed via a Gauss-Legendre quadrature, there are a set of fixed points at which these objects are evaluated, which is known before the evolution begins. Therefore, \mintinline{cpp}{Expression} objects contain a cache (implemented as an \mintinline{cpp}{std::map}) of the expression evaluated at those points that is filled at the start of the evolution. This is especially helpful for higher orders where the expressions become very complex, and it saves a large amount of time.
 
 \subsubsection{Initial Distributions}
 \label{subsec:init-dists}
 
-Initial distributions supply the values of the parton distributions at some initial energy $Q_0$, as well as the initial value of $\alpha_s$. Currently, there are two pre-defined options built into the program: the standard benchmark initial conditions used in \textcolor{red}{REF}, and an LHAPDF distribution. Due to LHAPDF being an external dependency that is often finnicky on systems other than Linux systems, there is a CMake flag one can specify when compiling to enable building with LHAPDF. Of course, not specifying this to be true will remove the latter initial distribution option from the program.
+Initial distributions supply the values of the parton distributions at some initial energy $Q_0$, as well as the initial value of $\alpha_s$. Since this behavior is independent of the evolution, it is factored into a \mintinline{cpp}{Distribution} class.
+Obviously, there are many ways to provide initial conditions, so it is a virtual class that specifies a set of behavior that is supplied by the user's chosen conditions:
+the values of the quark masses, the initial value of $\alpha_s$, functions for $xf_p(x)$ where $p$ is any parton, the initial value of $n_f$, the number of massless flavors at $Q_0$, as well as $Q_0$ itself.
 %
-Similar to the splitting functions and OMEs, we leverage OOP to define a set of standard behavior that every initial distribution should supply: a list of the values of the quark masses, the initial value of $\alpha_s$, functions for $xf_p(x)$ where $p$ is any parton (except the top), and a way to determine the initial value of $n_f$ given an initial energy $Q_0$. This means that the user can create their own distribution with their own rules so long as they implement these specific features, and very easily supply the solver with it.
+We have provided two derived classes, \mintinline{cpp}{LesHouchesDistribution} and \mintinline{cpp}{LHAPDFDistribution}.
+The former implements the conditions used in the benchmarks \textcolor{red}{TODO}, while the former provides an interface to supply initial conditions from an LHAPDF PDF.
+Note that the latter option is only present in the compiled version of the code if the user enables the \mintinline{cmake}{WITH_LHAPDF} and, if necessary, the \mintinline{cmake}{LHAPDF_ROOT_DIR} CMake variables during configuration.
 
 \subsubsection{The \texorpdfstring{\mintinline{cpp}{AlphaS}}{AlphaS} Class}
 \label{subsec:alphas}
 
-The behavior of the QCD running coupling $\alpha_s$ is stored within the \mintinline{cpp}{AlphaS} class, including the values of the various $\beta$-coefficients and a routine to evaluate the coupling at some other arbitrary scale given its value at an initial scale by solving the Cauchy problem
+The behavior of the QCD running coupling $\alpha_s$ is stored within the \mintinline{cpp}{AlphaS} class, including the values of the various $\beta$-coefficients and a routine to evaluate the coupling at some other arbitrary scale given its value at an initial scale. This is done by solving the Cauchy problem
 %
 \begin{equation}
   \frac{\dd \alpha_s(t)}{\dd t} = \beta(\alpha_s).
 \end{equation}
 %
-At LO, this has an exact solution, while at higher orders a fourth-order Runge Kutta method is used. Additionally, this class also contains the necessary information and methods to perform the matching of the coupling at the quark thresholds at NNLO and above, assuming the on-shell scheme. It keeps an internal set of arrays that contain the values of the coupling pre- and post-threshold for each relevant $n_f$; for this reason, its constructor requires the mass array which is suppied by the initial distribution.
+At LO, this has an exact solution, while at higher orders a fourth-order Runge Kutta method is used.
+Additionally, this class also contains the necessary information and methods to perform the matching of the coupling at the quark thresholds at NNLO and above, assuming the on-shell scheme.
+It keeps an internal set of arrays that contain the values of the coupling pre- and post-threshold for each relevant $n_f$; for this reason, its constructor requires the mass array which is suppied by the initial distribution.
 
 \subsubsection{The Grid}
 \label{subsec:grid}
 
-The interpolation/convolution grid is arguably the most important part of the code, as convolutions and interpolations take up the vast majority of the program's runtime. At the highest level, the \mintinline{cpp}{Grid} class supplies an underlying grid of points, along with methods to perform convolutions between arrays and expressions as well as interpolations of arrays on the grid.
+The interpolation/convolution grid is arguably the most important part of the code, as convolutions and interpolations take up the vast majority of the program's runtime. At the highest level, the \mintinline{cpp}{Grid} class supplies an underlying grid of points, along with methods to perform convolutions between arrays and expressions as well as interpolations of arrays on the grid. These have the signature
 %
-There are several ways to define the grid. The original version of \texttt{Candia} used logarithmically spaced intervals, extending from the minimum value provided in the array of tabulated $x$-values to 1. While this works well due to prescription we apply to do the convolutions, it leaves much fewer points for $x>0.5$, which is a particularly sensitive region especially at higher orders where PDFs become very small.
-Because of this, we have devised several other prescriptions in an attempt to fill the higher end of the grid with more points. 
+\mint{cpp}|double Grid::convolution(ArrayGrid& A, Expression& E, uint k)|
+%
+\mintinline{cpp}{A} is an array that represents an ordinary function that is assumed to be defined at the same points as the grid; \mintinline{cpp}{E} represents a splitting function or operator matrix element, and $k$ is the grid index at which to perform the convolution.
+%
+\mint{cpp}|double Grid::interpolate(ArrayGrid& A, double x)|
+%
+\mintinline{cpp}{A} is an array like above, and $x$ is the point one wants to interpolate.
+%
+There are several ways to define the grid.
+The original version of \texttt{Candia} used logarithmically spaced intervals, extending from the minimum value provided in the array of tabulated $x$-values to 1. While this works well due to prescription we apply to do the convolutions, it leaves much fewer points for $x>0.5$, which is a particularly sensitive region especially at higher orders where PDFs become very small.
+Because of this, we have devised a few other prescriptions in an attempt to fill the higher end of the grid with more points and increase the accuracy in this regime.
+The first will create several more logarithmic bins for $x>0.1$, in an attempt to fill this region with more points. The other prescription will also still retain the ordinary logarithmic bins for $x<0.1$, but for $x>=1.0$ it will linearly space the points.
 
+\subsubsection{The Evolution}
+\label{subsec:evol}
 
-%% The Appendices part is started with the command \appendix;
-%% appendix sections are then done as normal sections
-%% \appendix
+The part of the code responsible for the actual evolution of the parton distributions ties all of the above classes and methods together; this is all done within the \mintinline{cpp}{DGLAPSolver} class. The constructor accepts the following values:
+\begin{itemize}
+\item the perturbative order
+\item a \mintinline{cpp}{Grid} object
+\item a \mintinline{cpp}{AlphaS} object
+\item $Q_f$, the final evolution energy ($Q_0$ is encoded in the \mintinline{cpp}{AlphaS} object)
+\item the number iterations (corresponding to the $s$ index)
+\item the number of terms to keep in the singlet expansion, called the \textit{truncation index} (this is $\kappa$)
+\item a \mintinline{cpp}{Distribution} object
+\item the ratio $\mu_r^2/\mu_f^2$ (this defaults to 1 if the user doesn't provide an argument)
+\end{itemize}
+%
+Upon construction, it will store copies of the important arguments, then allocate memory for and fill the initial part of the distributions from the \mintinline{cpp}{Distribution} object. At N$^3$LO, it will also hard-code the $r_1$, $b$, and $c$ coefficients.
+Once the user calls the \mintinline{cpp}{.evolve()} method, the evolution proceeds. It will first form the special distributions the are evolved, e.g. $q_{NS}^{+}$ or $q^{(+)}$. It will then, using the initial value of $n_f$ from the distribution and the corresponding values of $\alpha_s$, perform the evolution up until the first relevant quark mass. This is accomplished by calculating the logarithmic coefficients, then using the recursion relations to calculate, up until the specified number of iterations, the final values of the coefficients, then perform the resummation. Then, it will reform the quark PDFs, and if relevent, it will perform the matching, before proceeding again.
+If the final requested evolution energy is less than a quark mass, instead of proceeding all the way to the quark mass, it will proceed only to the requested value, skipping matching and storing the results of the resummation in a special set of distributions that are then returned to the user.
 
-%% \section{}
-%% \label{}
+These steps are performed if the user requests to perform the evolution in the variable flavor number scheme. If the user decides to perform in the fixed flavor number scheme, we proceed directly from the initial to the final energy, calculating quantities related to $\alpha_s$ only with the requested number of flavors.
 
-%% References
-%%
-%% Following citation commands can be used in the body text:
-%% Usage of \cite is as follows:
-%%   \cite{key}         ==>>  [#]
-%%   \cite[chap. 2]{key} ==>> [#, chap. 2]
-%%
+\subsection{Major Optimizations from \texorpdfstring{\texttt{Candia-v1}}{Candia-v1}}
+\label{subsec:optims}
 
-%% References with bibTeX database:
+We now, for completeness, describe the major optimizations and general enhancements that have been made with the advance to \texttt{Candia-v2}. The first one is the flexibility offered by C++ over C when it comes to type-generic functions and interfaces. While this can be achieved in C either directly or indirectly, it often leads to un-transparent code that is hard to read and debug. C++ provides a very natural way to express, say, ``Expressions'', as in Section~\ref{subsec:splitfuncs-and-omes} with neglible overhead. While this doesn't have any direct performance impacts, it makes debugging and handling the corresponding code very straightforward, leading to a faster developing process.
+
+There are three major improvements that were made that significantly increased the performance of the code, those being the caching of the values of the splitting functions and operator matrix elements, the usage of multi-threading due to the independent nature of certain pieces of the evolution, and the memory reduction by only allocating for two iterations, as opposed to all $s$ requested ones.
+
+In regards to the first, the choice of Gauss-Legendre quadrature leaves a fairly manageable memory footprint if we simply cache the values of the splitting functions evaluated at the Gauss-Legendre abscissae.
+Additionally, it seemed quite wasteful to perform these calculates hundreds if not thousands of times during the course of the program's execution.
+For NNLO and beyond, this reduces several dozen calculations and calls to harmonic polylogarithm routines to a few conditional statements to retrieve the value from the cache, and drastically speeds up the calculation of the convolutions.
+
+In regards to the second, the non-singlet distributions that are evolved are completely decoupled, meaning they can all proceed concurrently. Assuming the user enables the \mintinline{cmake}{ENABLE_THREADING} CMake option, the code is then able to place each individual non-singlet evolution on a separate thread. The singlet sector, unfortunately, doesn't have this freedom. However, each iteration requires information only from the previous iteration, not from it's own, when it comes to performing the convolutions, the most time-intensive part of the convolution. Therefore, we can split the grid up into several sections and have the convlutions performed independently on these parts, reducing the time spent on the convolutions for that iteration by, roughly, the number of threads. Since essentially all remotely recent CPUs have multiple cores/threads, this is very much a viable option for performance.
+
+In regards to the third and final optimization, the realization about the singlet sector above is also present in the non-singlet sector, though only for the outermost index, denoted $s$. Previously, in \texttt{Candia-v1}, this was ignored, and memory was allocated for all iterations, meaning, for instance, at NNLO, if the user requested 10 iterations and 500 grid points, we would request $8*37*10^3*500 = 148000000$ bytes of memory (8 being the size of a double-precision floating point on most systems and 37 being the total number of distributions used throughout the evolution), which is approximately \qty{148}{\mega\byte}. With this optimization, we drop the memory usage by a factor of $s/2$, which is very impactful for large grids and large numbers of iterations.
+
 
 \bibliographystyle{elsarticle-num}
-\bibliography{sources.bib}
-
-%% Authors are advised to submit their bibtex database files. They are
-%% requested to list a bibtex style file in the manuscript if they do
-%% not want to use elsarticle-num.bst.
-
-%% References without bibTeX database:
-
-% \begin{thebibliography}{00}
-
-%% \bibitem must have the following form:
-%%   \bibitem{key}...
-%%
-
-% \bibitem{}
-
-% \end{thebibliography}
+\bibliography{sources}
 
 
 \end{document}
-
-%%
-%% End of file 

@@ -6,6 +6,8 @@
 #ifndef __ARRAYGRID_HPP
 #define __ARRAYGRID_HPP
 
+#include <initializer_list>
+
 #include "Candia-v2/Common.hpp"
 
 namespace Candia2
@@ -32,11 +34,17 @@ namespace Candia2
 		 */
 		explicit ArrayGrid(base_type const& points) : _base{points} {}
 		/**
-		 *  @brief default Initializes the array with another @a ArrayGrid
+		 *  @brief default initializes the array with another @a ArrayGrid
 		 *  @param other The other @a ArrayGrid
 		 */
 		explicit ArrayGrid(ArrayGrid const& other) : _base(other._base) {}
 		explicit ArrayGrid(ArrayGrid&& other) = delete; //!< no move constructor
+
+		/**
+		 *  @brief Initializes using list-initialization
+		 *  @param l an initializer list of values to initialize the array with
+		 */
+		ArrayGrid(std::initializer_list<double> l) : _base(l) {}
 
 		/** Copy assignment operator performs like the copy constructor */
 		inline void operator=(ArrayGrid const& other) { _base = other._base; }
@@ -51,6 +59,15 @@ namespace Candia2
 		
 		double operator[](uint idx) const;  //!< accessor for points on the grid (const)
 		double& operator[](uint idx);       //!< accessor for points on the grid (reference)
+
+		/** const begin iterator */
+		inline base_type::const_iterator begin() const { return _base.cbegin(); }
+		/** const end iterator */
+		inline base_type::const_iterator end() const { return _base.cend(); }
+		/** begin iterator */
+		inline base_type::iterator begin() { return _base.begin(); }
+		/** end iterator */
+		inline base_type::iterator end() { return _base.end(); }
 	};
 
 	/**
