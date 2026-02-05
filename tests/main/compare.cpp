@@ -77,7 +77,8 @@ dist_type compute_diffs(dist_type const& candia_data, dist_type const& other_dat
 {
 	auto reldiff =
 		[](double candia, double other) -> double {
-			return std::abs((candia-other)/other);
+			double avg = (candia+other)/2.0;
+			return std::abs((candia-other)/avg);
 		};
 
 	dist_type diffs{candia_data.size(), std::vector<double>(candia_data.at(0).size(), 0.0)};

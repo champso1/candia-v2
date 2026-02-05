@@ -186,8 +186,6 @@ namespace Candia2
 		if (nf1<_nfi)
 			nf1++;
 
-		log(LOG_DEBUG, "AlphaS::calculateThresholdValues()", "initial: nf1 = {}\talpha0 = {}, Q0={}", nf1, _alpha0, _Q0);
-
 		update(nf1);
 
 		// TODO: check some flag to ensure we are doing matching, not just that are >=NNLO
@@ -195,12 +193,8 @@ namespace Candia2
 		_post[nf1] = evaluate(_Q0, _masses[nf1], _alpha0);
 		_pre[nf1]  = _order >= 2 ? preMatch(_post[nf1], nf1) : _post[nf1];
 
-		log(LOG_DEBUG, "AlphaS::calculateThresholdValues()", "pre/post[nf1]");
-
 		_pre[nf1+1] =  evaluate(_Q0, _masses[nf1+1], _alpha0);
 		_post[nf1+1] = _order >= 2 ? postMatch(_pre[nf1+1], nf1) : _pre[nf1+1];
-
-		log(LOG_DEBUG, "AlphaS::calculateThresholdValues()", "pre/post[nf1+1]");
 
 		uint nf;
 		for (nf=nf1-1; nf>=_nfi; nf--) {
@@ -210,16 +204,12 @@ namespace Candia2
 			_pre[nf]  = _order >= 2 ? preMatch(_post[nf], nf) : _post[nf];
 		}
 
-		log(LOG_DEBUG, "AlphaS::calculateThresholdValues()", "pre/post loop 1");
-
 		for (nf=nf1+1; nf<=_nff+1; nf++) {
 			update(nf-1);
 			
 			_pre[nf]  = evaluate(_masses[nf-1], _masses[nf], _post[nf-1]);
 			_post[nf] = _order >= 2 ? postMatch(_pre[nf], nf) : _pre[nf];
 		}
-		log(LOG_DEBUG, "AlphaS::calculateThresholdValues()", "pre/post loop 2");
-
 		log(LOG_INFO, "AlphaS", "Computed alpha_s threshold values for VFNS. They are:");
 
 		for (nf=_nfi; nf<=_nff+1; nf++)

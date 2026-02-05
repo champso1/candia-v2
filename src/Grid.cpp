@@ -139,64 +139,50 @@ namespace Candia2
 
 	void Grid::initGrid2(std::vector<double> const& xtab, uint nx)
 	{
+		UNUSED(xtab);
+		UNUSED(nx);
+		
 	    log(LOG_INFO, "Grid", "Using method 2");
 		log(LOG_WARNING, "Grid", "Method 2 is unfinished. Prefer method 3 for now.");
-		log(LOG_WARNING, "Grid", "Method 2 hard-codes values to compare with distributions. Will ignore supplied x-tab.");
-		if (!(xtab.front() < 0.1 && xtab.back() > 0.1))
-			log(LOG_ERROR, "Grid", "Method 2 requires tabulated points below and above 0.1");
+		log(LOG_WARNING, "Grid", "This method hard-codes values to compare with distributions.");
+		log(LOG_WARNING, "Grid", "Will ignore supplied x-tab and number of grid points.");
 
+	    uint grid_points_per = 500;
 		
-		double log_min = std::log10(xtab.front());
+		double log_min = std::log10(1e-5);
 		double log_max = std::log10(0.1);
 		uint num_log_intervals = std::round(log_max-log_min);
 		double dlog = (log_max-log_min)/static_cast<double>(num_log_intervals);
+		uint log_interval_size = grid_points_per/num_log_intervals;
 		
-		double lin_min = 0.1;
-		double lin_max = xtab.back();
-		uint num_lin_intervals = 1;
-
-		/*
-		  this definitely needs to be considered a bit
-		  given, say, tabulated points 0.01, 0.1, 1.0,
-		  we want there to be an equal number of points
-		  between 0.01 and 0.1 as there are between 0.1 and 1.0,
-		  with the points below 0.1 being logarithmically spaced
-		  and the ones above being linearly spaced
-		  but we split up the points below into logarithmic intervals
-		  but we don't want a 1-to-1 correspondance between the number of points
-		  in those intervals and the number of points in the linear interval
-		  because that may leave too many in the linear interval
-		  we also don't want the number of points in the linear interval to
-		  match the total number in all of the logarithmic intervals
-		  so this factor makes it such that, for the first example i listed above,
-		  factor=2, which leaves an equal number in the log/linear intervals
-		  but for all the way up to 6 log intervals (if the min xtab=1e-7)
-		  then factor=3, leaving 2/3 points in all log intervals and 1/3 in the single linear interval
-		  will play around with this!
-		*/
-		double factor = (9.0/5.0) + (1.0/5.0)*num_log_intervals;
-		uint total_intervals = num_log_intervals + num_lin_intervals;
-		uint lin_interval_size = std::round(static_cast<double>(nx)/factor);
-		uint log_interval_size = std::round(static_cast<double>(nx-lin_interval_size)/num_log_intervals);
+		double lin1_min = 0.1;
+		double lin1_max = 0.7;
+		double lin2_min = 0.7;
+		double lin2_max = 1.0;
 
 		_points.clear();
 		for (uint i=0; i<num_log_intervals; ++i) {
 			double l0 = log_min + i*dlog;
 			double l1 = l0 + dlog;
 			for (uint k=0; k<log_interval_size; ++k) {
-				double l = l0 + (l1-l0)*k/static_cast<double>(log_interval_size-1);
+				double l = l0 + (l1-l0)*k/static_cast<double>(log_interval_size);
 				_points.emplace_back(std::pow(10, l));
 			}
 		}
 
-		for (uint k=0; k<lin_interval_size; ++k) {
-		    double x = lin_min + (lin_max-lin_min)*k/static_cast<double>(lin_interval_size-1);
+		for (uint k=0; k<grid_points_per; ++k) {
+		    double x = lin1_min + (lin1_max-lin1_min)*k/static_cast<double>(grid_points_per);
+			_points.emplace_back(x);
+		}
+		for (uint k=0; k<grid_points_per; ++k) {
+		    double x = lin2_min + (lin2_max-lin2_min)*k/static_cast<double>(grid_points_per-1);
 			_points.emplace_back(x);
 		}
 		
 		std::set<double> points_set(_points.begin(), _points.end());
 		points_set.insert(xtab.begin(), xtab.end());
-		points_set.insert(0.1); // just in case
+		std::vector<double> pivots{0.1, 0.7};
+		points_set.insert(pivots.begin(), pivots.end()); // just in case
 		_points = std::vector<double>(points_set.begin(), points_set.end());
 		
 
@@ -222,13 +208,6 @@ namespace Candia2
 		ss = {};
 		std::copy(xtabbed_points.begin(), xtabbed_points.end(), std::ostream_iterator<double>(ss, ", "));
 		log(LOG_DEBUG, "Grid", "Printing xtabbed points to make sure ntab is correct: {}", ss.str());
-
-		auto it = std::find(_points.begin(), _points.end(), 0.1);
-		if (it == _points.end())
-			log(LOG_ERROR, "Grid", "Somehow, 0.1 didn't end up in the set of grid points");
-		
-		log(LOG_DEBUG, "Grid", "Number of points before 0.1: {}, number of points after: {}",
-			std::distance(_points.begin(), it), std::distance(it, _points.end()));
 
 		initGauLeg(0.0, 1.0, _Xi, _Wi);
 	}
@@ -344,7 +323,6 @@ namespace Candia2
 		std::sort(intervals_sorted.begin(), intervals_sorted.end());
 		auto points_per_interval = size()/num_intervals;
 
-		log(LOG_INFO, "Grid", "List of intervals:");
 		auto it = intervals_sorted.begin() + 1;
 		while (it != intervals_sorted.end()) {
 			auto prev_x = *(it-1);
@@ -354,14 +332,6 @@ namespace Candia2
 			_Xi2.emplace_back(Xi);
 			_Wi2.emplace_back(Wi);
 			++it;
-
-			log(LOG_INFO, "Grid", "  - [{}, {}]", prev_x, new_x);
-			log(LOG_INFO, "Grid", "    - Abscissae:");
-			for (auto x : Xi)
-				log(LOG_INFO, "Grid", "      - {}", x);
-			log(LOG_INFO, "Grid", "    - Weights:");
-			for (auto x : Wi)
-				log(LOG_INFO, "Grid", "      - {}", x);
 		}
 	}
 

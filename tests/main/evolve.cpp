@@ -22,12 +22,13 @@ static void usage()
 	cout << "[ERROR] evolve.cpp: Invalid arguments.\n";
 	cout << "Usage:\n";
 	cout << "-------------------------------------------------------\n";
-	cout << "./evolve(.exe) <order> <num_grid_points> <iterations> <trunc_idx> <kr>\n";
+	cout << "./evolve(.exe) <order> <num_grid_points> <iterations> <trunc_idx> <kr> [title]\n";
 	cout << "    <order>: perturbative order to perform the calculation.\n";
 	cout << "    <num_grid_points>: number of grid points to use.\n";
 	cout << "    <iterations>: number of total iterations to perform.\n";
 	cout << "    <trunc_idx>: number of truncation iterations to perform (for each main iteration!)\n";
 	cout << "    <kr>: ratio of mu_R / mu_F.\n";
+	cout << "    [title]: optional -- gives a title for the resulting datafile\n";
 	cout << "-------------------------------------------------------\n\n";
 	exit(EXIT_FAILURE);
 }
@@ -36,7 +37,8 @@ static constexpr char const* DATAFILEDIR = "data";
 
 static void outputData(
 	out_type const& F, Grid::grid_type const& xtab, Grid const& grid,
-	uint order, uint num_grid_points, uint iterations, uint trunc_idx, double kr)
+	uint order, uint num_grid_points, uint iterations, uint trunc_idx, double kr,
+	std::string filename="")
 {
 	// open the output file, with a filename descriptive of all the provided inputs
 	ostringstream outfile_ss{};
@@ -48,7 +50,8 @@ static void outputData(
 		if (!fs::create_directory(datafiledir_path))
 			log(LOG_ERROR, "evolve.cpp", "failed to create output directory for datafiles.");
 	}
-	fs::path datafile_path = datafiledir_path/outfile_name;
+	
+	fs::path datafile_path = datafiledir_path/(filename.empty() ? outfile_name : filename);
 	ofstream outfile(datafile_path);
 
 	// print a readable header to list the given inputs
@@ -82,7 +85,7 @@ static void outputData(
 }
 
 int main(int argc, char *argv[]) {
-	if (argc != 6)
+	if (argc != 6 && argc != 7)
 		usage();
 
 	getDebugFlag() = true;
@@ -93,6 +96,10 @@ int main(int argc, char *argv[]) {
 	const double kr = stold(argv[5]);
 	const double Qf = 100.0;
 
+	std::string datafile_name{};
+	if (argc == 7)
+		datafile_name = argv[6];
+	
 	ostringstream logfile_ss{};
 	logfile_ss << ((order == 3) ? "n3lo" : (order == 2) ? "nnlo" : (order == 1) ? "nlo" : "lo");
 	logfile_ss << "-g" << num_grid_points << "-i" << iterations << "-t" << trunc_idx << "-r" << setprecision(2) << kr << ".log";
@@ -106,8 +113,8 @@ int main(int argc, char *argv[]) {
 	
 	
 	vector<double> xtab{1e-5, 1e-4, 1e-3, 1e-2, 0.1, 0.3, 0.5, 0.7, 0.9, 1.0};
-	Grid grid(xtab, num_grid_points, 50, 3);
-	// grid.splitConvolution({1e-5, 0.1, 0.8, 1.0});
+	Grid grid(xtab, num_grid_points, 50, 2);
+	grid.splitConvolution({1e-5, 0.1, 0.7, 1.0});
 
 	LesHouchesDistribution dist{};
 	AlphaS alphas(order, dist.Q0(), Qf, dist.alpha0(), kr);
@@ -124,5 +131,5 @@ int main(int argc, char *argv[]) {
 	chrono::duration<double, ratio<60>> mins = tf-t0;
 	log(LOG_INFO, "evolve.cpp", "Evolution took {}.", mins);
 
-	outputData(F, xtab, grid, order, num_grid_points, iterations, trunc_idx, kr);
+	outputData(F, xtab, grid, order, num_grid_points, iterations, trunc_idx, kr, datafile_name);
 }

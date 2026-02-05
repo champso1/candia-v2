@@ -19,3 +19,4 @@ set(resources
   benchmark-data
 )
 file(COPY ${resources} DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+
