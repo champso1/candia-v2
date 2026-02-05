@@ -62,6 +62,10 @@ enable_language(Fortran)
 add_library(hplog STATIC src/fortran/hplog.f)
 target_link_libraries(hplog PUBLIC gfortran)
 
+add_library(AQqPSs3 STATIC src/fortran/OME.f)
+target_sources(AQqPSs3 PRIVATE ${AQqPSs3_sources})
+target_link_libraries(AQqPSs3 PUBLIC gfortran hplog)
+
 find_package(GSL REQUIRED)
 
 add_library(candia STATIC)
@@ -81,10 +85,10 @@ if (WITH_LHAPDF)
   target_link_libraries(candia PUBLIC ${LHAPDF_LIBRARIES})
 
   target_sources(candia PUBLIC
-	FILE_SET cxx_headers
-	TYPE HEADERS
-	BASE_DIRS ${CMAKE_SOURCE_DIR}/include
-	FILES include/Candia-v2/LHAPDFDistribution.hpp)
+    FILE_SET cxx_headers
+    TYPE HEADERS
+    BASE_DIRS ${CMAKE_SOURCE_DIR}/include
+    FILES include/Candia-v2/LHAPDFDistribution.hpp)
   target_sources(candia PRIVATE src/LHAPDFDistribution.cpp)
 endif()
 
@@ -97,7 +101,7 @@ else()
   target_compile_definitions(candia PRIVATE ENABLE_THREADING=0)
 endif()
 
-target_link_libraries(candia PRIVATE hplog ome GSL::gsl)
+target_link_libraries(candia PRIVATE hplog AQqPSs3 ome GSL::gsl)
 target_include_directories(candia PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:include>)
@@ -126,7 +130,7 @@ endif(BUILD_DOCS)
 # INSTALLATION
 # ====================
 include(GNUInstallDirs)
-install(TARGETS candia hplog
+install(TARGETS candia hplog AQqPSs3
   EXPORT candiaTargets
   FILE_SET cxx_headers DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
 install(EXPORT candiaTargets

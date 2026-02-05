@@ -49,7 +49,13 @@ namespace Candia2
 		_points = other._points;
 		_ntab = other._ntab;
 		_xtab = other._xtab;
-		_gauss_points ={other._gauss_points}, _Xi ={other._Xi}, _Wi ={other._Wi}
+		_gauss_points = other._gauss_points;
+		_Xi = other._Xi;
+		_Wi = other._Wi;
+		_split_interval = other._split_interval;
+		_Xi2 = other._Xi2;
+		_Wi2 = other._Wi2;
+		_gsl_gauleg_table = std::move(other._gsl_gauleg_table);
 		
 		log(LOG_INFO, "Grid", "Copy constructor: previous grid's gsl objects will no longer be valid.");
 	}

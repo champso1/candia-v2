@@ -23,22 +23,33 @@
 // 31     q^(+)
 // 32-36  q_{NS,1i}^(+)  ds,ss,cs,bs,ts
 
-
+namespace
+{
+	inline constexpr char const* CANDIA_OPENING_TEXT = 
+		"==================================================\n"
+    	"| \033[1mCandia-v2\033[0m — DGLAP evolution up to \033[1mN³LO\033[0m\n"
+    	"| Based on Candia (C version)\n"
+    	"| \033[2mPlease cite arXiv:2512.22667 "
+    	"| (Hampson, Guzzi)\033[0m\n"
+		"==================================================\n";
+}
 
 namespace Candia2
 {
 
 	DGLAPSolver::DGLAPSolver(
-		uint order, Grid const& grid, AlphaS const& alpha_s,
+		uint order, Grid& grid, AlphaS const& alpha_s,
 		double Qf, uint iterations, uint trunc_idx,
 		Distribution const& initial_dist,
-		double kr) 
+		double mur2_muf2) 
 		: _order{order},  _grid{grid}, _Qf{Qf},
 		  _alpha_s{alpha_s},
-		  _mur2_muf2{kr}, _log_mur2_muf2{std::log(kr)},
+		  _mur2_muf2{mur2_muf2}, _log_mur2_muf2{std::log(mur2_muf2)},
 		  _iterations{iterations}, _trunc_idx{trunc_idx},
 		  _use_n3lo_matching_conditions{true}
 	{
+		log(::CANDIA_OPENING_TEXT);
+
 		log(LOG_INFO, "DGLAP", "Evolving with log(mu_R / mu_F) = log({:.1}) = {:.4}.", _mur2_muf2, _log_mur2_muf2);
 
 		switch(_order) {
@@ -232,6 +243,7 @@ namespace Candia2
             createExpression<OpMatElemN3LO>("A3hg", ome::AQg);
             createExpression<OpMatElemN3LO>("A3psqq", ome::AqqQPS);
             createExpression<OpMatElemN3LO>("A3sqg", ome::AqgQ);
+			createExpression<AQqPSs3>("AQqPSs3");
         }
         
     }

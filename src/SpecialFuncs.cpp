@@ -9,14 +9,14 @@ namespace Candia2
 			n1 = -1,
 			n2 = 1;
 
-		dcomplex HC1[3], HC2[3][3], HC3[3][3][3], HC4[3][3][3][3];
-		double HR1[3], HR2[3][3], HR3[3][3][3], HR4[3][3][3][3];
-		double HI1[3], HI2[3][3], HI3[3][3][3], HI4[3][3][3][3];
+		dcomplex HC1[3], HC2[3][3], HC3[3][3][3], HC4[3][3][3][3], HC5[3][3][3][3][3];
+		double   HR1[3], HR2[3][3], HR3[3][3][3], HR4[3][3][3][3], HR5[3][3][3][3][3];
+		double   HI1[3], HI2[3][3], HI3[3][3][3], HI4[3][3][3][3], HI5[3][3][3][3][3];
 
-		hplog_(&x, &nw,
-			   HC1, *HC2, **HC3, ***HC4,
-			   HR1, *HR2, **HR3, ***HR4,
-			   HI1, *HI2, **HI3, ***HI4,
+		hplog5_(&x, &nw,
+			   HC1, *HC2, **HC3, ***HC4, ****HC5,
+			   HR1, *HR2, **HR3, ***HR4, ****HR5,
+			   HI1, *HI2, **HI3, ***HI4, ****HI5,
 			   &n1, &n2);
 
 		return HR2[2][1];
@@ -27,14 +27,14 @@ namespace Candia2
 		int nw = 3,
 			n1 = -1,
 			n2 = 1;
-		dcomplex HC1[3], HC2[3][3], HC3[3][3][3], HC4[3][3][3][3];
-		double   HR1[3], HR2[3][3], HR3[3][3][3], HR4[3][3][3][3];
-		double   HI1[3], HI2[3][3], HI3[3][3][3], HI4[3][3][3][3];
+		dcomplex HC1[3], HC2[3][3], HC3[3][3][3], HC4[3][3][3][3], HC5[3][3][3][3][3];
+		double   HR1[3], HR2[3][3], HR3[3][3][3], HR4[3][3][3][3], HR5[3][3][3][3][3];
+		double   HI1[3], HI2[3][3], HI3[3][3][3], HI4[3][3][3][3], HI5[3][3][3][3][3];
 
-		hplog_(&x, &nw,
-			   HC1, *HC2, **HC3, ***HC4,
-			   HR1, *HR2, **HR3, ***HR4,
-			   HI1, *HI2, **HI3, ***HI4,
+		hplog5_(&x, &nw,
+			   HC1, *HC2, **HC3, ***HC4, ****HC5,
+			   HR1, *HR2, **HR3, ***HR4, ****HR5,
+			   HI1, *HI2, **HI3, ***HI4, ****HI5,
 			   &n1, &n2);
 
 		return HR3[2][1][1];
@@ -46,14 +46,14 @@ namespace Candia2
 		int nw = 3,
 			n1 = -1,
 			n2 = 1;
-		dcomplex HC1[3], HC2[3][3], HC3[3][3][3], HC4[3][3][3][3];
-		double   HR1[3], HR2[3][3], HR3[3][3][3], HR4[3][3][3][3];
-		double   HI1[3], HI2[3][3], HI3[3][3][3], HI4[3][3][3][3];
+		dcomplex HC1[3], HC2[3][3], HC3[3][3][3], HC4[3][3][3][3], HC5[3][3][3][3][3];
+		double   HR1[3], HR2[3][3], HR3[3][3][3], HR4[3][3][3][3], HR5[3][3][3][3][3];
+		double   HI1[3], HI2[3][3], HI3[3][3][3], HI4[3][3][3][3], HI5[3][3][3][3][3];
 
-		hplog_(&x, &nw,
-			   HC1, *HC2, **HC3, ***HC4,
-			   HR1, *HR2, **HR3, ***HR4,
-			   HI1, *HI2, **HI3, ***HI4,
+		hplog5_(&x, &nw,
+			   HC1, *HC2, **HC3, ***HC4, ****HC5,
+			   HR1, *HR2, **HR3, ***HR4, ****HR5,
+			   HI1, *HI2, **HI3, ***HI4, ****HI5,
 			   &n1, &n2);
 
 		return HR3[2][2][1];

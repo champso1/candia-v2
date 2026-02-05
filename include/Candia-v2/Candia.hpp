@@ -90,7 +90,7 @@ namespace Candia2
 		/**
 		 *  @brief Constructs a DGLAPSolver object
 		 *  @param order The perturbative order
-		 *  @param grid (const) reference to a @a Grid object
+		 *  @param grid reference to a @a Grid object
 		 *  @param alpha_s (const) reference to an @a AlphaS object
 		 *  @param Qf the final energy to evolve to
 		 *  @param iterations Number of iterations to complete (the outer, s-index)
@@ -99,10 +99,10 @@ namespace Candia2
 		 *  @param kr The ratio of \f$\mu_f^2/\mu_r^2\f$
 		 */
 	    DGLAPSolver(
-			uint order, Grid const& grid, AlphaS const& alpha_s,
+			uint order, Grid& grid, AlphaS const& alpha_s,
 			double Qf, uint iterations, uint trunc_idx,
 			Distribution const& initial_dist,
-			double kr = 1.0);
+			double mur2_muf2 = 1.0);
 		~DGLAPSolver(); //!< default destructor
 
 		/** getter for the @a AlphaS object */
@@ -238,9 +238,10 @@ namespace Candia2
 		 *  @brief relation 4 for N3LO HFT
 		 *  @param g gluon arraygrid
 		 *  @param qp q^(+) arraygrid
+		 *  @param qminus q^(-) arraygrid
 		 *  @param k current grid index
 		 */
-		void HFT_N3LO4(ArrayGrid& g, ArrayGrid& qp, uint k);
+		void HFT_N3LO4(ArrayGrid& g, ArrayGrid& qp, ArrayGrid& qminus, uint k);
 		/** @} */
 
 

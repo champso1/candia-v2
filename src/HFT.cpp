@@ -63,6 +63,14 @@ namespace Candia2
 			}
 		} else if (_order == 3) {
 			if (_use_n3lo_matching_conditions) {
+				ArrayGrid qminus(_grid.size());
+				for (uint k=0; k<_grid.size(); ++k) {
+					qminus[k] = 0.0;
+					for (uint j=1; j<=_nf; ++j) {
+						qminus[k] += _D[j][0][0][0][0][k] - _D[j+6][0][0][0][0][k];
+					}
+				}
+
 				for (uint k=0; k<_grid.size()-1;k++) {
 					const double fac_n3lo = as*as*as/(64.0*PI_3);
 					const double convSPa = _grid.convolution(arr_singlet[1], getExpression("A3psqq"), k);
@@ -76,8 +84,10 @@ namespace Candia2
 					for (uint j=1+6; j<=_nf+6; j++)
 						HFT_N3LO2(arr[j-6], arr[j], j, k, SP);
 
+					
+
 					HFT_N3LO3(arr_singlet[0], arr_singlet[1], k); // gluon
-					HFT_N3LO4(arr_singlet[0], arr_singlet[1], k); // heavy flavor
+					HFT_N3LO4(arr_singlet[0], arr_singlet[1], qminus, k); // heavy flavor
 				}
 			} else {
 				for (uint k=0; k<_grid.size()-1;k++) {
@@ -186,7 +196,7 @@ namespace Candia2
 	}
 
 	// heavy flavor
-	void DGLAPSolver::HFT_N3LO4(ArrayGrid& g, ArrayGrid& qp, uint k)
+	void DGLAPSolver::HFT_N3LO4(ArrayGrid& g, ArrayGrid& qp, ArrayGrid& qminus, uint k)
 	{
 		const double as = _alpha_s.post(_nf+1);
 		const double fac_nnlo = as*as/(16.0*PI_2);
@@ -196,9 +206,11 @@ namespace Candia2
 		const double conv1b = _grid.convolution(qp, getExpression("A3hq"), k);
 		const double conv2a = _grid.convolution(g, getExpression("A2hg"), k);
 		const double conv2b = _grid.convolution(g, getExpression("A3hg"), k);
+		const double conv3  = _grid.convolution(qminus, getExpression("AQqPSs3"), k);
 		
-        const double res = 0.5*((fac_nnlo*conv1a + fac_n3lo*conv1b) + (fac_nnlo*conv2a + fac_n3lo*conv2b));
-		_D[(_nf+1)][0][0][0][0][k] = res;
-        _D[(_nf+1)+6][0][0][0][0][k] = res;
+        const double qh = 0.5*((fac_nnlo*conv1a + fac_n3lo*conv1b) + (fac_nnlo*conv2a + fac_n3lo*conv2b) + fac_n3lo*conv3);
+		const double qb = 0.5*((fac_nnlo*conv1a + fac_n3lo*conv1b) + (fac_nnlo*conv2a + fac_n3lo*conv2b) - fac_n3lo*conv3);
+		_D[(_nf+1)][0][0][0][0][k] = qh;
+        _D[(_nf+1)+6][0][0][0][0][k] = qb;
 	}
 } // namespace Candia2

@@ -31,20 +31,20 @@ namespace Candia2
 		};
 
 		/**
-		 *  @brief evaluates a harmonic polylogarithm
+		 *  @brief evaluates a harmonic polylogarithm ujp to weight 5
 		 *  @param x argument of the 1d harmonic polylog (1dHPL)
 		 *  @param nw the maximum requested weight of the 1dHPL
-		 *  @param Hc1,Hc2,Hc3,Hc4 the complex values of the 1dHPL
-		 *  @param Hr1,Hr2,Hr3,Hr4 the real parts of @a Hc1,Hc2,Hc3,Hc4
-		 *  @param Hi1,Hi2,Hi3,Hi4 the imag parts of @a Hc1,Hc2,Hc3,Hc4
+		 *  @param Hc1,Hc2,Hc3,Hc4,Hc5 the complex values of the 1dHPL
+		 *  @param Hr1,Hr2,Hr3,Hr4,Hr5 the real parts of @a Hc1,Hc2,Hc3,Hc4,Hr5
+		 *  @param Hi1,Hi2,Hi3,Hi4,Hi5 the imag parts of @a Hc1,Hc2,Hc3,Hc4,Hi5
 		 *  @param n1,n2 The required range of inidices.
 		 *         The allowed ranges are (0,1), (-1,0), (-1,1)
 		 */
-		double hplog_(
+		double hplog5_(
 			double* x, int* nw,
-			dcomplex* Hc1, dcomplex* Hc2, dcomplex* Hc3, dcomplex* Hc4,
-			double* Hr1, double* Hr2, double* Hr3, double* Hr4,
-			double* Hi1, double* Hi2, double* Hi3, double* Hi4,
+			dcomplex* Hc1, dcomplex* Hc2, dcomplex* Hc3, dcomplex* Hc4, dcomplex* Hc5,
+			double* Hr1, double* Hr2, double* Hr3, double* Hr4, double* Hr5,
+			double* Hi1, double* Hi2, double* Hi3, double* Hi4, double* Hi5,
 			int* n1, int* n2);
 	}
 	

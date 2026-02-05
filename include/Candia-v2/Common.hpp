@@ -109,6 +109,20 @@ namespace Candia2
 	}
 
 	/**
+	 *  @brief A simple wrapper for printing to standard out and possibly an additional stream.
+	 *  @param fmt_string the format string of the log message, as used in std::format
+	 *  @param args args used to format the string, as used in std::format
+	 */
+	template <typename... TArgs>
+	void log(std::format_string<TArgs...> fmt_string, TArgs&&... args)
+	{
+		std::string log_text = std::vformat(fmt_string.get(), std::make_format_args(args...));
+		if (use_log_output_stream)
+			log_output_stream.get() << log_text;
+		std::cout << log_text;
+	}
+
+	/**
 	 *  @brief a concept to require that a type has a @a value_type as well as begin and end iterators
 	 */
 	template <typename TContainer>
