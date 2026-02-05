@@ -47,7 +47,7 @@ namespace Candia2
 
 				_A = std::vector<std::vector<ArrayGrid>>{
 					DISTS, std::vector<ArrayGrid>{
-						2, ArrayGrid{grid.size()}
+						2, ArrayGrid(grid.size())
 					}
 				};
 			} break;
@@ -55,7 +55,7 @@ namespace Candia2
 				_B = MultiDimArrayGrid_t<3>{
 					DISTS, MultiDimArrayGrid_t<2>{
 						2, MultiDimArrayGrid_t<1>{
-							_iterations, ArrayGrid{grid.size()}
+							_iterations, ArrayGrid(grid.size())
 						}
 					}
 				};
@@ -66,7 +66,7 @@ namespace Candia2
 					DISTS, MultiDimArrayGrid_t<3>{
 						2, MultiDimArrayGrid_t<2>{
 							_iterations, MultiDimArrayGrid_t<1>{
-								_iterations, ArrayGrid{grid.size()}
+								_iterations, ArrayGrid(grid.size())
 							}
 						}
 					}
@@ -78,7 +78,7 @@ namespace Candia2
 						2, MultiDimArrayGrid_t<3>{
 							_iterations, MultiDimArrayGrid_t<2>{
 								_iterations, MultiDimArrayGrid_t<1>{
-									_iterations, ArrayGrid{grid.size()}
+									_iterations, ArrayGrid(grid.size())
 								}
 							}
 						}
@@ -116,7 +116,7 @@ namespace Candia2
 		_S = decltype(_S){
 			trunc_idx+1, std::vector<std::vector<ArrayGrid>>{
 				2, std::vector<ArrayGrid>{
-					2, ArrayGrid{_grid.size()}
+					2, ArrayGrid(_grid.size())
 				}
 			}
 		};
@@ -124,7 +124,7 @@ namespace Candia2
 
 
 		_F = std::vector<ArrayGrid>{
-			DISTS, ArrayGrid{grid.size()}
+			DISTS, ArrayGrid(grid.size())
 		};
 
 		setInitialConditions(initial_dist);
@@ -420,8 +420,8 @@ namespace Candia2
 		// so we stick everything into this temp array
 		// during the evolution, then move it into the n=0
 		// part after the full evolution
-		std::vector<ArrayGrid> temp_arr(DISTS, ArrayGrid{_grid.size()});
-		std::vector<ArrayGrid> temp_arr_singlet(DISTS, ArrayGrid{_grid.size()});
+		std::vector<ArrayGrid> temp_arr(DISTS, ArrayGrid(_grid.size()));
+		std::vector<ArrayGrid> temp_arr_singlet(DISTS, ArrayGrid(_grid.size()));
 			
 		// since the only difference during the evolution/resummation to
 		// the tabulated energy or the threshold is what array we append to, 
@@ -448,8 +448,12 @@ namespace Candia2
 			// update all values
 			_alpha_s.update(_nf);
 			SplittingFunction::update(_nf, _alpha_s.beta0());
-			for (auto& [_, expr] : _expressions)
-				expr->fill(_grid.points(), _grid.abscissae());
+			for (auto& [_, expr] : _expressions) {
+				if (_grid.splitIntervals())
+					expr->fill(_grid.points(), _grid.allAbscissae());
+				else
+					expr->fill(_grid.points(), _grid.abscissae());
+			}
 			_alpha0 = _alpha_s.post(_nf);
 			_alpha1 = _alpha_s.pre(_nf+1);
 			bool resum_tab = _alpha_s.resumTabulated();

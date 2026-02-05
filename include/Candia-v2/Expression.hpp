@@ -48,6 +48,21 @@ namespace Candia2
 		 */
 		virtual void fill(array_type const& grid_points, array_type const& gauss_points);
 
+		/**
+		 *  @brief Fills the cache with the gauss-legendre points given @a grid_points and @a gauss_points.
+		 *
+		 *  This method takes in multiple sets of gauss_points, which will be the case
+		 *  if the user splits the grid into convolution intervals.
+		 *
+		 *  @param grid_points The array of grid points.
+		 *  @param gauss_points The array of several sets of gauss-legendre abscissae
+		 */
+		virtual inline void fill(array_type const& grid_points, std::vector<array_type> const& gauss_points)
+		{
+			for (auto const& a : gauss_points)
+				fill(grid_points, a);
+		}
+
 		/** @brief Retrieves the regular part of the expression evaluated at x from the cache */
 		inline virtual double regular(double x) { return _reg_cache[x]; }
 		/** @brief Retrieves the plus part of the expression evaluated at x from the cache */

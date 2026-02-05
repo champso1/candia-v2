@@ -7,8 +7,6 @@
 #include <cmath>
 #include <iterator>
 #include <set>
-#include <span>
-#include <sstream>
 
 namespace Candia2
 {
@@ -35,6 +33,25 @@ namespace Candia2
 		}
 	    
 		initGauLeg(0.0, 1.0, _Xi, _Wi);
+	}
+
+	Grid::Grid(Grid& other)
+		: _points{other._points}, _ntab{other._ntab}, _xtab{other._xtab},
+		  _gauss_points{other._gauss_points}, _Xi{other._Xi}, _Wi{other._Wi},
+		  _split_interval{other._split_interval}, _Xi2{other._Xi2}, _Wi2{other._Wi2},
+		  _gsl_gauleg_table{std::move(other._gsl_gauleg_table)}
+	{
+		log(LOG_INFO, "Grid", "Copy constructor: previous grid's gsl objects will no longer be valid.");
+	}
+
+	void Grid::operator=(Grid& other)
+	{
+		_points = other._points;
+		_ntab = other._ntab;
+		_xtab = other._xtab;
+		_gauss_points ={other._gauss_points}, _Xi ={other._Xi}, _Wi ={other._Wi}
+		
+		log(LOG_INFO, "Grid", "Copy constructor: previous grid's gsl objects will no longer be valid.");
 	}
 
 	void Grid::initGrid(std::vector<double> const& xtab, const uint nx)
@@ -113,28 +130,101 @@ namespace Candia2
 	}
 
 
+
 	void Grid::initGrid2(std::vector<double> const& xtab, uint nx)
 	{
 	    log(LOG_INFO, "Grid", "Using method 2");
-		
-		std::vector<double> log_points{};
-		if (!(xtab.front() < 0.1))
-			log(LOG_ERROR, "Grid", "Method 4 requires tabulated points below and above 0.1");
+		log(LOG_WARNING, "Grid", "Method 2 is unfinished. Prefer method 3 for now.");
+		log(LOG_WARNING, "Grid", "Method 2 hard-codes values to compare with distributions. Will ignore supplied x-tab.");
+		if (!(xtab.front() < 0.1 && xtab.back() > 0.1))
+			log(LOG_ERROR, "Grid", "Method 2 requires tabulated points below and above 0.1");
 
+		
 		double log_min = std::log10(xtab.front());
 		double log_max = std::log10(0.1);
-		uint num_log_intervals = std::round((log_max-log_min)/static_cast<double>(nx));
+		uint num_log_intervals = std::round(log_max-log_min);
+		double dlog = (log_max-log_min)/static_cast<double>(num_log_intervals);
 		
 		double lin_min = 0.1;
 		double lin_max = xtab.back();
-		uint num_lin_intervals = std::clamp<uint>(static_cast<uint>(lin_max*5.0-1), 1, 5);
+		uint num_lin_intervals = 1;
 
+		/*
+		  this definitely needs to be considered a bit
+		  given, say, tabulated points 0.01, 0.1, 1.0,
+		  we want there to be an equal number of points
+		  between 0.01 and 0.1 as there are between 0.1 and 1.0,
+		  with the points below 0.1 being logarithmically spaced
+		  and the ones above being linearly spaced
+		  but we split up the points below into logarithmic intervals
+		  but we don't want a 1-to-1 correspondance between the number of points
+		  in those intervals and the number of points in the linear interval
+		  because that may leave too many in the linear interval
+		  we also don't want the number of points in the linear interval to
+		  match the total number in all of the logarithmic intervals
+		  so this factor makes it such that, for the first example i listed above,
+		  factor=2, which leaves an equal number in the log/linear intervals
+		  but for all the way up to 6 log intervals (if the min xtab=1e-7)
+		  then factor=3, leaving 2/3 points in all log intervals and 1/3 in the single linear interval
+		  will play around with this!
+		*/
+		double factor = (9.0/5.0) + (1.0/5.0)*num_log_intervals;
 		uint total_intervals = num_log_intervals + num_lin_intervals;
-		double interval_size = static_cast<double>(nx)/static_cast<double>(total_intervals);
+		uint lin_interval_size = std::round(static_cast<double>(nx)/factor);
+		uint log_interval_size = std::round(static_cast<double>(nx-lin_interval_size)/num_log_intervals);
 
+		_points.clear();
+		for (uint i=0; i<num_log_intervals; ++i) {
+			double l0 = log_min + i*dlog;
+			double l1 = l0 + dlog;
+			for (uint k=0; k<log_interval_size; ++k) {
+				double l = l0 + (l1-l0)*k/static_cast<double>(log_interval_size-1);
+				_points.emplace_back(std::pow(10, l));
+			}
+		}
+
+		for (uint k=0; k<lin_interval_size; ++k) {
+		    double x = lin_min + (lin_max-lin_min)*k/static_cast<double>(lin_interval_size-1);
+			_points.emplace_back(x);
+		}
+		
+		std::set<double> points_set(_points.begin(), _points.end());
+		points_set.insert(xtab.begin(), xtab.end());
+		points_set.insert(0.1); // just in case
+		_points = std::vector<double>(points_set.begin(), points_set.end());
 		
 
-		log(LOG_ERROR, "Grid", "Method 2 unfinished. Use 1 (original candia method) or 3 (similar, but more points packed at higher x)");
+		_ntab.clear();
+		for (double x : xtab) {
+			if (auto it = std::find(_points.begin(), _points.end(), x); it != _points.end()) {
+				_ntab.emplace_back(std::distance(_points.begin(), it));
+				continue;
+			}
+		}
+
+		log(LOG_DEBUG, "Grid", "Printing the grid:");
+		for (double x : _points)
+			log(LOG_DEBUG, "Grid", "  {}", x);
+		std::ostringstream ss{};
+		std::copy(_ntab.begin(), _ntab.end(), std::ostream_iterator<uint>(ss, ", "));
+		log(LOG_DEBUG, "Grid", "Printing ntab array: {}", ss.str());
+		std::vector<double> xtabbed_points{};
+		std::transform(
+			_ntab.begin(), _ntab.end(),
+			std::back_insert_iterator(xtabbed_points),
+			[&](int x) -> double { return this->_points[x]; });
+		ss = {};
+		std::copy(xtabbed_points.begin(), xtabbed_points.end(), std::ostream_iterator<double>(ss, ", "));
+		log(LOG_DEBUG, "Grid", "Printing xtabbed points to make sure ntab is correct: {}", ss.str());
+
+		auto it = std::find(_points.begin(), _points.end(), 0.1);
+		if (it == _points.end())
+			log(LOG_ERROR, "Grid", "Somehow, 0.1 didn't end up in the set of grid points");
+		
+		log(LOG_DEBUG, "Grid", "Number of points before 0.1: {}, number of points after: {}",
+			std::distance(_points.begin(), it), std::distance(it, _points.end()));
+
+		initGauLeg(0.0, 1.0, _Xi, _Wi);
 	}
 
 	void Grid::initGrid3(std::vector<double> const& xtab, uint nx)
@@ -228,6 +318,47 @@ namespace Candia2
 		}
 	}
 
+	void Grid::splitConvolution(std::vector<double> const& intervals)
+	{
+		_split_interval = true;
+
+		auto num_intervals = intervals.size();
+		if (num_intervals > 5)
+			log(LOG_WARNING, "Grid::splitConvolution()", ">5 convolution intervals is a little excessive.");
+		
+		_Xi2.reserve(num_intervals);
+		_Wi2.reserve(num_intervals);
+
+		if (auto it = std::find_if(intervals.begin(), intervals.end(), [](double x) { return (x < 1e-7) || (x > 1.0); });
+			it != std::ranges::end(intervals)) {
+			log(LOG_ERROR, "Grid::splitConvolution()", "A provided point ({}) is outside the range [1e-7, 1.0]", *it);
+		}
+
+		auto intervals_sorted = intervals;
+		std::sort(intervals_sorted.begin(), intervals_sorted.end());
+		auto points_per_interval = size()/num_intervals;
+
+		log(LOG_INFO, "Grid", "List of intervals:");
+		auto it = intervals_sorted.begin() + 1;
+		while (it != intervals_sorted.end()) {
+			auto prev_x = *(it-1);
+			auto new_x = *it;
+			gauleg_type Xi(_gauss_points, 0.0), Wi(_gauss_points, 0.0);
+			initGauLeg(prev_x, new_x, Xi, Wi);
+			_Xi2.emplace_back(Xi);
+			_Wi2.emplace_back(Wi);
+			++it;
+
+			log(LOG_INFO, "Grid", "  - [{}, {}]", prev_x, new_x);
+			log(LOG_INFO, "Grid", "    - Abscissae:");
+			for (auto x : Xi)
+				log(LOG_INFO, "Grid", "      - {}", x);
+			log(LOG_INFO, "Grid", "    - Weights:");
+			for (auto x : Wi)
+				log(LOG_INFO, "Grid", "      - {}", x);
+		}
+	}
+
     int Grid::interpFindIdx(double x)
 	{
 		const static int n = static_cast<int>(size());
@@ -279,7 +410,7 @@ namespace Candia2
 
 				den = ho-hp;
 				if (std::abs(ho-hp) < 1e-15)
-					log(LOG_ERROR, "Grid::interpolate()", "found a denominator equal to 0.0.");
+					log(LOG_ERROR, "Grid::interpolate()", "found a denominator equal to 0.0 ({}, {}, {})", x, xa[i], xa[i+m]);
 
 				den = w/den;
 				d[i] = hp*den;
@@ -299,24 +430,36 @@ namespace Candia2
 		double eplus1 = E.plus(1.0);
 		double ed1 = E.delta(1.0);
 		double res = (eplus1*std::log1p(-x) + ed1) * A[k];
+
+		auto conv_interval = [&](gauleg_type const& X, gauleg_type const& W) {
+			for (uint i=0; i<_gauss_points; i++) {
+				double y = X[i];
+				double w = W[i];
+
+				double a = std::pow(x, 1.0-y);
+				double b = std::pow(x, y);
+
+				double interp1 = interpolate(A, b);
+				double interp2 = interpolate(A, a);
+
+				double erega = E.regular(a);
+				double eplusb = E.plus(b);
+
+				res -= w*logx*a*erega*interp1;
+				res -= w*logx*b*(eplusb*interp2 - eplus1*A[k])/(1.0-b);
+			}
+		};
 		
-		for (uint i=0; i<_gauss_points; i++) {
-			double y = _Xi[i];
-			double w = _Wi[i];
-
-			double a = std::pow(x, 1.0-y);
-			double b = std::pow(x, y);
-
-			double interp1 = interpolate(A, b);
-			double interp2 = interpolate(A, a);
-
-			double erega = E.regular(a);
-			double eplusb = E.plus(b);
-
-			res -= w*logx*a*erega*interp1;
-			res -= w*logx*b*(eplusb*interp2 - eplus1*A[k])/(1.0-b);
+		if (!_split_interval)
+			conv_interval(_Xi, _Wi);
+		else {
+			for (uint i=0; i<_Xi2.size(); ++i) {
+				auto const& X = _Xi2[i];
+				auto const& W = _Wi2[i];
+				conv_interval(X, W);
+			}
 		}
-		
+	    
 		return res;
 	}
 }

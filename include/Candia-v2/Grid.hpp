@@ -10,9 +10,16 @@
 #include "Candia-v2/Expression.hpp"
 
 #include <vector>
+#include <memory>
+
+#include <gsl/gsl_integration.h>
 
 namespace Candia2
 {
+	inline auto gsl_gauleg_deleter = [](gsl_integration_glfixed_table* t){ gsl_integration_glfixed_table_free(t); };
+	using gsl_gauleg_deleter_type = decltype(gsl_gauleg_deleter);
+	using gsl_gauleg_type = std::unique_ptr<gsl_integration_glfixed_table, gsl_gauleg_deleter_type>;
+	
 	class ArrayGrid;
 	/**
 	 *  @brief Class that contains the interpolation/convolution grid and the methods to perform the interpolation and convolution.
@@ -32,6 +39,12 @@ namespace Candia2
 		uint _gauss_points;  //!< the number of gauss-legendre points
 		gauleg_type _Xi{};   //!< the array of gauss-legendre abscissae
 		gauleg_type _Wi{};   //!< the array of gauss-legendre weight
+
+		bool _split_interval{false}; //!< flag that declares if the user wants to split the convolution into intervals
+		std::vector<gauleg_type> _Xi2{}; //!< list of split-up abscissae per interval
+		std::vector<gauleg_type> _Wi2{}; //!< list of split-up weights per interval
+
+	    gsl_gauleg_type _gsl_gauleg_table{nullptr}; //!< underlying gsl gauleg type
 	public:
 		Grid() = delete; //!< default constructor deleted; must provide information to fill the grid
 		/**
@@ -43,6 +56,9 @@ namespace Candia2
 		 */
 		Grid(grid_type const& xtab, uint nx, uint gauss_points, int grid_fill_type=1);
 		~Grid() = default; //!< default destructor
+
+		explicit Grid(Grid& other); //!< copy constructor invalidates original grid's gsl objects
+		void operator=(Grid& other); //!< copy assignment invalidates original grid's gsl objects
 
 		/** Getter for xtab array */
 		inline grid_type& xtab() { return _xtab; }
@@ -56,14 +72,16 @@ namespace Candia2
 		/** Getter for point on the grid */
 		inline double operator[](uint idx) const { return _points[idx]; }
 
+		inline bool splitIntervals() const { return _split_interval; }
+		
 		/** Getter for the gauss-legendre abscissae */
 		inline gauleg_type const& abscissae() const { return _Xi; }
-		/** Getter for the gauss-legendre abscissae */
-		inline double abscissae(uint idx) const { return _Xi[idx]; }
+		/** Getter for ALL gauss-legendre abscissae, i.e. if the user splits into intervals */
+		inline std::vector<gauleg_type> const& allAbscissae() const { return _Xi2; }
 		/** Getter for the gauss-legendre weights */
 		inline gauleg_type const& weights() const { return _Wi; }
-		/** Getter for the gauss-legendre weights */
-		inline double weights(uint idx) const { return _Wi[idx]; }
+		/** Getter for ALL gauss-legendre weights, i.e. if the user splits into intervals */
+		inline std::vector<gauleg_type> const& allWeights() const { return _Wi2; }
 
 		/** Getter for the grid size */
 		inline uint size() const { return _points.size(); }
@@ -71,12 +89,9 @@ namespace Candia2
 		/** Getter for the ntab array */
 		inline ntab_type const& ntab() const { return _ntab; }
 		/** Getter for the ntab array */
-		inline int const& ntab(uint idx) const { return _ntab.at(idx); }
-		/** Getter for the ntab array */
 		inline ntab_type& ntab() { return _ntab; }
-		/** Getter for the ntab array */
-		inline int& ntab(uint idx) { return _ntab.at(idx); }
 
+	
 		/** Const iterator to the beginning of the underlying array */
 		inline grid_type::const_iterator begin() const { return _points.begin(); }
 		/** Iterator to the beginning of the underlying array */
@@ -85,6 +100,12 @@ namespace Candia2
 		inline grid_type::const_iterator end() const { return _points.end(); }
 		/** Iterator to the end of the underlying array */
 		inline grid_type::iterator end() { return _points.end(); }
+
+		/**
+		 *  @brief Splits the grid intervals into the provided intervals.
+		 *  @param intervals A list of points at which to split the interval
+		 */
+		void splitConvolution(std::vector<double> const& intervals);
 
 		/**
 		 *  @brief Uses a binary search to find the grid point closest to the given value of x

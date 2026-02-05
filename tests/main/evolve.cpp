@@ -23,7 +23,7 @@ static void usage()
 	cout << "Usage:\n";
 	cout << "-------------------------------------------------------\n";
 	cout << "./evolve(.exe) <order> <num_grid_points> <iterations> <trunc_idx> <kr>\n";
-	cout << "    <order>: perturbative order to perform the calculation.\n ";
+	cout << "    <order>: perturbative order to perform the calculation.\n";
 	cout << "    <num_grid_points>: number of grid points to use.\n";
 	cout << "    <iterations>: number of total iterations to perform.\n";
 	cout << "    <trunc_idx>: number of truncation iterations to perform (for each main iteration!)\n";
@@ -107,6 +107,7 @@ int main(int argc, char *argv[]) {
 	
 	vector<double> xtab{1e-5, 1e-4, 1e-3, 1e-2, 0.1, 0.3, 0.5, 0.7, 0.9, 1.0};
 	Grid grid(xtab, num_grid_points, 50, 3);
+	// grid.splitConvolution({1e-5, 0.1, 0.8, 1.0});
 
 	LesHouchesDistribution dist{};
 	AlphaS alphas(order, dist.Q0(), Qf, dist.alpha0(), kr);

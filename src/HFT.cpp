@@ -12,8 +12,12 @@ namespace Candia2
 		
 		log(LOG_INFO, "HFT", "Treating heavy flavors: {}th quark mass threshold (mass {})", _nf+1, _alpha_s.masses(_nf+1));
 		OpMatElem::update(-_log_mur2_muf2, _nf);
-		for (auto& [_, expr] : _expressions)
-			expr->fill(_grid.points(), _grid.abscissae());
+		for (auto& [_, expr] : _expressions) {
+			if (_grid.splitIntervals())
+				expr->fill(_grid.points(), _grid.allAbscissae());
+			else
+				expr->fill(_grid.points(), _grid.abscissae());
+		}
 
 		// Copy of pre-threshold distributions
 		// the nf+1 dists are defined in terms of the nf dists,
@@ -24,8 +28,8 @@ namespace Candia2
 		// at the next nf
 		log(LOG_INFO, "HFT", "Creating copy of pre-threshold distributions... ");
         
-        std::vector<ArrayGrid> arr(13, ArrayGrid{_grid.size()});
-		std::vector<ArrayGrid> arr_singlet(2, ArrayGrid{_grid.size()});
+        std::vector<ArrayGrid> arr(13, ArrayGrid(_grid.size()));
+		std::vector<ArrayGrid> arr_singlet(2, ArrayGrid(_grid.size()));
 
 		for (uint j=0; j<=1; ++j)
 			arr_singlet[j] = _S[0][j][0];
