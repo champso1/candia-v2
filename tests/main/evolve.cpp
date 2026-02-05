@@ -113,7 +113,7 @@ int main(int argc, char *argv[]) {
 	
 	
 	vector<double> xtab{1e-5, 1e-4, 1e-3, 1e-2, 0.1, 0.3, 0.5, 0.7, 0.9, 1.0};
-	Grid grid(xtab, num_grid_points, 50, 2);
+	Grid grid(xtab, num_grid_points, 30, 2);
 	grid.splitConvolution({1e-5, 0.1, 0.7, 1.0});
 
 	LesHouchesDistribution dist{};

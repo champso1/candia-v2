@@ -147,7 +147,7 @@ namespace Candia2
 		log(LOG_WARNING, "Grid", "This method hard-codes values to compare with distributions.");
 		log(LOG_WARNING, "Grid", "Will ignore supplied x-tab and number of grid points.");
 
-	    uint grid_points_per = 500;
+	    uint grid_points_per = 200;
 		
 		double log_min = std::log10(1e-5);
 		double log_max = std::log10(0.1);

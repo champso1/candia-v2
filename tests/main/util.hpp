@@ -30,13 +30,20 @@ static std::string scientificToLatex(double num, int precision, bool benchmark_f
 }
 static std::string percentToLatex(double num)
 {
+    double percent = num*100.0;
+	int exponent = std::floor(std::log10(std::abs(num)));
+	double mantissa = num / std::pow(10, exponent);
+	return std::format("${:.2f}^{{{:+}}}$\\%", mantissa, exponent);
+}
+static std::string percentToLatex2(double num)
+{
 	double percent = num*100.0;
-	if (percent >= 1000.0) {
+	if (percent >= 1e-8) {
 		int exponent = std::floor(std::log10(std::abs(num)));
 		double mantissa = num / std::pow(10, exponent);
 		return std::format("${:.2f}^{{{:+}}}$\\%", mantissa, exponent);
 	} else {
-    	return std::format("${:.2f}$\\%", num*100.0);
+		return std::format("0.00\\%");
 	}
 }
 
@@ -193,7 +200,7 @@ constexpr static char const* TEX_TABLE_COL_DEF{"r|"};
 static void outputLatexTable(
 	std::vector<double> const& xtab,
 	dist_type const& diffs, std::string const& filename,
-	std::vector<std::string> const& cols, bool use_percentages, bool benchmark_format)
+	std::vector<std::string> const& cols, int format, bool benchmark_format)
 {
 	fs::path tex_table_dir = fs::current_path()/TEX_TABLE_DIR;
 	fs::path tex_table_base = tex_table_dir/TEX_TABLE_TEMPLATE;
@@ -257,11 +264,13 @@ static void outputLatexTable(
 	    log(LOG_INFO, "util.hpp", "'latex' directory exists. Continuing.");
 	}
 
-	auto format_val = [b=use_percentages,f=benchmark_format](double val) -> std::string {
-		if (b)
-			return percentToLatex(val);
-		else
-			return scientificToLatex(val, 4, f);
+	auto format_val = [t=format,f=benchmark_format](double val) -> std::string {
+		switch (t) {
+			case 0: return percentToLatex(val);
+			case 1: return scientificToLatex(val, 4, f);
+			case 2: return percentToLatex2(val);
+		}
+		return "???"; // unreachable
 	};
 
 	log(LOG_INFO, "util.hpp", "Printing table information.");
