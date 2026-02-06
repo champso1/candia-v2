@@ -32,6 +32,14 @@ namespace
     	"| \033[2mPlease cite arXiv:2512.22667 "
     	"| (Hampson, Guzzi)\033[0m\n"
 		"==================================================\n";
+		inline constexpr char const* CANDIA_CLOSING_TEXT = 
+		"==================================================\n"
+    	"| \033[1mCandia-v2\033[0m — DGLAP evolution up to \033[1mN³LO\033[0m\n"
+    	"| Thanks for using this program!\n"
+    	"| \033[2mPlease cite arXiv:2512.22667 "
+    	"| (Hampson, Guzzi)\033[0m\n"
+		"==================================================\n";
+
 }
 
 namespace Candia2
@@ -144,6 +152,7 @@ namespace Candia2
 	DGLAPSolver::~DGLAPSolver()
 	{
 		log(LOG_INFO, "DGLAP", "Exiting...");
+		log(CANDIA_CLOSING_TEXT);
 	}
 
 	Expression& DGLAPSolver::getExpression(std::string_view name)
@@ -158,26 +167,6 @@ namespace Candia2
 	void DGLAPSolver::setInitialConditions(Distribution const& dist)
 	{
 		log(LOG_INFO, "DGLAP", "Setting initial conditions... ");
-
-		/*
-		for (uint k=0; k<_grid.size()-1; k++) {
-			double x = _grid[k];
-			_S[0][0][0][k] = dist.xg(x);
-			_S[0][1][0][k] = dist.xqplus(x);
-		}
-		*/
-
-		/*
-		for (uint k=0; k<_grid.size()-1; k++) {
-			double x = _grid[k];
-			get_dist(1, k) = dist.xu(x);  // u
-			get_dist(2, k) = dist.xd(x);  // d
-			get_dist(3, k) = dist.xs(x);  // s
-			get_dist(7, k) = dist.xub(x); // ub
-			get_dist(8, k) = dist.xdb(x); // db
-			get_dist(9, k) = dist.xs(x);  // sb ( = s)
-		}
-		*/
 
 		dist.fillSingletCoeffs(
 			[&](uint j, uint k) -> double& {
@@ -284,7 +273,10 @@ namespace Candia2
 		}
     }
 
-	void DGLAPSolver::fixDistributions(bool resum_tab, bool resum_threshold, std::vector<ArrayGrid>& temp_arr, std::vector<ArrayGrid>& temp_arr_singlet)
+	void DGLAPSolver::fixDistributions(
+		std::vector<ArrayGrid>& resum_ns,
+		std::vector<ArrayGrid>& resum_singlet,
+		std::vector<ArrayGrid>& resum)
     {
         for (uint t=1; t<=_trunc_idx; ++t) {
             for (uint j=0; j<=1; ++j) {
@@ -293,129 +285,62 @@ namespace Candia2
             }
         }
 
+		for (uint j=0; j<=1; ++j)
+			resum[j*31] = resum_singlet[j*31];
+		switch (_order) {
+			case 0:
+			case 1: {
+				for (uint j=13; j<=12+_nf; j++)
+					resum[j] = resum_ns[j];
+				for (uint j=32; j<=30+_nf; j++)
+					resum[j] = resum_ns[j];
+			} break;
+			case 2:
+			case 3: {
+				for (uint j=26; j<=24+_nf; ++j)
+					resum[j] = resum_ns[j];
+				for (uint j=32; j<=30+_nf; ++j)
+					resum[j] = resum_ns[j];
+				resum[25] = resum_ns[25];
+			} break;
+		}
+
         double Nf = static_cast<double>(_nf);
-        if (resum_tab) {
-            for (uint k=0; k<_grid.size()-1;k++) {
-                if (_order>=2) {
-                    _F[13][k]=_F[25][k];
-                    for (uint j=26; j<=24+_nf; j++)
-                        _F[13][k] += _F[j][k];
-                    _F[13][k] /= Nf;
-                    for (uint j=14; j<=12+_nf; j++)
-                        _F[j][k] = _F[13][k] - _F[j+12][k];
-                }
+		for (uint k=0; k<_grid.size()-1;k++) {
+			if (_order>=2) {
+				resum[13][k]=resum[25][k];
+				for (uint j=26; j<=24+_nf; j++)
+					resum[13][k] += resum[j][k];
+				resum[13][k] /= Nf;
+				for (uint j=14; j<=12+_nf; j++)
+					resum[j][k] = resum[13][k] - resum[j+12][k];
+			}
 
-                _F[19][k] = _F[31][k];
-                for (uint j=32; j<=30+_nf; j++)
-                    _F[19][k] += _F[j][k];
-                _F[19][k] /= Nf;
+			resum[19][k] = resum[31][k];
+			for (uint j=32; j<=30+_nf; j++)
+				resum[19][k] += resum[j][k];
+			resum[19][k] /= Nf;
 
-                for (uint j=20; j<=18+_nf; j++)
-                    _F[j][k] = _F[19][k] - _F[j+12][k];
+			for (uint j=20; j<=18+_nf; j++)
+				resum[j][k] = resum[19][k] - resum[j+12][k];
 
-                for (uint j=1; j<=_nf; j++) {
-                    _F[j][k]   =0.5*(_F[j+18][k] + _F[j+12][k]);
-                    _F[j+6][k] =0.5*(_F[j+18][k] - _F[j+12][k]);
-                }
+			for (uint j=1; j<=_nf; j++) {
+				resum[j][k]   =0.5*(resum[j+18][k] + resum[j+12][k]);
+				resum[j+6][k] =0.5*(resum[j+18][k] - resum[j+12][k]);
+			}
 
-                if (_order<2) {
-                    _F[25][k]=0.0;
-                    for (uint j=13; j<=12+_nf; j++)
-                        _F[25][k] += _F[j][k];
+			if (_order<2) {
+				resum[25][k]=0.0;
+				for (uint j=13; j<=12+_nf; j++)
+					resum[25][k] += resum[j][k];
 
-                    for (uint j=26; j<=24+_nf; j++)
-                        _F[j][k] = _F[13][k] - _F[j-12][k];
-                }
-            }
-        }
-        else if (resum_threshold)
-        {
-            switch (_order) {
-                case 0: {
-					for (uint k=0; k<_grid.size()-1; k++) {
-                        temp_arr[19][k] = temp_arr_singlet[31][k];
-                        for (uint j=32; j<=30+_nf; j++)
-                            temp_arr[19][k] += temp_arr[j][k];
-                        temp_arr[19][k] /= Nf;
-
-                        for (uint j=20; j<=18+_nf; j++)
-                            temp_arr[j][k] = temp_arr[19][k] - temp_arr[j+12][k];
-
-                        for (uint j=1; j<=_nf; j++) {
-                            temp_arr[j][k]   = 0.5*(temp_arr[j+18][k] + temp_arr[j+12][k]);
-                            temp_arr[j+6][k] = 0.5*(temp_arr[j+18][k] - temp_arr[j+12][k]);
-                        }
-                    }
-				}; break;
-                case 1: {
-                    for (uint k=0; k<_grid.size()-1; k++) {
-                        temp_arr[19][k] = temp_arr_singlet[31][k];
-                        for (uint j=32; j<=30+_nf; j++)
-                            temp_arr[19][k] += temp_arr[j][k];
-                        temp_arr[19][k] /= Nf;
-
-                        for (uint j=20; j<=18+_nf; j++)
-                            temp_arr[j][k] = temp_arr[19][k] - temp_arr[j+12][k];
-
-                        for (uint j=1; j<=_nf; j++) {
-                            temp_arr[j][k]   = 0.5*(temp_arr[j+18][k] + temp_arr[j+12][k]);
-                            temp_arr[j+6][k] = 0.5*(temp_arr[j+18][k] - temp_arr[j+12][k]);
-                        }
-                    }
-                }; break;
-                case 2: {
-					for (uint k=0; k<_grid.size()-1; k++) {
-                        temp_arr[13][k] = temp_arr[25][k];
-                        for (uint j=26; j<=24+_nf; j++)
-                            temp_arr[13][k] += temp_arr[j][k];
-                        temp_arr[13][k] /= Nf;
-
-                        for (uint j=14;j<=12+_nf;j++)
-                            temp_arr[j][k] = temp_arr[13][k] - temp_arr[j+12][k];
-
-                        temp_arr[19][k] = temp_arr_singlet[31][k];
-                        for (uint j=32; j<=30+_nf; j++)
-                            temp_arr[19][k] += temp_arr[j][k];
-                        temp_arr[19][k] /= Nf;
-
-                        for (uint j=20; j<=18+_nf; j++)
-                            temp_arr[j][k] = temp_arr[19][k] - temp_arr[j+12][k];
-
-                        for (uint j=1; j<=_nf; j++) {
-                            temp_arr[j][k]  =0.5*(temp_arr[j+18][k]+temp_arr[j+12][k]);
-                            temp_arr[j+6][k]=0.5*(temp_arr[j+18][k]-temp_arr[j+12][k]);
-                        }
-                    }
-				}; break;
-                case 3: {
-                    for (uint k=0; k<_grid.size()-1; k++) {
-                        temp_arr[13][k] = temp_arr[25][k];
-                        for (uint j=26; j<=24+_nf; j++)
-                            temp_arr[13][k] += temp_arr[j][k];
-                        temp_arr[13][k] /= Nf;
-
-                        for (uint j=14;j<=12+_nf;j++)
-                            temp_arr[j][k] = temp_arr[13][k] - temp_arr[j+12][k];
-
-                        temp_arr[19][k] = temp_arr_singlet[31][k];
-                        for (uint j=32; j<=30+_nf; j++)
-                            temp_arr[19][k] += temp_arr[j][k];
-                        temp_arr[19][k] /= Nf;
-
-                        for (uint j=20; j<=18+_nf; j++)
-                            temp_arr[j][k] = temp_arr[19][k] - temp_arr[j+12][k];
-
-                        for (uint j=1; j<=_nf; j++) {
-                            temp_arr[j][k]  =0.5*(temp_arr[j+18][k]+temp_arr[j+12][k]);
-                            temp_arr[j+6][k]=0.5*(temp_arr[j+18][k]-temp_arr[j+12][k]);
-                        }
-                    }
-                } break;
-            }
-        }
+				for (uint j=26; j<=24+_nf; j++)
+					resum[j][k] = resum[13][k] - resum[j-12][k];
+			}
+		}
     }
 
-	auto DGLAPSolver::evolve() -> decltype(_F)
+	std::vector<ArrayGrid> const& DGLAPSolver::evolve()
 	{
 		log(LOG_INFO, "DGLAP", "Evolving to {} flavors.", _alpha_s.nff());
 		using out_type = decltype(_F);
@@ -424,25 +349,14 @@ namespace Candia2
 		//std::array<double,1> Qtab{_Qf};
 		out_type final_dists;
 
-		// temp array for the threshold summation
-		// originally, we wrote directly to the n=0 piece
-		// of the coefficient array,
-		// but now we only have the two pieces that continually
-		// evolve forward
-		// so we stick everything into this temp array
-		// during the evolution, then move it into the n=0
-		// part after the full evolution
-		std::vector<ArrayGrid> temp_arr(DISTS, ArrayGrid(_grid.size()));
-		std::vector<ArrayGrid> temp_arr_singlet(DISTS, ArrayGrid(_grid.size()));
+		// since we now only store two iterations at once,
+		// we create these temporary arrays that will store the results of the resummation
+		// since they were originally stored in the s=0 part that no longer exists
+		// they are then copied to the _F final dists or the s=0 of the next iteration
+		std::vector<ArrayGrid> resum_ns(DISTS, ArrayGrid(_grid.size()));
+		std::vector<ArrayGrid> resum_singlet(DISTS, ArrayGrid(_grid.size()));
+		std::vector<ArrayGrid> resum(DISTS, ArrayGrid(_grid.size()));
 			
-		// since the only difference during the evolution/resummation to
-		// the tabulated energy or the threshold is what array we append to, 
-		// I create two reference arrays (one for singlet one for non-singlet)
-		// that are updated depending on what we are evolving to
-		// that way we don't have to evaluate if's inside the grid loop
-		std::reference_wrapper<std::vector<ArrayGrid>> arr{std::ref(temp_arr)};
-		std::reference_wrapper<std::vector<ArrayGrid>> arr_singlet{std::ref(temp_arr_singlet)};
-
 		for (_nf=_alpha_s.nfi(); _nf<=_alpha_s.nff(); _nf++) {
 			log(LOG_INFO, "DGLAP", "Setting nf={}", _nf);
 
@@ -456,7 +370,6 @@ namespace Candia2
 				break;
 			}
 
-			
 			// update all values
 			_alpha_s.update(_nf);
 			SplittingFunction::update(_nf, _alpha_s.beta0());
@@ -466,22 +379,13 @@ namespace Candia2
 				else
 					expr->fill(_grid.points(), _grid.abscissae());
 			}
-			_alpha0 = _alpha_s.post(_nf);
-			_alpha1 = _alpha_s.pre(_nf+1);
 			bool resum_tab = _alpha_s.resumTabulated();
 			bool resum_threshold = !resum_tab;
+			_alpha0 = _alpha_s.post(_nf);
+			_alpha1 = resum_tab ? 
+				_alpha_s.evaluate(_alpha_s.masses(_nf), _Qf, _alpha0) :
+				_alpha_s.pre(_nf+1);
 			
-			// alpha1 needs to be manually calculated
-			// if we are evolving to a tabulated energy
-			if (resum_tab) {
-				_alpha1 = _alpha_s.evaluate(_alpha_s.masses(_nf), _Qf, _alpha0);
-				arr = std::ref(_F);
-				arr_singlet = std::ref(_F);
-			} else {
-				arr = std::ref(temp_arr);
-				arr_singlet = std::ref(temp_arr_singlet);
-			}
-
 			double beta0 = _alpha_s.beta0();
 			double beta1 = _alpha_s.beta1();
 			double beta2 = _alpha_s.beta2();
@@ -526,29 +430,29 @@ namespace Candia2
 			if (_alpha0 != _alpha1) {
 				log(LOG_INFO, "DGLAP", "Starting singlet evolution and resummation...");
 #if ENABLE_THREADING
-				evolveSingletThreaded(arr_singlet, L1);
+				evolveSingletThreaded(resum_singlet, L1);
 #else
-				evolveSinglet(arr_singlet, L1);
+				evolveSinglet(resum_singlet, L1);
 #endif
 				log(LOG_INFO, "DGLAP", "Finished singlet evolution and resummation.");
 
 				log(LOG_INFO, "DGLAP", "Starting non-singlet evolution and resummation...");
 #if ENABLE_THREADING
-				evolveNonSingletThreaded(arr, L1, L2, L3, L4);
+				evolveNonSingletThreaded(resum_ns, L1, L2, L3, L4);
 #else
-				evolveNonSinglet(arr, L1, L2, L3, L4);
+				evolveNonSinglet(resum_ns, L1, L2, L3, L4);
 #endif
 				log(LOG_INFO, "DGLAP", "Finished non-singlet evolution and resummation.");
 
 				log(LOG_INFO, "DGLAP", "Fixing distributions...");
-				fixDistributions(resum_tab, resum_threshold, temp_arr, temp_arr_singlet);
+				fixDistributions(resum_ns, resum_singlet, resum);
 				log(LOG_INFO, "DGLAP", "Finished fixing distributions.");
 
 				// if we just resummed to a tabulated value,
 				// _F contains our final distributions
 				// we can just copy
 				if (resum_tab) {
-					final_dists = _F;
+					_F = std::move(resum);
 				} else if (resum_threshold) {
 					// if we just resummed to a threshold energy,
 					// then we need to recopy the resultant distributions
@@ -556,15 +460,15 @@ namespace Candia2
 					// back to the n=0 piece
 					for (uint j=0; j<DISTS; ++j) {
 						switch (_order) {
-							case 0: _A[j][0] 		   = temp_arr[j]; break;
-							case 1: _B[j][0][0] 	   = temp_arr[j]; break;
-							case 2: _C[j][0][0][0]    = temp_arr[j]; break;
-							case 3: _D[j][0][0][0][0] = temp_arr[j]; break;
+							case 0: _A[j][0] 		   = resum[j]; break;
+							case 1: _B[j][0][0] 	   = resum[j]; break;
+							case 2: _C[j][0][0][0]     = resum[j]; break;
+							case 3: _D[j][0][0][0][0]  = resum[j]; break;
 						}
 						
 					}
 					for (uint j=0; j<=1; ++j)
-						_S[0][j][0] = temp_arr_singlet[j*31];
+						_S[0][j][0] = resum[j*31];
 				}
 			} // if (alpha0 != alpha1)
 
@@ -574,7 +478,7 @@ namespace Candia2
 		} // for (_nf=_nfi; ; _nf++)
 
 		log(LOG_INFO, "DGLAP", "Done!");
-		return final_dists;
+		return _F;
 	} // evolve()
 
 	

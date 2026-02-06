@@ -38,8 +38,8 @@ namespace Candia2
 		uint _nf{}; //!< current active number of massless flavors
 		uint _nfi{}; //!< minimum number based on initial evolution and provided quark masses
 		uint _nff{}; //!< final based on final evolution and provided quark masses
-		double _alpha0{}; //!< initial alpha_s in a threshold
-		double _alpha1{}; //!< final alpha_s in a threshold
+		double _alpha0{}; //!< initial alpha_s in an interval
+		double _alpha1{}; //!< final alpha_s in an interval
 
 		uint _iterations{}; //!< number of singlet/non-singlet iterations
 		uint _trunc_idx{}; //!< number of additional singlet truncated iterations
@@ -51,14 +51,14 @@ namespace Candia2
 	    MultiDimArrayGrid_t<3> _S{}; //!< singlet coeffs
 		std::vector<ArrayGrid> _F{}; //!< final distributions
 
-		std::array<double,8> _r1{}; //!< one real solution to N3LO quadratic
-		std::array<double,8> _b{};  //!< -2*Re[r2]
-		std::array<double,8> _c{};  //!< |r2|^2
+		std::array<double,8> _r1{}; //!< real solution to N3LO quadratic
+		std::array<double,8> _b{};  //!< \f$-2*\mathrm{Re}[r_2]\f$
+		std::array<double,8> _c{};  //!< \f$|r_2|^2\f$
 
 		// for purposes of comparing with benchmarks,
 		// this flag lets one enable whether or not to use
 		// the n3lo matching conditions in the n3lo evolution
-		bool _use_n3lo_matching_conditions; //!< switch for whether to use n3lo matching at nnlo (for benchmarking purposes)
+		bool _use_n3lo_matching_conditions{true}; //!< switch for whether to use n3lo matching at nnlo (for benchmarking purposes)
 		bool _disable_matching{false}; //!< switch for whether to use matching at all
 		bool _use_n3lo_heavyquark_asymmetry{true}; //!< use new OME from arXiv:2512.13508v1
 
@@ -121,7 +121,7 @@ namespace Candia2
 		/**
 		 *  @brief Performs the full evolution.
 		 */
-		std::vector<ArrayGrid> evolve();
+		std::vector<ArrayGrid> const& evolve();
 
 	private:
 		/**
@@ -135,11 +135,14 @@ namespace Candia2
 		void setupCoefficients();
 		/**
 		 *  @brief Does the opposite of @a setInitialConditions, i.e. retrieves the raw quark dists from the special evolution ones
+		 *  @param resum_ns the set of resummed non-singlet distributions
+		 *  @param resum_singlet the set of resummed singlet distributions
+		 *  @param resum[out] the final set of all (non-singlet and singlet) fixed distributions
 		 */
 		void fixDistributions(
-			bool resum_tab, bool resum_threshold, 
-			std::vector<ArrayGrid>& temp_arr, 
-			std::vector<ArrayGrid>& temp_arr_singlet);
+			std::vector<ArrayGrid>& resum_ns, 
+			std::vector<ArrayGrid>& resum_singlet,
+			std::vector<ArrayGrid>& resum);
 
 		void evolveSinglet(std::reference_wrapper<std::vector<ArrayGrid>> arr, double L1);
 		/**
