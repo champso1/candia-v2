@@ -63,6 +63,15 @@ namespace Candia2
 		typedef std::vector<T> type;
 	};
 
+	// colors for printing to the terminal
+	inline constexpr char const* ANSI_COLOR_RED =         "\x1b[31m";
+	inline constexpr char const* ANSI_COLOR_GREEN =       "\x1b[32m";
+	inline constexpr char const* ANSI_COLOR_YELLOW =      "\x1b[33m";
+	inline constexpr char const* ANSI_COLOR_BLUE =        "\x1b[34m";
+	inline constexpr char const* ANSI_COLOR_MAGENTA =     "\x1b[35m";
+	inline constexpr char const* ANSI_COLOR_CYAN =        "\x1b[36m";
+	inline constexpr char const* ANSI_COLOR_RESET =       "\x1b[0m";
+	
 	/** Enum for defining a set of standard logging types. */
 	enum LogType : int
 	{
@@ -74,6 +83,8 @@ namespace Candia2
 		LOG_NUM_LOG_TYPES
 	};
 	inline std::array<std::string_view, LOG_NUM_LOG_TYPES> log_string_reps{"DEBUG", "INFO", "WARNING", "ERROR", "ERROR"};
+	inline std::array<std::string_view, LOG_NUM_LOG_TYPES> log_string_colors{
+		ANSI_COLOR_GREEN, ANSI_COLOR_RESET, ANSI_COLOR_YELLOW, ANSI_COLOR_RED, ANSI_COLOR_RED};
 
 	// TODO: better handle setting global flags
 	inline bool debug_flag{false}; //!< whether to print logged messaged tagged with LOG_DEBUG
@@ -99,7 +110,8 @@ namespace Candia2
 			return;
 			
 		std::string log_text = std::vformat(fmt_string.get(), std::make_format_args(args...));
-		std::string all_text = std::format("[{}] {}: {}\n", log_string_reps[log_type], prefix, log_text);
+		std::string all_text = std::format("{}[{}] {}: {}{}\n",
+			log_string_colors[log_type], log_string_reps[log_type], prefix, log_text, ANSI_COLOR_RESET);
 		if (use_log_output_stream)
 			log_output_stream.get() << all_text;
 		std::cout << all_text;

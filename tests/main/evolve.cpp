@@ -1,7 +1,6 @@
 #include "Candia-v2/Common.hpp"
 #include <iomanip>
 #include <iostream>
-#include <memory>
 #include <sstream>
 #include <vector>
 #include <fstream>
@@ -124,6 +123,7 @@ int main(int argc, char *argv[]) {
 	DGLAPSolver solver(order, grid, alphas, Qf, iterations, trunc_idx, dist, kr);
 	// solver.disableMatching();
 	// solver.useNNLOMatchingAtN3LO();
+	solver.disableN3LOHeavyQuarkAsymmetry();
 
 	auto t0 = chrono::high_resolution_clock::now();
 	auto F = solver.evolve();

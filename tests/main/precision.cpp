@@ -1,12 +1,9 @@
 #include "Candia-v2/Common.hpp"
 #include <algorithm>
-#include <charconv>
 #include <cstdlib>
 #include <cmath>
 #include <vector>
 #include <filesystem>
-#include <sstream>
-#include <iterator>
 using dist_type = std::vector<std::vector<double>>;
 
 #include "util.hpp"
@@ -57,7 +54,7 @@ static dist_type compute_diffs(dist_type const& candia_data1, dist_type const& c
 	auto reldiff =
 		[](double candia1, double candia2) -> double {
 			double avg = (candia1+candia2)/2.0;
-			return std::abs((candia1-candia2)/avg);
+			return std::abs((candia1-candia2)/avg)*100.0;
 		};
 
 	dist_type diffs{candia_data1.size(), std::vector<double>(candia_data1.at(0).size(), 0.0)};

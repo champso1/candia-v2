@@ -69,7 +69,7 @@ int main(int argc, char *argv[])
     
 	std::string identifier = candia_filepath.filename().string().substr(0, candia_filepath.filename().string().rfind('.'));
 	std::string latex_filename = std::format("diffs-other-{}", identifier);
-	outputLatexTable(xtab_candia, diffs, latex_filename, cols[type].get(), true, format == 0);
+	outputLatexTable(xtab_candia, diffs, latex_filename, cols[type].get(), 0, format == 0);
 }
 
 
@@ -78,7 +78,7 @@ dist_type compute_diffs(dist_type const& candia_data, dist_type const& other_dat
 	auto reldiff =
 		[](double candia, double other) -> double {
 			double avg = (candia+other)/2.0;
-			return std::abs((candia-other)/avg);
+			return std::abs((candia-other)/avg)*100.0;
 		};
 
 	dist_type diffs{candia_data.size(), std::vector<double>(candia_data.at(0).size(), 0.0)};

@@ -206,7 +206,7 @@ namespace Candia2
 		const double conv1b = _grid.convolution(qp, getExpression("A3hq"), k);
 		const double conv2a = _grid.convolution(g, getExpression("A2hg"), k);
 		const double conv2b = _grid.convolution(g, getExpression("A3hg"), k);
-		const double conv3  = _grid.convolution(qminus, getExpression("AQqPSs3"), k);
+		const double conv3  = _use_n3lo_heavyquark_asymmetry ? _grid.convolution(qminus, getExpression("AQqPSs3"), k) : 0.0;
 		
         const double qh = 0.5*((fac_nnlo*conv1a + fac_n3lo*conv1b) + (fac_nnlo*conv2a + fac_n3lo*conv2b) + fac_n3lo*conv3);
 		const double qb = 0.5*((fac_nnlo*conv1a + fac_n3lo*conv1b) + (fac_nnlo*conv2a + fac_n3lo*conv2b) - fac_n3lo*conv3);

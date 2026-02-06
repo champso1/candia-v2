@@ -21,3 +21,4 @@ set(resources
 )
 file(COPY ${resources} DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 
+add_custom_target(tests_main DEPENDS evolve read compare ratio precision)

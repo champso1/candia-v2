@@ -144,20 +144,17 @@ namespace Candia2
 		
 	    log(LOG_INFO, "Grid", "Using method 2");
 		log(LOG_WARNING, "Grid", "Method 2 is unfinished. Prefer method 3 for now.");
-		log(LOG_WARNING, "Grid", "This method hard-codes values to compare with distributions.");
-		log(LOG_WARNING, "Grid", "Will ignore supplied x-tab and number of grid points.");
+		log(LOG_WARNING, "Grid", "Will ignore supplied x-tab. Supplied number of grid points will actually be 1/3 of total grid points.");
 
-	    uint grid_points_per = 200;
-		
 		double log_min = std::log10(1e-5);
 		double log_max = std::log10(0.1);
 		uint num_log_intervals = std::round(log_max-log_min);
 		double dlog = (log_max-log_min)/static_cast<double>(num_log_intervals);
-		uint log_interval_size = grid_points_per/num_log_intervals;
+		uint log_interval_size = nx/num_log_intervals;
 		
 		double lin1_min = 0.1;
-		double lin1_max = 0.7;
-		double lin2_min = 0.7;
+		double lin1_max = 0.8;
+		double lin2_min = 0.8;
 		double lin2_max = 1.0;
 
 		_points.clear();
@@ -170,12 +167,12 @@ namespace Candia2
 			}
 		}
 
-		for (uint k=0; k<grid_points_per; ++k) {
-		    double x = lin1_min + (lin1_max-lin1_min)*k/static_cast<double>(grid_points_per);
+		for (uint k=0; k<nx; ++k) {
+		    double x = lin1_min + (lin1_max-lin1_min)*k/static_cast<double>(nx);
 			_points.emplace_back(x);
 		}
-		for (uint k=0; k<grid_points_per; ++k) {
-		    double x = lin2_min + (lin2_max-lin2_min)*k/static_cast<double>(grid_points_per-1);
+		for (uint k=0; k<nx; ++k) {
+		    double x = lin2_min + (lin2_max-lin2_min)*k/static_cast<double>(nx-1);
 			_points.emplace_back(x);
 		}
 		
@@ -193,21 +190,6 @@ namespace Candia2
 				continue;
 			}
 		}
-
-		log(LOG_DEBUG, "Grid", "Printing the grid:");
-		for (double x : _points)
-			log(LOG_DEBUG, "Grid", "  {}", x);
-		std::ostringstream ss{};
-		std::copy(_ntab.begin(), _ntab.end(), std::ostream_iterator<uint>(ss, ", "));
-		log(LOG_DEBUG, "Grid", "Printing ntab array: {}", ss.str());
-		std::vector<double> xtabbed_points{};
-		std::transform(
-			_ntab.begin(), _ntab.end(),
-			std::back_insert_iterator(xtabbed_points),
-			[&](int x) -> double { return this->_points[x]; });
-		ss = {};
-		std::copy(xtabbed_points.begin(), xtabbed_points.end(), std::ostream_iterator<double>(ss, ", "));
-		log(LOG_DEBUG, "Grid", "Printing xtabbed points to make sure ntab is correct: {}", ss.str());
 
 		initGauLeg(0.0, 1.0, _Xi, _Wi);
 	}

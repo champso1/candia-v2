@@ -60,6 +60,7 @@ namespace Candia2
 		// the n3lo matching conditions in the n3lo evolution
 		bool _use_n3lo_matching_conditions; //!< switch for whether to use n3lo matching at nnlo (for benchmarking purposes)
 		bool _disable_matching{false}; //!< switch for whether to use matching at all
+		bool _use_n3lo_heavyquark_asymmetry{true}; //!< use new OME from arXiv:2512.13508v1
 
 		std::map<std::string_view, std::unique_ptr<Expression>> _expressions{}; //!< list of internal stores Expression objects
 		/**
@@ -114,6 +115,8 @@ namespace Candia2
 		inline void useNNLOMatchingAtN3LO() { _use_n3lo_matching_conditions = false;};
 		/** sets the flag to disable all matching condition */
 		inline void disableMatching() { _disable_matching = true; }
+		/** disables the new n3lo heavy quark asymmetry from arXiv:2512.13508v1 */
+		inline void disableN3LOHeavyQuarkAsymmetry() { _use_n3lo_heavyquark_asymmetry = false; }
 
 		/**
 		 *  @brief Performs the full evolution.

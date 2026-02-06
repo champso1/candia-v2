@@ -15,6 +15,10 @@ using namespace Candia2;
 using dist_type = std::vector<std::vector<double>>;
 using xtab_type = std::vector<double>;
 
+static std::string percentToLatex(double percent)
+{
+	return std::format("${:.2f}$\\%", percent);
+}
 static std::string scientificToLatex(double num, int precision, bool benchmark_format)
 {
 	int exponent = std::floor(std::log10(std::abs(num)));
@@ -28,20 +32,12 @@ static std::string scientificToLatex(double num, int precision, bool benchmark_f
 			std::make_format_args(mantissa, precision_new, exponent));
 	}
 }
-static std::string percentToLatex(double num)
+static std::string percentToLatex2(double percent)
 {
-    double percent = num*100.0;
-	int exponent = std::floor(std::log10(std::abs(num)));
-	double mantissa = num / std::pow(10, exponent);
-	return std::format("${:.2f}^{{{:+}}}$\\%", mantissa, exponent);
-}
-static std::string percentToLatex2(double num)
-{
-	double percent = num*100.0;
 	if (percent >= 1e-8) {
-		int exponent = std::floor(std::log10(std::abs(num)));
-		double mantissa = num / std::pow(10, exponent);
-		return std::format("${:.2f}^{{{:+}}}$\\%", mantissa, exponent);
+		int exponent = std::floor(std::log10(std::abs(percent)));
+		double mantissa = percent / std::pow(10, exponent);
+		return std::format("{:.2f}e{:+}\\%", mantissa, exponent);
 	} else {
 		return std::format("0.00\\%");
 	}
