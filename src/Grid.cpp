@@ -7,6 +7,7 @@
 #include <cmath>
 #include <iterator>
 #include <set>
+#include <ranges>
 
 namespace Candia2
 {
@@ -33,31 +34,6 @@ namespace Candia2
 		}
 	    
 		initGauLeg(0.0, 1.0, _Xi, _Wi);
-	}
-
-	Grid::Grid(Grid& other)
-		: _points{other._points}, _ntab{other._ntab}, _xtab{other._xtab},
-		  _gauss_points{other._gauss_points}, _Xi{other._Xi}, _Wi{other._Wi},
-		  _split_interval{other._split_interval}, _Xi2{other._Xi2}, _Wi2{other._Wi2},
-		  _gsl_gauleg_table{std::move(other._gsl_gauleg_table)}
-	{
-		log(LOG_INFO, "Grid", "Copy constructor: previous grid's gsl objects will no longer be valid.");
-	}
-
-	void Grid::operator=(Grid& other)
-	{
-		_points = other._points;
-		_ntab = other._ntab;
-		_xtab = other._xtab;
-		_gauss_points = other._gauss_points;
-		_Xi = other._Xi;
-		_Wi = other._Wi;
-		_split_interval = other._split_interval;
-		_Xi2 = other._Xi2;
-		_Wi2 = other._Wi2;
-		_gsl_gauleg_table = std::move(other._gsl_gauleg_table);
-		
-		log(LOG_INFO, "Grid", "Copy constructor: previous grid's gsl objects will no longer be valid.");
 	}
 
 	void Grid::initGrid(std::vector<double> const& xtab, const uint nx)
@@ -178,8 +154,6 @@ namespace Candia2
 		
 		std::set<double> points_set(_points.begin(), _points.end());
 		points_set.insert(xtab.begin(), xtab.end());
-		std::vector<double> pivots{0.1, 0.7};
-		points_set.insert(pivots.begin(), pivots.end()); // just in case
 		_points = std::vector<double>(points_set.begin(), points_set.end());
 		
 
@@ -239,7 +213,7 @@ namespace Candia2
 		const double eps = 3.0e-11; // relative precision
 
 		// abscissae are symmetric:
-		uint n = _gauss_points; // simpler to type
+		uint n = Xi.size(); // simpler to type
 		double N = static_cast<double>(n);
 		uint m = (n+1)/2;
 		// double x2 = 1.0;
@@ -285,10 +259,13 @@ namespace Candia2
 		}
 	}
 
-	void Grid::splitConvolution(std::vector<double> const& intervals)
+	void Grid::splitConvolution(
+		std::vector<double> const& intervals,
+		std::vector<double> const& sizes)
 	{
-		_split_interval = true;
-
+		if (intervals.size() - 1 != sizes.size())
+			log(LOG_ERROR, "Grid::splitConvolution()", "Invalid number of element in the intervals and sizes vectors.");
+		
 		auto num_intervals = intervals.size();
 		if (num_intervals > 5)
 			log(LOG_WARNING, "Grid::splitConvolution()", ">5 convolution intervals is a little excessive.");
@@ -297,24 +274,28 @@ namespace Candia2
 		_Wi2.reserve(num_intervals);
 
 		if (auto it = std::find_if(intervals.begin(), intervals.end(), [](double x) { return (x < 1e-7) || (x > 1.0); });
-			it != std::ranges::end(intervals)) {
+			it != std::ranges::end(intervals))
+		{
 			log(LOG_ERROR, "Grid::splitConvolution()", "A provided point ({}) is outside the range [1e-7, 1.0]", *it);
 		}
-
-		auto intervals_sorted = intervals;
-		std::sort(intervals_sorted.begin(), intervals_sorted.end());
+		
 		auto points_per_interval = size()/num_intervals;
-
-		auto it = intervals_sorted.begin() + 1;
-		while (it != intervals_sorted.end()) {
+		
+		auto it = intervals.begin() + 1;
+		auto it_size = sizes.begin();
+		while (it != intervals.end() && it_size != sizes.end()) {
 			auto prev_x = *(it-1);
 			auto new_x = *it;
-			gauleg_type Xi(_gauss_points, 0.0), Wi(_gauss_points, 0.0);
+			auto size = *it_size;
+			gauleg_type Xi(size, 0.0), Wi(size, 0.0);
 			initGauLeg(prev_x, new_x, Xi, Wi);
 			_Xi2.emplace_back(Xi);
 			_Wi2.emplace_back(Wi);
+			_interval_size.emplace_back(size);
 			++it;
+			++it_size;
 		}
+		_split_interval = true;
 	}
 
     int Grid::interpFindIdx(double x)
@@ -389,8 +370,8 @@ namespace Candia2
 		double ed1 = E.delta(1.0);
 		double res = (eplus1*std::log1p(-x) + ed1) * A[k];
 
-		auto conv_interval = [&](gauleg_type const& X, gauleg_type const& W) {
-			for (uint i=0; i<_gauss_points; i++) {
+		auto gsl_conv = [&](gauleg_type const& X, gauleg_type const& W, uint s) {
+			for (uint i=0; i<s; i++) {
 				double y = X[i];
 				double w = W[i];
 
@@ -409,15 +390,16 @@ namespace Candia2
 		};
 		
 		if (!_split_interval)
-			conv_interval(_Xi, _Wi);
+			gsl_conv(_Xi, _Wi, _gauss_points);
 		else {
 			for (uint i=0; i<_Xi2.size(); ++i) {
 				auto const& X = _Xi2[i];
 				auto const& W = _Wi2[i];
-				conv_interval(X, W);
+				auto s = _interval_size[i];
+				gsl_conv(X, W, s);
 			}
 		}
-	    
+		
 		return res;
 	}
 }

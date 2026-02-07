@@ -20,6 +20,7 @@ static void usage()
 	log(LOG_INFO, "read.cpp", "    <type>: 0=all flavors independently");
 	log(LOG_INFO, "read.cpp", "            1=special combos from benchmark paper");
 	log(LOG_INFO, "read.cpp", "            2=special combos from benchmark paper, with q(-)");
+	log(LOG_INFO, "read.cpp", "            3=mixture of special singlet and non-singlet");
 	exit(EXIT_FAILURE);
 }
 

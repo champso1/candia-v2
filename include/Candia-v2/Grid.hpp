@@ -12,14 +12,8 @@
 #include <vector>
 #include <memory>
 
-#include <gsl/gsl_integration.h>
-
 namespace Candia2
 {
-	inline auto gsl_gauleg_deleter = [](gsl_integration_glfixed_table* t){ gsl_integration_glfixed_table_free(t); };
-	using gsl_gauleg_deleter_type = decltype(gsl_gauleg_deleter);
-	using gsl_gauleg_type = std::unique_ptr<gsl_integration_glfixed_table, gsl_gauleg_deleter_type>;
-	
 	class ArrayGrid;
 	/**
 	 *  @brief Class that contains the interpolation/convolution grid and the methods to perform the interpolation and convolution.
@@ -30,7 +24,6 @@ namespace Candia2
 		using grid_type = std::vector<double>; //!< alias for the underlying grid type
 		using gauleg_type = std::vector<double>; //!< alias for the type of the array of gauss-legendre weights/abscissae
 		using ntab_type = std::vector<int>; //!< alias for the type of the calulated ntab array
-
 	private:
 		grid_type _points{}; //!< grid points
 		ntab_type _ntab;     //!< stored indices for the tabulated grid points
@@ -41,10 +34,9 @@ namespace Candia2
 		gauleg_type _Wi{};   //!< the array of gauss-legendre weight
 
 		bool _split_interval{false}; //!< flag that declares if the user wants to split the convolution into intervals
-		std::vector<gauleg_type> _Xi2{}; //!< list of split-up abscissae per interval
-		std::vector<gauleg_type> _Wi2{}; //!< list of split-up weights per interval
-
-	    gsl_gauleg_type _gsl_gauleg_table{nullptr}; //!< underlying gsl gauleg type
+		std::vector<gauleg_type> _Xi2{}; //!< list of split-up gauleg abscissae per interval
+		std::vector<gauleg_type> _Wi2{}; //!< list of split-up gauleg weights per interval
+		std::vector<uint> _interval_size{}; //!< number of points per interval
 	public:
 		Grid() = delete; //!< default constructor deleted; must provide information to fill the grid
 		/**
@@ -56,9 +48,6 @@ namespace Candia2
 		 */
 		Grid(grid_type const& xtab, uint nx, uint gauss_points, int grid_fill_type=1);
 		~Grid() = default; //!< default destructor
-
-		explicit Grid(Grid& other); //!< copy constructor invalidates original grid's gsl objects
-		void operator=(Grid& other); //!< copy assignment invalidates original grid's gsl objects
 
 		/** Getter for xtab array */
 		inline grid_type& xtab() { return _xtab; }
@@ -104,8 +93,11 @@ namespace Candia2
 		/**
 		 *  @brief Splits the grid intervals into the provided intervals.
 		 *  @param intervals A list of points at which to split the interval
+		 *  @param sizes Sizes of each interval
 		 */
-		void splitConvolution(std::vector<double> const& intervals);
+		void splitConvolution(
+			std::vector<double> const& intervals,
+			std::vector<double> const& sizes);
 
 		/**
 		 *  @brief Uses a binary search to find the grid point closest to the given value of x
