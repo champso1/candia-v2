@@ -35,7 +35,7 @@ namespace Candia2
 		for (uint j=i+1; j<8; j++)
 			_masses[j]=0.;
 
-		log(LOG_INFO, "AlphaS", "Calculated mass array: {}", vec_to_str(_masses));
+		log(LOG_DEBUG, "AlphaS", "Calculated mass array: {}", vec_to_str(_masses));
 		calculateThresholdValues();
 	}
 
@@ -210,10 +210,10 @@ namespace Candia2
 			_pre[nf]  = evaluate(_masses[nf-1], _masses[nf], _post[nf-1]);
 			_post[nf] = _order >= 2 ? postMatch(_pre[nf], nf) : _pre[nf];
 		}
-		log(LOG_INFO, "AlphaS", "Computed alpha_s threshold values for VFNS. They are:");
+		log(LOG_DEBUG, "AlphaS", "Computed alpha_s threshold values for VFNS. They are:");
 
 		for (nf=_nfi; nf<=_nff+1; nf++)
-			log(LOG_INFO, "AlphaS", "{} {:14.9} {:14.9} {:14.9}", nf, _masses[nf], _pre[nf], _post[nf]);
+			log(LOG_DEBUG, "AlphaS", "{} {:14.9} {:14.9} {:14.9}", nf, _masses[nf], _pre[nf], _post[nf]);
 
 	}
 

@@ -12,9 +12,21 @@
 #include <vector>
 #include <memory>
 
+#include <gsl/gsl_integration.h>
+
+
 namespace Candia2
 {
-	class ArrayGrid;
+	namespace gsl
+	{
+		inline auto workspace_deleter = [](gsl_integration_workspace* w){ gsl_integration_workspace_free(w); };
+		using workspace_deleter_type = decltype(workspace_deleter);
+		using workspace_type = std::unique_ptr<gsl_integration_workspace, workspace_deleter_type>;
+
+		inline auto make_workspace = [](uint size){ return workspace_type(gsl_integration_workspace_alloc(size), workspace_deleter);};
+	}
+	
+    class ArrayGrid;
 	/**
 	 *  @brief Class that contains the interpolation/convolution grid and the methods to perform the interpolation and convolution.
 	 */
@@ -24,30 +36,38 @@ namespace Candia2
 		using grid_type = std::vector<double>; //!< alias for the underlying grid type
 		using gauleg_type = std::vector<double>; //!< alias for the type of the array of gauss-legendre weights/abscissae
 		using ntab_type = std::vector<int>; //!< alias for the type of the calulated ntab array
+
+		enum GridFillType : uint
+		{
+			LOG = 0, //!< simple logarithmic intervals
+			LOG_LIN, //!< logarithmic intervals until 0.1, then linear until 1.0
+		};
 	private:
 		grid_type _points{}; //!< grid points
 		ntab_type _ntab;     //!< stored indices for the tabulated grid points
 		grid_type _xtab;     //!< stored values of the tabulated grid points
 
-		uint _gauss_points;  //!< the number of gauss-legendre points
-		gauleg_type _Xi{};   //!< the array of gauss-legendre abscissae
-		gauleg_type _Wi{};   //!< the array of gauss-legendre weight
+		bool _split_interval{false}; //!< flag that declares if the user has split the convolution into intervals
+		std::vector<gauleg_type> _Xi{}; //!< list of split-up gauleg abscissae per interval
+		std::vector<gauleg_type> _Wi{}; //!< list of split-up gauleg weights per interval
+		std::vector<uint> _interval_sizes{}; //!< number of points per interval
 
-		bool _split_interval{false}; //!< flag that declares if the user wants to split the convolution into intervals
-		std::vector<gauleg_type> _Xi2{}; //!< list of split-up gauleg abscissae per interval
-		std::vector<gauleg_type> _Wi2{}; //!< list of split-up gauleg weights per interval
-		std::vector<uint> _interval_size{}; //!< number of points per interval
+		gsl::workspace_type _workspace{nullptr};
+
+		static constexpr uint DEFAULT_GAULEG_POINTS = 50;
 	public:
 		Grid() = delete; //!< default constructor deleted; must provide information to fill the grid
 		/**
 		 *  Fills the grid with @a nx grid points according to @a grid_fill_type and sets up @a gauss_points gauss-legendre points
 		 *  @param xtab Array of tabulated grid points to ensure the grid contains for easy retrieval
 		 *  @param nx number of grid points
-		 *  @param gauss_points number of gauss_legendre points
 		 *  @param grid_fill_type Specifies how the grid is laid out
 		 */
-		Grid(grid_type const& xtab, uint nx, uint gauss_points, int grid_fill_type=1);
+		Grid(grid_type const& xtab, uint nx, uint grid_fill_type=LOG_LIN);
 		~Grid() = default; //!< default destructor
+
+		explicit Grid(Grid& other); //!< constructs grid from another
+		void operator=(Grid& other); //!< assigns grid from another
 
 		/** Getter for xtab array */
 		inline grid_type& xtab() { return _xtab; }
@@ -64,13 +84,9 @@ namespace Candia2
 		inline bool splitIntervals() const { return _split_interval; }
 		
 		/** Getter for the gauss-legendre abscissae */
-		inline gauleg_type const& abscissae() const { return _Xi; }
-		/** Getter for ALL gauss-legendre abscissae, i.e. if the user splits into intervals */
-		inline std::vector<gauleg_type> const& allAbscissae() const { return _Xi2; }
+		inline std::vector<gauleg_type> const& abscissae() const { return _Xi; }
 		/** Getter for the gauss-legendre weights */
-		inline gauleg_type const& weights() const { return _Wi; }
-		/** Getter for ALL gauss-legendre weights, i.e. if the user splits into intervals */
-		inline std::vector<gauleg_type> const& allWeights() const { return _Wi2; }
+		inline std::vector<gauleg_type> const& weights() const { return _Wi; }
 
 		/** Getter for the grid size */
 		inline uint size() const { return _points.size(); }
@@ -120,11 +136,10 @@ namespace Candia2
 		
 	private:
 		/** Fills the grid according to the original candia-v2 method (log-spaced) */
-		void initGrid(grid_type const& xtab, uint nx);
+		void initGridLog(grid_type const& xtab, uint nx);
 		/** Fills the grid with log-spacing and a calculated set of additional linear points from \f$0.1<x<1.0\f$ */
-		void initGrid2(grid_type const& xtab, uint nx);
-		/** Fills the grid with log-spacing and a pre-defined additional set of points from \f$0.1<x<1.0\f$ */
-		void initGrid3(grid_type const& xtab, uint nx);
+		void initGridLogLin(grid_type const& xtab, uint nx);
+		
 		/** Initializes the set of gauss-legendre weights and abscissae */
 		void initGauLeg(double x1, double x2, std::vector<double> & Xi, std::vector<double> & Wi);
 	};

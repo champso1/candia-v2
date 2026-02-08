@@ -11,10 +11,10 @@
 
 namespace Candia2
 {
-	Grid::Grid(std::vector<double> const& xtab, uint nx, uint gauss_points, int grid_fill_type)
-		: _points(nx), _ntab{}, _xtab{xtab},
-		  _gauss_points(gauss_points),
-		  _Xi(gauss_points), _Wi(gauss_points)
+	Grid::Grid(std::vector<double> const& xtab, uint nx, uint grid_fill_type)
+		: _points(nx), _ntab{}, _xtab{xtab}, _interval_sizes{DEFAULT_GAULEG_POINTS},
+		  _Xi{gauleg_type(DEFAULT_GAULEG_POINTS, 0.0)}, _Wi{1, gauleg_type(DEFAULT_GAULEG_POINTS, 0.0)},
+		  _workspace{std::move(gsl::make_workspace(40))}
 	{
 		if (!std::ranges::is_sorted(xtab)) {
 			log(LOG_WARNING, "Grid", "xtab array was not sorted. will sort it and continue");
@@ -23,23 +23,38 @@ namespace Candia2
 		
 		switch (grid_fill_type)
 		{
-			case 1: initGrid(_xtab, nx); break;
-			case 2: initGrid2(_xtab, nx); break;
-			case 3: initGrid3(_xtab, nx); break;
-			default: {
-				log(LOG_WARNING, "Grid", "Invalid grid fill type. Found {}, expected 1, 2, or 3.", grid_fill_type);
-				log(LOG_WARNING, "Grid", "Will default to 1 (candia-v1 method)");
-				initGrid(xtab, nx);
-			}
+			case LOG: initGridLog(_xtab, nx); break;
+			case LOG_LIN: initGridLogLin(_xtab, nx); break;
+			default:
+				log(LOG_ERROR, "Grid", "Invalid grid fill type. Found {}, expected 1(LOG) or 2(LOG_LIN).", grid_fill_type);
 		}
-	    
-		initGauLeg(0.0, 1.0, _Xi, _Wi);
+		
+		initGauLeg(0.0, 1.0, _Xi[0], _Wi[0]);
 	}
 
-	void Grid::initGrid(std::vector<double> const& xtab, const uint nx)
+	Grid::Grid(Grid& other)
+		: _points{other._points}, _ntab{other._ntab}, _xtab{other._xtab},
+		  _split_interval{other._split_interval},
+		  _Xi{other._Xi}, _Wi{other._Wi},
+		  _interval_sizes{other._interval_sizes},
+		  _workspace{std::move(gsl::make_workspace(other._workspace->limit))}
 	{
-		log(LOG_INFO, "Grid", "Using Candia-v1 method.");
-		
+	}
+	
+	void Grid::operator=(Grid& other)
+	{
+		_points = other._points;
+		_ntab = other._ntab;
+		_xtab = other._xtab;
+		_split_interval = other._split_interval;
+		_Xi = other._Xi;
+		_Wi = other._Wi;
+		_interval_sizes = other._interval_sizes;
+	    _workspace = std::move(gsl::make_workspace(other._workspace->limit));
+	}
+
+	void Grid::initGridLog(std::vector<double> const& xtab, const uint nx)
+	{
 		const uint xtab_len = xtab.size();
 		std::vector<double> Ntab(xtab_len);
 	    std::vector<int> ntab(xtab_len);
@@ -113,12 +128,8 @@ namespace Candia2
 
 
 
-	void Grid::initGrid2(std::vector<double> const& xtab, uint nx)
+	void Grid::initGridLogLin(std::vector<double> const& xtab, uint nx)
 	{
-		UNUSED(xtab);
-		UNUSED(nx);
-		
-	    log(LOG_INFO, "Grid", "Using method 2");
 		log(LOG_WARNING, "Grid", "Method 2 is unfinished. Prefer method 3 for now.");
 		log(LOG_WARNING, "Grid", "Will ignore supplied x-tab. Supplied number of grid points will actually be 1/3 of total grid points.");
 
@@ -163,48 +174,6 @@ namespace Candia2
 				_ntab.emplace_back(std::distance(_points.begin(), it));
 				continue;
 			}
-		}
-
-		initGauLeg(0.0, 1.0, _Xi, _Wi);
-	}
-
-	void Grid::initGrid3(std::vector<double> const& xtab, uint nx)
-	{
-		log(LOG_INFO, "Grid", "Using method 3");
-		
-		std::vector<double> points{};
-
-		std::vector<double> log_tab{1e-5, 1e-4, 1e-3, 1e-2, 0.1, 0.5, 0.8, 1.0};
-		std::vector<double> log_xtab{log_tab};
-		std::ranges::transform(log_xtab, log_xtab.begin(), [](double x) -> double{ return std::log10(x); });
-		int num_grid_points_per_bin = nx / xtab.size();
-
-		for (uint i=0; i<log_xtab.size()-1; ++i) {
-			double logmin = log_xtab[i];
-			double logmax = log_xtab[i+1];
-			double dlog = (logmax-logmin)/static_cast<double>(num_grid_points_per_bin);
-
-			int num = 0;
-			for (double _l=logmin; _l<logmax && num<num_grid_points_per_bin; _l+=dlog, ++num)
-				points.emplace_back(std::pow(10, _l));
-		}
-		
-		// insert the tabulated points
-		// make it a set to avoid duplicate values
-		// then replace the original points array with the new one
-		std::ranges::sort(points);
-		std::set<double> set{points.begin(), points.end()};
-		set.insert(xtab.begin(), xtab.end());
-		points = std::vector<double>(set.begin(), set.end());
-		
-		_points = points;
-
-		// build the ntab array
-		_ntab = std::vector<int>{};
-		for (const double x : xtab) {
-			auto it = std::ranges::lower_bound(_points, x);
-			if (it != _points.end() && std::abs(*it - x) < 1e-14)
-				_ntab.emplace_back(std::distance(_points.begin(), it));
 		}
 	}
 
@@ -263,21 +232,22 @@ namespace Candia2
 		std::vector<double> const& intervals,
 		std::vector<double> const& sizes)
 	{
-		if (intervals.size() - 1 != sizes.size())
+		if (intervals.size()-1 != sizes.size())
 			log(LOG_ERROR, "Grid::splitConvolution()", "Invalid number of element in the intervals and sizes vectors.");
 		
-		auto num_intervals = intervals.size();
+		auto num_intervals = intervals.size()-1;
 		if (num_intervals > 5)
 			log(LOG_WARNING, "Grid::splitConvolution()", ">5 convolution intervals is a little excessive.");
 		
-		_Xi2.reserve(num_intervals);
-		_Wi2.reserve(num_intervals);
-
 		if (auto it = std::find_if(intervals.begin(), intervals.end(), [](double x) { return (x < 1e-7) || (x > 1.0); });
 			it != std::ranges::end(intervals))
 		{
 			log(LOG_ERROR, "Grid::splitConvolution()", "A provided point ({}) is outside the range [1e-7, 1.0]", *it);
 		}
+
+		_Xi.clear();
+		_Wi.clear();
+		_interval_sizes.clear();
 		
 		auto points_per_interval = size()/num_intervals;
 		
@@ -289,12 +259,30 @@ namespace Candia2
 			auto size = *it_size;
 			gauleg_type Xi(size, 0.0), Wi(size, 0.0);
 			initGauLeg(prev_x, new_x, Xi, Wi);
-			_Xi2.emplace_back(Xi);
-			_Wi2.emplace_back(Wi);
-			_interval_size.emplace_back(size);
+			_Xi.emplace_back(Xi);
+			_Wi.emplace_back(Wi);
+			_interval_sizes.emplace_back(size);
+			
 			++it;
 			++it_size;
 		}
+
+		log(LOG_DEBUG, "Grid::splitConvolution", "Using the following sizes: {}", vec_to_str(_interval_sizes));
+		auto tie =
+			std::views::iota(0)
+			| std::views::take(num_intervals)
+			| std::views::transform([&](int i){ return std::make_tuple(i, _Xi[i], _Wi[i], _interval_sizes[i]); });
+		for (auto const& [i, X, W, s] : tie) {
+			auto min = intervals[i];
+			auto max = intervals[i+1];
+			
+			log(LOG_DEBUG, "Grid::splitConvolution()", "Interval of size {} in range [{}, {}]", s, min, max);
+			log(LOG_DEBUG, "Grid::splitConvolution()", "Abscissae: ");
+			for (auto x : X)
+				log(LOG_DEBUG, "Grid::splitConvolution()", "  - {}", x);
+		}
+		
+		assert(_Xi.size() == _Wi.size() && _Xi.size() == _interval_sizes.size(), "Failed to split convolution intervals.");
 		_split_interval = true;
 	}
 
@@ -390,12 +378,12 @@ namespace Candia2
 		};
 		
 		if (!_split_interval)
-			gsl_conv(_Xi, _Wi, _gauss_points);
+			gsl_conv(_Xi[0], _Wi[0], _interval_sizes[0]);
 		else {
-			for (uint i=0; i<_Xi2.size(); ++i) {
-				auto const& X = _Xi2[i];
-				auto const& W = _Wi2[i];
-				auto s = _interval_size[i];
+			for (uint i=0; i<_Xi.size(); ++i) {
+				auto const& X = _Xi[i];
+				auto const& W = _Wi[i];
+				auto s = _interval_sizes[i];
 				gsl_conv(X, W, s);
 			}
 		}

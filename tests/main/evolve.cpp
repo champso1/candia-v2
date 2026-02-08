@@ -112,8 +112,8 @@ int main(int argc, char *argv[]) {
 	
 	
 	vector<double> xtab{1e-5, 1e-4, 1e-3, 1e-2, 0.1, 0.3, 0.5, 0.7, 0.9, 1.0};
-	Grid grid(xtab, num_grid_points, 200, 2);
-	grid.splitConvolution({1e-5, 0.1, 0.8, 1.0}, {50, 75, 150});
+	Grid grid(xtab, num_grid_points, Grid::LOG_LIN);
+	grid.splitConvolution({1e-5, 0.1, 0.8, 1.0}, {50, 75, 100});
 
 	LesHouchesDistribution dist{};
 	AlphaS alphas(order, dist.Q0(), Qf, dist.alpha0(), kr);
@@ -123,7 +123,7 @@ int main(int argc, char *argv[]) {
 	DGLAPSolver solver(order, grid, alphas, Qf, iterations, trunc_idx, dist, kr);
 	// solver.disableMatching();
 	// solver.useNNLOMatchingAtN3LO();
-	solver.disableN3LOHeavyQuarkAsymmetry();
+	// solver.disableN3LOHeavyQuarkAsymmetry();
 
 	auto t0 = chrono::high_resolution_clock::now();
 	auto F = solver.evolve();

@@ -373,12 +373,9 @@ namespace Candia2
 			// update all values
 			_alpha_s.update(_nf);
 			SplittingFunction::update(_nf, _alpha_s.beta0());
-			for (auto& [_, expr] : _expressions) {
-				if (_grid.splitIntervals())
-					expr->fill(_grid.points(), _grid.allAbscissae());
-				else
-					expr->fill(_grid.points(), _grid.abscissae());
-			}
+			for (auto& [_, expr] : _expressions)
+				expr->fill(_grid.points(), _grid.abscissae());
+			
 			bool resum_tab = _alpha_s.resumTabulated();
 			bool resum_threshold = !resum_tab;
 			_alpha0 = _alpha_s.post(_nf);

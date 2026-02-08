@@ -134,6 +134,14 @@ namespace Candia2
 		std::cout << log_text;
 	}
 
+
+	template <typename... TArgs>
+	void assert(bool stmnt, std::format_string<TArgs...> fmt_string, TArgs&&... args)
+	{
+		if (!stmnt)
+			log(LOG_ERROR, "ASSERT", fmt_string, std::forward<TArgs>(args)...);
+	}
+
 	/**
 	 *  @brief a concept to require that a type has a @a value_type as well as begin and end iterators
 	 */
