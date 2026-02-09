@@ -67,10 +67,12 @@ namespace Candia2
 					}
 				}
 
+				auto& a3psqq = getExpression("A3psqq");
+				auto& a3sqg  = getExpression("A3sqg");
 				for (uint k=0; k<_grid.size()-1;k++) {
 					const double fac_n3lo = as*as*as/(64.0*PI_3);
-					const double convSPa = _grid.convolution(arr_singlet[1], getExpression("A3psqq"), k);
-					const double convSPb = _grid.convolution(arr_singlet[0], getExpression("A3sqg"), k);
+					const double convSPa = _grid.convolution(arr_singlet[1], a3psqq, k);
+					const double convSPb = _grid.convolution(arr_singlet[0], a3sqg, k);
 					const double SP = fac_n3lo*(convSPa + convSPb)/static_cast<double>(_nf);
 
 					// q

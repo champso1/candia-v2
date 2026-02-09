@@ -48,6 +48,21 @@ namespace Candia2
 	constexpr const uint DEFAULT_TRUNC_IDX = 5;
 	/** @{ */
 
+	struct Defaults final
+	{
+		uint dists{37};
+		uint interp_points{4};
+		uint iterations{10};
+		uint trunc_idx{5};
+
+		inline static Defaults& getInstance()
+		{
+			static Defaults defaults{};
+			return defaults;
+		};
+	};
+	inline auto defaults = [](){ return Defaults::getInstance(); };
+
 	/**
 	 *  @brief Template class for more easily typing an @a std::vector with multiple layers of nesting.
 	 */
@@ -80,16 +95,32 @@ namespace Candia2
 		LOG_WARNING,
 		LOG_ERROR,
 		LOG_ERROR_NOQUIT,
+		LOG_THREAD,
 		LOG_NUM_LOG_TYPES
 	};
-	inline std::array<std::string_view, LOG_NUM_LOG_TYPES> log_string_reps{"DEBUG", "INFO", "WARNING", "ERROR", "ERROR"};
+	inline std::array<std::string_view, LOG_NUM_LOG_TYPES> log_string_reps{
+		"DEBUG",
+		"INFO",
+		"WARNING",
+		"ERROR",
+		"ERROR",
+		"THREAD"};
 	inline std::array<std::string_view, LOG_NUM_LOG_TYPES> log_string_colors{
-		ANSI_COLOR_GREEN, ANSI_COLOR_RESET, ANSI_COLOR_YELLOW, ANSI_COLOR_RED, ANSI_COLOR_RED};
+		ANSI_COLOR_GREEN,
+		ANSI_COLOR_RESET,
+		ANSI_COLOR_YELLOW,
+		ANSI_COLOR_RED,
+		ANSI_COLOR_RED,
+		ANSI_COLOR_CYAN};
 
 	// TODO: better handle setting global flags
 	inline bool debug_flag{false}; //!< whether to print logged messaged tagged with LOG_DEBUG
 	/** Getter/Setter for the debug flag */
 	inline bool& getDebugFlag() { return debug_flag; }
+
+	inline bool show_thread_output{false}; //!< whether to print all info from threads
+	/** sets the flag to show debug output (default false) */
+	inline void showThreadOutput() { show_thread_output = true; }
 	
 	inline bool use_log_output_stream{false}; //!< flag for whether to use an additional logging output stream
 	inline std::reference_wrapper<std::ostream> log_output_stream = std::ref(std::cout); //!< additional output stream
@@ -107,6 +138,9 @@ namespace Candia2
 	void log(uint log_type, std::string_view prefix, std::format_string<TArgs...> fmt_string, TArgs&& ...args)
 	{
 		if (log_type == LOG_DEBUG && !debug_flag)
+			return;
+
+		if (log_type == LOG_THREAD && !show_thread_output)
 			return;
 			
 		std::string log_text = std::vformat(fmt_string.get(), std::make_format_args(args...));

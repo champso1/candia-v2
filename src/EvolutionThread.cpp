@@ -23,16 +23,21 @@ namespace Candia2
 
         switch (_order) {
             case 0: {
+				auto& p0qq = getExpression("P0qq");
+				auto& p0qg = getExpression("P0qg");
+				auto& p0gq = getExpression("P0gq");
+				auto& p0gg = getExpression("P0gg");
+				
                 for (uint n=1; n<_iterations; n++) {
 					log(LOG_INFO, "DGLAP", "LO Singlet Iteration {}", n);
                     
                     for (uint k=0; k<_grid.size()-1; k++) {
                         _S[0][1][1][k] =
-							recrelS_1(_S[0][1][0], k, getExpression("P0qq")) +
-							recrelS_1(_S[0][0][0], k, getExpression("P0qg"));
+							recrelS_1(_S[0][1][0], k, p0qq) +
+							recrelS_1(_S[0][0][0], k, p0qg);
                         _S[0][0][1][k] =
-							recrelS_1(_S[0][1][0], k, getExpression("P0gq")) +
-							recrelS_1(_S[0][0][0], k, getExpression("P0gg"));
+							recrelS_1(_S[0][1][0], k, p0gq) +
+							recrelS_1(_S[0][0][0], k, p0gg);
 
 						for (uint j=0; j<=1; j++)
 							arr.get()[j*31][k] += _S[0][j][1][k] * std::pow(L1, n)/factorial(n);
@@ -43,17 +48,26 @@ namespace Candia2
                 }
             } break;
             case 1: {
+				auto& p0qq = getExpression("P0qq");
+				auto& p0qg = getExpression("P0qg");
+				auto& p0gq = getExpression("P0gq");
+				auto& p0gg = getExpression("P0gg");
+				auto& p1qq = getExpression("P1qq");
+				auto& p1qg = getExpression("P1qg");
+				auto& p1gq = getExpression("P1gq");
+				auto& p1gg = getExpression("P1gg");
+				
 			    for (uint n=1; n<_iterations; n++) {
 					log(LOG_INFO, "DGLAP", "NLO Singlet Iteration {}", n);
 
                     // LO piece (non truncated)
                     for (uint k=0; k<_grid.size()-1; k++) {
                         _S[0][1][1][k] = 
-							recrelS_1(_S[0][1][0], k, getExpression("P0qq")) +
-							recrelS_1(_S[0][0][0], k, getExpression("P0qg"));
+							recrelS_1(_S[0][1][0], k, p0qq) +
+							recrelS_1(_S[0][0][0], k, p0qg);
                         _S[0][0][1][k] = 
-							recrelS_1(_S[0][1][0], k, getExpression("P0gq")) +
-							recrelS_1(_S[0][0][0], k, getExpression("P0gg"));
+							recrelS_1(_S[0][1][0], k, p0gq) +
+							recrelS_1(_S[0][0][0], k, p0gg);
                     }
 
                     // new NLO piece non-convolution
@@ -65,11 +79,11 @@ namespace Candia2
                     // new NLO piece convolution
                     for (uint k=0; k<_grid.size()-1; k++) {
                         _S[1][1][1][k] +=
-							recrelS_2(_S[1][1][0],_S[0][1][0],k,getExpression("P0qq"),getExpression("P1qq")) +
-							recrelS_2(_S[1][0][0],_S[0][0][0],k,getExpression("P0qg"),getExpression("P1qg"));
+							recrelS_2(_S[1][1][0], _S[0][1][0], k, p0qq, p1qq) +
+							recrelS_2(_S[1][0][0], _S[0][0][0], k, p0qg, p1qg);
 					    _S[1][0][1][k] +=
-							recrelS_2(_S[1][1][0],_S[0][1][0],k,getExpression("P0gq"),getExpression("P1gq")) +
-							recrelS_2(_S[1][0][0],_S[0][0][0],k,getExpression("P0gg"),getExpression("P1gg"));
+							recrelS_2(_S[1][1][0], _S[0][1][0], k, p0gq, p1gq) +
+							recrelS_2(_S[1][0][0], _S[0][0][0], k, p0gg, p1gg);
                     }
 
                     // NLO truncation terms
@@ -111,17 +125,30 @@ namespace Candia2
                 }
             } break;
             case 2: {
+				auto& p0qq = getExpression("P0qq");
+				auto& p0qg = getExpression("P0qg");
+				auto& p0gq = getExpression("P0gq");
+				auto& p0gg = getExpression("P0gg");
+				auto& p1qq = getExpression("P1qq");
+				auto& p1qg = getExpression("P1qg");
+				auto& p1gq = getExpression("P1gq");
+				auto& p1gg = getExpression("P1gg");
+				auto& p2qq = getExpression("P2qq");
+				auto& p2qg = getExpression("P2qg");
+				auto& p2gq = getExpression("P2gq");
+				auto& p2gg = getExpression("P2gg");
+				
                 for (uint n=1; n<_iterations; n++) {
 					log(LOG_INFO, "DGLAP", "NNLO Singlet Iteration {}", n);
 
                     // LO piece (non truncated)
                     for (uint k=0; k<_grid.size()-1; k++) {
                         _S[0][1][1][k] =
-							recrelS_1(_S[0][1][0], k, getExpression("P0qq")) +
-							recrelS_1(_S[0][0][0], k, getExpression("P0qg"));
+							recrelS_1(_S[0][1][0], k, p0qq) +
+							recrelS_1(_S[0][0][0], k, p0qg);
                         _S[0][0][1][k] =
-							recrelS_1(_S[0][1][0], k, getExpression("P0gq")) +
-							recrelS_1(_S[0][0][0], k, getExpression("P0gg"));
+							recrelS_1(_S[0][1][0], k, p0gq) +
+							recrelS_1(_S[0][0][0], k, p0gg);
                     }
 
                     // new NLO piece non-convolution
@@ -133,11 +160,11 @@ namespace Candia2
                     // new NLO piece convolution
                     for (uint k=0; k<_grid.size()-1; k++) {
                         _S[1][1][1][k] +=
-							recrelS_2(_S[1][1][0],_S[0][1][0],k,getExpression("P0qq"),getExpression("P1qq"))+
-							recrelS_2(_S[1][0][0],_S[0][0][0],k,getExpression("P0qg"),getExpression("P1qg"));
+							recrelS_2(_S[1][1][0], _S[0][1][0], k, p0qq, p1qq) +
+							recrelS_2(_S[1][0][0], _S[0][0][0], k, p0qg, p1qg);
 					    _S[1][0][1][k] +=
-							recrelS_2(_S[1][1][0],_S[0][1][0],k,getExpression("P0gq"),getExpression("P1gq"))+
-							recrelS_2(_S[1][0][0],_S[0][0][0],k,getExpression("P0gg"),getExpression("P1gg"));
+							recrelS_2(_S[1][1][0], _S[0][1][0], k, p0gq, p1gq) +
+							recrelS_2(_S[1][0][0], _S[0][0][0], k, p0gg, p1gg);
                     }
 
                     // new NNLO piece non-convolution
@@ -153,15 +180,11 @@ namespace Candia2
                     // new NNLO piece convolution
                     for (uint k=0; k<_grid.size()-1; k++) {
                         _S[2][1][1][k] += 
-                            recrelS_3(_S[2][1][0], _S[1][1][0], _S[0][1][0], k,
-								getExpression("P0qq"), getExpression("P1qq"), getExpression("P2qq")) +
-                            recrelS_3(_S[2][0][0], _S[1][0][0], _S[0][0][0], k,
-                                getExpression("P0qg"), getExpression("P1qg"), getExpression("P2qg"));
+                            recrelS_3(_S[2][1][0], _S[1][1][0], _S[0][1][0], k, p0qq, p1qq, p2qq) +
+                            recrelS_3(_S[2][0][0], _S[1][0][0], _S[0][0][0], k, p0qg, p1qg, p2qg);
                         _S[2][0][1][k] += 
-                            recrelS_3(_S[2][1][0], _S[1][1][0], _S[0][1][0], k,
-                                getExpression("P0gq"), getExpression("P1gq"), getExpression("P2gq")) +
-                            recrelS_3(_S[2][0][0], _S[1][0][0], _S[0][0][0], k,
-                                getExpression("P0gg"), getExpression("P1gg"), getExpression("P2gg"));
+                            recrelS_3(_S[2][1][0], _S[1][1][0], _S[0][1][0], k, p0gq, p1gq, p2gq) +
+                            recrelS_3(_S[2][0][0], _S[1][0][0], _S[0][0][0], k, p0gg, p1gg, p2gg);
                     }
 
                     for (uint t=3; t<=_trunc_idx; ++t) {
@@ -204,17 +227,34 @@ namespace Candia2
                 }
             } break;
             case 3: {
+				auto& p0qq = getExpression("P0qq");
+				auto& p0qg = getExpression("P0qg");
+				auto& p0gq = getExpression("P0gq");
+				auto& p0gg = getExpression("P0gg");
+				auto& p1qq = getExpression("P1qq");
+				auto& p1qg = getExpression("P1qg");
+				auto& p1gq = getExpression("P1gq");
+				auto& p1gg = getExpression("P1gg");
+				auto& p2qq = getExpression("P2qq");
+				auto& p2qg = getExpression("P2qg");
+				auto& p2gq = getExpression("P2gq");
+				auto& p2gg = getExpression("P2gg");
+				auto& p3qq = getExpression("P3qq");
+				auto& p3qg = getExpression("P3qg");
+				auto& p3gq = getExpression("P3gq");
+				auto& p3gg = getExpression("P3gg");
+				
 			    for (uint n=1; n<_iterations; n++) {
 					log(LOG_INFO, "DGLAP", "N3LO Singlet Iteration {}", n);
 
                     // LO piece
                     for (uint k=0; k<_grid.size()-1; k++) {
                         _S[0][1][1][k] =
-							recrelS_1(_S[0][1][0], k, getExpression("P0qq")) +
-							recrelS_1(_S[0][0][0], k, getExpression("P0qg"));
+							recrelS_1(_S[0][1][0], k, p0qq) +
+							recrelS_1(_S[0][0][0], k, p0qg);
                         _S[0][0][1][k] =
-							recrelS_1(_S[0][1][0], k, getExpression("P0gq")) +
-							recrelS_1(_S[0][0][0], k, getExpression("P0gg"));
+							recrelS_1(_S[0][1][0], k, p0gq) +
+							recrelS_1(_S[0][0][0], k, p0gg);
                     }
 
                     // new NLO piece non-convolution
@@ -226,11 +266,11 @@ namespace Candia2
                     // new NLO piece convolution
                     for (uint k=0; k<_grid.size()-1; k++) {
                         _S[1][1][1][k] +=
-							recrelS_2(_S[1][1][0],_S[0][1][0],k,getExpression("P0qq"),getExpression("P1qq"))+
-							recrelS_2(_S[1][0][0],_S[0][0][0],k,getExpression("P0qg"),getExpression("P1qg"));
+							recrelS_2(_S[1][1][0], _S[0][1][0], k, p0qq, p1qq) +
+							recrelS_2(_S[1][0][0], _S[0][0][0], k, p0qg, p1qg);
 					    _S[1][0][1][k] +=
-							recrelS_2(_S[1][1][0],_S[0][1][0],k,getExpression("P0gq"),getExpression("P1gq"))+
-							recrelS_2(_S[1][0][0],_S[0][0][0],k,getExpression("P0gg"),getExpression("P1gg"));
+							recrelS_2(_S[1][1][0], _S[0][1][0], k, p0gq, p1gq) +
+							recrelS_2(_S[1][0][0], _S[0][0][0], k, p0gg, p1gg);
                     }
 
                     // new NNLO piece non-convolution
@@ -246,16 +286,12 @@ namespace Candia2
                     // new NNLO piece non-convolution
                     for (uint k=0; k<_grid.size()-1; k++) {
                         _S[2][1][1][k] += 
-                            recrelS_3(_S[2][1][0], _S[1][1][0], _S[0][1][0], k, 
-                                getExpression("P0qq"), getExpression("P1qq"), getExpression("P2qq")) +
-                            recrelS_3(_S[2][0][0], _S[1][0][0], _S[0][0][0], k,
-                                getExpression("P0qg"), getExpression("P1qg"), getExpression("P2qg"));
+                            recrelS_3(_S[2][1][0], _S[1][1][0], _S[0][1][0], k, p0qq, p1qq, p2qq) +
+                            recrelS_3(_S[2][0][0], _S[1][0][0], _S[0][0][0], k, p0qg, p1qg, p2qg);
 
                         _S[2][0][1][k] += 
-                            recrelS_3(_S[2][1][0], _S[1][1][0], _S[0][1][0], k,
-                                getExpression("P0gq"), getExpression("P1gq"), getExpression("P2gq")) +
-                            recrelS_3(_S[2][0][0], _S[1][0][0], _S[0][0][0], k,
-                                getExpression("P0gg"), getExpression("P1gg"), getExpression("P2gg"));
+                            recrelS_3(_S[2][1][0], _S[1][1][0], _S[0][1][0], k, p0gq, p1gq, p2gq) +
+                            recrelS_3(_S[2][0][0], _S[1][0][0], _S[0][0][0], k, p0gg, p1gg, p2gg);
                     }
 
                     // new N3LO piece non-convolution
@@ -330,32 +366,50 @@ namespace Candia2
 	void DGLAPSolver::_mt_EvolveDistributions_S_NLO(uint t, int thread_idx, uint min, uint max)
 	{
 		initializeThreadIndex(thread_idx);
+
+		auto& p0qq = getExpression("P0qq");
+		auto& p0qg = getExpression("P0qg");
+		auto& p0gq = getExpression("P0gq");
+		auto& p0gg = getExpression("P0gg");
+		auto& p1qq = getExpression("P1qq");
+		auto& p1qg = getExpression("P1qg");
+		auto& p1gq = getExpression("P1gq");
+		auto& p1gg = getExpression("P1gg");
 		
 	    for (uint k=min; k<max; k++) {
 			_S[t][1][1][k] += 
-				recrelS_2(_S[t][1][0],_S[t-1][1][0],k,getExpression("P0qq"),getExpression("P1qq")) +
-				recrelS_2(_S[t][0][0],_S[t-1][0][0],k,getExpression("P0qg"),getExpression("P1qg"));
+				recrelS_2(_S[t][1][0], _S[t-1][1][0], k, p0qq, p1qq) +
+				recrelS_2(_S[t][0][0], _S[t-1][0][0], k, p0qg, p1qg);
 			_S[t][0][1][k] += 
-				recrelS_2(_S[t][1][0],_S[t-1][1][0],k,getExpression("P0gq"),getExpression("P1gq")) +
-				recrelS_2(_S[t][0][0],_S[t-1][0][0],k,getExpression("P0gg"),getExpression("P1gg"));
+				recrelS_2(_S[t][1][0], _S[t-1][1][0], k, p0gq, p1gq) +
+				recrelS_2(_S[t][0][0], _S[t-1][0][0], k, p0gg, p1gg);
 		}
 	}
 	
 	void DGLAPSolver::_mt_EvolveDistributions_S_NNLO(uint t, int thread_idx, uint min, uint max)
 	{
 		initializeThreadIndex(thread_idx);
+
+		auto& p0qq = getExpression("P0qq");
+		auto& p0qg = getExpression("P0qg");
+		auto& p0gq = getExpression("P0gq");
+		auto& p0gg = getExpression("P0gg");
+		auto& p1qq = getExpression("P1qq");
+		auto& p1qg = getExpression("P1qg");
+		auto& p1gq = getExpression("P1gq");
+		auto& p1gg = getExpression("P1gg");
+		auto& p2qq = getExpression("P2qq");
+		auto& p2qg = getExpression("P2qg");
+		auto& p2gq = getExpression("P2gq");
+		auto& p2gg = getExpression("P2gg");
 		
 	    for (uint k=min; k<max; k++) {
 			_S[t][1][1][k] += 
-				recrelS_3(_S[t][1][0], _S[t-1][1][0], _S[t-2][1][0], k,
-					getExpression("P0qq"), getExpression("P1qq"), getExpression("P2qq")) +
-				recrelS_3(_S[t][0][0], _S[t-1][0][0], _S[t-2][0][0], k,
-					getExpression("P0qg"), getExpression("P1qg"), getExpression("P2qg"));
+				recrelS_3(_S[t][1][0], _S[t-1][1][0], _S[t-2][1][0], k, p0qq, p1qq, p2qq) +
+				recrelS_3(_S[t][0][0], _S[t-1][0][0], _S[t-2][0][0], k, p0qg, p1qg, p2qg);
 			_S[t][0][1][k] += 
-				recrelS_3(_S[t][1][0], _S[t-1][1][0], _S[t-2][1][0], k,
-					getExpression("P0gq"), getExpression("P1gq"), getExpression("P2gq"))+
-				recrelS_3(_S[t][0][0], _S[t-1][0][0], _S[t-2][0][0], k,
-					getExpression("P0gg"), getExpression("P1gg"), getExpression("P2gg"));
+				recrelS_3(_S[t][1][0], _S[t-1][1][0], _S[t-2][1][0], k, p0gq, p1gq, p2gq) +
+				recrelS_3(_S[t][0][0], _S[t-1][0][0], _S[t-2][0][0], k, p0gg, p1gg, p2gg);
 		}
 	}
 
@@ -363,22 +417,31 @@ namespace Candia2
 	void DGLAPSolver::_mt_EvolveDistributions_S_N3LO(uint t, int thread_idx, uint min, uint max)
 	{
 		initializeThreadIndex(thread_idx);
+
+		auto& p0qq = getExpression("P0qq");
+		auto& p0qg = getExpression("P0qg");
+		auto& p0gq = getExpression("P0gq");
+		auto& p0gg = getExpression("P0gg");
+		auto& p1qq = getExpression("P1qq");
+		auto& p1qg = getExpression("P1qg");
+		auto& p1gq = getExpression("P1gq");
+		auto& p1gg = getExpression("P1gg");
+		auto& p2qq = getExpression("P2qq");
+		auto& p2qg = getExpression("P2qg");
+		auto& p2gq = getExpression("P2gq");
+		auto& p2gg = getExpression("P2gg");
+		auto& p3qq = getExpression("P3qq");
+		auto& p3qg = getExpression("P3qg");
+		auto& p3gq = getExpression("P3gq");
+		auto& p3gg = getExpression("P3gg");
 		
 		for (uint k=min; k<max; k++) {
 			_S[t][1][1][k] += 
-				recrelS_4(_S[t][1][0], _S[t-1][1][0], _S[t-2][1][0], _S[t-3][1][0], k,
-					getExpression("P0qq"), getExpression("P1qq"),
-					getExpression("P2qq"), getExpression("P3qq")) +
-				recrelS_4(_S[t][0][0], _S[t-1][0][0], _S[t-2][0][0], _S[t-3][0][0], k,
-					getExpression("P0qg"), getExpression("P1qg"),
-					getExpression("P2qg"), getExpression("P3qg"));
+				recrelS_4(_S[t][1][0], _S[t-1][1][0], _S[t-2][1][0], _S[t-3][1][0], k, p0qq, p1qq, p2qq, p3qq) +
+				recrelS_4(_S[t][0][0], _S[t-1][0][0], _S[t-2][0][0], _S[t-3][0][0], k, p0qg, p1qg, p2qg, p3qg);
 			_S[t][0][1][k] += 
-				recrelS_4(_S[t][1][0], _S[t-1][1][0], _S[t-2][1][0], _S[t-3][1][0], k,
-					getExpression("P0gq"), getExpression("P1gq"),
-					getExpression("P2gq"), getExpression("P3gq")) +
-				recrelS_4(_S[t][0][0], _S[t-1][0][0], _S[t-2][0][0], _S[t-3][0][0], k,
-					getExpression("P0gg"), getExpression("P1gg"),
-					getExpression("P2gg"), getExpression("P3gg"));
+				recrelS_4(_S[t][1][0], _S[t-1][1][0], _S[t-2][1][0], _S[t-3][1][0], k, p0gq, p1gq, p2gq, p3gq) +
+				recrelS_4(_S[t][0][0], _S[t-1][0][0], _S[t-2][0][0], _S[t-3][0][0], k, p0gg, p1gg, p2gg, p3gg);
 		}
 	}
 	
@@ -499,11 +562,13 @@ namespace Candia2
         uint j, double L1)
     {
 		initializeThreadIndex(j);
+
+		auto& p0ns = getExpression("P0ns");
 		
         for (uint n=1; n<_iterations; n++) {
             log(LOG_INFO, "THREAD", "  [j={}] Iteration {}/{}", j, n, _iterations-1);
 			for (uint k=0; k<_grid.size()-1; k++) {
-				_A[j][1][k] = recrelLO(_A[j][0], k, getExpression("P0ns"));
+				_A[j][1][k] = recrelLO(_A[j][0], k, p0ns);
                 arr.get()[j][k] += _A[j][1][k]*std::pow(L1, n)/factorial(n);
             }
 			_A[j][0] = _A[j][1];
@@ -514,21 +579,23 @@ namespace Candia2
         uint j, std::string const& P1, std::array<double, 2> const&  L)
     {
 		initializeThreadIndex(j);
+
+		auto& p0ns = getExpression("P0ns");
+		auto& p1 = getExpression(P1);
 		
         double const L1 = L[0];
         double const L2 = L[1];
+		
         for (uint s=1; s<_iterations; s++) {
             log(LOG_INFO, "THREAD", "  [j={}] Iteration {}/{}", j, s, _iterations-1);
             for (uint k=0; k<_grid.size()-1;k++) {
                 for (uint n=1; n<=s; n++) {
-                    _B[j][1][n][k] = recrelNLO_1(_B[j][0][n-1], k, getExpression("P0ns"));
+                    _B[j][1][n][k] = recrelNLO_1(_B[j][0][n-1], k, p0ns);
                     arr.get()[j][k] += _B[j][1][n][k]*std::pow(L1,n)*std::pow(L2,s-n)/factorial(n)/factorial(s-n);
                 }
 
                 uint n = 0;
-                double res = recrelNLO_2(_B[j][0][0], k, 
-                    getExpression("P0ns"), 
-                    getExpression(P1));
+                double res = recrelNLO_2(_B[j][0][0], k, p0ns, p1);
                 _B[j][1][0][k] = -_B[j][1][1][k] + res;
                 arr.get()[j][k] += _B[j][1][0][k]
                     *std::pow(L1,n)*std::pow(L2,s-n)
@@ -543,6 +610,10 @@ namespace Candia2
         uint j, std::array<std::string, 2> const& P, std::array<double, 3> const& L)
     {
 		initializeThreadIndex(j);
+
+		auto& p0ns = getExpression("P0ns");
+		auto& p1 = getExpression(P[0]);
+		auto& p2 = getExpression(P[1]);
 		
         double const L1 = L[0];
         double const L2 = L[1];
@@ -554,7 +625,7 @@ namespace Candia2
                 // recrel #1:
                 for (uint t=1; t<=s; t++) {
                     for (uint n=1; n<=t; n++) {
-                        _C[j][1][t][n][k] = recrelNNLO_1(_C[j][0][t-1][n-1], k, getExpression("P0ns"));
+                        _C[j][1][t][n][k] = recrelNNLO_1(_C[j][0][t-1][n-1], k, p0ns);
 
                         double orig = _C[j][1][t][n][k];
                         double powers = std::pow(L1,n)*std::pow(L2,(t-n))*std::pow(L3,(s-t));
@@ -568,8 +639,7 @@ namespace Candia2
                 // recrel #2:
                 {
                     double fac1 = -0.5*_C[j][1][s][1][k];
-                    double fac2 = recrelNNLO_2(_C[j][0][s-1][0], k, 
-                        getExpression("P0ns"), getExpression(P[0]), getExpression(P[1]));
+                    double fac2 = recrelNNLO_2(_C[j][0][s-1][0], k, p0ns, p1, p2);
                     _C[j][1][s][0][k] = fac1 + fac2;
 
                     uint n = 0;
@@ -590,8 +660,7 @@ namespace Candia2
                 // recrel #3:
                 for (int t=s-1; t>=0; t--) {
                     double fac1 = -2.0*_alpha_s.beta1()*(_C[j][1][t+1][0][k] + _C[j][1][t+1][1][k]);
-                    double fac2 = recrelNNLO_3(_C[j][0][t][0], k, 
-                        getExpression("P0ns"), getExpression(P[0]));
+                    double fac2 = recrelNNLO_3(_C[j][0][t][0], k, p0ns, p1);
                     _C[j][1][t][0][k] = fac1 + fac2;
 
                     uint n = 0;
@@ -615,6 +684,11 @@ namespace Candia2
 			uint j, std::array<std::string, 3> const& P, std::array<double, 4> const& L)
     {
 		initializeThreadIndex(j);
+
+		auto& p0ns = getExpression("P0ns");
+		auto& p1 = getExpression(P[0]);
+		auto& p2 = getExpression(P[1]);
+		auto& p3 = p2;
 		
 		double const L1 = L[0];
         double const L2 = L[1];
@@ -634,7 +708,7 @@ namespace Candia2
                 for (uint t=1; t<=s; t++) {
                     for (uint m=1; m<=t; m++) {
                         for (uint n=1; n<=m; n++) {
-                            _D[j][1][t][m][n][k] = recrelN3LO_1(_D[j][0][t-1][m-1][n-1], k, getExpression("P0ns"));
+                            _D[j][1][t][m][n][k] = recrelN3LO_1(_D[j][0][t-1][m-1][n-1], k, p0ns);
 
                             double orig = _D[j][1][t][m][n][k];
                             double powers =
@@ -659,8 +733,7 @@ namespace Candia2
                     double fac1 = (
                         0.5*(16.0*PI_2*_alpha_s.beta1() + 4*PI*r1*_alpha_s.beta2() - (c + b*r1)*_alpha_s.beta3())
                     ) * _D[j][1][s][s][1][k];
-                    double fac2 = recrelN3LO_2(_D[j][0][s-1][s-1][0], k,
-                        getExpression("P0ns"), getExpression(P[0]), getExpression(P[1]), getExpression(P[2]));
+                    double fac2 = recrelN3LO_2(_D[j][0][s-1][s-1][0], k, p0ns, p1, p2, p3);
                     _D[j][1][s][s][0][k] = (fac1 + fac2)/gamma;
 
                     uint t = s;
@@ -687,8 +760,7 @@ namespace Candia2
                     double fac1 = -(
                         16.0*PI_2*_alpha_s.beta1() + 4.0*PI*r1*_alpha_s.beta2() + r1*r1*_alpha_s.beta3()
                     ) * _D[j][1][s][m+1][1][k];
-                    double fac2 = recrelN3LO_3(_D[j][0][s-1][m][0], k,
-                        getExpression("P0ns"), getExpression(P[0]), getExpression(P[1]), getExpression(P[2]));
+                    double fac2 = recrelN3LO_3(_D[j][0][s-1][m][0], k, p0ns, p1, p2, p3);
                     _D[j][1][s][m][0][k] = (fac1 + fac2)/gamma;
 
                     uint t = s;
@@ -715,8 +787,7 @@ namespace Candia2
                         double fac1a = -2.0*b*gamma;
                         double fac1b = 32*PI_2*(b+r1)*_alpha_s.beta1() - 8*PI*c*_alpha_s.beta2() - 2*c*r1*_alpha_s.beta3();
                         double fac1 = fac1a*_D[j][1][t+1][m+1][0][k] + fac1b*_D[j][1][t+1][m+1][1][k];
-                        double fac2 = recrelN3LO_4(_D[j][0][t][m][0], k,
-                            getExpression("P0ns"), getExpression(P[0]), getExpression(P[1]), getExpression(P[2]));
+                        double fac2 = recrelN3LO_4(_D[j][0][t][m][0], k, p0ns, p1, p2, p3);
                         _D[j][1][t][m][0][k] = (fac1 + fac2)/gamma;
 
                         uint n = 0;
