@@ -105,6 +105,7 @@ target_link_libraries(candia PRIVATE hplog AQqPSs3 ome GSL::gsl)
 target_include_directories(candia PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:include>)
+target_include_directories(candia PUBLIC ${GSL_INCLUDE_DIRS})
 add_subdirectory(examples)
 add_subdirectory(tests)
 

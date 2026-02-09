@@ -8,7 +8,7 @@
 
 #include <functional>
 #include <memory>
-
+#include <ranges>
 
 
 // PDF indices
@@ -62,7 +62,10 @@ namespace Candia2
 
 		switch(_order) {
 			case 0: {
-				_trunc_idx = 0; // LO has exact singlet solution, do not add additional terms
+				if (_trunc_idx != 0) {
+					_trunc_idx = 0; // LO has exact singlet solution, do not add additional terms
+					log(LOG_WARNING, "DGLAP", "Specified value of the truncation index ({}) will be set to zero.", _trunc_idx);
+				}
 
 				_A = std::vector<std::vector<ArrayGrid>>{
 					DISTS, std::vector<ArrayGrid>{
@@ -127,6 +130,16 @@ namespace Candia2
 				_r1[6] = -1.4277979273114205;
 				_b[6] = -2.0 * 0.7964970177083996;
 				_c[6] = std::pow(0.7964970177083996, 2) + std::pow(1.816809978388145, 2);
+
+				auto func = [](std::array<double, 8> const& a) -> std::string {
+					auto view =
+						std::views::iota(1) | std::views::take(6)
+						| std::views::transform([&a](int i){ return a[i]; });
+					return vec_to_str(view);
+				};
+				log(LOG_DEBUG, "DGLAPSolver::DGLAPSolver()", "r1 array: {}", func(_r1));
+				log(LOG_DEBUG, "DGLAPSolver::DGLAPSolver()", "b  array: {}", func(_r1));
+				log(LOG_DEBUG, "DGLAPSolver::DGLAPSolver()", "c  array: {}", func(_r1));
 			} break;
 			default: {
 				log(LOG_INFO, "DGLAPSolver::DGLAPSolver()", "Found {} for the order, expected a value in range [0, 3].", order);
@@ -186,6 +199,7 @@ namespace Candia2
 
 	void DGLAPSolver::loadAllExpressions()
     {
+		log(LOG_DEBUG, "DGLAPSolver::loadAllExpressions()", "Loading 'P0ns, P0qq, P0qg, P0gq, P0gg' at LO");
         createExpression<P0ns>("P0ns");
         createExpression<P0qq>("P0qq");
         createExpression<P0qg>("P0qg");
@@ -193,6 +207,7 @@ namespace Candia2
         createExpression<P0gg>("P0gg");
     
         if (_order >= 1) {
+			log(LOG_DEBUG, "DGLAPSolver::loadAllExpressions()", "Loading 'P1nsm, P1nsp, P1qq, P1qg, P1gq, P1gg' at NLO");
 		    createExpression<P1nsm>("P1nsm");
             createExpression<P1nsp>("P1nsp");
             createExpression<P1qq>("P1qq");
@@ -201,6 +216,8 @@ namespace Candia2
             createExpression<P1gg>("P1gg");
         }
         if (_order >= 2) {
+			log(LOG_DEBUG, "DGLAPSolver::loadAllExpressions()", "Loading 'P2nsm, P2nsp, P2nsv, P2qq, P2qg, P2gq, P2gg' at NNLO");
+			log(LOG_DEBUG, "DGLAPSolver::loadAllExpressions()", "Loading 'A2ns, A2gq, A2gg, A2hq, A2hg' at NNLO");
             createExpression<P2nsm>("P2nsm");
             createExpression<P2nsp>("P2nsp");
             createExpression<P2nsv>("P2nsv");
@@ -216,6 +233,9 @@ namespace Candia2
             createExpression<A2hg>("A2hg");
         }
         if (_order >= 3) {
+			log(LOG_DEBUG, "DGLAPSolver::loadAllExpressions()", "Loading 'P3nsm, P3nsp, P3nsv, P3qq, P3qg, P3gq, P3gg' at N3LO");
+			log(LOG_DEBUG, "DGLAPSolver::loadAllExpressions()", "Loading 'A3nsm, A3nsp, A3gq, A3gg, A3hq, A3hg, A3psqq, A3sqg' at N3LO (libome)");
+			log(LOG_DEBUG, "DGLAPSolver::loadAllExpressions()", "Loading 'AQqPSs3' at N3LO");
             createExpression<P3nsm>("P3nsm");
             createExpression<P3nsp>("P3nsp");
             createExpression<P3nsv>("P3nsv");
@@ -418,6 +438,11 @@ namespace Candia2
 				double aux = std::sqrt(-b*b + 4*c); // never negative, no need for analytic continuation
 				L4 = std::atan((_alpha1-_alpha0)*aux / (2.0*_alpha0*_alpha1 + (_alpha0+_alpha1)*b + 2.0*c))/aux;
 			}
+
+			log(LOG_DEBUG, "DGLAP::evolve()", "Values of log coeffs:");
+			std::vector<std::pair<double, std::string_view>> coeffs{{L1, "L1"}, {L2, "L2"}, {L3, "L3"}, {L4, "L4"}};
+			for (auto [x, xname] : coeffs)
+				log(LOG_DEBUG, "DGLAP::evolve()", "  - {} = {: }", xname, x);
 			
 			log(LOG_INFO, "DGLAP", "Doing {} resummation", (resum_tab ? "tabulated" : "threshold" ));
 			log(LOG_INFO, "DGLAP", "AlphaS: {} --> {}", _alpha0, _alpha1);

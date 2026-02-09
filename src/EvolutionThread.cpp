@@ -1,20 +1,23 @@
 #include "Candia-v2/Candia.hpp"
 #include "Candia-v2/ArrayGrid.hpp"
+#include "Candia-v2/Common.hpp"
 #include "Candia-v2/Math.hpp"
 
 #include <cmath>
 #include <functional>
 #include <thread>
 
+
 namespace Candia2
 {
+	thread_local int thread_index = -1;
+	
 	void DGLAPSolver::evolveSingletThreaded(
         std::reference_wrapper<std::vector<ArrayGrid>> arr, double L1)
 	{
         for (uint j=0; j<=1; ++j)
             arr.get()[j*31] = _S[0][j][0];
 
-		const static int NUM_SINGLET_THREADS  = 5;
 		uint size = _grid.size()-1;
 		uint part_size = size/NUM_SINGLET_THREADS;
 
@@ -83,9 +86,12 @@ namespace Candia2
                         }
 
 						std::vector<std::thread> threads{};
-						for (uint i=0; i<NUM_SINGLET_THREADS-1; ++i)
-							threads.emplace_back(&DGLAPSolver::_mt_EvolveDistributions_S_NLO, this, t, i*part_size, (i+1)*part_size);
-						threads.emplace_back(&DGLAPSolver::_mt_EvolveDistributions_S_NLO, this, t, (NUM_SINGLET_THREADS-1)*part_size, size);
+						for (uint i=0; i<NUM_SINGLET_THREADS-1; ++i) {
+							threads.emplace_back(&DGLAPSolver::_mt_EvolveDistributions_S_NLO, this,
+								t, i, i*part_size, (i+1)*part_size);
+						}
+						threads.emplace_back(&DGLAPSolver::_mt_EvolveDistributions_S_NLO, this,
+							t, NUM_SINGLET_THREADS, (NUM_SINGLET_THREADS-1)*part_size, size);
 
 						for (std::thread& t : threads)
 							t.join();
@@ -312,8 +318,10 @@ namespace Candia2
         }
     }
 
-	void DGLAPSolver::_mt_EvolveDistributions_S_NLO(uint t, uint min, uint max)
+	void DGLAPSolver::_mt_EvolveDistributions_S_NLO(uint t, int thread_idx, uint min, uint max)
 	{
+		initializeThreadIndex(thread_idx);
+		
 	    for (uint k=min; k<max; k++) {
 			_S[t][1][1][k] += 
 				recrelS_2(_S[t][1][0],_S[t-1][1][0],k,getExpression("P0qq"),getExpression("P1qq")) +
@@ -324,8 +332,10 @@ namespace Candia2
 		}
 	}
 	
-	void DGLAPSolver::_mt_EvolveDistributions_S_NNLO(uint t, uint min, uint max)
+	void DGLAPSolver::_mt_EvolveDistributions_S_NNLO(uint t, int thread_idx, uint min, uint max)
 	{
+		initializeThreadIndex(thread_idx);
+		
 	    for (uint k=min; k<max; k++) {
 			_S[t][1][1][k] += 
 				recrelS_3(_S[t][1][0], _S[t-1][1][0], _S[t-2][1][0], k,
@@ -341,8 +351,10 @@ namespace Candia2
 	}
 
 
-	void DGLAPSolver::_mt_EvolveDistributions_S_N3LO(uint t, uint min, uint max)
+	void DGLAPSolver::_mt_EvolveDistributions_S_N3LO(uint t, int thread_idx, uint min, uint max)
 	{
+		initializeThreadIndex(thread_idx);
+		
 		for (uint k=min; k<max; k++) {
 			_S[t][1][1][k] += 
 				recrelS_4(_S[t][1][0], _S[t-1][1][0], _S[t-2][1][0], _S[t-3][1][0], k,
@@ -477,6 +489,8 @@ namespace Candia2
         std::reference_wrapper<std::vector<ArrayGrid>> arr, 
         uint j, double L1)
     {
+		initializeThreadIndex(j);
+		
         for (uint n=1; n<_iterations; n++) {
             log(LOG_INFO, "THREAD", "  [j={}] Iteration {}/{}", j, n, _iterations-1);
 			for (uint k=0; k<_grid.size()-1; k++) {
@@ -490,6 +504,8 @@ namespace Candia2
         std::reference_wrapper<std::vector<ArrayGrid>> arr, 
         uint j, std::string const& P1, std::array<double, 2> const&  L)
     {
+		initializeThreadIndex(j);
+		
         double const L1 = L[0];
         double const L2 = L[1];
         for (uint s=1; s<_iterations; s++) {
@@ -517,6 +533,8 @@ namespace Candia2
         std::reference_wrapper<std::vector<ArrayGrid>> arr, 
         uint j, std::array<std::string, 2> const& P, std::array<double, 3> const& L)
     {
+		initializeThreadIndex(j);
+		
         double const L1 = L[0];
         double const L2 = L[1];
         double const L3 = L[2];
@@ -587,6 +605,8 @@ namespace Candia2
         std::reference_wrapper<std::vector<ArrayGrid>> arr, 
 			uint j, std::array<std::string, 3> const& P, std::array<double, 4> const& L)
     {
+		initializeThreadIndex(j);
+		
 		double const L1 = L[0];
         double const L2 = L[1];
         double const L3 = L[2];

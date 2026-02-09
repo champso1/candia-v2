@@ -258,24 +258,27 @@ namespace Candia2
 		/**
 		 *  @brief Performs the NLO evolution of the coefficients
 		 *  @param t truncation index
+		 *  @param thread_idx a unique index passed to the function to ensure safe access to a gsl workspace
 		 *  @param min minimum grid index
 		 *  @param max maximum grid index
 		 */
-		void _mt_EvolveDistributions_S_NLO(uint t, uint min, uint max);
+		void _mt_EvolveDistributions_S_NLO(uint t, int thread_idx, uint min, uint max);
 		/**
 		 *  @brief Performs the NNLO evolution of the coefficients
 		 *  @param t truncation index
+		 *  @param thread_idx a unique index passed to the function to ensure safe access to a gsl workspace
 		 *  @param min minimum grid index
 		 *  @param max maximum grid index
 		 */
-		void _mt_EvolveDistributions_S_NNLO(uint t, uint min, uint max);
+		void _mt_EvolveDistributions_S_NNLO(uint t, int thread_idx, uint min, uint max);
 		/**
 		 *  @brief Performs the N3LO evolution of the coefficients
 		 *  @param t truncation index
+		 *  @param thread_idx a unique index passed to the function to ensure safe access to a gsl workspace
 		 *  @param min minimum grid index
 		 *  @param max maximum grid index
 		 */
-		void _mt_EvolveDistributions_S_N3LO(uint t, uint min, uint max);
+		void _mt_EvolveDistributions_S_N3LO(uint t, int thread_idx, uint min, uint max);
 		/** @} */
 
 		/**

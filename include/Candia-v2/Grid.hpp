@@ -9,6 +9,7 @@
 #include "Candia-v2/Common.hpp"
 #include "Candia-v2/Expression.hpp"
 
+#include <gsl/gsl_errno.h>
 #include <vector>
 #include <memory>
 
@@ -23,7 +24,20 @@ namespace Candia2
 		using workspace_deleter_type = decltype(workspace_deleter);
 		using workspace_type = std::unique_ptr<gsl_integration_workspace, workspace_deleter_type>;
 
-		inline auto make_workspace = [](uint size){ return workspace_type(gsl_integration_workspace_alloc(size), workspace_deleter);};
+		inline auto make_workspace = [](uint size){ return workspace_type(gsl_integration_workspace_alloc(size), workspace_deleter); };
+		static constexpr uint DEFAULT_WORKSPACE_SIZE = 1000;
+		inline auto make_default_workspace = [](){return workspace_type(gsl_integration_workspace_alloc(DEFAULT_WORKSPACE_SIZE), workspace_deleter); };
+
+		extern "C" {
+			static inline void error_handler(
+				const char * reason, const char * file,
+				int line, int gsl_errno)
+			{
+				log(LOG_ERROR_NOQUIT, "GSL", "({}:{}) {}", file, line, reason);
+			}
+		}
+
+		static bool error_handler_set = (([](){ gsl_set_error_handler(error_handler); })(), true);
 	}
 	
     class ArrayGrid;
@@ -42,6 +56,27 @@ namespace Candia2
 			LOG = 0, //!< simple logarithmic intervals
 			LOG_LIN, //!< logarithmic intervals until 0.1, then linear until 1.0
 		};
+
+		struct ConvolutionRes final
+		{
+			double out{};
+			std::vector<double> y{}, w{}, a{}, b{}, interp1{}, interp2{}, erega{}, eplusb{};
+		};
+		struct GSLIntegrationParams final
+		{
+			Grid& g;
+
+			double x;
+			uint k;
+			double logx;
+			double eplus1;
+
+			ArrayGrid& A;
+			Expression& E;
+
+			int print_count;
+			ConvolutionRes res;
+		};
 	private:
 		grid_type _points{}; //!< grid points
 		ntab_type _ntab;     //!< stored indices for the tabulated grid points
@@ -52,7 +87,9 @@ namespace Candia2
 		std::vector<gauleg_type> _Wi{}; //!< list of split-up gauleg weights per interval
 		std::vector<uint> _interval_sizes{}; //!< number of points per interval
 
-		gsl::workspace_type _workspace{nullptr};
+		bool _use_gsl_routine_for_high_x{false}; //!< flag for whether to use the gsl routine for high x
+		gsl::workspace_type _workspace{nullptr}; //!< gsl workspace for calling gsl integration routines
+		std::vector<gsl::workspace_type> _workspaces; //!< gsl workspaces for calling gsl integration routines
 
 		static constexpr uint DEFAULT_GAULEG_POINTS = 50;
 	public:
@@ -114,6 +151,9 @@ namespace Candia2
 		void splitConvolution(
 			std::vector<double> const& intervals,
 			std::vector<double> const& sizes);
+
+		/** @brief sets a flag that uses a higher accuracy (but slower) GSL routine for x>0.8 */
+		inline void useGSLRoutineForHighX() { _use_gsl_routine_for_high_x = true; }
 
 		/**
 		 *  @brief Uses a binary search to find the grid point closest to the given value of x

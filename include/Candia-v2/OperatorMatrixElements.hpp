@@ -47,9 +47,9 @@ namespace Candia2
 	class A2ns final : public OpMatElem
 	{
 	public:
-	    double _reg_func(double x) const override;
-		double _plus_func(double x) const override;
-		double _delta_func(double x) const override;
+	    double calcRegular(double x) const override;
+		double calcPlus(double x) const override;
+		double calcDelta(double x) const override;
 	};
 
 	/**
@@ -59,7 +59,7 @@ namespace Candia2
 	class A2gq final : public OpMatElem
 	{
 	public:
-		double _reg_func(double x) const override;
+		double calcRegular(double x) const override;
 	};
 
 	/**
@@ -69,9 +69,9 @@ namespace Candia2
 	class A2gg final : public OpMatElem
 	{
 	public:
-		double _reg_func(double x) const override;
-		double _plus_func(double x) const override;
-		double _delta_func(double x) const override;
+		double calcRegular(double x) const override;
+		double calcPlus(double x) const override;
+		double calcDelta(double x) const override;
 	};
 
 	/**
@@ -81,7 +81,7 @@ namespace Candia2
 	class A2hq final : public OpMatElem
 	{
 	public:
-		double _reg_func(double x) const override;
+		double calcRegular(double x) const override;
 	};
 
 	/**
@@ -91,7 +91,7 @@ namespace Candia2
 	class A2hg final : public OpMatElem
 	{
 	public:
-		double _reg_func(double x) const override;
+		double calcRegular(double x) const override;
 	};
 
 	
@@ -114,7 +114,7 @@ namespace Candia2
 		OpMatElemN3LO(ome_type const& ome) : _ome{ome} {}
 		~OpMatElemN3LO() = default; //!< default deconstructor
 
-		inline double _reg_func(double x) const override
+		inline double calcRegular(double x) const override
 		{
 			if (!_ome.has_regular())
 				return 0;
@@ -123,7 +123,7 @@ namespace Candia2
 			return reg[3](_lm, _nf, x);
 		}
 
-		inline double _plus_func(double x) const override
+		inline double calcPlus(double x) const override
 		{
 			if (!_ome.has_plus())
 				return 0;
@@ -132,7 +132,7 @@ namespace Candia2
 			return plus[3](_lm, _nf, x);
 		}
 
-		inline double _delta_func(double x) const override
+		inline double calcDelta(double x) const override
 		{
 			UNUSED(x);
 
@@ -152,7 +152,7 @@ namespace Candia2
 	class AQqPSs3 final : public OpMatElem
 	{
 	public:
-		inline double _reg_func(double x) const override
+		inline double calcRegular(double x) const override
 		{
 			double nf = static_cast<double>(_nf);
 			return aqqpss3_(&x, &nf, &_lm);

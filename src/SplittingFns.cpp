@@ -10,67 +10,67 @@ namespace Candia2
 	uint SplittingFunction::_nf = 4; // good default
 	double SplittingFunction::_beta0 = 0.0; // will be set later
 	
-	double P0ns::_reg_func(double x) const
+	double P0ns::calcRegular(double x) const
 	{
 		return CF*(-1.0-x);
 	}
-	double P0ns::_plus_func(double x) const
+	double P0ns::calcPlus(double x) const
 	{
 		UNUSED(x);
 		return 2.0*CF;
 	}
-	double P0ns::_delta_func(double x) const
+	double P0ns::calcDelta(double x) const
 	{
 		UNUSED(x);
 		return (3.0/2.0)*CF;
 	}
 
 
-	double P0qq::_reg_func(double x) const
+	double P0qq::calcRegular(double x) const
 	{
 		return CF*(-1.0-x);
 	}
-	double P0qq::_plus_func(double x) const
+	double P0qq::calcPlus(double x) const
 	{
 		UNUSED(x);
 		return 2.0*CF;
 	}
-	double P0qq::_delta_func(double x) const
+	double P0qq::calcDelta(double x) const
 	{
 		UNUSED(x);
 		return (3.0/2.0)*CF;
 	}
 
 
-	double P0qg::_reg_func(double x) const
+	double P0qg::calcRegular(double x) const
 	{
 		return 2.0*TR*_nf*(2.0*x*x - 2.0*x + 1.0);
 	}
 
 
-	double P0gq::_reg_func(double x) const
+	double P0gq::calcRegular(double x) const
 	{
 		return CF*(x - 2.0 + 2.0/x);
 	}
 
 
-	double P0gg::_reg_func(double x) const
+	double P0gg::calcRegular(double x) const
 	{
 		return 2.0*NC*(1.0/x - 2.0 + x - x*x);
 	}
-	double P0gg::_plus_func(double x) const
+	double P0gg::calcPlus(double x) const
 	{
 		UNUSED(x);
 		return 2.0*NC;
 	}
-	double P0gg::_delta_func(double x) const
+	double P0gg::calcDelta(double x) const
 	{
 		UNUSED(x);
 		return _beta0/2.0;
 	}
 
 
-	double P1nsp::_reg_func(double x) const
+	double P1nsp::calcRegular(double x) const
 	{
 		double Nf = static_cast<double>(_nf);
 		return (CF*(4.*Nf*TR*(1.+x)*(-1.+11.*x)-6.*CF*(3.+PI_2+(-3.+PI_2)*x*x)+
@@ -81,19 +81,19 @@ namespace Candia2
 			    +std::log(x)*std::log(1.-x)*(2.*CF*CF*(1.+x*x))/(-1.+x)
 			    +std::log(x)*std::log(1.+x)*(-2.*CF*(2.*CF-NC)*(1.+x*x))/(1.+x);
 	}
-	double P1nsp::_plus_func(double x) const
+	double P1nsp::calcPlus(double x) const
 	{
 		UNUSED(x);
 		return -(CF*(NC*(-67.0 + 3.0*PI_2) + 20.0*_nf*TR))/9.0;
 	}
-	double P1nsp::_delta_func(double x) const
+	double P1nsp::calcDelta(double x) const
 	{
 		UNUSED(x);
 		return (CF*(-4.0*_nf*(3.0 + 4.0*PI_2)*TR + NC*(51.0 + 44.0*PI_2 - 216.0*Zeta3) + 9.0*CF*(3.0 - 4.0*PI_2 + 48.0*Zeta3)))/72.0;
 	}
 
 	
-	double P1nsm::_reg_func(double x) const
+	double P1nsm::calcRegular(double x) const
 	{
 		double Nf = static_cast<double>(_nf);
 		return (CF*(4.*Nf*TR*(1.+x)*(-1.+11.*x)+NC*(89.+(-134.+6.*PI_2-223.*x)*x)+
@@ -104,19 +104,19 @@ namespace Candia2
 			    +std::log(x)*std::log(1.-x)*(2.*CF*CF*(1.+x*x))/(-1.+x)
 			    +std::log(x)*std::log(1.+x)*(2.*CF*(2.*CF-NC)*(1.+x*x))/(1.+x);
 	}
-	double P1nsm::_plus_func(double x) const
+	double P1nsm::calcPlus(double x) const
 	{
 		UNUSED(x);
 		return -(CF*(NC*(-67.0 + 3.0*PI_2) + 20.0*_nf*TR))/9.0;
 	}
-	double P1nsm::_delta_func(double x) const
+	double P1nsm::calcDelta(double x) const
 	{
 		UNUSED(x);
 		return (CF*(-4.0*_nf*(3.0 + 4.0*PI_2)*TR + NC*(51.0+44.0*PI_2 - 216.0*Zeta3) + 9.0*CF*(3.0 - 4.0*PI_2 + 48.0*Zeta3)))/72.0;
 	}
 
 
-	double P1qq::_reg_func(double x) const
+	double P1qq::calcRegular(double x) const
 	{
 		double Nf = static_cast<double>(_nf);
 		return (CF*(4.*Nf*TR*(20.+x+46.*x*x+9.*std::pow(x,3.)-56.*std::pow(x,4.))+
@@ -127,19 +127,19 @@ namespace Candia2
 			    +std::log(x)*std::log(1.-x)*(2.*CF*CF*(1.+x*x))/(-1.+x)
 			    +std::log(x)*std::log(1.+x)*(-2.*CF*(2.*CF-NC)*(1.+x*x))/(1.+x);
 	}
-	double P1qq::_plus_func(double x) const
+	double P1qq::calcPlus(double x) const
 	{
 		UNUSED(x);
 		return -(CF*(NC*(-67.0 + 3.0*PI_2) + 20.0*_nf*TR))/9.0;
 	}
-	double P1qq::_delta_func(double x) const
+	double P1qq::calcDelta(double x) const
 	{
 		UNUSED(x);
 		return (CF*(-4.0*_nf*(3.0 + 4.0*PI_2)*TR + NC*(51.0 + 44.0*PI_2 - 216.0*Zeta3) + 9.0*CF*(3.0 - 4.0*PI_2 + 48.0*Zeta3)))/72.0;
 	}
 
 
-	double P1qg::_reg_func(double x) const
+	double P1qg::calcRegular(double x) const
 	{
 		double Nf = static_cast<double>(_nf);
 		return (Nf*TR*(3.*CF*x*(42.-87.*x+60.*x*x+PI_2*(-2.-4.*(-1.+x)*x))-
@@ -154,7 +154,7 @@ namespace Candia2
 	}
 
 
-	double P1gq::_reg_func(double x) const
+	double P1gq::calcRegular(double x) const
 	{
 		double Nf = static_cast<double>(_nf);
 		return (CF*(-9.*CF*x*(5.+7.*x)-16.*Nf*TR*(5.+x*(-5.+4.*x))+2.*NC*(9.+x*(19.+6.*PI_2+x*(37.+44.*x)))))/(18.*x)
@@ -169,7 +169,7 @@ namespace Candia2
 
 
 
-	double P1gg::_reg_func(double x) const
+	double P1gg::calcRegular(double x) const
 	{
 		double Nf = static_cast<double>(_nf);
 		return (24.*CF*Nf*TR*(-1.+x)*(1.+x)*(-1.+x*(11.+5.*x))+
@@ -181,12 +181,12 @@ namespace Candia2
 			    +std::log(x)*std::log(1.-x)*(4.*NC*NC*std::pow(1.+(-1.+x)*x,2.))/((-1.+x)*x)
 			    +std::log(x)*std::log(1.+x)*(4.*NC*NC*std::pow(1.+x+x*x,2.))/(x*(1.+x));
 	}
-	double P1gg::_plus_func(double x) const
+	double P1gg::calcPlus(double x) const
 	{
 		UNUSED(x);
 		return -(NC*(NC*(-67.0 + 3.0*PI_2) + 20.0*_nf*TR))/9.0;
 	}
-	double P1gg::_delta_func(double x) const
+	double P1gg::calcDelta(double x) const
 	{
 		UNUSED(x);
 		return -(CF*_nf*TR) + (NC*(-4.0*_nf*TR + NC*(8.0 + 9.0*Zeta3)))/3.0;
@@ -194,7 +194,7 @@ namespace Candia2
 
 
 
-	double P2nsp::_reg_func(double x) const
+	double P2nsp::calcRegular(double x) const
 	{
 		const double dl = std::log(x);
 		// const double dl1 = std::log1p(-x);
@@ -215,7 +215,7 @@ namespace Candia2
 
 		return res/8.0;
 	}
-	double P2nsp::_plus_func(double x) const
+	double P2nsp::calcPlus(double x) const
 	{
 		UNUSED(x);
 		
@@ -225,7 +225,7 @@ namespace Candia2
 		
 		return res/8.0;
 	}
-	double P2nsp::_delta_func(double x) const
+	double P2nsp::calcDelta(double x) const
 	{
 		UNUSED(x);
 		
@@ -238,7 +238,7 @@ namespace Candia2
 	}
 
 
-	double P2nsm::_reg_func(double x) const
+	double P2nsm::calcRegular(double x) const
 	{
 		const double dl = std::log(x);
 		const double dl1 = std::log1p(-x);
@@ -258,7 +258,7 @@ namespace Candia2
 
 		return res/8.0;
 	}
-	double P2nsm::_plus_func(double x) const
+	double P2nsm::calcPlus(double x) const
 	{
 		UNUSED(x);
 		
@@ -268,7 +268,7 @@ namespace Candia2
 		
 		return res/8.0;
 	}
-	double P2nsm::_delta_func(double x) const
+	double P2nsm::calcDelta(double x) const
 	{
 		UNUSED(x);
 
@@ -280,7 +280,7 @@ namespace Candia2
 	}
 
 
-	double P2nsv::_reg_func(double x) const
+	double P2nsv::calcRegular(double x) const
 	{
 		const double dl = std::log(x);
 		const double x1 = 1.0-x;
@@ -308,7 +308,7 @@ namespace Candia2
 
 		return (res1 + res2)/8.0;
 	}
-	double P2nsv::_plus_func(double x) const
+	double P2nsv::calcPlus(double x) const
 	{
 		UNUSED(x);
 		
@@ -318,7 +318,7 @@ namespace Candia2
 		
 		return res/8.0;
 	}
-	double P2nsv::_delta_func(double x) const
+	double P2nsv::calcDelta(double x) const
 	{
 		UNUSED(x);
 
@@ -329,7 +329,7 @@ namespace Candia2
 		return res/8.0;
 	}
 
-	double P2ps::_reg_func(double x) const
+	double P2ps::calcRegular(double x) const
 	{
 		double dl  = std::log(x);
         double dl1 = std::log1p(-x);
@@ -350,7 +350,7 @@ namespace Candia2
 		return res/8.0;
 	}
 
-	double P2qq::_reg_func(double x) const
+	double P2qq::calcRegular(double x) const
 	{
 		double dl  = std::log(x);
         double dl1 = std::log1p(-x);
@@ -384,7 +384,7 @@ namespace Candia2
 		return (res1 + res2)/8.0;
 		
 	}
-	double P2qq::_plus_func(double x) const
+	double P2qq::calcPlus(double x) const
 	{
 		UNUSED(x);
 		
@@ -394,7 +394,7 @@ namespace Candia2
 		
 		return res/8.0;
 	}
-	double P2qq::_delta_func(double x) const
+	double P2qq::calcDelta(double x) const
 	{
 		UNUSED(x);
 		
@@ -407,7 +407,7 @@ namespace Candia2
 	}
 
 
-	double P2qg::_reg_func(double x) const
+	double P2qg::calcRegular(double x) const
 	{
 		const double nf = static_cast<double>(_nf);
 
@@ -435,7 +435,7 @@ namespace Candia2
 	}
 
 
-	double P2gq::_reg_func(double x) const
+	double P2gq::calcRegular(double x) const
 	{
 		const double nf = static_cast<double>(_nf);
 
@@ -464,7 +464,7 @@ namespace Candia2
 	}
 
 
-	double P2gg::_reg_func(double x) const
+	double P2gg::calcRegular(double x) const
 	{
 		const double nf = static_cast<double>(_nf);
 
@@ -487,7 +487,7 @@ namespace Candia2
 		double res = res1 + nf*(res2 + nf*res3);
 		return res/8.0;
 	}
-	double P2gg::_plus_func(double x) const
+	double P2gg::calcPlus(double x) const
 	{
 		UNUSED(x);
 		
@@ -497,7 +497,7 @@ namespace Candia2
 
 		return res/8.0;
 	}
-	double P2gg::_delta_func(double x) const
+	double P2gg::calcDelta(double x) const
 	{
 		UNUSED(x);
 		
@@ -514,7 +514,7 @@ namespace Candia2
 
 
 	
-	double P3nsp::_reg_func(double x) const
+	double P3nsp::calcRegular(double x) const
 	{	
 		const double x2   = x*x;
 		const double x3   = x2*x;
@@ -587,7 +587,7 @@ namespace Candia2
 
 		return res/16.0;
 	}
-	double P3nsp::_plus_func(double x) const
+	double P3nsp::calcPlus(double x) const
 	{
 		UNUSED(x);
 		
@@ -611,7 +611,7 @@ namespace Candia2
 
 		return res/16.0;
 	}
-	double P3nsp::_delta_func(double x) const
+	double P3nsp::calcDelta(double x) const
 	{
 		UNUSED(x);
 		
@@ -653,7 +653,7 @@ namespace Candia2
 	}
 
 
-	double P3nsm::_reg_func(double x) const
+	double P3nsm::calcRegular(double x) const
 	{
 		const double x2   = x*x;
 		const double x3   = x2*x;
@@ -725,7 +725,7 @@ namespace Candia2
 
 		return res/16.0;
 	}
-	double P3nsm::_plus_func(double x) const
+	double P3nsm::calcPlus(double x) const
 	{
 		UNUSED(x);
 		double Nf = static_cast<double>(_nf);
@@ -748,7 +748,7 @@ namespace Candia2
 
 		return res/16.0;
 	}
-	double P3nsm::_delta_func(double x) const
+	double P3nsm::calcDelta(double x) const
 	{
 		UNUSED(x);
 		double Nf = static_cast<double>(_nf);
@@ -782,7 +782,7 @@ namespace Candia2
 		return res/16.0;
 	}
 
-	double P3nsv::_reg_func(double x) const
+	double P3nsv::calcRegular(double x) const
 	{
 		const double Nf = static_cast<double>(_nf);
 		double res1 = std::numeric_limits<double>::max(),
@@ -893,7 +893,7 @@ namespace Candia2
 
 		return (res1+res2)/16.0;
 	}
-	double P3nsv::_plus_func(double x) const
+	double P3nsv::calcPlus(double x) const
 	{
 		UNUSED(x);
 		double Nf = static_cast<double>(_nf);
@@ -915,7 +915,7 @@ namespace Candia2
 
 		return res/16.0;
 	}
-	double P3nsv::_delta_func(double x) const
+	double P3nsv::calcDelta(double x) const
 	{
 		UNUSED(x);
 		double Nf = static_cast<double>(_nf);
@@ -952,7 +952,7 @@ namespace Candia2
 
 
 
-	double P3ps::_reg_func(double x) const
+	double P3ps::calcRegular(double x) const
 	{
 		const double Nf = static_cast<double>(_nf);
 		const double Nf2     = Nf*Nf;
@@ -1080,7 +1080,7 @@ namespace Candia2
 		return res/16.0;
 	}
 
-	double P3qq::_reg_func(double x) const
+	double P3qq::calcRegular(double x) const
 	{
 		const double Nf = static_cast<double>(_nf);
 		double res1 = std::numeric_limits<double>::max(),
@@ -1282,7 +1282,7 @@ namespace Candia2
 
 		return (res1+res2)/16.0;
 	}
-	double P3qq::_plus_func(double x) const
+	double P3qq::calcPlus(double x) const
 	{
 		UNUSED(x);
 		
@@ -1306,7 +1306,7 @@ namespace Candia2
 
 		return res/16.0;
 	}
-	double P3qq::_delta_func(double x) const
+	double P3qq::calcDelta(double x) const
 	{
 		UNUSED(x);
 		
@@ -1348,7 +1348,7 @@ namespace Candia2
 	}
 
 
-	double P3qg::_reg_func(double x) const
+	double P3qg::calcRegular(double x) const
 	{
 		const double Nf = static_cast<double>(_nf);
 		const double Nf2     = Nf*Nf;
@@ -1481,7 +1481,7 @@ namespace Candia2
 		return res/16.0;
 	}
 
-	double P3gq::_reg_func(double x) const
+	double P3gq::calcRegular(double x) const
 	{
 		const double Nf = static_cast<double>(_nf);
 		const double Nf2     = Nf*Nf;
@@ -1619,7 +1619,7 @@ namespace Candia2
 		return res/16.0;
 	}
 
-	double P3gg::_reg_func(double x) const
+	double P3gg::calcRegular(double x) const
 	{
 		const double Nf = static_cast<double>(_nf);
 		const double A4gluon = 40880.330e0 - 11714.246e0 * Nf + 440.04876e0 * pow(Nf, 2) + 7.3627750e0 * pow(Nf, 3);
@@ -1712,7 +1712,7 @@ namespace Candia2
 		return res/16.0;
 	}
 
-	double P3gg::_plus_func(double x) const
+	double P3gg::calcPlus(double x) const
 	{
 		UNUSED(x);
 		const double Nf = static_cast<double>(_nf);
@@ -1720,7 +1720,7 @@ namespace Candia2
 		const double res = 40880.330e0 - 11714.246e0 * Nf + 440.04876e0 * std::pow(Nf, 2) + 7.3627750e0 * std::pow(Nf, 3);
 		return res/16.0;
 	}
-	double P3gg::_delta_func(double x) const
+	double P3gg::calcDelta(double x) const
 	{
 		UNUSED(x);
 		const double Nf = static_cast<double>(_nf);

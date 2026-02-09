@@ -8,16 +8,16 @@ namespace Candia2
 	{
 		// no matter what, the plus and delta distributions
 		// are evaluated at 1
-		_plus_cache[1.0] = _plus_func(1.0);
-		_delta_cache[1.0] = _delta_func(1.0);
+		_plus_cache[1.0] = calcPlus(1.0);
+		_delta_cache[1.0] = calcDelta(1.0);
 
 		for (double x : grid_points) {
 			for (double y : gauss_points) {
 				double a = std::pow(x, 1.0-y);
 				double b = std::pow(x, y);
 			
-				_reg_cache[a] = _reg_func(a);
-				_plus_cache[b] = _plus_func(b);
+				_reg_cache[a] = calcRegular(a);
+				_plus_cache[b] = calcPlus(b);
 			}
 		}
 	}
@@ -33,24 +33,5 @@ namespace Candia2
 		log(LOG_ERROR, "Expression::operator()()", "Invalid function part ({}).", function_part);
 		return 0.0; // unreachable
 	}
-	
-	double Expression::_reg_func(double x) const
-	{
-		UNUSED(x);
-		return 0.0;
-	}
-
-	double Expression::_plus_func(const double x) const
-	{
-		UNUSED(x);
-		return 0.0;
-	}
-
-	double Expression::_delta_func(const double x) const
-	{
-		UNUSED(x);
-		return 0.0;
-	}
-	
 	
 }; // namespace Candia2

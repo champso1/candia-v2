@@ -46,9 +46,9 @@ namespace Candia2
 	public:
 	    using SplittingFunction::SplittingFunction;
 		
-		double _reg_func(double x) const override;
-		double _plus_func(double x) const override;
-		double _delta_func(double x) const override;
+		double calcRegular(double x) const override;
+		double calcPlus(double x) const override;
+		double calcDelta(double x) const override;
 	};
 
 	/**
@@ -60,9 +60,9 @@ namespace Candia2
 	public:
 		using SplittingFunction::SplittingFunction;
 		
-		double _reg_func(double x) const override;
-		double _plus_func(double x) const override;
-		double _delta_func(double x) const override;
+		double calcRegular(double x) const override;
+		double calcPlus(double x) const override;
+		double calcDelta(double x) const override;
 	};
 
 	/**
@@ -74,7 +74,7 @@ namespace Candia2
 	public:
 		using SplittingFunction::SplittingFunction;
 		
-		double _reg_func(double x) const override;
+		double calcRegular(double x) const override;
 	};
 
 	/**
@@ -86,7 +86,7 @@ namespace Candia2
 	public:
 		using SplittingFunction::SplittingFunction;
 		
-		double _reg_func(double x) const override;
+		double calcRegular(double x) const override;
 	};
 
 	/**
@@ -98,9 +98,9 @@ namespace Candia2
 	public:
 		using SplittingFunction::SplittingFunction;
 		
-		double _reg_func(double x) const override;
-		double _plus_func(double x) const override;
-		double _delta_func(double x) const override;
+		double calcRegular(double x) const override;
+		double calcPlus(double x) const override;
+		double calcDelta(double x) const override;
 	};
 
 
@@ -113,9 +113,9 @@ namespace Candia2
 	public:
 		using SplittingFunction::SplittingFunction;
 		
-		double _reg_func(double x) const override;
-		double _plus_func(double x) const override;
-		double _delta_func(double x) const override;
+		double calcRegular(double x) const override;
+		double calcPlus(double x) const override;
+		double calcDelta(double x) const override;
 	};
 
 	/**
@@ -127,9 +127,9 @@ namespace Candia2
 	public:
 		using SplittingFunction::SplittingFunction;
 		
-		double _reg_func(double x) const override;
-		double _plus_func(double x) const override;
-		double _delta_func(double x) const override;
+		double calcRegular(double x) const override;
+		double calcPlus(double x) const override;
+		double calcDelta(double x) const override;
 	};
 
 	/**
@@ -141,9 +141,9 @@ namespace Candia2
 	public:
 		using SplittingFunction::SplittingFunction;
 		
-		double _reg_func(double x) const override;
-		double _plus_func(double x) const override;
-		double _delta_func(double x) const override;
+		double calcRegular(double x) const override;
+		double calcPlus(double x) const override;
+		double calcDelta(double x) const override;
 	};
 
 	/**
@@ -155,7 +155,7 @@ namespace Candia2
 	public:
 		using SplittingFunction::SplittingFunction;
 		
-		double _reg_func(double x) const override;
+		double calcRegular(double x) const override;
 	};
 
 	/**
@@ -167,7 +167,7 @@ namespace Candia2
 	public:
 		using SplittingFunction::SplittingFunction;
 		
-		double _reg_func(double x) const override;
+		double calcRegular(double x) const override;
 	};
 
 	/**
@@ -179,9 +179,9 @@ namespace Candia2
 	public:
 		using SplittingFunction::SplittingFunction;
 		
-		double _reg_func(double x) const override;
-		double _plus_func(double x) const override;
-		double _delta_func(double x) const override;
+		double calcRegular(double x) const override;
+		double calcPlus(double x) const override;
+		double calcDelta(double x) const override;
 	};
 
 
@@ -196,9 +196,9 @@ namespace Candia2
 	public:
 		using SplittingFunction::SplittingFunction;
 		
-		double _reg_func(double x) const override;
-		double _plus_func(double x) const override;
-		double _delta_func(double x) const override;
+		double calcRegular(double x) const override;
+		double calcPlus(double x) const override;
+		double calcDelta(double x) const override;
 	};
 
 	/**
@@ -210,9 +210,9 @@ namespace Candia2
 	public:
 		using SplittingFunction::SplittingFunction;
 		
-		double _reg_func(double x) const override;
-		double _plus_func(double x) const override;
-		double _delta_func(double x) const override;
+		double calcRegular(double x) const override;
+		double calcPlus(double x) const override;
+		double calcDelta(double x) const override;
 	};
 
 	/**
@@ -224,9 +224,9 @@ namespace Candia2
 	public:
 		using SplittingFunction::SplittingFunction;
 		
-		double _reg_func(double x) const override;
-		double _plus_func(double x) const override;
-		double _delta_func(double x) const override;
+		double calcRegular(double x) const override;
+		double calcPlus(double x) const override;
+		double calcDelta(double x) const override;
 	};
 
 	/**
@@ -238,7 +238,7 @@ namespace Candia2
 	public:
 		using SplittingFunction::SplittingFunction;
 		
-		double _reg_func(double x) const override;
+		double calcRegular(double x) const override;
 	};
 
 	/**
@@ -250,9 +250,9 @@ namespace Candia2
 	public:
 		using SplittingFunction::SplittingFunction;
 		
-		double _reg_func(double x) const override;
-		double _plus_func(double x) const override;
-		double _delta_func(double x) const override;
+		double calcRegular(double x) const override;
+		double calcPlus(double x) const override;
+		double calcDelta(double x) const override;
 	};
 
 	/**
@@ -264,7 +264,7 @@ namespace Candia2
 	public:
 		using SplittingFunction::SplittingFunction;
 		
-		double _reg_func(double x) const override;
+		double calcRegular(double x) const override;
 	};
 
 	/**
@@ -276,7 +276,7 @@ namespace Candia2
 	public:
 		using SplittingFunction::SplittingFunction;
 		
-		double _reg_func(double x) const override;
+		double calcRegular(double x) const override;
 	};
 
 	/**
@@ -288,9 +288,9 @@ namespace Candia2
 	public:
 		using SplittingFunction::SplittingFunction;
 		
-		double _reg_func(double x) const override;
-		double _plus_func(double x) const override;
-		double _delta_func(double x) const override;
+		double calcRegular(double x) const override;
+		double calcPlus(double x) const override;
+		double calcDelta(double x) const override;
 	};
 
 
@@ -307,9 +307,9 @@ namespace Candia2
 	public:
 		using SplittingFunction::SplittingFunction;
 		
-		double _reg_func(double x) const override;
-		double _plus_func(double x) const override;
-		double _delta_func(double x) const override;
+		double calcRegular(double x) const override;
+		double calcPlus(double x) const override;
+		double calcDelta(double x) const override;
 	};
 
 	/**
@@ -324,9 +324,9 @@ namespace Candia2
 	public:
 		using SplittingFunction::SplittingFunction;
 		
-		double _reg_func(double x) const override;
-		double _plus_func(double x) const override;
-		double _delta_func(double x) const override;
+		double calcRegular(double x) const override;
+		double calcPlus(double x) const override;
+		double calcDelta(double x) const override;
 	};
 
 	/**
@@ -341,9 +341,9 @@ namespace Candia2
 	public:
 		using SplittingFunction::SplittingFunction;
 		
-		double _reg_func(double x) const override;
-		double _plus_func(double x) const override;
-		double _delta_func(double x) const override;
+		double calcRegular(double x) const override;
+		double calcPlus(double x) const override;
+		double calcDelta(double x) const override;
 	};
 
 	/**
@@ -358,7 +358,7 @@ namespace Candia2
 	public:
 		using SplittingFunction::SplittingFunction;
 		
-		double _reg_func(double x) const override;
+		double calcRegular(double x) const override;
 	};
 
 	/**
@@ -373,9 +373,9 @@ namespace Candia2
 	public:
 		using SplittingFunction::SplittingFunction;
 		
-		double _reg_func(double x) const override;
-		double _plus_func(double x) const override;
-		double _delta_func(double x) const override;
+		double calcRegular(double x) const override;
+		double calcPlus(double x) const override;
+		double calcDelta(double x) const override;
 	};
 
 	/**
@@ -390,7 +390,7 @@ namespace Candia2
 	public:
 		using SplittingFunction::SplittingFunction;
 		
-		double _reg_func(double x) const override;
+		double calcRegular(double x) const override;
 	};
 
 	/**
@@ -405,7 +405,7 @@ namespace Candia2
 	public:
 		using SplittingFunction::SplittingFunction;
 		
-		double _reg_func(double x) const override;
+		double calcRegular(double x) const override;
 	};
 
 	/**
@@ -420,9 +420,9 @@ namespace Candia2
 	public:
 		using SplittingFunction::SplittingFunction;
 		
-		double _reg_func(double x) const override;
-		double _plus_func(double x) const override;
-		double _delta_func(double x) const override;
+		double calcRegular(double x) const override;
+		double calcPlus(double x) const override;
+		double calcDelta(double x) const override;
 	};
 } // namespace Candia2
 

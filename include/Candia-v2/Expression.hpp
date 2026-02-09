@@ -63,6 +63,14 @@ namespace Candia2
 				fill(grid_points, a);
 		}
 
+		/** @brief actually calculates the regular distribution */
+		inline virtual double calcRegular(double x) const { return 0.0; }
+		/** @brief actually calculates the plus distribution */
+		inline virtual double calcPlus(double x) const { return 0.0; }
+		/** @brief actually calculates the delta distribution */
+		inline virtual double calcDelta(double x) const { return 0.0; }
+		
+
 		/** @brief Retrieves the regular part of the expression evaluated at x from the cache */
 		inline virtual double regular(double x) { return _reg_cache[x]; }
 		/** @brief Retrieves the plus part of the expression evaluated at x from the cache */
@@ -74,11 +82,6 @@ namespace Candia2
 		 *  @brief evaluates the @a function_part of the splitting function at @a x
 		 */
 		virtual double operator()(double x, uint function_part);
-		
-	protected:
-		virtual double _reg_func(double x) const; //!< actually calculates the regular part of the expression at x
-		virtual double _plus_func(double x) const; //!< actually calculates the plus part of the expression at x
-		virtual double _delta_func(double x) const; //!< actually calculates the delta part of the expression at x
 	};
 	
 };

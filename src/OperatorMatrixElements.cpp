@@ -9,7 +9,7 @@ namespace Candia2
 	double OpMatElem::_lm = 0.0;
 	uint OpMatElem::_nf = 4;
 
-  	double A2ns::_reg_func(double x) const
+  	double A2ns::calcRegular(double x) const
 	{
 		double L = std::log(x);
 
@@ -17,20 +17,20 @@ namespace Candia2
 					  + (8.0/3.0)*(1.0-x)*L + 44.0/27.0 - (268.0/27.0)*x);
 	}
 
-	double A2ns::_plus_func(double x) const
+	double A2ns::calcPlus(double x) const
 	{
 		UNUSED(x);
 		return CF*TR*(224.0/27.0);
 	}
 
-	double A2ns::_delta_func(double x) const
+	double A2ns::calcDelta(double x) const
 	{
 		UNUSED(x);
 		return CF*TR*((-8.0/3.0)*Zeta3 + (40.0/9.0)*Zeta2 + 73.0/18.0);
 	}
 
 
-	double A2gq::_reg_func(double x) const
+	double A2gq::calcRegular(double x) const
 	{
 		double M = std::log1p(-x);
 		return CF*TR*((4.0/3.0)*(2.0/x - 2.0 + x)*M*M
@@ -40,7 +40,7 @@ namespace Candia2
 
 
 
-    double A2gg::_reg_func(double x) const
+    double A2gg::calcRegular(double x) const
 	{
 		double L = std::log(x);
 		double M = std::log1p(-x);
@@ -54,13 +54,13 @@ namespace Candia2
 				+ (556.0/x - 628.0 + 548.0*x - 700.0*x*x)/27.0);
 	}
 
-	double A2gg::_plus_func(double x) const
+	double A2gg::calcPlus(double x) const
 	{
 		UNUSED(x);
 		return NC*TR*224.0/27.0;
 	}
 
-	double A2gg::_delta_func(double x) const
+	double A2gg::calcDelta(double x) const
 	{
 		UNUSED(x);
 		// return -CF*TR*15.0 + NC*TR*10.0/(9.0*27.0);
@@ -70,14 +70,14 @@ namespace Candia2
 
 
 
-	double A2hq::_reg_func(double x) const
+	double A2hq::calcRegular(double x) const
 	{
 		double L = std::log(x);
 		
 		return CF*TR*((1.0+x)*(32.0*S12(1.0-x) + 16.0*L*Li2(1.0-x) - 16.0*Zeta2*L - 4.0/3.0*L*L*L) + (32.0/(3.0*x) + 8.0 - 8.0*x - 32.0/3.0*x*x)*Li2(1.0-x) + (-32.0/(3.0*x) - 8.0 + 8.0*x + 32.0/3.0*x*x)*Zeta2 + (2.0 + 10.0*x + 16.0/3.0*x*x)*L*L - (56.0/3.0 + 88.0/3.0*x + 448.0/9.0*x*x)*L - 448.0/(27.0*x) - 4.0/3.0 - 124.0/3.0*x + 1600.0/27.0*x*x);
 	}
 
-    double A2hg::_reg_func(double x) const
+    double A2hg::calcRegular(double x) const
 	{
 		double L = std::log(x);
 		double M = std::log1p(-x);

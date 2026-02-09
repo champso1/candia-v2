@@ -18,7 +18,7 @@ using uint = unsigned;
 
 #define UNUSED(x) (void)(x)
 #define EPS 1e-8
-
+#define NUM_SINGLET_THREADS 5
 
 namespace Candia2
 {
@@ -146,12 +146,7 @@ namespace Candia2
 	 *  @brief a concept to require that a type has a @a value_type as well as begin and end iterators
 	 */
 	template <typename TContainer>
-	concept CContainer = requires(TContainer&& t)
-	{
-		typename TContainer::value_type;
-	    { std::begin(t) } -> std::input_or_output_iterator;
-		{ std::end(t) } -> std::sentinel_for<decltype(std::begin(t))>;
-	};
+	concept CContainer = std::ranges::range<TContainer> || std::ranges::view<TContainer>;
 
 	/**
 	 *  @brief Returns a string with the values of the container separated by a comma and a space
@@ -160,11 +155,15 @@ namespace Candia2
 	template <CContainer TContainer>
 	std::string vec_to_str(TContainer const& vec)
 	{
-		using value_type = TContainer::value_type;
+		using value_type = decltype(*std::ranges::begin(vec));
 		std::ostringstream ss{};
-		std::copy(vec.begin(), vec.end(), std::ostream_iterator<value_type>(ss, ", "));
+		std::ranges::copy(vec, std::ostream_iterator<value_type>(ss, ", "));
 		return std::move(ss.str());
 	}
+#if ENABLE_THREADING
+	extern thread_local int thread_index;
+	inline void initializeThreadIndex(int index) { thread_index = index; }
+#endif
 }; // namespace Candia2
 
 

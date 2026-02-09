@@ -5,7 +5,10 @@
 #include <algorithm>
 #include <cstdlib>
 #include <cmath>
+#include <gsl/gsl_errno.h>
+#include <gsl/gsl_integration.h>
 #include <iterator>
+#include <limits>
 #include <set>
 #include <ranges>
 
@@ -14,12 +17,18 @@ namespace Candia2
 	Grid::Grid(std::vector<double> const& xtab, uint nx, uint grid_fill_type)
 		: _points(nx), _ntab{}, _xtab{xtab}, _interval_sizes{DEFAULT_GAULEG_POINTS},
 		  _Xi{gauleg_type(DEFAULT_GAULEG_POINTS, 0.0)}, _Wi{1, gauleg_type(DEFAULT_GAULEG_POINTS, 0.0)},
-		  _workspace{std::move(gsl::make_workspace(40))}
+		  _workspace{gsl::make_default_workspace()}
 	{
 		if (!std::ranges::is_sorted(xtab)) {
 			log(LOG_WARNING, "Grid", "xtab array was not sorted. will sort it and continue");
 			std::ranges::sort(_xtab);
 		}
+
+		_workspaces.reserve(DISTS);
+		for (uint i=0; i<DISTS; ++i)
+			_workspaces.emplace_back(gsl::make_default_workspace());
+
+	    assert(gsl::error_handler_set, "GSL error handler failed to set correctly.");
 		
 		switch (grid_fill_type)
 		{
@@ -37,8 +46,12 @@ namespace Candia2
 		  _split_interval{other._split_interval},
 		  _Xi{other._Xi}, _Wi{other._Wi},
 		  _interval_sizes{other._interval_sizes},
+		  _use_gsl_routine_for_high_x(other._use_gsl_routine_for_high_x),
 		  _workspace{std::move(gsl::make_workspace(other._workspace->limit))}
 	{
+		_workspaces.reserve(DISTS);
+		for (uint i=0; i<DISTS; ++i)
+			_workspaces.emplace_back(gsl::make_workspace(other._workspaces[i]->limit));
 	}
 	
 	void Grid::operator=(Grid& other)
@@ -50,7 +63,13 @@ namespace Candia2
 		_Xi = other._Xi;
 		_Wi = other._Wi;
 		_interval_sizes = other._interval_sizes;
+		_use_gsl_routine_for_high_x = other._use_gsl_routine_for_high_x;
 	    _workspace = std::move(gsl::make_workspace(other._workspace->limit));
+
+		_workspaces.clear();
+		_workspaces.reserve(DISTS);
+		for (uint i=0; i<DISTS; ++i)
+			_workspaces.emplace_back(gsl::make_workspace(other._workspaces[i]->limit));
 	}
 
 	void Grid::initGridLog(std::vector<double> const& xtab, const uint nx)
@@ -350,15 +369,57 @@ namespace Candia2
 		return y;
 	}
 
+	static double gsl_convolution_function(double y, void* params_)
+	{
+		Grid::GSLIntegrationParams* params = reinterpret_cast<Grid::GSLIntegrationParams*>(params_);
+		auto& g = params->g;
+		auto x = params->x;
+		auto k = params->k;
+		auto logx = params->logx;
+		auto eplus1 = params->eplus1;
+		auto& A = params->A;
+		auto& E = params->E;
+		auto print_count = params->print_count;
+		auto& conv_res = params->res;
+
+		double a = std::pow(x, 1.0-y);
+		double b = std::pow(x, y);
+
+		double interp1 = g.interpolate(A, b);
+		double interp2 = g.interpolate(A, a);
+
+		double erega = E.calcRegular(a);
+		double eplusb = E.calcPlus(b);
+
+		for (double val : {interp1, interp2, erega, eplusb}) {
+			if (std::isnan(val) || std::isinf(val)) {
+				conv_res.y.emplace_back(y);
+				conv_res.a.emplace_back(a);
+				conv_res.b.emplace_back(b);
+				conv_res.interp1.emplace_back(interp1);
+				conv_res.interp2.emplace_back(interp2);
+				conv_res.erega.emplace_back(erega);
+				conv_res.eplusb.emplace_back(eplusb);
+			}
+		}
+
+		double res = -logx*a*erega*interp1;
+		res -= logx*b*(eplusb*interp2 - eplus1*A[k])/(1.0-b);
+
+		return res;
+	}
+
 	double Grid::convolution(ArrayGrid& A, Expression &E, uint k)
 	{
+		static int print_count = 0;
+
 		double x = _points[k];
 		double logx =  std::log(x);
 		double eplus1 = E.plus(1.0);
 		double ed1 = E.delta(1.0);
 		double res = (eplus1*std::log1p(-x) + ed1) * A[k];
 
-		auto gsl_conv = [&](gauleg_type const& X, gauleg_type const& W, uint s) {
+		auto gauleg_conv = [&](gauleg_type const& X, gauleg_type const& W, uint s) {
 			for (uint i=0; i<s; i++) {
 				double y = X[i];
 				double w = W[i];
@@ -376,15 +437,120 @@ namespace Candia2
 				res -= w*logx*b*(eplusb*interp2 - eplus1*A[k])/(1.0-b);
 			}
 		};
+
+		auto tostr = [](std::vector<double> const& arr) -> std::string {
+			auto vec =
+				std::views::iota(0) | std::views::take(arr.size())
+				| std::views::transform([&arr](int i) -> double { return arr[i]; });
+			return vec_to_str(vec);
+		};
+		auto print_conv_res = [&tostr](ConvolutionRes const& res) {
+			log(LOG_DEBUG, "Grid::convolution()", "    - {:>7} = {: }", "res", res.out);
+			log(LOG_DEBUG, "Grid::convolution()", "    - {:>7} = {}", "y", tostr(res.y));
+			log(LOG_DEBUG, "Grid::convolution()", "    - {:>7} = {}", "a", tostr(res.a));
+			log(LOG_DEBUG, "Grid::convolution()", "    - {:>7} = {}", "b", tostr(res.b));
+			log(LOG_DEBUG, "Grid::convolution()", "    - {:>7} = {}", "interp1", tostr(res.interp1));
+			log(LOG_DEBUG, "Grid::convolution()", "    - {:>7} = {}", "interp2", tostr(res.interp2));
+			log(LOG_DEBUG, "Grid::convolution()", "    - {:>7} = {}", "erega", tostr(res.erega));
+			log(LOG_DEBUG, "Grid::convolution()", "    - {:>7} = {}", "eplusb", tostr(res.eplusb));
+		};
 		
-		if (!_split_interval)
-			gsl_conv(_Xi[0], _Wi[0], _interval_sizes[0]);
-		else {
-			for (uint i=0; i<_Xi.size(); ++i) {
-				auto const& X = _Xi[i];
-				auto const& W = _Wi[i];
-				auto s = _interval_sizes[i];
-				gsl_conv(X, W, s);
+
+		auto gauleg_conv2 = [&](gauleg_type const& X, gauleg_type const& W, uint s) -> ConvolutionRes {
+			ConvolutionRes res{};
+			for (uint i=0; i<s; i++) {
+				double y = X[i];
+				double w = W[i];
+
+				double a = std::pow(x, 1.0-y);
+				double b = std::pow(x, y);
+
+				double interp1 = interpolate(A, b);
+				double interp2 = interpolate(A, a);
+
+				double erega = E.regular(a);
+				double eplusb = E.plus(b);
+
+				res.out -= w*logx*a*erega*interp1;
+				res.out -= w*logx*b*(eplusb*interp2 - eplus1*A[k])/(1.0-b);
+
+				for (double val : {interp1, interp2, erega, eplusb}) {
+					if (std::isnan(val) || std::isinf(val)) {
+						res.y.emplace_back(y);
+						res.a.emplace_back(a);
+						res.b.emplace_back(b);
+						res.interp1.emplace_back(interp1);
+						res.interp2.emplace_back(interp2);
+						res.erega.emplace_back(erega);
+						res.eplusb.emplace_back(eplusb);
+					}
+				}
+			}
+			return res;
+		};
+		
+		
+		if (!_split_interval) {
+			gauleg_conv(_Xi[0], _Wi[0], _interval_sizes[0]);
+		} else {
+			if (!_use_gsl_routine_for_high_x) {
+			    for (uint i=0; i<_Xi.size(); ++i) {
+					auto const& X = _Xi[i];
+					auto const& W = _Wi[i];
+					auto s = _interval_sizes[i];
+					gauleg_conv(X, W, s);
+				}
+			} else {
+				for (uint i=0; i<_Xi.size()-1; ++i) {
+					auto const& X = _Xi[i];
+					auto const& W = _Wi[i];
+					auto s = _interval_sizes[i];
+					gauleg_conv(X, W, s);
+				}
+
+				ConvolutionRes gauleg_res_final_interval{};
+				{
+					auto const& X = _Xi.back();
+					auto const& W = _Wi.back();
+					auto s = _interval_sizes.back();
+					gauleg_res_final_interval = gauleg_conv2(X, W, s);
+				}
+
+				GSLIntegrationParams p{
+					.g = *this,
+					.x = x,
+					.k = k,
+					.logx = logx,
+					.eplus1 = eplus1,
+					.A = A,
+					.E = E,
+					.res = ConvolutionRes{}};
+				
+				gsl_function f{
+					.function = gsl_convolution_function,
+					.params = reinterpret_cast<void*>(&p) };
+				double a = 0.8, b = 1.0-1e-10;
+				double epsabs = 0.0, epsrel = 1e-5;
+				int key = GSL_INTEG_GAUSS41;
+				std::size_t limit = gsl::DEFAULT_WORKSPACE_SIZE;
+				double out{}, abserr{};
+				gsl_integration_workspace* w = _workspaces[thread_index+1].get();
+
+				int rc = gsl_integration_qag(
+					&f, a, b, epsabs, epsrel,
+					limit, key, w,
+					&out, &abserr);
+				p.res.out = out;
+				if (rc != GSL_SUCCESS) {
+					log(LOG_WARNING, "Grid::convolution()", "{:>4} GSL integration routine failed for x = {: }", print_count, x);
+					log(LOG_WARNING, "Grid::convolution()", "{:>4} Found {}, expected {}", print_count, out, gauleg_res_final_interval.out);
+					log(LOG_WARNING, "Grid::convolution()", "{:>4} Printing nan results (if any) from GSL integration:", print_count);
+					print_conv_res(p.res);
+					
+					++print_count;
+				}
+				
+				res += out;
 			}
 		}
 		
