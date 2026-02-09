@@ -179,9 +179,12 @@ namespace Candia2
                         }
 
 						std::vector<std::thread> threads{};
-						for (uint i=0; i<NUM_SINGLET_THREADS-1; ++i)
-							threads.emplace_back(&DGLAPSolver::_mt_EvolveDistributions_S_NNLO, this, t, i*part_size, (i+1)*part_size);
-						threads.emplace_back(&DGLAPSolver::_mt_EvolveDistributions_S_NNLO, this, t, (NUM_SINGLET_THREADS-1)*part_size, size);
+						for (uint i=0; i<NUM_SINGLET_THREADS-1; ++i) {
+							threads.emplace_back(&DGLAPSolver::_mt_EvolveDistributions_S_NNLO, this,
+								t, i, i*part_size, (i+1)*part_size);
+						}
+						threads.emplace_back(&DGLAPSolver::_mt_EvolveDistributions_S_NNLO, this,
+							t, NUM_SINGLET_THREADS, (NUM_SINGLET_THREADS-1)*part_size, size);
 
 						for (std::thread& t : threads)
 							t.join();
@@ -269,9 +272,12 @@ namespace Candia2
 
 					{
 						std::vector<std::thread> threads{};
-						for (uint i=0; i<NUM_SINGLET_THREADS-1; ++i)
-							threads.emplace_back(&DGLAPSolver::_mt_EvolveDistributions_S_N3LO, this, 3, i*part_size, (i+1)*part_size);
-						threads.emplace_back(&DGLAPSolver::_mt_EvolveDistributions_S_N3LO, this, 3, (NUM_SINGLET_THREADS-1)*part_size, size);
+						for (uint i=0; i<NUM_SINGLET_THREADS-1; ++i) {
+							threads.emplace_back(&DGLAPSolver::_mt_EvolveDistributions_S_N3LO, this,
+								3, i, i*part_size, (i+1)*part_size);
+						}
+						threads.emplace_back(&DGLAPSolver::_mt_EvolveDistributions_S_N3LO, this,
+							3, NUM_SINGLET_THREADS, (NUM_SINGLET_THREADS-1)*part_size, size);
 
 						for (std::thread& t : threads)
 							t.join();
@@ -294,9 +300,12 @@ namespace Candia2
                         }
 
 						std::vector<std::thread> threads{};
-						for (uint i=0; i<NUM_SINGLET_THREADS-1; ++i)
-							threads.emplace_back(&DGLAPSolver::_mt_EvolveDistributions_S_N3LO, this, t, i*part_size, (i+1)*part_size);
-						threads.emplace_back(&DGLAPSolver::_mt_EvolveDistributions_S_N3LO, this, t, (NUM_SINGLET_THREADS-1)*part_size, size);
+						for (uint i=0; i<NUM_SINGLET_THREADS-1; ++i) {
+							threads.emplace_back(&DGLAPSolver::_mt_EvolveDistributions_S_N3LO, this,
+								t, i, i*part_size, (i+1)*part_size);
+						}
+						threads.emplace_back(&DGLAPSolver::_mt_EvolveDistributions_S_N3LO, this,
+							t, NUM_SINGLET_THREADS, (NUM_SINGLET_THREADS-1)*part_size, size);
 
 						for (std::thread& t : threads)
 							t.join();
