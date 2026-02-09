@@ -380,7 +380,6 @@ namespace Candia2
 		auto& A = params->A;
 		auto& E = params->E;
 		auto print_count = params->print_count;
-		auto& conv_res = params->res;
 
 		double a = std::pow(x, 1.0-y);
 		double b = std::pow(x, y);
@@ -390,18 +389,6 @@ namespace Candia2
 
 		double erega = E.calcRegular(a);
 		double eplusb = E.calcPlus(b);
-
-		for (double val : {interp1, interp2, erega, eplusb}) {
-			if (std::isnan(val) || std::isinf(val)) {
-				conv_res.y.emplace_back(y);
-				conv_res.a.emplace_back(a);
-				conv_res.b.emplace_back(b);
-				conv_res.interp1.emplace_back(interp1);
-				conv_res.interp2.emplace_back(interp2);
-				conv_res.erega.emplace_back(erega);
-				conv_res.eplusb.emplace_back(eplusb);
-			}
-		}
 
 		double res = -logx*a*erega*interp1;
 		res -= logx*b*(eplusb*interp2 - eplus1*A[k])/(1.0-b);
@@ -437,58 +424,6 @@ namespace Candia2
 				res -= w*logx*b*(eplusb*interp2 - eplus1*A[k])/(1.0-b);
 			}
 		};
-
-		auto tostr = [](std::vector<double> const& arr) -> std::string {
-			auto vec =
-				std::views::iota(0) | std::views::take(arr.size())
-				| std::views::transform([&arr](int i) -> double { return arr[i]; });
-			return vec_to_str(vec);
-		};
-		auto print_conv_res = [&tostr](ConvolutionRes const& res) {
-			log(LOG_DEBUG, "Grid::convolution()", "    - {:>7} = {: }", "res", res.out);
-			log(LOG_DEBUG, "Grid::convolution()", "    - {:>7} = {}", "y", tostr(res.y));
-			log(LOG_DEBUG, "Grid::convolution()", "    - {:>7} = {}", "a", tostr(res.a));
-			log(LOG_DEBUG, "Grid::convolution()", "    - {:>7} = {}", "b", tostr(res.b));
-			log(LOG_DEBUG, "Grid::convolution()", "    - {:>7} = {}", "interp1", tostr(res.interp1));
-			log(LOG_DEBUG, "Grid::convolution()", "    - {:>7} = {}", "interp2", tostr(res.interp2));
-			log(LOG_DEBUG, "Grid::convolution()", "    - {:>7} = {}", "erega", tostr(res.erega));
-			log(LOG_DEBUG, "Grid::convolution()", "    - {:>7} = {}", "eplusb", tostr(res.eplusb));
-		};
-		
-
-		auto gauleg_conv2 = [&](gauleg_type const& X, gauleg_type const& W, uint s) -> ConvolutionRes {
-			ConvolutionRes res{};
-			for (uint i=0; i<s; i++) {
-				double y = X[i];
-				double w = W[i];
-
-				double a = std::pow(x, 1.0-y);
-				double b = std::pow(x, y);
-
-				double interp1 = interpolate(A, b);
-				double interp2 = interpolate(A, a);
-
-				double erega = E.regular(a);
-				double eplusb = E.plus(b);
-
-				res.out -= w*logx*a*erega*interp1;
-				res.out -= w*logx*b*(eplusb*interp2 - eplus1*A[k])/(1.0-b);
-
-				for (double val : {interp1, interp2, erega, eplusb}) {
-					if (std::isnan(val) || std::isinf(val)) {
-						res.y.emplace_back(y);
-						res.a.emplace_back(a);
-						res.b.emplace_back(b);
-						res.interp1.emplace_back(interp1);
-						res.interp2.emplace_back(interp2);
-						res.erega.emplace_back(erega);
-						res.eplusb.emplace_back(eplusb);
-					}
-				}
-			}
-			return res;
-		};
-		
 		
 		if (!_split_interval) {
 			gauleg_conv(_Xi[0], _Wi[0], _interval_sizes[0]);
@@ -506,14 +441,6 @@ namespace Candia2
 					auto const& W = _Wi[i];
 					auto s = _interval_sizes[i];
 					gauleg_conv(X, W, s);
-				}
-
-				ConvolutionRes gauleg_res_final_interval{};
-				{
-					auto const& X = _Xi.back();
-					auto const& W = _Wi.back();
-					auto s = _interval_sizes.back();
-					gauleg_res_final_interval = gauleg_conv2(X, W, s);
 				}
 
 				GSLIntegrationParams p{
@@ -542,12 +469,10 @@ namespace Candia2
 					&out, &abserr);
 				p.res.out = out;
 				if (rc != GSL_SUCCESS) {
-					log(LOG_WARNING, "Grid::convolution()", "{:>4} GSL integration routine failed for x = {: }", print_count, x);
-					log(LOG_WARNING, "Grid::convolution()", "{:>4} Found {}, expected {}", print_count, out, gauleg_res_final_interval.out);
-					log(LOG_WARNING, "Grid::convolution()", "{:>4} Printing nan results (if any) from GSL integration:", print_count);
-					print_conv_res(p.res);
-					
-					++print_count;
+					if (print_count++ > 0) 
+						log(LOG_WARNING, "Grid::convolution()", "GSL integration routine failed for x = {: }", print_count, x);
+					if (print_count == 0)
+						log(LOG_WARNING, "Grid::convolution()", "Suppressing further GSL relating warnings.");
 				}
 				
 				res += out;

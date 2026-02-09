@@ -28,12 +28,19 @@ namespace Candia2
 		static constexpr uint DEFAULT_WORKSPACE_SIZE = 1000;
 		inline auto make_default_workspace = [](){return workspace_type(gsl_integration_workspace_alloc(DEFAULT_WORKSPACE_SIZE), workspace_deleter); };
 
+		static inline int error_print_count = 20;
+
 		extern "C" {
 			static inline void error_handler(
 				const char * reason, const char * file,
 				int line, int gsl_errno)
 			{
-				log(LOG_ERROR_NOQUIT, "GSL", "({}:{}) {}", file, line, reason);
+				if (error_print_count > 0) {
+					log(LOG_ERROR_NOQUIT, "GSL", "({}:{}) {}", file, line, reason);
+					error_print_count--;
+				}
+				if (error_print_count == 0)
+					log(LOG_WARNING, "GSL", "Reached more than 20 GSL failures, suppressing additional ones.");
 			}
 		}
 

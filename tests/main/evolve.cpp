@@ -109,6 +109,7 @@ int main(int argc, char *argv[]) {
 	fs::path log_path = fs::current_path()/"log"/logfile_ss.str();
 	std::ofstream log_output_file(log_path);
 	set_log_output_stream(log_output_file);
+	showThreadOutput();
 	
 	
 	vector<double> xtab{1e-5, 1e-4, 1e-3, 1e-2, 0.1, 0.3, 0.5, 0.7, 0.9, 1.0};
