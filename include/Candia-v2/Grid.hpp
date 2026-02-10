@@ -39,8 +39,10 @@ namespace Candia2
 					log(LOG_ERROR_NOQUIT, "GSL", "({}:{}) {}", file, line, reason);
 					error_print_count--;
 				}
-				if (error_print_count == 0)
+				if (error_print_count == 0) {
 					log(LOG_WARNING, "GSL", "Reached more than 20 GSL failures, suppressing additional ones.");
+					error_print_count--;
+				}
 			}
 		}
 
