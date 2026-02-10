@@ -7,6 +7,7 @@
 #define __ALPHAS_HPP
 
 #include <array>
+#include <cmath>
 
 #include "Candia-v2/Common.hpp"
 
@@ -32,7 +33,8 @@ namespace Candia2
 		double _beta2{}; //!< \f$\beta_2\f$
 		double _beta3{}; //!< \f$\beta_3\f$
 
-		double _L{}; //!< log (mu_R/mu_F)
+		double _mur2_muf2; //!< \f$\frac{mu_R^2}/{mu_F^2}\f$, NO LOG
+		double _L{}; //!< \f$\log(\frac{mu_R^2}/{mu_F^2})\f$
 
 		std::array<double, 8> _masses{}; //!< Values of quark masses.
 
@@ -54,10 +56,10 @@ namespace Candia2
 		 *  @param Q0 The initial evolution energy.
 		 *  @param Qf The final evolution energy.
 		 *  @param alpha0 The value of \f$\alpha_s\f$ at the initial energy.
-		 *  @param log_mur2_muf2 The ratio of the renormalization scale \f$\mu_r^2\f$ to the factorization scale \f$\mu_f^2\f$.
+		 *  @param mur2_muf2 The ratio of the renormalization scale \f$\mu_R^2\f$ to the factorization scale \f$\mu_F^2\f$.
 		 */
-	    AlphaS(uint order, double Q0, double Qf, double alpha0, double log_mur2_muf2)
-			: _order{order}, _Q0{Q0}, _Qf{Qf}, _alpha0{alpha0}, _L{log_mur2_muf2}, _scheme{UNSET}
+	    AlphaS(uint order, double Q0, double Qf, double alpha0, double mur2_muf2)
+			: _order{order}, _Q0{Q0}, _Qf{Qf}, _alpha0{alpha0}, _mur2_muf2{mur2_muf2}, _L{std::log(mur2_muf2)}, _scheme{UNSET}
 		{}
 
 		/**

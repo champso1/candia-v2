@@ -30,8 +30,10 @@ namespace Candia2
 		Grid _grid; //!< main @a Grid object
 		double _Qf{}; //!< final energy value to evolve to
 		AlphaS _alpha_s; //!< main @a AlphaS object
-		double _mur2_muf2{}; //!< mu_r^2/mu_f^2
-		double _log_mur2_muf2{}; //!< log(_mur2_muf2)
+		double _mur2_muf2{}; //!< \f$mu_r^2/mu_f^2\f$
+		double _log_mur2_muf2{}; //!< \f$\log(\frac{\mu_r^2}{\mu_f^2})\f$
+		double _log_muf2_mur2{}; //!< \f$\log(\frac{\mu_f^2}{\mu_r^2})\f$
+		bool _is_scale_difference{}; //!< convenience flag for if \f$\mu_r \neq \mu_f\f$
 
 		// TODO: remove the nfi and nff variables, they shouldn't be needed anymore
 		// since they are stored inside the alpha_s object
@@ -97,7 +99,7 @@ namespace Candia2
 		 *  @param iterations Number of iterations to complete (the outer, s-index)
 		 *  @param trunc_idx Number of terms in the singlet expansion to truncate at
 		 *  @param initial_dist (const) reference to a @a Distribution object
-		 *  @param kr The ratio of \f$\mu_f^2/\mu_r^2\f$
+		 *  @param mur2_muf2 The ratio of \f$\mu_r^2/\mu_f^2\f$
 		 */
 	    DGLAPSolver(
 			uint order, Grid& grid, AlphaS const& alpha_s,

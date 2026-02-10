@@ -87,7 +87,6 @@ int main(int argc, char *argv[]) {
 	if (argc != 6 && argc != 7)
 		usage();
 
-	getDebugFlag() = true;
 	const uint order = stoi(argv[1]);
 	const uint num_grid_points = stoi(argv[2]);
 	const uint iterations = stoi(argv[3]);
@@ -98,7 +97,7 @@ int main(int argc, char *argv[]) {
 	std::string datafile_name{};
 	if (argc == 7)
 		datafile_name = argv[6];
-	
+
 	ostringstream logfile_ss{};
 	logfile_ss << ((order == 3) ? "n3lo" : (order == 2) ? "nnlo" : (order == 1) ? "nlo" : "lo");
 	logfile_ss << "-g" << num_grid_points << "-i" << iterations << "-t" << trunc_idx << "-r" << setprecision(2) << kr << ".log";
@@ -108,9 +107,12 @@ int main(int argc, char *argv[]) {
 	}
 	fs::path log_path = fs::current_path()/"log"/logfile_ss.str();
 	std::ofstream log_output_file(log_path);
-	set_log_output_stream(log_output_file);
-	showThreadOutput();
-	
+
+	auto& options = getLogOptions();
+	options.show_debug_messages = true;
+	options.show_thread_output = true;
+	options.use_log_output_stream = true;
+	options.log_output_stream = log_output_file;
 	
 	vector<double> xtab{1e-5, 1e-4, 1e-3, 1e-2, 0.1, 0.3, 0.5, 0.7, 0.9, 1.0};
 	Grid grid(xtab, num_grid_points, Grid::LOG_LIN);

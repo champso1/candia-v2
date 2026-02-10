@@ -1,5 +1,6 @@
 #include "Candia-v2/AlphaS.hpp"
-#include "Candia-v2/Distribution.hpp"
+
+#include <cmath>
 
 namespace Candia2
 {
@@ -179,36 +180,38 @@ namespace Candia2
 
 	void AlphaS::calculateThresholdValues()
 	{
-		uint nf1{};
+		// TODO: maybe add a flag for if we want to do matching even if
+		// we are in the VFNS?
+
+		double mur_muf = std::sqrt(_mur2_muf2);
+		uint nf1 = 0;
 		// set nf1 correctly
 		// TODO: handle kr != 1
-		for (nf1=_nff; _Q0<_masses[nf1]; nf1--);
+		for (nf1=_nff; _Q0<mur_muf*_masses[nf1]; nf1--);
 		if (nf1<_nfi)
 			nf1++;
 
 		update(nf1);
 
-		// TODO: check some flag to ensure we are doing matching, not just that are >=NNLO
-		// also, we do matching at NLO for mu_R^2/mu_F^2 != 1
-		_post[nf1] = evaluate(_Q0, _masses[nf1], _alpha0);
-		_pre[nf1]  = _order >= 2 ? preMatch(_post[nf1], nf1) : _post[nf1];
+		_post[nf1] = evaluate(_Q0, mur_muf*_masses[nf1], _alpha0);
+		_pre[nf1]  = preMatch(_post[nf1], nf1); // might not need this value?
 
-		_pre[nf1+1] =  evaluate(_Q0, _masses[nf1+1], _alpha0);
-		_post[nf1+1] = _order >= 2 ? postMatch(_pre[nf1+1], nf1) : _pre[nf1+1];
+		_pre[nf1+1] =  evaluate(_Q0, mur_muf*_masses[nf1+1], _alpha0);
+		_post[nf1+1] = postMatch(_pre[nf1+1], nf1);
 
 		uint nf;
 		for (nf=nf1-1; nf>=_nfi; nf--) {
 			update(nf);
 			
-			_post[nf] = evaluate(_masses[nf+1], _masses[nf], _pre[nf+1]);
-			_pre[nf]  = _order >= 2 ? preMatch(_post[nf], nf) : _post[nf];
+			_post[nf] = evaluate(mur_muf*_masses[nf+1], mur_muf*_masses[nf], _pre[nf+1]);
+			_pre[nf]  = preMatch(_post[nf], nf);
 		}
 
 		for (nf=nf1+1; nf<=_nff+1; nf++) {
 			update(nf-1);
 			
-			_pre[nf]  = evaluate(_masses[nf-1], _masses[nf], _post[nf-1]);
-			_post[nf] = _order >= 2 ? postMatch(_pre[nf], nf) : _pre[nf];
+			_pre[nf]  = evaluate(mur_muf*_masses[nf-1], mur_muf*_masses[nf], _post[nf-1]);
+			_post[nf] = postMatch(_pre[nf], nf);
 		}
 		log(LOG_DEBUG, "AlphaS", "Computed alpha_s threshold values for VFNS. They are:");
 
@@ -235,7 +238,7 @@ namespace Candia2
 		// otherwise, 4th order runge-kutta
 		const static uint steps = 200;
 		double h = 2.0*std::log(Qf/Qi) / static_cast<double>(steps);
-		double k1, k2, k3, k4;
+		double k1{}, k2{}, k3{}, k4{};
 		double a = alpha0;
 		
 		for (uint i=0; i<steps; i++) {

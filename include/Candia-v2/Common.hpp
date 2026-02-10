@@ -23,45 +23,29 @@ using uint = unsigned;
 namespace Candia2
 {
 	/**
-	 *  @defgroup constants Constants
-	 *  @{
-	 */
-	constexpr const double CF    = 4.0/3.0;
-	constexpr const double NC    = 3.0;
-	constexpr const double TR    = 0.5;
-	constexpr const double MZ    = 91.1876;
-	constexpr const double PI = std::numbers::pi;
-	constexpr const double PI_2 = PI*PI;
-	constexpr const double PI_3 = PI*PI*PI;
-	constexpr const double Zeta2 = PI*PI/6.0;
-	constexpr const double Zeta3 = 1.2020569031595942854;
+	*  @defgroup constants Constants
+	*  @{
+	*/
+	constexpr double CF    = 4.0/3.0;
+	constexpr double NC    = 3.0;
+	constexpr double TR    = 0.5;
+	constexpr double MZ    = 91.1876;
+	constexpr double PI = std::numbers::pi;
+	constexpr double PI_2 = PI*PI;
+	constexpr double PI_3 = PI*PI*PI;
+	constexpr double Zeta2 = PI*PI/6.0;
+	constexpr double Zeta3 = 1.2020569031595942854;
 	/** @} */
 
-	// TODO: better handle defaults
 	/**
-	 *  @defgroup defaults Program Defaults
-	 *  @{
-	 */
+	*  @defgroup defaults Program Defaults
+	*  @{
+	*/
 	constexpr const uint DISTS = 37;
 	constexpr const uint INTERP_POINTS = 4;
 	constexpr const uint DEFAULT_ITERATIONS = 10;
 	constexpr const uint DEFAULT_TRUNC_IDX = 5;
 	/** @{ */
-
-	struct Defaults final
-	{
-		uint dists{37};
-		uint interp_points{4};
-		uint iterations{10};
-		uint trunc_idx{5};
-
-		inline static Defaults& getInstance()
-		{
-			static Defaults defaults{};
-			return defaults;
-		};
-	};
-	inline auto defaults = [](){ return Defaults::getInstance(); };
 
 	/**
 	 *  @brief Template class for more easily typing an @a std::vector with multiple layers of nesting.
@@ -113,19 +97,26 @@ namespace Candia2
 		ANSI_COLOR_RED,
 		ANSI_COLOR_CYAN};
 
-	// TODO: better handle setting global flags
-	inline bool debug_flag{false}; //!< whether to print logged messaged tagged with LOG_DEBUG
-	/** Getter/Setter for the debug flag */
-	inline bool& getDebugFlag() { return debug_flag; }
+	/** @brief struct to store flags/options for logging */
+	struct LogOptions final
+	{
+		bool show_debug_messages{false}; //!< switch for showing debug messages. only useful for debugging, default off
+		bool show_thread_output{false};  //!< switch for showing the output from threads. often floods the console, default off
 
-	inline bool show_thread_output{false}; //!< whether to print all info from threads
-	/** sets the flag to show debug output (default false) */
-	inline void showThreadOutput() { show_thread_output = true; }
-	
-	inline bool use_log_output_stream{false}; //!< flag for whether to use an additional logging output stream
-	inline std::reference_wrapper<std::ostream> log_output_stream = std::ref(std::cout); //!< additional output stream
-	/** Setter for the additional logging output stream */
-	inline void set_log_output_stream(std::ostream& os) { log_output_stream = os; use_log_output_stream = true; }
+		bool use_log_output_stream{false}; //!< switch for whether we are logging to another output stream, like a file
+		std::reference_wrapper<std::ostream> log_output_stream{std::ref(std::cerr)}; //!< actual output stream. only used if @a use_log_output_stream is true
+
+		inline static LogOptions makeDefault()
+		{
+			return LogOptions{};
+		}
+	};
+	/** @brief global options struct */
+	inline LogOptions _log_options = LogOptions::makeDefault();
+	/** @brief returns the global options for setting values */
+	inline LogOptions& getLogOptions() { return _log_options; }
+	/** @brief setter for apply some desired options */
+	inline void setLogOptions(LogOptions const& o) { _log_options = LogOptions{o}; };
 
 	/**
 	 *  @brief Prints a message to standard out and possibly an additional stream with a nice prefix.
@@ -137,17 +128,17 @@ namespace Candia2
 	template <typename... TArgs>
 	void log(uint log_type, std::string_view prefix, std::format_string<TArgs...> fmt_string, TArgs&& ...args)
 	{
-		if (log_type == LOG_DEBUG && !debug_flag)
+		if (log_type == LOG_DEBUG && !getLogOptions().show_debug_messages)
 			return;
 
-		if (log_type == LOG_THREAD && !show_thread_output)
+		if (log_type == LOG_THREAD && !getLogOptions().show_thread_output)
 			return;
 			
 		std::string log_text = std::vformat(fmt_string.get(), std::make_format_args(args...));
 		std::string all_text = std::format("{}[{}] {}: {}{}\n",
 			log_string_colors[log_type], log_string_reps[log_type], prefix, log_text, ANSI_COLOR_RESET);
-		if (use_log_output_stream)
-			log_output_stream.get() << all_text;
+		if (getLogOptions().use_log_output_stream)
+			getLogOptions().log_output_stream.get() << all_text;
 		std::cout << all_text;
 
 		if (log_type == LOG_ERROR)
@@ -163,8 +154,8 @@ namespace Candia2
 	void log(std::format_string<TArgs...> fmt_string, TArgs&&... args)
 	{
 		std::string log_text = std::vformat(fmt_string.get(), std::make_format_args(args...));
-		if (use_log_output_stream)
-			log_output_stream.get() << log_text;
+		if (getLogOptions().use_log_output_stream)
+			getLogOptions().log_output_stream.get() << log_text;
 		std::cout << log_text;
 	}
 

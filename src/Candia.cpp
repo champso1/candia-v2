@@ -52,7 +52,7 @@ namespace Candia2
 		double mur2_muf2) 
 		: _order{order},  _grid{grid}, _Qf{Qf},
 		  _alpha_s{alpha_s},
-		  _mur2_muf2{mur2_muf2}, _log_mur2_muf2{std::log(mur2_muf2)},
+		  _mur2_muf2{mur2_muf2}, _log_mur2_muf2{std::log(mur2_muf2)}, _log_muf2_mur2{-_log_mur2_muf2}, _is_scale_difference{mur2_muf2 != 1.0},
 		  _iterations{iterations}, _trunc_idx{trunc_idx},
 		  _use_n3lo_matching_conditions{true}
 	{
