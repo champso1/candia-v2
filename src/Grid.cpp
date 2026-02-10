@@ -463,9 +463,9 @@ namespace Candia2
 				double out{}, abserr{};
 				gsl_integration_workspace* w = _workspaces[thread_index+1].get();
 
-				int rc = gsl_integration_qag(
+				int rc = gsl_integration_qags(
 					&f, a, b, epsabs, epsrel,
-					limit, key, w,
+					limit, w,
 					&out, &abserr);
 				p.res.out = out;
 				if (rc != GSL_SUCCESS) {
