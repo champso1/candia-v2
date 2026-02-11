@@ -7,6 +7,8 @@
 
 namespace Candia2
 {
+	thread_local int thread_index = -1;
+	
     void DGLAPSolver::evolveSinglet(
         std::reference_wrapper<std::vector<ArrayGrid>> arr, double L1
     ) {

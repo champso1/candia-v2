@@ -185,10 +185,10 @@ namespace Candia2
 		std::ranges::copy(vec, std::ostream_iterator<value_type>(ss, ", "));
 		return std::move(ss.str());
 	}
+
 #if ENABLE_THREADING
 	extern thread_local int thread_index;
 	inline void initializeThreadIndex(int index) {
-		log(LOG_THREAD, "initializeThreadIndex", "Initializing new thread with index {}.", index);
 		thread_index = index;
 	}
 #endif
