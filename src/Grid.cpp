@@ -11,12 +11,14 @@
 #include <limits>
 #include <set>
 #include <ranges>
+#include <tuple>
+#include <utility>
 
 namespace Candia2
 {
 	Grid::Grid(std::vector<double> const& xtab, uint nx, uint grid_fill_type)
 		: _points(nx), _ntab{}, _xtab{xtab}, _interval_sizes{DEFAULT_GAULEG_POINTS},
-		  _Xi{gauleg_type(DEFAULT_GAULEG_POINTS, 0.0)}, _Wi{1, gauleg_type(DEFAULT_GAULEG_POINTS, 0.0)},
+		  _Xi(1, gauleg_type(DEFAULT_GAULEG_POINTS, 0.0)), _Wi(1, gauleg_type(DEFAULT_GAULEG_POINTS, 0.0)),
 		  _workspace{gsl::make_default_workspace()}
 	{
 		if (!std::ranges::is_sorted(xtab)) {
@@ -151,8 +153,7 @@ namespace Candia2
 
 	void Grid::initGridLogLin(std::vector<double> const& xtab, uint nx)
 	{
-		log(LOG_WARNING, "Grid", "Method 2 is unfinished. Prefer method 3 for now.");
-		log(LOG_WARNING, "Grid", "Will ignore supplied x-tab. Supplied number of grid points will actually be 1/3 of total grid points.");
+		log(LOG_WARNING, "Grid", "This grid initialization method is unfinished.");
 
 		double log_min = std::log10(1e-5);
 		double log_max = std::log10(0.1);
@@ -165,6 +166,9 @@ namespace Candia2
 		double lin2_min = 0.75;
 		double lin2_max = 1.0;
 
+		double lin3_min = 0.1;
+		double lin3_max = 1.0;
+
 		_points.clear();
 		for (uint i=0; i<num_log_intervals; ++i) {
 			double l0 = log_min + i*dlog;
@@ -175,6 +179,7 @@ namespace Candia2
 			}
 		}
 
+		/*
 		for (uint k=0; k<nx; ++k) {
 		    double x = lin1_min + (lin1_max-lin1_min)*k/static_cast<double>(nx);
 			_points.emplace_back(x);
@@ -183,12 +188,16 @@ namespace Candia2
 		    double x = lin2_min + (lin2_max-lin2_min)*k/static_cast<double>(nx-1);
 			_points.emplace_back(x);
 		}
+		*/
+		for (uint k=0; k<nx; ++k) {
+		    double x = lin3_min + (lin3_max-lin3_min)*k/static_cast<double>(nx-1);
+			_points.emplace_back(x);
+		}
 		
 		std::set<double> points_set(_points.begin(), _points.end());
 		points_set.insert(xtab.begin(), xtab.end());
 		_points = std::vector<double>(points_set.begin(), points_set.end());
 		
-
 		_ntab.clear();
 		for (double x : xtab) {
 			if (auto it = std::find(_points.begin(), _points.end(), x); it != _points.end()) {
@@ -253,12 +262,8 @@ namespace Candia2
 		std::vector<double> const& intervals,
 		std::vector<double> const& sizes)
 	{
+		// this means we just accept the default splitting
 		if (intervals.empty() && sizes.empty()) {
-			_Xi.resize(1);
-			_Xi[0] = gauleg_type(100, 0.0);
-			_Wi.resize(1);
-			_Wi[0] = gauleg_type(100, 0.0);
-			initGauLeg(1e-5, 1.0, _Xi[0], _Wi[0]);
 			_split_interval = true;
 		    return;
 		}
@@ -279,6 +284,12 @@ namespace Candia2
 		_Xi.clear();
 		_Wi.clear();
 		_interval_sizes.clear();
+		{
+			gauleg_type X(DEFAULT_GAULEG_POINTS, 0.0), W(DEFAULT_GAULEG_POINTS, 0.0);
+			initGauLeg(0, 1.0, X, W);
+			_Xi.emplace_back(X);
+			_Wi.emplace_back(W);
+		}
 		
 		auto points_per_interval = size()/num_intervals;
 		
@@ -302,7 +313,7 @@ namespace Candia2
 		auto tie =
 			std::views::iota(0)
 			| std::views::take(num_intervals)
-			| std::views::transform([&](int i){ return std::make_tuple(i, _Xi[i], _Wi[i], _interval_sizes[i]); });
+			| std::views::transform([&](int i){ return std::make_tuple(i, _Xi[i+1], _Wi[i+1], _interval_sizes[i]); });
 		for (auto const& [i, X, W, s] : tie) {
 			auto min = intervals[i];
 			auto max = intervals[i+1];
@@ -313,7 +324,7 @@ namespace Candia2
 				log(LOG_DEBUG, "Grid::splitConvolution()", "  - {}", x);
 		}
 		
-		assert(_Xi.size() == _Wi.size() && _Xi.size() == _interval_sizes.size(), "Failed to split convolution intervals.");
+		assert(_Xi.size() == _Wi.size() && _Xi.size() == _interval_sizes.size()+1, "Failed to split convolution intervals.");
 		_split_interval = true;
 	}
 
@@ -411,31 +422,30 @@ namespace Candia2
 		return res;
 	}
 
-	double Grid::largeXMappingFunction(
-		uint k, double x,
+	double Grid::largeXMappingFunctionBase(
+		uint k, double x, YandJAccessor const& yandjaccessor,
 		Expression& E, ArrayGrid& A,
 		double eplus1,
-		gauleg_type const& X, gauleg_type const& W, uint s)
+		gauleg_type const& X, gauleg_type const& W)
 	{
+		double ak = A[k];
 		double out = 0.0;
+		uint s = X.size();
 		for (uint i=0; i<s; i++) {
 			double z = X[i];
 			double w = W[i];
 
-			double d1z = 1.0-z;
-			double d1z2 = d1z*d1z;
-			double jac = 1.8*d1z;				
-			double y = 1.0 - 0.9*d1z2;
+			auto [y, J] = yandjaccessor(x, z);
 			double a = x/y;
 			double d1y = 1.0-y;
 
 			double erega = E.calcRegular(a);
 			double interpy = interpolate(A, y);
-			out += w*jac * (a/y)*erega*interpy;
+			out += w*J * (a/y)*erega*interpy;
 
 			double eplusy = E.calcPlus(y);
 			double interpa = interpolate(A, a);
-			out += w*jac * (1.0/d1y)*(eplusy*interpa - eplus1*A[k]);
+			out += w*J * (1.0/d1y)*(eplusy*interpa - eplus1*ak);
 		}
 		return out;
 	}
@@ -452,8 +462,8 @@ namespace Candia2
 		double ed1 = E.delta(1.0);
 		double res = (eplus1*std::log1p(-x) + ed1) * A[k];
 
-		auto gauleg_conv = [&](gauleg_type const& X, gauleg_type const& W, uint s) {
-			for (uint i=0; i<s; i++) {
+		auto gauleg_conv = [&](gauleg_type const& X, gauleg_type const& W) {
+			for (uint i=0; i<X.size(); i++) {
 				double y = X[i];
 				double w = W[i];
 
@@ -471,77 +481,44 @@ namespace Candia2
 			}
 		};
 
-		auto gauleg_conv2 = [&](gauleg_type const& X, gauleg_type const& W, uint s) {
-			double out = 0.0;
-			for (uint i=0; i<s; i++) {
-				double y = X[i];
-				double w = W[i];
+		static YandJAccessor f2  = [](double x, double z) { return std::make_pair(0.1+0.65*z, 0.65); };
+		static YandJAccessor f2x = [](double x, double z) { return std::make_pair(x+(0.75-x)*z, 0.75-x); };
+		static YandJAccessor f3  = [](double x, double z) { return std::make_pair(0.75+0.25*z, 0.25); };
+		static YandJAccessor f3x = [](double x, double z) { return std::make_pair(x+(1.0-x)*z, 1.0-x); };
 
-				double a = std::pow(x, 1.0-y);
-				double b = std::pow(x, y);
-
-				double interp1 = interpolate(A, b);
-				double interp2 = interpolate(A, a);
-
-				double erega = E.regular(a);
-				double eplusb = E.plus(b);
-
-				out -= w*logx*a*erega*interp1;
-				out -= w*logx*b*(eplusb*interp2 - eplus1*A[k])/(1.0-b);
-			}
-			return out;
-		};
-
-		auto gauleg_conv_highx = [&](gauleg_type const& X, gauleg_type const& W, uint s) {
-			double out = 0.0;
-			for (uint i=0; i<s; i++) {
-				double z = X[i];
-				double w = W[i];
-
-				double d1z = 1.0-z;
-				double d1z2 = d1z*d1z;
-				double jac = 1.8*d1z;				
-			    double y = 1.0 - 0.9*d1z2;
-				double a = x/y;
-				double d1y = 1.0-y;
-
-				double erega = E.calcRegular(a);
-				double interpy = interpolate(A, y);
-				out += w*jac * (a/y)*erega*interpy;
-
-				double eplusy = E.calcPlus(y);
-				double interpa = interpolate(A, a);
-				out += w*jac * (1.0/d1y)*(eplusy*interpa - eplus1*A[k]);
-			}
-			res += out;
-			return out;
+		// we use this in order to skip the first, which is always just [0,1]
+		static auto gauleg_enum = [&](uint d) {
+			return 
+				std::views::iota(1)
+				| std::views::take(_Xi.size()-1-d)
+				| std::views::transform([&](int i){ return std::make_tuple(i, _Xi.begin()+i, _Wi.begin()+i); });
 		};
 		
 		if (!_split_interval) {
-			gauleg_conv(_Xi[0], _Wi[0], _interval_sizes[0]);
+			gauleg_conv(_Xi[0], _Wi[0]);
 		} else {
 			if (!_use_gsl_routine_for_high_x && !_try_new_largex_mapping) {
-			    for (uint i=0; i<_Xi.size(); ++i) {
-					auto const& X = _Xi[i];
-					auto const& W = _Wi[i];
-					auto s = _interval_sizes[i];
-					gauleg_conv(X, W, s);
-				}
-			} else if (!_use_gsl_routine_for_high_x && _try_new_largex_mapping) {
-			    double z0 = std::log(0.1)/logx;
-			    gauleg_type X(100, 0.0), W(100, 0.0);
-				initGauLeg(z0, 1.0, X, W);
-				gauleg_conv(X, W, 100);
+				for (auto const& [i, X, W] : gauleg_enum(0))
+					gauleg_conv(*X, *W);
 
-				double largex_out = largeXMappingFunction(k, x, E, A, eplus1, _Xi[0], _Wi[0], 100);
-				res += largex_out;
-			} else {
-				for (uint i=0; i<_Xi.size()-1; ++i) {
-					auto const& X = _Xi[i];
-					auto const& W = _Wi[i];
-					auto s = _interval_sizes[i];
-					gauleg_conv(X, W, s);
+			} else if (!_use_gsl_routine_for_high_x && _try_new_largex_mapping) {
+				if (x < 0.1) {
+					double z0 = std::log(0.1)/logx;
+					gauleg_type X(DEFAULT_GAULEG_POINTS, 0.0), W(DEFAULT_GAULEG_POINTS, 0.0);
+					initGauLeg(z0, 1.0, X, W);
+					gauleg_conv(X, W);
+
+					res += largeXMappingFunctionBase(k, x, f2, E, A, eplus1, _Xi[0], _Wi[0]);
+					res += largeXMappingFunctionBase(k, x, f3, E, A, eplus1, _Xi[0], _Wi[0]);
+				} else if (x >= 0.1 && x < 0.75) {
+					res += largeXMappingFunctionBase(k, x, f2x, E, A, eplus1, _Xi[0], _Wi[0]);
+					res += largeXMappingFunctionBase(k, x, f3,  E, A, eplus1, _Xi[0], _Wi[0]);
+				} else {
+					res += largeXMappingFunctionBase(k, x, f3x,  E, A, eplus1, _Xi[0], _Wi[0]);
 				}
+			} else {
+				for (auto const& [i, X, W] : gauleg_enum(1))
+					gauleg_conv(*X, *W);
 
 				GSLIntegrationParams p{
 					.g = *this,

@@ -100,7 +100,9 @@ namespace Candia2
 		gsl::workspace_type _workspace{nullptr}; //!< gsl workspace for calling gsl integration routines
 		std::vector<gsl::workspace_type> _workspaces; //!< gsl workspaces for calling gsl integration routines
 
-		static constexpr uint DEFAULT_GAULEG_POINTS = 50;
+		static constexpr uint DEFAULT_GAULEG_POINTS = 100;
+		static inline std::vector<double> DEFAULT_SPLIT_INTERVALS{1e-5, 0.1, 0.8, 1.0};
+		static inline std::vector<double> DEFAULT_SPLIT_SIZES{DEFAULT_GAULEG_POINTS,DEFAULT_GAULEG_POINTS,DEFAULT_GAULEG_POINTS};
 	public:
 		Grid() = delete; //!< default constructor deleted; must provide information to fill the grid
 		/**
@@ -158,8 +160,8 @@ namespace Candia2
 		 *  @param sizes Sizes of each interval
 		 */
 		void splitConvolution(
-			std::vector<double> const& intervals={},
-			std::vector<double> const& sizes={});
+			std::vector<double> const& intervals=DEFAULT_SPLIT_INTERVALS,
+			std::vector<double> const& sizes=DEFAULT_SPLIT_SIZES);
 
 		/** @brief sets a flag that uses a higher accuracy (but slower) GSL routine for x>0.8 */
 		inline void useGSLRoutineForHighX() { _use_gsl_routine_for_high_x = true; }
@@ -167,12 +169,25 @@ namespace Candia2
 		/** @brief sets a flag that uses a different mapping for x>0.5 */
 		inline void tryNewLargeXMapping() { _try_new_largex_mapping = true; }
 
-		double largeXMappingFunction(
-			uint k, double x,
+		/** @brief Accepts x and z, and returns y and the Jacobian */
+		using YandJAccessor = std::function<std::pair<double,double>(double,double)>;
+		/**
+		 *  @brief Handles a convolution with a simple linear mapping y -> z
+		 *  @param k grid index
+		 *  @param x x-value at the grid index
+		 *  @param yandjaccessor a @a YandJAccessor to retrieve y and the jacobian given x and z (the mapped value, a gauleg abscissa)
+		 *  @param E splitting function / operator matrix elements
+		 *  @param A array to convolute
+		 *  @param eplus1 the constant value of the plus component of the expression evaluated at x=1
+		 *  @param X the list of gauleg abscissae
+		 *  @param W the list of gauleg weights
+		 */
+		double largeXMappingFunctionBase(
+			uint k, double x, YandJAccessor const& yandjaccessor,
 			Expression& E, ArrayGrid& A,
 			double eplus1,
-			gauleg_type const& X, gauleg_type const& W, uint s);
-		
+			gauleg_type const& X, gauleg_type const& W);
+
 		/**
 		 *  @brief Uses a binary search to find the grid point closest to the given value of x
 		 *  @param x value to search for

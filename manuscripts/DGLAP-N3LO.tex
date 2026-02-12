@@ -106,7 +106,7 @@ and the future high-luminosity (HL-LHC) program aims at delivering an integrated
 Moreover, high-precision data are going to be collected by the Electron Ion Collider (EIC)~\cite{AbdulKhalek:2021gbh}.
 Such a high-precision standard in the experiments requires theory predictions for the hadronic cross sections of comparable quality. Therefore, PDFs with improved uncertainties are needed, which must encode all the theoretical advances discussed above.
 
-Parton evolution is crucial for the success of all these programs and past and recent literature contains multiple efforts devoted to the development of algorithms using different approaches to solve DGLAP equations~\cite{Furmanski:1981cw,Rossi:1983xz,DaLuzVieira:1990xk,Kumano:1992vd,Pascaud:1994vx,Miyama:1995bd,Pascaud:1996ci,Kosower:1997hg,Hirai:1997gb,Coriano:1998wj,Santorelli:1998yt,Ratcliffe:2000kp,Weinzierl:2002mv,Cafarella:2005zj,Jadach:2005bf,Guzzi:2006wx,Jadach:2007qa,Simonelli:2024vyh}. In the past three decades, part of these methods have been implemented in efficient computer codes, some of which are publicly available. Examples of these codes are \texttt{partonevolution}~\cite{Weinzierl:2002mv} (Mellin-transform method with an optimized contour), \texttt{Pegasus}~\cite{Vogt:2004ns} ($U$-matrix method in Mellin space), \texttt{Candia}~\cite{Cafarella:2008du,candiav1} (logarithmic recursion relations in the $x$-space), \texttt{Hoppet}~\cite{Salam:2008qg,Karlberg:2025hxk} (Runge-Kutta method in the $x$-space), \texttt{QCDNum}~\cite{Botje:2010ay} (polynomial spline interpolation in the $x$-space), 
+Parton evolution is crucial for the success of all these programs and past and recent literature contains multiple efforts devoted to the development of algorithms using different approaches to solve DGLAP equations~\cite{Furmanski:1981cw,Rossi:1983xz,DaLuzVieira:1990xk,Kumano:1992vd,Pascaud:1994vx,Miyama:1995bd,Pascaud:1996ci,Kosower:1997hg,Hirai:1997gb,Blumlein:1997em,Coriano:1998wj,Santorelli:1998yt,Ratcliffe:2000kp,Weinzierl:2002mv,Cafarella:2005zj,Jadach:2005bf,Guzzi:2006wx,Jadach:2007qa,Simonelli:2024vyh}. In the past three decades, part of these methods have been implemented in efficient computer codes, some of which are publicly available. Examples of these codes are \texttt{partonevolution}~\cite{Weinzierl:2002mv} (Mellin-transform method with an optimized contour), \texttt{Pegasus}~\cite{Vogt:2004ns} ($U$-matrix method in Mellin space), \texttt{Candia}~\cite{Cafarella:2008du,candiav1} (logarithmic recursion relations in the $x$-space), \texttt{Hoppet}~\cite{Salam:2008qg,Karlberg:2025hxk} (Runge-Kutta method in the $x$-space), \texttt{QCDNum}~\cite{Botje:2010ay} (polynomial spline interpolation in the $x$-space), 
 and more recently 
 \texttt{Apfel}~\cite{Bertone:2013vaa,Bertone:2017gds} (Runge-Kutta method and higher-order interpolations in the $x$-space), \texttt{ChiliPDF}~\cite{Diehl:2021gvs} (global interpolation with Chebyshev polynomials in Mellin space),
 \texttt{EKO}~\cite{Candido:2022tld} (evolution kernel operator method in Mellin space),
@@ -453,7 +453,7 @@ Z_{11}(x) &= R_0(x) = -\frac{2}{\beta_0} P^{(0)}(x),
 \nonumber\\
 Z_{21} &= \frac{1}{2\beta_3\gamma}\left[ 16\pi^2\beta_1 + 4\pi r_1\beta_2 - (\bar{c} + \bar{b} r_1)\beta_3 \right], 
 \nonumber\\
-Z_{22}(x) &= \frac{1}{\beta_3\gamma}\left[32\pi^2[P^{(1)}(x) + 16\pi r_1 P^{(2)}(x) - 8(\bar{c}+\bar{b}r_1)P^{(3)} (x)\right], 
+Z_{22}(x) &= \frac{1}{\beta_3\gamma}\left[32\pi^2P^{(1)}(x) + 16\pi r_1 P^{(2)}(x) - 8(\bar{c}+\bar{b}r_1)P^{(3)} (x)\right], 
 \nonumber\\
 Z_{31} &=\frac{1}{\beta_3\gamma} \left[(-16\pi^2\beta_1 - 4\pi r_1\beta_2 - r_1^2\beta_3)\right], 
 \nonumber\\
@@ -584,7 +584,7 @@ At N$^3$LO, the recursion relation for the ${\bf S}$ coefficients is given by
 \label{eq:singlet-n3lo}
 \end{align}
 %
-These recursion relations generate truncated solutions at arbitrary order $\kappa$ that are equivalent those obtained using the $U$-matrix method~\cite{Vogt:2004ns,Cafarella:2005zj}.  
+These recursion relations generate truncated solutions at arbitrary order $\kappa$ that are equivalent those obtained using the $U$-matrix method~\cite{Blumlein:1997em,Vogt:2004ns,Cafarella:2005zj}.  
 
 
 \section{Factorization/Renormalization Scale Dependence}
@@ -611,12 +611,12 @@ where
 \begin{align}
 P^{(0)} \left( x,\frac{\mu_F^2}{\mu_R^2} \right) =& P^{(0)}(x), 
 \\
-P^{(1)} \left( x,\frac{\mu_F^2}{\mu_R^2} \right) =& P^{(1)}(x) - \frac{\beta_0}{2}P^{(0)}(x)L 
+P^{(1)} \left( x,\frac{\mu_F^2}{\mu_R^2} \right) =& P^{(1)}(x) - \frac{\beta_0}{2}P^{(0)}(x)L,
 \\
-P^{(2)} \left( x,\frac{\mu_F^2}{\mu_R^2} \right) =& P^{(2)}(x) - \left[ \beta_1P^{(0)}(x) + 2\beta_0P^{(1)}(x) \right]L + \beta_0^2 P^{(0)}(x)L^2 
+P^{(2)} \left( x,\frac{\mu_F^2}{\mu_R^2} \right) =& P^{(2)}(x) - \beta_0LP^{(1)}(x) + \frac{1}{4}(\beta_0^2L^2 - \beta_1L)P^{(0)}(x),
 \\
-P^{(3)} \left( x,\frac{\mu_F^2}{\mu_R^2} \right) =&  P^{(3)} - \left[ \beta_2P^{(0)} + 2\beta_1P^{(1)}(x) + 3\beta_0P^{(2)}(x) \right]L \nonumber\\
-&+ \left[ \frac{5}{2}\beta_0\beta_1P^{(0)}(x) + 3\beta_0^2P^{(1)}(x) \right]L^2 - \beta_0^3P^{(0)}(x)L^3\,,
+P^{(3)} \left( x,\frac{\mu_F^2}{\mu_R^2} \right) =&  P^{(3)}(x) - \frac{3}{2}\beta_0LP^{(2)}(x) + \left( \frac{3}{4}\beta_0^2L^2 - \frac{1}{2}\beta_1L \right)P^{(1)}(x) \nonumber\\
+&+ \frac{1}{8} \left( -\beta_0^3L^3 + \frac{5}{2}\beta_0\beta_1L^2 - \beta_2L \right)P^{(0)}(x),
 \end{align}
 and we have 
 %
@@ -753,6 +753,8 @@ In the non-singlet sector, we have derived an exact power-series expansion that 
 In addition, we have presented benchmark results for the aN$^3$LO evolution using the most recent approximations to the N$^3$LO splitting functions, and a comparison with the new release of the $x$-space \texttt{Hoppet-v2} computer code~\cite{Karlberg:2025hxk}.  
 %
 Further developments in \texttt{Candia-v2} are in progress which will improve its current precision and performance. They will be presented in a forthcoming publication for the official new release of \texttt{Candia-v2}. The \texttt{Candia} algorithm offers a flexible and efficient framework for high-precision parton evolution in QCD at higher perturbative orders, and provides insight into the analytical structure of DGLAP solutions in the $x$-space.     
+
+
 
 
 

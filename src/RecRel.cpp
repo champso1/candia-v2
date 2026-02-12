@@ -48,25 +48,26 @@ namespace Candia2
 		double conv2 = _grid.convolution(S_im1, P1, k);
 		double conv3 = _grid.convolution(S_im2, P2, k);
 
-		double res = conv1 * (-2.0/_alpha_s.beta0());
-		res -= conv2 / (PI*_alpha_s.beta0());
-		res -= conv3 / (2.0*PI_2*_alpha_s.beta0());
+		double res = conv1 * (2.0/_alpha_s.beta0());
+		res += conv2 / (PI*_alpha_s.beta0());
+		res += conv3 / (2.0*PI_2*_alpha_s.beta0());
 
 		if (_is_scale_difference) {
 			double L = _log_muf2_mur2;
 			double beta1 = _alpha_s.beta1();
 			double beta0 = _alpha_s.beta0();
-			double convL1 =  _grid.convolution(S_im1, P0, k);
-			double convL2 =  _grid.convolution(S_im2, P0, k);
-			double convL3 =  _grid.convolution(S_im2, P1, k);
 
+			double convL1 =  _grid.convolution(S_im1, P0, k);
 			res -= L*convL1/(2.0*PI);
-			res += L*convL2 * (beta0*L - beta1/beta0)/(8.0*PI_2);
-			res -= L*convL3/(2.0*PI_2);
+
+			double convL2a =  _grid.convolution(S_im2, P1, k);
+			double convL2b =  _grid.convolution(S_im2, P0, k);
+			res -= L*convL2a/(2.0*PI_2);
+			res += convL2b * (beta0*L*L - (beta1/beta0)*L)/(8.0*PI_2);
 		}
 		
 		
-		return res;
+		return -res;
 	}
 
 	double DGLAPSolver::recrelS_4(
@@ -85,35 +86,34 @@ namespace Candia2
 		double conv3 = _grid.convolution(S_im2, P2, k);
 		double conv4 = _grid.convolution(S_im3, P3, k);
 
-		double res = -conv1 * (2.0/_alpha_s.beta0());
-		res -= conv2 / (PI*_alpha_s.beta0());
-		res -= conv3 / (2.0*PI_2*_alpha_s.beta0());
-		res -= conv4 / (4.0*PI_3*_alpha_s.beta0());
+		double res = conv1 * (2.0/_alpha_s.beta0());
+		res += conv2 / (PI*_alpha_s.beta0());
+		res += conv3 / (2.0*PI_2*_alpha_s.beta0());
+		res += conv4 / (4.0*PI_3*_alpha_s.beta0());
 
-		if (_log_mur2_muf2 != 0.0) {
+		if (_is_scale_difference) {
 			const double beta0 = _alpha_s.beta0();
 			const double beta1 = _alpha_s.beta1();
 			const double beta2 = _alpha_s.beta2();
 			const double L = _log_muf2_mur2;
 			
 		    double convL1 =  _grid.convolution(S_im1, P0, k);
+			res -= L*convL1/(2.0*PI);
+
 			double convL2a = _grid.convolution(S_im2, P1, k);
 			double convL2b = _grid.convolution(S_im2, P0, k);
+			res -= L*convL2a/(2.0*PI_2);
+			res += convL2b * (beta0*L*L - (beta1/beta0)*L)/(8.0*PI_2);
+
 			double convL3a = _grid.convolution(S_im3, P2, k);
 			double convL3b = _grid.convolution(S_im3, P1, k);
 			double convL3c = _grid.convolution(S_im3, P0, k);
-
-			res += (L/(2.0*PI)) * convL1;
-
-			res += (L/(2.0*PI_2)) * convL2a;
-			res += (((beta1/beta0)*L - beta0*L*L)/(8.0*PI_2)) * convL2b;
-			
-			res += ((3.0*L)/(8.0*PI_3)) * convL3a;
-			res += ((2.0*(beta1/beta0)*L - 3.0*beta0*L*L)/(16.0*PI_3)) * convL3b;
-			res += ((2.0*(beta2/beta0)*L - 5.0*beta1*L*L + 2.0*beta0*beta0*L*L*L)/(64.0*PI_3)) * convL3c;
+			res -= (3.0*L)/(8.0*PI_3) * convL3a;
+			res += (3.0*beta0*L*L - (beta1/beta0)*L)/(16.0*PI_3) * convL3b;
+			res += (-beta0*beta0*L*L*L + (5.0/2.0)*beta1*L*L - (beta2/beta0)*L)/(32.0*PI_3) * convL3c;
 		}
 		
-		return res;
+		return -res;
 	}
 
 
@@ -174,18 +174,17 @@ namespace Candia2
 
 		
 		if (_is_scale_difference) {
-			double L = _log_muf2_mur2;
+			const double L = _log_muf2_mur2;
 			const double beta0 = _alpha_s.beta0();
 			const double beta1 = _alpha_s.beta1();
 			const double beta2 = _alpha_s.beta2();
 			
-			double convL1 = _grid.convolution(C, P0, k);
-			double convL2 = _grid.convolution(C, P1, k);
-			
-			res += L*((beta1 - beta0*beta0*L)/beta2) * convL1;
-			res += L*4.0*(beta0/beta2) * convL2;
+			double convL1 = _grid.convolution(C, P1, k);
+			double convL2 = _grid.convolution(C, P0, k);
+
+			res += L*4.0*(beta0/beta2) * convL1;
+			res += ((beta1*L - beta0*beta0*L*L)/beta2) * convL2;
 		}
-		
 			
 	    return res;
 	}
@@ -239,20 +238,20 @@ namespace Candia2
 
 		double res = fac1*conv1 + fac2*conv2 + fac3*conv3;
 
-		if (_log_mur2_muf2 != 0.0) {
+		if (_is_scale_difference) {
 			const double beta0 = _alpha_s.beta0();
 			const double beta1 = _alpha_s.beta1();
 			const double beta2 = _alpha_s.beta2();
 			const double L = _log_mur2_muf2;
 
-			res += (-(fac1/2.0)*beta0*L) * conv0;
+			res -= (fac1*beta0*L/2.0) * conv0;
 
-			res += (-fac2*beta0*L) * conv1;
-			res += (-(fac2/4.0)*(beta1*L - beta0*beta0*L*L)) * conv0;
+			res -= (fac2*beta0*L) * conv1;
+			res += ((fac2/4.0)*(beta0*beta0*L*L - beta1*L)) * conv0;
 
-			res += ((-3.0*fac3/2.0)*beta0*L) * conv2;
-			res += (-(fac3/4.0)*(2.0*beta1*L - 3.0*beta0*beta0*L*L)) * conv1;
-			res += (-(fac3/16.0)*(2.0*beta2*L - 5.0*beta1*beta2*L*L + 2.0*beta0*beta0*beta0*L*L*L)) * conv0;
+			res -= ((3.0/2.0)*fac3*beta0*L) * conv2;
+			res += (-fac3*((3.0/4.0)*beta0*beta0*L*L - (1.0/2.0)*beta1*L)) * conv1;
+			res += ((fac3/8.0)*(-beta0*beta0*beta0*L*L*L + (5.0/2.0)*beta1*beta2*L*L - beta2*L)) * conv0;
 		}
 		
 		return res;
@@ -279,20 +278,20 @@ namespace Candia2
 		const double fac3 = -16*r1*r1;
 		double res = fac1*conv1 + fac2*conv2 + fac3*conv3;
 		
-		if (_log_mur2_muf2 != 0.0) {
+		if (_is_scale_difference) {
 			const double beta0 = _alpha_s.beta0();
 			const double beta1 = _alpha_s.beta1();
 			const double beta2 = _alpha_s.beta2();
 			const double L = _log_mur2_muf2;
 
-			res += (-(fac1/2.0)*beta0*L) * conv0;
+			res -= (fac1*beta0*L/2.0) * conv0;
 
-			res += (-fac2*beta0*L) * conv1;
-			res += (-(fac2/4.0)*(beta1*L - beta0*beta0*L*L)) * conv0;
+			res -= (fac2*beta0*L) * conv1;
+			res += ((fac2/4.0)*(beta0*beta0*L*L - beta1*L)) * conv0;
 
-			res += ((-3.0*fac3/2.0)*beta0*L) * conv2;
-			res += (-(fac3/4.0)*(2.0*beta1*L - 3.0*beta0*beta0*L*L)) * conv1;
-			res += (-(fac3/16.0)*(2.0*beta2*L - 5.0*beta1*beta2*L*L + 2.0*beta0*beta0*beta0*L*L*L)) * conv0;
+			res -= ((3.0/2.0)*fac3*beta0*L) * conv2;
+			res += (-fac3*((3.0/4.0)*beta0*beta0*L*L - (1.0/2.0)*beta1*L)) * conv1;
+			res += ((fac3/8.0)*(-beta0*beta0*beta0*L*L*L + (5.0/2.0)*beta1*beta2*L*L - beta2*L)) * conv0;
 		}
 			
 	    return res;
@@ -319,20 +318,20 @@ namespace Candia2
 		const double fac3 = -32*c*r1;
 		double res = fac1*conv1 + fac2*conv2 + fac3*conv3;
 
-		if (_log_mur2_muf2 != 0.0) {
+		if (_is_scale_difference) {
 			const double beta0 = _alpha_s.beta0();
 			const double beta1 = _alpha_s.beta1();
 			const double beta2 = _alpha_s.beta2();
 			const double L = _log_mur2_muf2;
 
-			res += (-(fac1/2.0)*beta0*L) * conv0;
+			res -= (fac1*beta0*L/2.0) * conv0;
 
-			res += (-fac2*beta0*L) * conv1;
-			res += (-(fac2/4.0)*(beta1*L - beta0*beta0*L*L)) * conv0;
+			res -= (fac2*beta0*L) * conv1;
+			res += ((fac2/4.0)*(beta0*beta0*L*L - beta1*L)) * conv0;
 
-			res += ((-3.0*fac3/2.0)*beta0*L) * conv2;
-			res += (-(fac3/4.0)*(2.0*beta1*L - 3.0*beta0*beta0*L*L)) * conv1;
-			res += (-(fac3/16.0)*(2.0*beta2*L - 5.0*beta1*beta2*L*L + 2.0*beta0*beta0*beta0*L*L*L)) * conv0;
+			res -= ((3.0/2.0)*fac3*beta0*L) * conv2;
+			res += (-fac3*((3.0/4.0)*beta0*beta0*L*L - (1.0/2.0)*beta1*L)) * conv1;
+			res += ((fac3/8.0)*(-beta0*beta0*beta0*L*L*L + (5.0/2.0)*beta1*beta2*L*L - beta2*L)) * conv0;
 		}
 		
 	    return res;
