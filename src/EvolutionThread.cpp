@@ -366,8 +366,8 @@ namespace Candia2
 	void DGLAPSolver::_mt_EvolveDistributions_S_NLO(uint t, int thread_idx, uint min, uint max)
 	{
 		initializeThreadIndex(thread_idx);
-        log(LOG_THREAD, "SingletNLO", "Thread {} evolving in range [{},{}]",
-            thread_idx, _grid[min], _grid[max]);
+        // log(LOG_THREAD, "SingletNLO", "Thread {} evolving in range [{},{}]",
+            // thread_idx, _grid[min], _grid[max]);
 
 		auto& p0qq = getExpression("P0qq");
 		auto& p0qg = getExpression("P0qg");
@@ -391,8 +391,8 @@ namespace Candia2
 	void DGLAPSolver::_mt_EvolveDistributions_S_NNLO(uint t, int thread_idx, uint min, uint max)
 	{
 		initializeThreadIndex(thread_idx);
-        log(LOG_THREAD, "SingletNNLO", "Thread {} evolving in range [{},{}]",
-            thread_idx, _grid[min], _grid[max]);
+        // log(LOG_THREAD, "SingletNNLO", "Thread {} evolving in range [{},{}]",
+            // thread_idx, _grid[min], _grid[max]);
 
 		auto& p0qq = getExpression("P0qq");
 		auto& p0qg = getExpression("P0qg");
@@ -421,8 +421,8 @@ namespace Candia2
 	void DGLAPSolver::_mt_EvolveDistributions_S_N3LO(uint t, int thread_idx, uint min, uint max)
 	{
 		initializeThreadIndex(thread_idx);
-        log(LOG_THREAD, "SingletN3LO", "Thread {} evolving in range [{},{}]",
-            thread_idx, _grid[min], _grid[max]);
+        // log(LOG_THREAD, "SingletN3LO", "Thread {} evolving in range [{},{}]",
+            // thread_idx, _grid[min], _grid[max]);
 
 		auto& p0qq = getExpression("P0qq");
 		auto& p0qg = getExpression("P0qg");

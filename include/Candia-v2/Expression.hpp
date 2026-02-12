@@ -42,11 +42,18 @@ namespace Candia2
 		};
 
 		/**
-		 *  @brief Fills the cache with the gauss-legendre points given @a grid_points and @a gauss_points.
+		 *  @brief Fills the cache with the gauss-legendre points given @a grid_points and @a gauss_points in the small-x mapping
 		 *  @param grid_points The array of grid points.
 		 *  @param gauss_points The array of gauss-legendre abscissae
 		 */
 		virtual void fill(array_type const& grid_points, array_type const& gauss_points);
+
+		/**
+		 *  @brief Fills the cache with the gauss-legendre points given @a grid_points and @a gauss_points in the large-x mapping
+		 *  @param grid_points The array of grid points.
+		 *  @param gauss_points The array of gauss-legendre abscissae
+		 */
+		virtual void fill2(array_type const& grid_points, array_type const& gauss_points);
 
 		/**
 		 *  @brief Fills the cache with the gauss-legendre points given @a grid_points and @a gauss_points.
@@ -59,8 +66,9 @@ namespace Candia2
 		 */
 		virtual inline void fill(array_type const& grid_points, std::vector<array_type> const& gauss_points)
 		{
-			for (auto const& a : gauss_points)
-				fill(grid_points, a);
+			for (auto it = gauss_points.begin(); it!=gauss_points.end()-1; ++it)
+				fill(grid_points, *it);
+			fill2(grid_points, gauss_points.back());
 		}
 
 		/** @brief actually calculates the regular distribution */

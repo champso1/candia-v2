@@ -186,12 +186,10 @@ namespace Candia2
 		return std::move(ss.str());
 	}
 
-#if ENABLE_THREADING
 	extern thread_local int thread_index;
 	inline void initializeThreadIndex(int index) {
 		thread_index = index;
 	}
-#endif
 }; // namespace Candia2
 
 

@@ -46,6 +46,7 @@ namespace Candia2
 		  _split_interval{other._split_interval},
 		  _Xi{other._Xi}, _Wi{other._Wi},
 		  _interval_sizes{other._interval_sizes},
+		  _try_new_largex_mapping(other._try_new_largex_mapping),
 		  _use_gsl_routine_for_high_x(other._use_gsl_routine_for_high_x),
 		  _workspace{std::move(gsl::make_workspace(other._workspace->limit))}
 	{
@@ -63,6 +64,7 @@ namespace Candia2
 		_Xi = other._Xi;
 		_Wi = other._Wi;
 		_interval_sizes = other._interval_sizes;
+		_try_new_largex_mapping = other._try_new_largex_mapping;
 		_use_gsl_routine_for_high_x = other._use_gsl_routine_for_high_x;
 	    _workspace = std::move(gsl::make_workspace(other._workspace->limit));
 
@@ -159,8 +161,8 @@ namespace Candia2
 		uint log_interval_size = nx/num_log_intervals;
 		
 		double lin1_min = 0.1;
-		double lin1_max = 0.8;
-		double lin2_min = 0.8;
+		double lin1_max = 0.75;
+		double lin2_min = 0.75;
 		double lin2_max = 1.0;
 
 		_points.clear();
@@ -251,6 +253,16 @@ namespace Candia2
 		std::vector<double> const& intervals,
 		std::vector<double> const& sizes)
 	{
+		if (intervals.empty() && sizes.empty()) {
+			_Xi.resize(1);
+			_Xi[0] = gauleg_type(100, 0.0);
+			_Wi.resize(1);
+			_Wi[0] = gauleg_type(100, 0.0);
+			initGauLeg(1e-5, 1.0, _Xi[0], _Wi[0]);
+			_split_interval = true;
+		    return;
+		}
+		
 		if (intervals.size()-1 != sizes.size())
 			log(LOG_ERROR, "Grid::splitConvolution()", "Invalid number of element in the intervals and sizes vectors.");
 		
@@ -355,8 +367,11 @@ namespace Candia2
 				w = c[i+1] - d[i];
 
 				den = ho-hp;
-				if (std::abs(ho-hp) < 1e-15)
-					log(LOG_ERROR, "Grid::interpolate()", "found a denominator equal to 0.0 ({}, {}, {})", x, xa[i], xa[i+m]);
+				if (std::abs(ho-hp) < 1e-15) {
+					log(LOG_ERROR_NOQUIT, "Grid::interpolate()", "found a denominator equal to 0.0 ({}, {}, {})", x, xa[i], xa[i+m]);
+					std::string msg = std::format("found a denominator equal to 0.0 ({}, {}, {})", x, xa[i], xa[i+m]);
+					throw "interpolation error";
+				}
 
 				den = w/den;
 				d[i] = hp*den;
@@ -396,11 +411,42 @@ namespace Candia2
 		return res;
 	}
 
+	double Grid::largeXMappingFunction(
+		uint k, double x,
+		Expression& E, ArrayGrid& A,
+		double eplus1,
+		gauleg_type const& X, gauleg_type const& W, uint s)
+	{
+		double out = 0.0;
+		for (uint i=0; i<s; i++) {
+			double z = X[i];
+			double w = W[i];
+
+			double d1z = 1.0-z;
+			double d1z2 = d1z*d1z;
+			double jac = 1.8*d1z;				
+			double y = 1.0 - 0.9*d1z2;
+			double a = x/y;
+			double d1y = 1.0-y;
+
+			double erega = E.calcRegular(a);
+			double interpy = interpolate(A, y);
+			out += w*jac * (a/y)*erega*interpy;
+
+			double eplusy = E.calcPlus(y);
+			double interpa = interpolate(A, a);
+			out += w*jac * (1.0/d1y)*(eplusy*interpa - eplus1*A[k]);
+		}
+		return out;
+	}
+
 	double Grid::convolution(ArrayGrid& A, Expression &E, uint k)
 	{
-		static int print_count = 0;
+		static int print_count = 20;
 
 		double x = _points[k];
+		double d1 = 1.0-x;
+		double d2 = x*d1;
 		double logx =  std::log(x);
 		double eplus1 = E.plus(1.0);
 		double ed1 = E.delta(1.0);
@@ -417,24 +463,78 @@ namespace Candia2
 				double interp1 = interpolate(A, b);
 				double interp2 = interpolate(A, a);
 
-				double erega = E.regular(a);
-				double eplusb = E.plus(b);
+				double erega = E.calcRegular(a);
+				double eplusb = E.calcPlus(b);
 
 				res -= w*logx*a*erega*interp1;
 				res -= w*logx*b*(eplusb*interp2 - eplus1*A[k])/(1.0-b);
 			}
 		};
+
+		auto gauleg_conv2 = [&](gauleg_type const& X, gauleg_type const& W, uint s) {
+			double out = 0.0;
+			for (uint i=0; i<s; i++) {
+				double y = X[i];
+				double w = W[i];
+
+				double a = std::pow(x, 1.0-y);
+				double b = std::pow(x, y);
+
+				double interp1 = interpolate(A, b);
+				double interp2 = interpolate(A, a);
+
+				double erega = E.regular(a);
+				double eplusb = E.plus(b);
+
+				out -= w*logx*a*erega*interp1;
+				out -= w*logx*b*(eplusb*interp2 - eplus1*A[k])/(1.0-b);
+			}
+			return out;
+		};
+
+		auto gauleg_conv_highx = [&](gauleg_type const& X, gauleg_type const& W, uint s) {
+			double out = 0.0;
+			for (uint i=0; i<s; i++) {
+				double z = X[i];
+				double w = W[i];
+
+				double d1z = 1.0-z;
+				double d1z2 = d1z*d1z;
+				double jac = 1.8*d1z;				
+			    double y = 1.0 - 0.9*d1z2;
+				double a = x/y;
+				double d1y = 1.0-y;
+
+				double erega = E.calcRegular(a);
+				double interpy = interpolate(A, y);
+				out += w*jac * (a/y)*erega*interpy;
+
+				double eplusy = E.calcPlus(y);
+				double interpa = interpolate(A, a);
+				out += w*jac * (1.0/d1y)*(eplusy*interpa - eplus1*A[k]);
+			}
+			res += out;
+			return out;
+		};
 		
 		if (!_split_interval) {
 			gauleg_conv(_Xi[0], _Wi[0], _interval_sizes[0]);
 		} else {
-			if (!_use_gsl_routine_for_high_x) {
+			if (!_use_gsl_routine_for_high_x && !_try_new_largex_mapping) {
 			    for (uint i=0; i<_Xi.size(); ++i) {
 					auto const& X = _Xi[i];
 					auto const& W = _Wi[i];
 					auto s = _interval_sizes[i];
 					gauleg_conv(X, W, s);
 				}
+			} else if (!_use_gsl_routine_for_high_x && _try_new_largex_mapping) {
+			    double z0 = std::log(0.1)/logx;
+			    gauleg_type X(100, 0.0), W(100, 0.0);
+				initGauLeg(z0, 1.0, X, W);
+				gauleg_conv(X, W, 100);
+
+				double largex_out = largeXMappingFunction(k, x, E, A, eplus1, _Xi[0], _Wi[0], 100);
+				res += largex_out;
 			} else {
 				for (uint i=0; i<_Xi.size()-1; ++i) {
 					auto const& X = _Xi[i];

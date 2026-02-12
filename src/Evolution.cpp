@@ -26,9 +26,11 @@ namespace Candia2
 					log(LOG_INFO, "DGLAP", "LO Singlet Iteration {}", n);
                     
                     for (uint k=0; k<_grid.size()-1; k++) {
+                        auto v1 = recrelS_1(_S[0][1][0], k, p0qq);
+                        auto v2 = recrelS_1(_S[0][0][0], k, p0qg);
                         _S[0][1][1][k] =
-							recrelS_1(_S[0][1][0], k, p0qq) +
-							recrelS_1(_S[0][0][0], k, p0qg);
+							v1 +
+							v2;
                         _S[0][0][1][k] =
 							recrelS_1(_S[0][1][0], k, p0gq) +
 							recrelS_1(_S[0][0][0], k, p0gg);
@@ -56,9 +58,11 @@ namespace Candia2
 
                     // LO piece (non truncated)
                     for (uint k=0; k<_grid.size()-1; k++) {
+                        auto v1 = recrelS_1(_S[0][1][0], k, p0qq);
+                        auto v2 = recrelS_1(_S[0][0][0], k, p0qg);
                         _S[0][1][1][k] = 
-							recrelS_1(_S[0][1][0], k, p0qq) +
-							recrelS_1(_S[0][0][0], k, p0qg);
+							v1 +
+							v2;
                         _S[0][0][1][k] = 
 							recrelS_1(_S[0][1][0], k, p0gq) +
 							recrelS_1(_S[0][0][0], k, p0gg);

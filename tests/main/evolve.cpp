@@ -116,9 +116,10 @@ int main(int argc, char *argv[]) {
 	
 	vector<double> xtab{1e-5, 1e-4, 1e-3, 1e-2, 0.1, 0.3, 0.5, 0.7, 0.9, 1.0};
 	Grid grid(xtab, num_grid_points, Grid::LOG_LIN);
-	grid.splitConvolution({1e-5, 0.1, 0.8, 1.0}, {50, 75, 150});
-	grid.useGSLRoutineForHighX();
-
+	// grid.splitConvolution();
+	// grid.useGSLRoutineForHighX();
+	// grid.tryNewLargeXMapping();
+	
 	LesHouchesDistribution dist{};
 	AlphaS alphas(order, dist.Q0(), Qf, dist.alpha0(), kr);
 	alphas.setVFNS(dist.masses(), dist.nfi());

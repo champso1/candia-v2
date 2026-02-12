@@ -95,8 +95,8 @@ namespace Candia2
 		std::vector<gauleg_type> _Xi{}; //!< list of split-up gauleg abscissae per interval
 		std::vector<gauleg_type> _Wi{}; //!< list of split-up gauleg weights per interval
 		std::vector<uint> _interval_sizes{}; //!< number of points per interval
-
 		bool _use_gsl_routine_for_high_x{false}; //!< flag for whether to use the gsl routine for high x
+		bool _try_new_largex_mapping{false}; //!< flag to try another mapping for large-x (x>0.5)
 		gsl::workspace_type _workspace{nullptr}; //!< gsl workspace for calling gsl integration routines
 		std::vector<gsl::workspace_type> _workspaces; //!< gsl workspaces for calling gsl integration routines
 
@@ -158,12 +158,21 @@ namespace Candia2
 		 *  @param sizes Sizes of each interval
 		 */
 		void splitConvolution(
-			std::vector<double> const& intervals,
-			std::vector<double> const& sizes);
+			std::vector<double> const& intervals={},
+			std::vector<double> const& sizes={});
 
 		/** @brief sets a flag that uses a higher accuracy (but slower) GSL routine for x>0.8 */
 		inline void useGSLRoutineForHighX() { _use_gsl_routine_for_high_x = true; }
 
+		/** @brief sets a flag that uses a different mapping for x>0.5 */
+		inline void tryNewLargeXMapping() { _try_new_largex_mapping = true; }
+
+		double largeXMappingFunction(
+			uint k, double x,
+			Expression& E, ArrayGrid& A,
+			double eplus1,
+			gauleg_type const& X, gauleg_type const& W, uint s);
+		
 		/**
 		 *  @brief Uses a binary search to find the grid point closest to the given value of x
 		 *  @param x value to search for
