@@ -2,7 +2,6 @@
 using namespace Candia2;
 
 #include <vector>
-#include <memory>
 
 int main()
 {
@@ -17,15 +16,15 @@ int main()
     1e-5, 1e-4, 1e-3, 1e-2, 0.1, 0.3, 0.5, 0.7, 0.9, 1.0};
   Grid grid(xtab, num_grid_points, 3);
 
-  std::unique_ptr<Distribution> dist = 
-    std::make_unique<LesHouchesDistribution>();
-  AlphaS alphas(order, dist->Q0(), Qf, dist->alpha0(), kr);
-  alphas.setVFNS(dist->masses(), dist->nfi());
+  LesHouchesDistribution dist{};
+  AlphaS alphas(order, dist.Q0(), Qf, dist.alpha0(), kr);
+  alphas.setVFNS(dist.masses(), dist.nfi());
   // alphas.setFFNS(4);
 
   DGLAPSolver solver(
     order, grid, alphas,
     Qf, iterations, trunc_idx,
-    *dist, kr);
+    dist, kr);
   auto dists = solver.evolve();
+  // do more stuff with dists
 }

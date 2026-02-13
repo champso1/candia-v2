@@ -546,7 +546,7 @@ namespace Candia2
 					threads.emplace_back(&DGLAPSolver::_mt_EvolveDistribution_NS_N3LO, this, arr, j, nsp, L);
 				threads.emplace_back(&DGLAPSolver::_mt_EvolveDistribution_NS_N3LO, this, arr, 25, nsv, L);
 				
-				for (std::thread & t : threads)
+				for (std::thread& t : threads)
 					t.join();
 
 				log(LOG_INFO, "NonSingletN3LO", "Finished performing threaded N3LO non-singlet evolution.");
@@ -562,7 +562,7 @@ namespace Candia2
 		initializeThreadIndex(j);
         log(LOG_THREAD, "NonSingletLO", "Thread {} initialized evolving distribution {}.", j, j);
 
-		auto& p0ns = getExpression("P0ns");
+		static auto& p0ns = getExpression("P0ns");
 		
         for (uint n=1; n<_iterations; n++) {
             log(LOG_THREAD, "NonSingletLO", "  [j={}] Iteration {}/{}", j, n, _iterations-1);
@@ -580,8 +580,8 @@ namespace Candia2
 		initializeThreadIndex(j);
         log(LOG_THREAD, "NonSingletNLO", "Thread {} initialized evolving distribution {}.", j, j);
 
-		auto& p0ns = getExpression("P0ns");
-		auto& p1 = getExpression(P1);
+		static auto& p0ns = getExpression("P0ns");
+		static auto& p1 = getExpression(P1);
 		
         double const L1 = L[0];
         double const L2 = L[1];
@@ -612,9 +612,9 @@ namespace Candia2
 		initializeThreadIndex(j);
         log(LOG_THREAD, "NonSingletNNLO", "Thread {} initialized evolving distribution {}.", j, j);
 
-		auto& p0ns = getExpression("P0ns");
-		auto& p1 = getExpression(P[0]);
-		auto& p2 = getExpression(P[1]);
+		static auto& p0ns = getExpression("P0ns");
+		static auto& p1 = getExpression(P[0]);
+		static auto& p2 = getExpression(P[1]);
 		
         double const L1 = L[0];
         double const L2 = L[1];
@@ -687,10 +687,10 @@ namespace Candia2
 		initializeThreadIndex(j);
         log(LOG_THREAD, "NonSingletN3LO", "Thread {} initialized evolving distribution {}.", j, j);
 
-		auto& p0ns = getExpression("P0ns");
-		auto& p1 = getExpression(P[0]);
-		auto& p2 = getExpression(P[1]);
-		auto& p3 = getExpression(P[2]);
+		static auto& p0ns = getExpression("P0ns");
+		static auto& p1 = getExpression(P[0]);
+		static auto& p2 = getExpression(P[1]);
+		static auto& p3 = getExpression(P[2]);
 		
 		double const L1 = L[0];
         double const L2 = L[1];
@@ -819,4 +819,305 @@ namespace Candia2
             }
         }
     }
+
+	void DGLAPSolver::evolveNonSingletTruncThreaded(std::reference_wrapper<std::vector<ArrayGrid>> arr, double L1)
+	{
+		log(LOG_INFO, "DGLAP", "Using the truncated ansatz for the non-singlet sector");
+        switch (_order) {
+            case 0: {
+				log(LOG_INFO, "NonSingletLO (trunc)", "Performing LO non-singlet evolution threaded.");
+				
+				for (uint j=13; j<=12+_nf; ++j)
+                    arr.get()[j] = _S_NS[0][j][0];
+                for (uint j=32; j<=30+_nf; ++j)
+                    arr.get()[j] = _S_NS[0][j][0];
+
+				std::vector<std::thread> threads{};
+				for (uint j=13; j<=12+_nf; ++j)
+					threads.emplace_back(&DGLAPSolver::_mt_EvolveDistribution_NST_LO, this, arr, j, L1);
+				for (uint j=32; j<=30+_nf; ++j)
+					threads.emplace_back(&DGLAPSolver::_mt_EvolveDistribution_NST_LO, this, arr, j, L1);
+
+				for (std::thread& t : threads)
+					t.join();
+				
+				log(LOG_INFO, "NonSingletLO (trunc)", "Finished performing LO non-singlet evolution threaded.");
+            }; break;
+			case 1: {
+				log(LOG_INFO, "NonSingletNLO (trunc)", "Performing NLO non-singlet evolution threaded.");
+
+				for (uint j=13; j<=12+_nf; ++j)
+                    arr.get()[j] = _S_NS[0][j][0];
+                for (uint j=32; j<=30+_nf; ++j)
+                    arr.get()[j] = _S_NS[0][j][0];
+
+				std::vector<std::thread> threads{};
+				for (uint j=13; j<=12+_nf; ++j)
+					threads.emplace_back(&DGLAPSolver::_mt_EvolveDistribution_NST_NLO, this, arr, j, "P1nsm", L1);
+				for (uint j=32; j<=30+_nf; ++j)
+					threads.emplace_back(&DGLAPSolver::_mt_EvolveDistribution_NST_NLO, this, arr, j, "P1nsp", L1);
+
+				for (std::thread & t : threads)
+					t.join();
+				
+				log(LOG_INFO, "NonSingletNLO (trunc)", "Finished performing NLO non-singlet evolution threaded.");
+			}; break;
+			case 2: {
+				log(LOG_INFO, "NonSingletNNLO (trunc)", "Performing NNLO non-singlet evolution threaded.");
+
+				for (uint j=26; j<=24+_nf; j++)
+                    arr.get()[j] = _S_NS[0][j][0];
+                for (uint j=32; j<=30+_nf; ++j)
+                    arr.get()[j] = _S_NS[0][j][0];
+				arr.get()[25] = _S_NS[0][25][0];
+
+				std::vector<std::thread> threads{};
+				for (uint j=26; j<=24+_nf; j++)
+					threads.emplace_back(&DGLAPSolver::_mt_EvolveDistribution_NST_NNLO, this, arr, j, "P1nsm", "P2nsm", L1);
+				for (uint j=32; j<=30+_nf; ++j)
+					threads.emplace_back(&DGLAPSolver::_mt_EvolveDistribution_NST_NNLO, this, arr, j, "P1nsp", "P2nsp", L1);
+				threads.emplace_back(&DGLAPSolver::_mt_EvolveDistribution_NST_NNLO, this, arr, 25, "P1nsm", "P2nsv", L1);
+				
+				for (std::thread & t : threads)
+					t.join();
+				
+				log(LOG_INFO, "NonSingletNNLO (trunc)", "Finished performing NNLO non-singlet evolution threaded.");
+			}; break;
+			case 3: {
+				log(LOG_INFO, "NonSingletN3LO (trunc)", "Performing N3LO non-singlet evolution threaded.");
+
+				for (uint j=26; j<=24+_nf; j++)
+                    arr.get()[j] = _S_NS[0][j][0];
+                for (uint j=32; j<=30+_nf; ++j)
+                    arr.get()[j] = _S_NS[0][j][0];
+				arr.get()[25] = _S_NS[0][25][0];
+
+				std::vector<std::thread> threads{};
+				for (uint j=26; j<=24+_nf; j++)
+					threads.emplace_back(&DGLAPSolver::_mt_EvolveDistribution_NST_N3LO, this, arr, j, "P1nsm", "P2nsm", "P3nsm", L1);
+				for (uint j=32; j<=30+_nf; ++j)
+					threads.emplace_back(&DGLAPSolver::_mt_EvolveDistribution_NST_N3LO, this, arr, j, "P1nsp", "P2nsp", "P3nsp", L1);
+				threads.emplace_back(&DGLAPSolver::_mt_EvolveDistribution_NST_N3LO, this, arr, 25, "P1nsm", "P2nsv", "P3nsv", L1);
+
+				for (std::thread & t : threads)
+					t.join();
+				
+				log(LOG_INFO, "NonSingletN3LO (trunc)", "Finished performing N3LO non-singlet evolution threaded.");
+			}; break;
+        }
+	}
+
+	void DGLAPSolver::_mt_EvolveDistribution_NST_LO(std::reference_wrapper<std::vector<ArrayGrid>> arr, uint j, double L1)
+	{
+		initializeThreadIndex(j);
+        log(LOG_THREAD, "NonSingletLO (trunc)", "Thread {0} initialized evolving distribution {0}.", j);
+
+		static auto& p0ns = getExpression("P0ns");
+
+		for (uint n=1; n<_iterations; n++) {
+			log(LOG_THREAD, "NonSingletLO (trunc)", "  [j={}] Iteration {}/{}", j, n, _iterations-1);	
+			double fac = std::pow(L1, n)/factorial(n);
+
+			for (uint k=0; k<_grid.size()-1; k++) {
+				_S_NS[0][j][1][k] = recrelS_1(_S_NS[0][j][0], k, p0ns);
+
+				arr.get()[j][k] += _S_NS[0][j][1][k]*fac;
+			}
+				    
+			_S_NS[0][j][0] = _S_NS[0][j][1];
+		}
+	}
+	void DGLAPSolver::_mt_EvolveDistribution_NST_NLO(
+		std::reference_wrapper<std::vector<ArrayGrid>> arr, uint j,
+		std::string_view _p1, double L1)
+	{
+		initializeThreadIndex(j);
+        log(LOG_THREAD, "NonSingletNLO (trunc)", "Thread {0} initialized evolving distribution {0}.", j);
+
+		static auto& p0ns = getExpression("P0ns");
+		auto& p1 =   getExpression(_p1);
+
+		for (uint n=1; n<_iterations; n++) {
+			log(LOG_THREAD, "NonSingletNLO (trunc)", "  [j={}] Iteration {}/{}", j, n, _iterations-1);
+			double fac = std::pow(L1, n)/factorial(n);
+
+			// LO piece
+			for (uint k=0; k<_grid.size()-1; k++)
+				_S_NS[0][j][1][k] = recrelS_1(_S_NS[0][j][0], k, p0ns);
+
+			// NLO
+			for (uint k=0; k<_grid.size()-1; k++) {
+				_S_NS[1][j][1][k] = -_S_NS[0][j][1][k] * _alpha_s.beta1()/(4.0*PI*_alpha_s.beta0()) - _S_NS[1][j][0][k];
+				_S_NS[1][j][1][k] += recrelS_2(_S_NS[1][j][0], _S_NS[0][j][0], k, p0ns, p1);
+			}
+
+			// truncation terms
+			for (uint t=2; t<=_trunc_idx; ++t) {
+				double T = static_cast<double>(t);
+				for (uint k=0; k<_grid.size()-1; k++) {
+					_S_NS[t][j][1][k] =
+						- (_alpha_s.beta1()/(4.0*PI*_alpha_s.beta0()))*_S_NS[t-1][j][1][k]
+						- T*_S_NS[t][j][0][k]
+						- (T-1.0)*(_alpha_s.beta1()/(4.0*PI*_alpha_s.beta0()))*_S_NS[t-1][j][0][k];
+					_S_NS[t][j][1][k] += recrelS_2(_S_NS[t][j][0], _S_NS[t-1][j][0], k, p0ns, p1);
+				}
+			}
+
+			// resum
+			for (uint t=0; t<=_trunc_idx; ++t) {
+				double a = std::pow(_alpha1, t);
+				for (uint k=0; k<_grid.size()-1; k++)
+					arr.get()[j][k] += _S_NS[t][j][1][k]*a*fac;
+			}
+
+			// setup for next iteration
+			for (uint t=0; t<=_trunc_idx; ++t)
+				_S_NS[t][j][0] = _S_NS[t][j][1];
+		}
+	}
+	void DGLAPSolver::_mt_EvolveDistribution_NST_NNLO(std::reference_wrapper<std::vector<ArrayGrid>> arr, uint j,
+		std::string_view _p1, std::string_view _p2, double L1)
+	{
+		initializeThreadIndex(j);
+        log(LOG_THREAD, "NonSingletNNLO (trunc)", "Thread {0} initialized evolving distribution {0}.", j);
+
+		static auto& p0ns = getExpression("P0ns");
+		auto& p1 = getExpression(_p1);
+		auto& p2 = getExpression(_p2);
+
+		for (uint n=1; n<_iterations; n++) {
+			log(LOG_THREAD, "NonSingletNNLO (trunc)", "  [j={}] Iteration {}/{}", j, n, _iterations-1);	
+			double fac = std::pow(L1, n)/factorial(n);
+
+			// LO piece
+			for (uint k=0; k<_grid.size()-1; k++)
+				_S_NS[0][j][1][k] = recrelS_1(_S_NS[0][j][0], k, p0ns);
+
+			// NLO
+			for (uint k=0; k<_grid.size()-1; k++) {
+				_S_NS[1][j][1][k] = -_S_NS[0][j][1][k] * _alpha_s.beta1()/(4.0*PI*_alpha_s.beta0()) - _S_NS[1][j][0][k];
+				_S_NS[1][j][1][k] += recrelS_2(_S_NS[1][j][0], _S_NS[0][j][0], k, p0ns, p1);
+			}
+
+			// NNLO
+			for (uint k=0; k<_grid.size()-1; k++) {
+				_S_NS[2][j][1][k] =
+					- (_alpha_s.beta1()/(4.0*PI*_alpha_s.beta0()))*_S_NS[1][j][1][k]
+					- (_alpha_s.beta2()/(16.0*PI_2*_alpha_s.beta0()))*_S_NS[0][j][1][k]
+					- 2.0*_S_NS[2][j][0][k]
+					- (_alpha_s.beta1()/(4.0*PI*_alpha_s.beta0()))*_S_NS[1][j][0][k];
+				_S_NS[2][j][1][k] += recrelS_3(_S_NS[2][j][0], _S_NS[1][j][0], _S_NS[0][j][0], k, p0ns, p1, p2);
+			}
+
+			for (uint t=3; t<=_trunc_idx; ++t) {
+				double T = static_cast<double>(t);
+				for (uint k=0; k<_grid.size()-1; k++) {
+					_S_NS[t][j][1][k] =
+						- (_alpha_s.beta1()/(4.0*PI*_alpha_s.beta0()))*_S_NS[t-1][j][1][k]
+						- (_alpha_s.beta2()/(16.0*PI_2*_alpha_s.beta0()))*_S_NS[t-2][j][1][k]
+						- T*_S_NS[t][j][0][k]
+						- (T-1.0)*(_alpha_s.beta1()/(4.0*PI*_alpha_s.beta0()))*_S_NS[t-1][j][0][k]
+						- (T-2.0)*(_alpha_s.beta2()/(16.0*PI_2*_alpha_s.beta0()))*_S_NS[t-2][j][0][k];
+					_S_NS[t][j][1][k] += recrelS_3(_S_NS[t][j][0], _S_NS[t-1][j][0], _S_NS[t-2][j][0], k, p0ns, p1, p2);
+				}
+			}
+
+			// resum
+			for (uint t=0; t<=_trunc_idx; ++t) {
+				double a = std::pow(_alpha1, t);
+				for (uint k=0; k<_grid.size()-1; k++)
+					arr.get()[j][k] += _S_NS[t][j][1][k]*a*fac;
+			}
+
+			// setup for next iteration
+			for (uint t=0; t<=_trunc_idx; ++t)
+				_S_NS[t][j][0] = _S_NS[t][j][1];
+		}
+	}
+	void DGLAPSolver::_mt_EvolveDistribution_NST_N3LO(
+		std::reference_wrapper<std::vector<ArrayGrid>> arr, uint j,
+		std::string_view _p1, std::string_view _p2, std::string_view _p3, double L1)
+	{
+		initializeThreadIndex(j);
+        log(LOG_THREAD, "NonSingletN3LO (trunc)", "Thread {0} initialized evolving distribution {0}.", j);
+
+		static auto& p0ns = getExpression("P0ns");
+		auto& p1 =   getExpression(_p1);
+		auto& p2 =   getExpression(_p2);
+		auto& p3 =   getExpression(_p3);
+
+		double beta0 = _alpha_s.beta0();
+		double beta1 = _alpha_s.beta1();
+		double beta2 = _alpha_s.beta2();
+		double beta3 = _alpha_s.beta3();
+
+		for (uint n=1; n<_iterations; n++) {
+			log(LOG_THREAD, "NonSingletN3LO (trunc)", "  [j={}] Iteration {}/{}", j, n, _iterations-1);	
+			double fac = std::pow(L1, n)/factorial(n);
+
+			// LO piece
+			for (uint k=0; k<_grid.size()-1; k++)
+				_S_NS[0][j][1][k] = recrelS_1(_S_NS[0][j][0], k, p0ns);
+
+			// NLO
+			for (uint k=0; k<_grid.size()-1; k++) {
+				_S_NS[1][j][1][k] = -_S_NS[0][j][1][k] * beta1/(4.0*PI*beta0) - _S_NS[1][j][0][k];
+				_S_NS[1][j][1][k] += recrelS_2(_S_NS[1][j][0], _S_NS[0][j][0], k, p0ns, p1);
+			}
+
+			// NNLO
+			for (uint k=0; k<_grid.size()-1; k++) {
+				_S_NS[2][j][1][k] =
+					- (beta1/(4.0*PI*beta0))*_S_NS[1][j][1][k]
+					- (beta2/(16.0*PI_2*beta0))*_S_NS[0][j][1][k]
+					- 2.0*_S_NS[2][j][0][k]
+					- (beta1/(4.0*PI*beta0))*_S_NS[1][j][0][k];
+				_S_NS[2][j][1][k] += recrelS_3(_S_NS[2][j][0], _S_NS[1][j][0], _S_NS[0][j][0], k, p0ns, p1, p2);
+			}
+
+			// N3LO
+			for (uint k=0; k<_grid.size()-1; k++) {
+				_S_NS[3][j][1][k] =
+					- (beta1/(4.0*PI*beta0))*_S_NS[2][j][1][k]
+					- (beta2/(16.0*PI_2*beta0))*_S_NS[1][j][1][k]
+					- (beta3/(64.0*PI_3*beta0))*_S_NS[0][j][1][k]
+					- 3.0*_S_NS[3][j][0][k]
+					- 2.0*(beta1/(4.0*PI*beta0))*_S_NS[2][j][0][k]
+					- (beta2/(16.0*PI_2*beta0))*_S_NS[1][j][0][k];
+				_S_NS[3][j][1][k] += recrelS_4(
+					_S_NS[3][j][0], _S_NS[2][j][0], _S_NS[1][j][0], _S_NS[0][j][0],
+					k,
+					p0ns, p1, p2, p3);
+			}
+
+			for (uint t=4; t<=_trunc_idx; ++t) {
+				double T = static_cast<double>(t);
+				for (uint k=0; k<_grid.size()-1; k++) {
+					_S_NS[t][j][1][k] =
+						- (beta1/(4.0*PI*beta0))*_S_NS[t-1][j][1][k]
+						- (beta2/(16.0*PI_2*beta0))*_S_NS[t-2][j][1][k]
+						- (beta3/(64.0*PI_3*beta0))*_S_NS[t-3][j][1][k]
+						- T*_S_NS[t][j][0][k]
+						- (T-1.0)*(beta1/(4.0*PI*beta0))*_S_NS[t-1][j][0][k]
+						- (T-2.0)*(beta2/(16.0*PI_2*beta0))*_S_NS[t-2][j][0][k]
+						- (T-3.0)*(beta3/(64.0*PI_3*beta0))*_S_NS[t-3][j][0][k];
+					_S_NS[t][j][1][k] += recrelS_4(
+						_S_NS[t][j][0], _S_NS[t-1][j][0], _S_NS[t-2][j][0], _S_NS[t-3][j][0],
+						k,
+						p0ns, p1, p2, p3);
+				}
+			}
+					
+			// resum
+			for (uint t=0; t<=_trunc_idx; ++t) {
+				double a = std::pow(_alpha1, t);
+				for (uint k=0; k<_grid.size()-1; k++)
+					arr.get()[j][k] += _S_NS[t][j][1][k]*a*fac;
+			}
+
+			// setup for next iteration
+			for (uint t=0; t<=_trunc_idx; ++t)
+				_S_NS[t][j][0] = _S_NS[t][j][1];
+		}
+	}
 }

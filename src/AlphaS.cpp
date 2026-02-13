@@ -184,7 +184,9 @@ namespace Candia2
 		// we are in the VFNS?
 
 		double mur_muf = std::sqrt(_mur2_muf2);
+		log(LOG_DEBUG, "AlphaS::calculateThresholdValues()", "Using mur/muf={}", mur_muf);
 		uint nf1 = 0;
+		
 		// set nf1 correctly
 		// TODO: handle kr != 1
 		for (nf1=_nff; _Q0<mur_muf*_masses[nf1]; nf1--);

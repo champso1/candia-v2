@@ -11,6 +11,7 @@
 #include <memory>
 #include <utility>
 #include <vector>
+#include <string_view>
 
 #include "Candia-v2/Common.hpp"
 #include "Candia-v2/Grid.hpp"
@@ -26,7 +27,7 @@ namespace Candia2
 	 */
 	struct DGLAPOptions final
 	{
-		bool use_nnlo_matching_conditions_at_n3lo{true}; //!< switch for whether to use nnlo matching at n3lo (for benchmarking purposes)
+		bool use_nnlo_matching_conditions_at_n3lo{false}; //!< switch for whether to use nnlo matching at n3lo (for benchmarking purposes)
 		bool disable_heavy_flavor_matching{false}; //!< switch for whether to use matching at all for the heavy flavors
 		bool use_n3lo_heavyquark_asymmetry{true}; //!< use new OME from arXiv:2512.13508
 		bool use_truncated_nonsinglet_sol{false}; //!< whether to use the truncated ansatz in the non-singlet sector, as opposed to the exact solution
@@ -193,6 +194,14 @@ namespace Candia2
 		void evolveNonSingletThreaded(
 			std::reference_wrapper<std::vector<ArrayGrid>> arr, 
 			double L1, double L2, double L3, double L4);
+
+		/**
+		 *  @brief Evolves the non-singlet distributions with the truncated ansatz (threaded version)
+		 *  @param arr Reference to the array in which to place the resummed results,
+		 *  which will be different if resumming to the final energy vs a threshold one
+		 *  @param L1 The LO logarithmic coefficient
+		 */
+		void evolveNonSingletTruncThreaded(std::reference_wrapper<std::vector<ArrayGrid>> arr, double L1);
 #endif
 
 		/**
@@ -267,6 +276,7 @@ namespace Candia2
 		void HFT_N3LO4(ArrayGrid& g, ArrayGrid& qp, ArrayGrid& qminus, uint k, ArrayGrid& qh, ArrayGrid& qhb);
 		/** @} */
 
+#if ENABLE_THREADING
 
 		/**
 		 *  @defgroup singlethelpers Multi-Thread Singlet Helper Functions
@@ -344,8 +354,58 @@ namespace Candia2
 			uint j, std::array<std::string, 3> const& P, std::array<double, 4> const& L);
 		/** @} */
 
+		/**
+		 *  @defgroup nonsinglettrunchelpers Multi-Thread Non-Singlet Helper Functions (Truncated Ansatz)
+		 *  @{
+		 */
+		/**
+		 *  @brief LO non-singlet multi-threaded helper routine
+		 *  @param arr reference to set of dists to place resummation results into
+		 *  @param j distribution index
+		 *  @param L1 log term
+		 */
+		void _mt_EvolveDistribution_NST_LO(
+			std::reference_wrapper<std::vector<ArrayGrid>> arr,
+			uint j, double L1);
+		/**
+		 *  @brief NLO non-singlet multi-threaded helper routine
+		 *  @param arr reference to set of dists to place resummation results into
+		 *  @param j distribution index
+		 *  @param p1 the NLO splitting function
+		 *  @param L1 log term
+		 */
+	    void _mt_EvolveDistribution_NST_NLO(
+			std::reference_wrapper<std::vector<ArrayGrid>> arr,
+			uint j, std::string_view p1, double L1);
+		/**
+		 *  @brief NNLO non-singlet multi-threaded helper routine
+		 *  @param arr reference to set of dists to place resummation results into
+		 *  @param j distribution index
+		 *  @param p1 the NLO splitting function
+		 *  @param p2 the NNLO splitting function
+		 *  @param L1 log term
+		 */
+	    void _mt_EvolveDistribution_NST_NNLO(
+			std::reference_wrapper<std::vector<ArrayGrid>> arr,
+			uint j, std::string_view p1, std::string_view p2, double L1);
+		/**
+		 *  @brief N3LO non-singlet multi-threaded helper routine
+		 *  @param arr reference to set of dists to place resummation results into
+		 *  @param j distribution index
+		 *  @param p1 the NLO splitting function
+		 *  @param p2 the NNLO splitting function
+		 *  @param p3 the N3LO splitting function
+		 *  @param L1 log term
+		 */
+	    void _mt_EvolveDistribution_NST_N3LO(
+			std::reference_wrapper<std::vector<ArrayGrid>> arr,
+			uint j, std::string_view p1, std::string_view p2, std::string_view p3, double L1);
+		/** @} */
+
 		/** @defgroup recrels Recursion Relations */
 
+#endif // ENABLE_THREADING
+		
 		/**
 		 *  @defgroup singletrecrels Singlet Recursion Relations
 		 *  @ingroup recrels

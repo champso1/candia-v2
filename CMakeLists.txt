@@ -55,6 +55,7 @@ set(headers
   include/Candia-v2/Grid.hpp
   include/Candia-v2/Math.hpp
   include/Candia-v2/OperatorMatrixElements.hpp
+  include/Candia-v2/Options.hpp
   include/Candia-v2/SpecialFuncs.hpp
   include/Candia-v2/SplittingFn.hpp)
 

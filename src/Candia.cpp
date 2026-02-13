@@ -432,12 +432,14 @@ namespace Candia2
 				break;
 			}
 
+			log(LOG_DEBUG, "DGLAP", "Loading relevant splitting function / OME values into cache");
 			// update all values
 			_alpha_s.update(_nf);
 			SplittingFunction::update(_nf, _alpha_s.beta0());
 			for (auto& [_, expr] : _expressions)
 				expr->fill(_grid.points(), _grid.abscissae());
-			
+
+			log(LOG_DEBUG, "DGLAP", "Retrieving values of alpha_s, and calculating all logarithm factors");
 			bool resum_tab = _alpha_s.resumTabulated();
 			bool resum_threshold = !resum_tab;
 			_alpha0 = _alpha_s.post(_nf);
@@ -483,7 +485,7 @@ namespace Candia2
 
 			log(LOG_DEBUG, "DGLAP::evolve()", "Values of log coeffs:");
 			std::vector<std::pair<double, std::string_view>> coeffs{{L1, "L1"}, {L2, "L2"}, {L3, "L3"}, {L4, "L4"}};
-			for (auto [x, xname] : coeffs)
+			for (auto [x, xname] : coeffs)
 				log(LOG_DEBUG, "DGLAP::evolve()", "  - {} = {: }", xname, x);
 			
 			log(LOG_INFO, "DGLAP", "Doing {} resummation", (resum_tab ? "tabulated" : "threshold" ));
@@ -502,7 +504,9 @@ namespace Candia2
 
 				log(LOG_INFO, "DGLAP", "Starting non-singlet evolution and resummation...");
 #if ENABLE_THREADING
-				evolveNonSingletThreaded(resum_ns, L1, L2, L3, L4);
+				options.use_truncated_nonsinglet_sol ?
+					evolveNonSingletTruncThreaded(resum_ns, L1) :
+					evolveNonSingletThreaded(resum_ns, L1, L2, L3, L4);
 #else
 				options.use_truncated_nonsinglet_sol ?
 					evolveNonSingletTrunc(resum_ns, L1) :
@@ -518,8 +522,10 @@ namespace Candia2
 				// _F contains our final distributions
 				// we can just copy
 				if (resum_tab) {
+					log(LOG_INFO, "DGLAP", "Moving distributions into output array.");
 					_F = std::move(resum);
 				} else if (resum_threshold) {
+					log(LOG_INFO, "DGLAP", "Moving distributions into the initial conditions of the next iteration.");
 					// if we just resummed to a threshold energy,
 					// then we need to recopy the resultant distributions
 					// from the temporary array

@@ -76,7 +76,7 @@ static void outputData(
 	// print them out
 	for (uint k=0; k<grid.size(); k++){
 		outfile << setw(15) << setprecision(8) << grid.at(k) << ' ';
-		outfile << setprecision(8);	
+		outfile << setprecision(15);	
 		for (const uint j : dists)
 			outfile << setw(15) << F[j][k] << ' ';
 		outfile << '\n';
@@ -109,17 +109,15 @@ int main(int argc, char *argv[]) {
 	std::ofstream log_output_file(log_path);
 
 	auto& log_options = getLogOptions();
-	log_options.show_debug_messages = false;
-	log_options.show_thread_output = false;
+	log_options.show_debug_messages = true;
+	log_options.show_thread_output = true;
 	log_options.use_log_output_stream = true;
 	log_options.log_output_stream = log_output_file;
 	
 	vector<double> xtab{1e-5, 1e-4, 1e-3, 1e-2, 0.1, 0.3, 0.5, 0.7, 0.9, 1.0};
 	Grid grid(xtab, num_grid_points, Grid::LOG_LIN);
 	auto& grid_options = grid.getOptions();
-	grid_options.use_gsl_routine_for_high_x = false;
-	grid_options.try_new_largex_mapping = false;
-	grid.splitConvolution({1e-5, 0.5, 1.0}, {50, 75});
+	grid.splitConvolution({1e-5, 0.7, 1.0}, {100, 50});
 	
 	LesHouchesDistribution dist{};
 	AlphaS alphas(order, dist.Q0(), Qf, dist.alpha0(), kr);
@@ -129,6 +127,8 @@ int main(int argc, char *argv[]) {
 	DGLAPSolver solver(order, grid, alphas, Qf, iterations, trunc_idx, dist, kr);
 	auto& dglap_options = solver.getOptions();
 	dglap_options.use_truncated_nonsinglet_sol = true;
+	dglap_options.use_n3lo_heavyquark_asymmetry = true;
+	dglap_options.disable_heavy_flavor_matching = false;
 
 	auto t0 = chrono::high_resolution_clock::now();
 	auto F = solver.evolve();

@@ -1164,6 +1164,11 @@ namespace Candia2
 				auto& p3nsp = getExpression("P3nsp");
 				auto& p3nsv = getExpression("P3nsv");
 
+				double beta0 = _alpha_s.beta0();
+				double beta1 = _alpha_s.beta1();
+				double beta2 = _alpha_s.beta2();
+				double beta3 = _alpha_s.beta3();
+
 				for (uint j=26; j<=24+_nf; j++)
                     arr[j] = _S_NS[0][j][0];
                 for (uint j=32; j<=30+_nf; ++j)
@@ -1171,35 +1176,35 @@ namespace Candia2
 				arr[25] = _S_NS[0][25][0];
 
 				auto go = [&](uint j, double fac, Expression& p1, Expression& p2, Expression& p3) {
-					// LO piece
+				    // LO piece
 					for (uint k=0; k<_grid.size()-1; k++)
 						_S_NS[0][j][1][k] = recrelS_1(_S_NS[0][j][0], k, p0ns);
 
 					// NLO
 					for (uint k=0; k<_grid.size()-1; k++) {
-						_S_NS[1][j][1][k] = -_S_NS[0][j][1][k] * _alpha_s.beta1()/(4.0*PI*_alpha_s.beta0()) - _S_NS[1][j][0][k];
+						_S_NS[1][j][1][k] = -_S_NS[0][j][1][k] * beta1/(4.0*PI*beta0) - _S_NS[1][j][0][k];
 						_S_NS[1][j][1][k] += recrelS_2(_S_NS[1][j][0], _S_NS[0][j][0], k, p0ns, p1);
 					}
 
 					// NNLO
                     for (uint k=0; k<_grid.size()-1; k++) {
 						_S_NS[2][j][1][k] =
-							- (_alpha_s.beta1()/(4.0*PI*_alpha_s.beta0()))*_S_NS[1][j][1][k]
-							- (_alpha_s.beta2()/(16.0*PI_2*_alpha_s.beta0()))*_S_NS[0][j][1][k]
+							- (beta1/(4.0*PI*beta0))*_S_NS[1][j][1][k]
+							- (beta2/(16.0*PI_2*beta0))*_S_NS[0][j][1][k]
 							- 2.0*_S_NS[2][j][0][k]
-							- (_alpha_s.beta1()/(4.0*PI*_alpha_s.beta0()))*_S_NS[1][j][0][k];
+							- (beta1/(4.0*PI*beta0))*_S_NS[1][j][0][k];
 						_S_NS[2][j][1][k] += recrelS_3(_S_NS[2][j][0], _S_NS[1][j][0], _S_NS[0][j][0], k, p0ns, p1, p2);
                     }
 
 					// N3LO
                     for (uint k=0; k<_grid.size()-1; k++) {
 						_S_NS[3][j][1][k] =
-							- (_alpha_s.beta1()/(4.0*PI*_alpha_s.beta0()))*_S_NS[2][j][1][k]
-							- (_alpha_s.beta2()/(16.0*PI_2*_alpha_s.beta0()))*_S_NS[1][j][1][k]
-							- (_alpha_s.beta3()/(64.0*PI_3*_alpha_s.beta0()))*_S_NS[0][j][1][k]
+							- (beta1/(4.0*PI*beta0))*_S_NS[2][j][1][k]
+							- (beta2/(16.0*PI_2*beta0))*_S_NS[1][j][1][k]
+							- (beta3/(64.0*PI_3*beta0))*_S_NS[0][j][1][k]
 							- 3.0*_S_NS[3][j][0][k]
-							- 2.0*(_alpha_s.beta1()/(4.0*PI*_alpha_s.beta0()))*_S_NS[2][j][0][k]
-							- (_alpha_s.beta2()/(16.0*PI_2*_alpha_s.beta0()))*_S_NS[1][j][0][k];
+							- 2.0*(beta1/(4.0*PI*beta0))*_S_NS[2][j][0][k]
+							- (beta2/(16.0*PI_2*beta0))*_S_NS[1][j][0][k];
 						_S_NS[3][j][1][k] += recrelS_4(
 							_S_NS[3][j][0], _S_NS[2][j][0], _S_NS[1][j][0], _S_NS[0][j][0],
 							k,
@@ -1210,13 +1215,13 @@ namespace Candia2
                         double T = static_cast<double>(t);
                         for (uint k=0; k<_grid.size()-1; k++) {
 							_S_NS[t][j][1][k] =
-								- (_alpha_s.beta1()/(4.0*PI*_alpha_s.beta0()))*_S_NS[t-1][j][1][k]
-								- (_alpha_s.beta2()/(16.0*PI_2*_alpha_s.beta0()))*_S_NS[t-2][j][1][k]
-								- (_alpha_s.beta3()/(64.0*PI_3*_alpha_s.beta0()))*_S_NS[t-3][j][1][k]
+								- (beta1/(4.0*PI*beta0))*_S_NS[t-1][j][1][k]
+								- (beta2/(16.0*PI_2*beta0))*_S_NS[t-2][j][1][k]
+								- (beta3/(64.0*PI_3*beta0))*_S_NS[t-3][j][1][k]
 								- T*_S_NS[t][j][0][k]
-								- (T-1.0)*(_alpha_s.beta1()/(4.0*PI*_alpha_s.beta0()))*_S_NS[t-1][j][0][k]
-								- (T-2.0)*(_alpha_s.beta2()/(16.0*PI_2*_alpha_s.beta0()))*_S_NS[t-2][j][0][k]
-								- (T-3.0)*(_alpha_s.beta3()/(64.0*PI_3*_alpha_s.beta0()))*_S_NS[t-3][j][0][k];
+								- (T-1.0)*(beta1/(4.0*PI*beta0))*_S_NS[t-1][j][0][k]
+								- (T-2.0)*(beta2/(16.0*PI_2*beta0))*_S_NS[t-2][j][0][k]
+								- (T-3.0)*(beta3/(64.0*PI_3*beta0))*_S_NS[t-3][j][0][k];
 							_S_NS[t][j][1][k] += recrelS_4(
 								_S_NS[t][j][0], _S_NS[t-1][j][0], _S_NS[t-2][j][0], _S_NS[t-3][j][0],
 								k,

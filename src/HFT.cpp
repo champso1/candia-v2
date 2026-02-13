@@ -68,6 +68,7 @@ namespace Candia2
 			}
 		} else if (_order == 3) {
 			if (!options.use_nnlo_matching_conditions_at_n3lo) {
+				log(LOG_INFO, "HFT", "Performing N3LO matching at N3LO");
 				ArrayGrid qminus(_grid.size());
 				for (uint k=0; k<_grid.size(); ++k) {
 					qminus[k] = 0.0;
