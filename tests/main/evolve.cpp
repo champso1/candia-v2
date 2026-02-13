@@ -108,17 +108,18 @@ int main(int argc, char *argv[]) {
 	fs::path log_path = fs::current_path()/"log"/logfile_ss.str();
 	std::ofstream log_output_file(log_path);
 
-	auto& options = getLogOptions();
-	options.show_debug_messages = true;
-	options.show_thread_output = true;
-	options.use_log_output_stream = true;
-	options.log_output_stream = log_output_file;
+	auto& log_options = getLogOptions();
+	log_options.show_debug_messages = false;
+	log_options.show_thread_output = false;
+	log_options.use_log_output_stream = true;
+	log_options.log_output_stream = log_output_file;
 	
 	vector<double> xtab{1e-5, 1e-4, 1e-3, 1e-2, 0.1, 0.3, 0.5, 0.7, 0.9, 1.0};
 	Grid grid(xtab, num_grid_points, Grid::LOG_LIN);
-	grid.splitConvolution();
-	// grid.useGSLRoutineForHighX();
-	// grid.tryNewLargeXMapping();
+	auto& grid_options = grid.getOptions();
+	grid_options.use_gsl_routine_for_high_x = false;
+	grid_options.try_new_largex_mapping = false;
+	grid.splitConvolution({1e-5, 0.5, 1.0}, {50, 75});
 	
 	LesHouchesDistribution dist{};
 	AlphaS alphas(order, dist.Q0(), Qf, dist.alpha0(), kr);
@@ -126,9 +127,8 @@ int main(int argc, char *argv[]) {
 	// alphas.setFFNS(4);
 
 	DGLAPSolver solver(order, grid, alphas, Qf, iterations, trunc_idx, dist, kr);
-	// solver.disableMatching();
-	// solver.useNNLOMatchingAtN3LO();
-	solver.disableN3LOHeavyQuarkAsymmetry();
+	auto& dglap_options = solver.getOptions();
+	dglap_options.use_truncated_nonsinglet_sol = true;
 
 	auto t0 = chrono::high_resolution_clock::now();
 	auto F = solver.evolve();

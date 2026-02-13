@@ -14,7 +14,7 @@ namespace Candia2
     ) {
         for (uint j=0; j<=1; ++j)
             arr.get()[j*31] = _S[0][j][0];
-
+		
         switch (_order) {
             case 0: {
 				auto& p0qq = getExpression("P0qq");
@@ -26,21 +26,19 @@ namespace Candia2
 					log(LOG_INFO, "DGLAP", "LO Singlet Iteration {}", n);
                     
                     for (uint k=0; k<_grid.size()-1; k++) {
-                        auto v1 = recrelS_1(_S[0][1][0], k, p0qq);
-                        auto v2 = recrelS_1(_S[0][0][0], k, p0qg);
                         _S[0][1][1][k] =
-							v1 +
-							v2;
+							recrelS_1(_S[0][1][0], k, p0qq) +
+							recrelS_1(_S[0][0][0], k, p0qg);
                         _S[0][0][1][k] =
 							recrelS_1(_S[0][1][0], k, p0gq) +
 							recrelS_1(_S[0][0][0], k, p0gg);
 
-						for (uint j=0; j<=1; j++)
+						for (uint j=0; j<=1; ++j)
 							arr.get()[j*31][k] += _S[0][j][1][k] * std::pow(L1, n)/factorial(n);
                     }
 
-                    for (uint j=0; j<=1; ++j)
-                        _S[0][j][0] = _S[0][j][1];
+					for (uint j=0; j<=1; ++j)
+						_S[0][j][0] = _S[0][j][1];
                 }
             } break;
             case 1: {
@@ -58,11 +56,9 @@ namespace Candia2
 
                     // LO piece (non truncated)
                     for (uint k=0; k<_grid.size()-1; k++) {
-                        auto v1 = recrelS_1(_S[0][1][0], k, p0qq);
-                        auto v2 = recrelS_1(_S[0][0][0], k, p0qg);
-                        _S[0][1][1][k] = 
-							v1 +
-							v2;
+                        _S[0][1][1][k] =
+							recrelS_1(_S[0][1][0], k, p0qq) +
+							recrelS_1(_S[0][0][0], k, p0qg);
                         _S[0][0][1][k] = 
 							recrelS_1(_S[0][1][0], k, p0gq) +
 							recrelS_1(_S[0][0][0], k, p0gg);
@@ -999,4 +995,257 @@ namespace Candia2
             } break;
         }
     }
+
+
+	void DGLAPSolver::evolveNonSingletTrunc(std::vector<ArrayGrid>& arr, double L1)
+	{
+		log(LOG_INFO, "DGLAP", "Using the truncated ansatz for the non-singlet sector");
+        switch (_order) {
+            case 0: {
+				auto& p0ns = getExpression("P0ns");
+
+				std::vector<uint> dists{};
+				for (uint j=13; j<=12+_nf; ++j)
+                    dists.emplace_back(j);
+                for (uint j=32; j<=30+_nf; ++j)
+                    dists.emplace_back(j);
+				for (auto j : dists)
+                    arr[j] = _S_NS[0][j][0];
+				
+                for (uint n=1; n<_iterations; n++) {
+					log(LOG_INFO, "DGLAP", "LO Non-Singlet Iteration (trunc) {}", n);
+					
+					double fac = std::pow(L1, n)/factorial(n);
+
+				    for (auto j : dists) {
+						for (uint k=0; k<_grid.size()-1; k++) {
+							_S_NS[0][j][1][k] = recrelS_1(_S_NS[0][j][0], k, p0ns);
+
+							arr[j][k] += _S_NS[0][j][1][k]*fac;
+						}
+					}
+					
+                    for (auto j : dists)
+                        _S_NS[0][j][0] = _S_NS[0][j][1];
+                }
+            }; break;
+			case 1: {
+				auto& p0ns  = getExpression("P0ns");
+				auto& p1nsm = getExpression("P1nsm");
+				auto& p1nsp = getExpression("P1nsp");
+
+				for (uint j=13; j<=12+_nf; ++j)
+                    arr[j] = _S_NS[0][j][0];
+                for (uint j=32; j<=30+_nf; ++j)
+                    arr[j] = _S_NS[0][j][0];
+
+				auto go = [&](uint j, double fac, Expression& p1) {
+					// LO piece
+					for (uint k=0; k<_grid.size()-1; k++)
+						_S_NS[0][j][1][k] = recrelS_1(_S_NS[0][j][0], k, p0ns);
+
+					// NLO
+					for (uint k=0; k<_grid.size()-1; k++) {
+						_S_NS[1][j][1][k] = -_S_NS[0][j][1][k] * _alpha_s.beta1()/(4.0*PI*_alpha_s.beta0()) - _S_NS[1][j][0][k];
+						_S_NS[1][j][1][k] += recrelS_2(_S_NS[1][j][0], _S_NS[0][j][0], k, p0ns, p1);
+					}
+
+					// truncation terms
+					for (uint t=2; t<=_trunc_idx; ++t) {
+						double T = static_cast<double>(t);
+						for (uint k=0; k<_grid.size()-1; k++) {
+							_S_NS[t][j][1][k] =
+								- (_alpha_s.beta1()/(4.0*PI*_alpha_s.beta0()))*_S_NS[t-1][j][1][k]
+								- T*_S_NS[t][j][0][k]
+								- (T-1.0)*(_alpha_s.beta1()/(4.0*PI*_alpha_s.beta0()))*_S_NS[t-1][j][0][k];
+							_S_NS[t][j][1][k] += recrelS_2(_S_NS[t][j][0], _S_NS[t-1][j][0], k, p0ns, p1);
+						}
+					}
+
+					// resum
+					for (uint t=0; t<=_trunc_idx; ++t) {
+						double a = std::pow(_alpha1, t);
+						for (uint k=0; k<_grid.size()-1; k++)
+							arr[j][k] += _S_NS[t][j][1][k]*a*fac;
+					}
+
+					// setup for next iteration
+					for (uint t=0; t<=_trunc_idx; ++t)
+						_S_NS[t][j][0] = _S_NS[t][j][1];
+				};
+				
+				for (uint n=1; n<_iterations; n++) {
+					log(LOG_INFO, "DGLAP", "NLO Non-Singlet Iteration (trunc) {}", n);
+					double fac = std::pow(L1, n)/factorial(n);
+					for (uint j=13; j<=12+_nf; ++j)
+						go(j, fac, p1nsm);
+					for (uint j=32; j<=30+_nf; ++j)
+						go(j, fac, p1nsp);
+				}
+			}; break;
+			case 2: {
+				auto& p0ns  = getExpression("P0ns");
+				auto& p1nsm = getExpression("P1nsm");
+				auto& p1nsp = getExpression("P1nsp");
+				auto& p2nsm = getExpression("P2nsm");
+				auto& p2nsp = getExpression("P2nsp");
+				auto& p2nsv = getExpression("P2nsv");
+
+				for (uint j=26; j<=24+_nf; j++)
+                    arr[j] = _S_NS[0][j][0];
+                for (uint j=32; j<=30+_nf; ++j)
+                    arr[j] = _S_NS[0][j][0];
+				arr[25] = _S_NS[0][25][0];
+
+				auto go = [&](uint j, double fac, Expression& p1, Expression& p2) {
+					// LO piece
+					for (uint k=0; k<_grid.size()-1; k++)
+						_S_NS[0][j][1][k] = recrelS_1(_S_NS[0][j][0], k, p0ns);
+
+					// NLO
+					for (uint k=0; k<_grid.size()-1; k++) {
+						_S_NS[1][j][1][k] = -_S_NS[0][j][1][k] * _alpha_s.beta1()/(4.0*PI*_alpha_s.beta0()) - _S_NS[1][j][0][k];
+						_S_NS[1][j][1][k] += recrelS_2(_S_NS[1][j][0], _S_NS[0][j][0], k, p0ns, p1);
+					}
+
+					// NNLO
+                    for (uint k=0; k<_grid.size()-1; k++) {
+						_S_NS[2][j][1][k] =
+							- (_alpha_s.beta1()/(4.0*PI*_alpha_s.beta0()))*_S_NS[1][j][1][k]
+							- (_alpha_s.beta2()/(16.0*PI_2*_alpha_s.beta0()))*_S_NS[0][j][1][k]
+							- 2.0*_S_NS[2][j][0][k]
+							- (_alpha_s.beta1()/(4.0*PI*_alpha_s.beta0()))*_S_NS[1][j][0][k];
+						_S_NS[2][j][1][k] += recrelS_3(_S_NS[2][j][0], _S_NS[1][j][0], _S_NS[0][j][0], k, p0ns, p1, p2);
+                    }
+
+					for (uint t=3; t<=_trunc_idx; ++t) {
+                        double T = static_cast<double>(t);
+                        for (uint k=0; k<_grid.size()-1; k++) {
+							_S_NS[t][j][1][k] =
+								- (_alpha_s.beta1()/(4.0*PI*_alpha_s.beta0()))*_S_NS[t-1][j][1][k]
+								- (_alpha_s.beta2()/(16.0*PI_2*_alpha_s.beta0()))*_S_NS[t-2][j][1][k]
+								- T*_S_NS[t][j][0][k]
+								- (T-1.0)*(_alpha_s.beta1()/(4.0*PI*_alpha_s.beta0()))*_S_NS[t-1][j][0][k]
+								- (T-2.0)*(_alpha_s.beta2()/(16.0*PI_2*_alpha_s.beta0()))*_S_NS[t-2][j][0][k];
+							_S_NS[t][j][1][k] += recrelS_3(_S_NS[t][j][0], _S_NS[t-1][j][0], _S_NS[t-2][j][0], k, p0ns, p1, p2);
+                        }
+                    }
+
+					// resum
+					for (uint t=0; t<=_trunc_idx; ++t) {
+						double a = std::pow(_alpha1, t);
+						for (uint k=0; k<_grid.size()-1; k++)
+							arr[j][k] += _S_NS[t][j][1][k]*a*fac;
+					}
+
+					// setup for next iteration
+					for (uint t=0; t<=_trunc_idx; ++t)
+						_S_NS[t][j][0] = _S_NS[t][j][1];
+				};
+				
+				for (uint n=1; n<_iterations; n++) {
+					log(LOG_INFO, "DGLAP", "NNLO Non-Singlet Iteration (trunc) {}", n);
+					double fac = std::pow(L1, n)/factorial(n);
+					for (uint j=26; j<=24+_nf; j++)
+						go(j, fac, p1nsm, p2nsm);
+					for (uint j=32; j<=30+_nf; ++j)
+						go(j, fac, p1nsp, p2nsp);
+					go(25, fac, p1nsm, p2nsv);
+				}
+			}; break;
+			case 3: {
+				auto& p0ns  = getExpression("P0ns");
+				auto& p1nsm = getExpression("P1nsm");
+				auto& p1nsp = getExpression("P1nsp");
+				auto& p2nsm = getExpression("P2nsm");
+				auto& p2nsp = getExpression("P2nsp");
+				auto& p2nsv = getExpression("P2nsv");
+				auto& p3nsm = getExpression("P3nsm");
+				auto& p3nsp = getExpression("P3nsp");
+				auto& p3nsv = getExpression("P3nsv");
+
+				for (uint j=26; j<=24+_nf; j++)
+                    arr[j] = _S_NS[0][j][0];
+                for (uint j=32; j<=30+_nf; ++j)
+                    arr[j] = _S_NS[0][j][0];
+				arr[25] = _S_NS[0][25][0];
+
+				auto go = [&](uint j, double fac, Expression& p1, Expression& p2, Expression& p3) {
+					// LO piece
+					for (uint k=0; k<_grid.size()-1; k++)
+						_S_NS[0][j][1][k] = recrelS_1(_S_NS[0][j][0], k, p0ns);
+
+					// NLO
+					for (uint k=0; k<_grid.size()-1; k++) {
+						_S_NS[1][j][1][k] = -_S_NS[0][j][1][k] * _alpha_s.beta1()/(4.0*PI*_alpha_s.beta0()) - _S_NS[1][j][0][k];
+						_S_NS[1][j][1][k] += recrelS_2(_S_NS[1][j][0], _S_NS[0][j][0], k, p0ns, p1);
+					}
+
+					// NNLO
+                    for (uint k=0; k<_grid.size()-1; k++) {
+						_S_NS[2][j][1][k] =
+							- (_alpha_s.beta1()/(4.0*PI*_alpha_s.beta0()))*_S_NS[1][j][1][k]
+							- (_alpha_s.beta2()/(16.0*PI_2*_alpha_s.beta0()))*_S_NS[0][j][1][k]
+							- 2.0*_S_NS[2][j][0][k]
+							- (_alpha_s.beta1()/(4.0*PI*_alpha_s.beta0()))*_S_NS[1][j][0][k];
+						_S_NS[2][j][1][k] += recrelS_3(_S_NS[2][j][0], _S_NS[1][j][0], _S_NS[0][j][0], k, p0ns, p1, p2);
+                    }
+
+					// N3LO
+                    for (uint k=0; k<_grid.size()-1; k++) {
+						_S_NS[3][j][1][k] =
+							- (_alpha_s.beta1()/(4.0*PI*_alpha_s.beta0()))*_S_NS[2][j][1][k]
+							- (_alpha_s.beta2()/(16.0*PI_2*_alpha_s.beta0()))*_S_NS[1][j][1][k]
+							- (_alpha_s.beta3()/(64.0*PI_3*_alpha_s.beta0()))*_S_NS[0][j][1][k]
+							- 3.0*_S_NS[3][j][0][k]
+							- 2.0*(_alpha_s.beta1()/(4.0*PI*_alpha_s.beta0()))*_S_NS[2][j][0][k]
+							- (_alpha_s.beta2()/(16.0*PI_2*_alpha_s.beta0()))*_S_NS[1][j][0][k];
+						_S_NS[3][j][1][k] += recrelS_4(
+							_S_NS[3][j][0], _S_NS[2][j][0], _S_NS[1][j][0], _S_NS[0][j][0],
+							k,
+							p0ns, p1, p2, p3);
+                    }
+
+                    for (uint t=4; t<=_trunc_idx; ++t) {
+                        double T = static_cast<double>(t);
+                        for (uint k=0; k<_grid.size()-1; k++) {
+							_S_NS[t][j][1][k] =
+								- (_alpha_s.beta1()/(4.0*PI*_alpha_s.beta0()))*_S_NS[t-1][j][1][k]
+								- (_alpha_s.beta2()/(16.0*PI_2*_alpha_s.beta0()))*_S_NS[t-2][j][1][k]
+								- (_alpha_s.beta3()/(64.0*PI_3*_alpha_s.beta0()))*_S_NS[t-3][j][1][k]
+								- T*_S_NS[t][j][0][k]
+								- (T-1.0)*(_alpha_s.beta1()/(4.0*PI*_alpha_s.beta0()))*_S_NS[t-1][j][0][k]
+								- (T-2.0)*(_alpha_s.beta2()/(16.0*PI_2*_alpha_s.beta0()))*_S_NS[t-2][j][0][k]
+								- (T-3.0)*(_alpha_s.beta3()/(64.0*PI_3*_alpha_s.beta0()))*_S_NS[t-3][j][0][k];
+							_S_NS[t][j][1][k] += recrelS_4(
+								_S_NS[t][j][0], _S_NS[t-1][j][0], _S_NS[t-2][j][0], _S_NS[t-3][j][0],
+								k,
+								p0ns, p1, p2, p3);
+                        }
+                    }
+					
+					// resum
+					for (uint t=0; t<=_trunc_idx; ++t) {
+						double a = std::pow(_alpha1, t);
+						for (uint k=0; k<_grid.size()-1; k++)
+							arr[j][k] += _S_NS[t][j][1][k]*a*fac;
+					}
+
+					// setup for next iteration
+					for (uint t=0; t<=_trunc_idx; ++t)
+						_S_NS[t][j][0] = _S_NS[t][j][1];
+				};
+				
+				for (uint n=1; n<_iterations; n++) {
+					log(LOG_INFO, "DGLAP", "N3LO Non-Singlet Iteration (trunc) {}", n);
+					double fac = std::pow(L1, n)/factorial(n);
+					for (uint j=26; j<=24+_nf; j++)
+						go(j, fac, p1nsm, p2nsm, p3nsm);
+					for (uint j=32; j<=30+_nf; ++j)
+						go(j, fac, p1nsp, p2nsp, p3nsp);
+					go(25, fac, p1nsm, p2nsv, p3nsv);
+				}
+			}; break;
+        }
+	}
 }

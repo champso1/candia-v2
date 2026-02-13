@@ -17,13 +17,25 @@
 #include "Candia-v2/AlphaS.hpp"
 #include "Candia-v2/Distribution.hpp"
 #include "Candia-v2/ArrayGrid.hpp"
+#include "Candia-v2/Options.hpp"
 
 namespace Candia2
 {
 	/**
+	 *  @brief groups all of the options/flags together into a single struct
+	 */
+	struct DGLAPOptions final
+	{
+		bool use_nnlo_matching_conditions_at_n3lo{true}; //!< switch for whether to use nnlo matching at n3lo (for benchmarking purposes)
+		bool disable_heavy_flavor_matching{false}; //!< switch for whether to use matching at all for the heavy flavors
+		bool use_n3lo_heavyquark_asymmetry{true}; //!< use new OME from arXiv:2512.13508
+		bool use_truncated_nonsinglet_sol{false}; //!< whether to use the truncated ansatz in the non-singlet sector, as opposed to the exact solution
+	};
+
+	/**
 	 *  @brief Performs the evolution of parton distributions.
 	 */
-	class DGLAPSolver
+	class DGLAPSolver : public OptionsBase<DGLAPOptions>
 	{
 	private:
 		uint _order{}; //!< perturbative order
@@ -51,18 +63,12 @@ namespace Candia2
 		MultiDimArrayGrid_t<4> _C{}; //!< NNLO coeffs
 		MultiDimArrayGrid_t<5> _D{}; //!< N3LO coeffs
 	    MultiDimArrayGrid_t<3> _S{}; //!< singlet coeffs
+		MultiDimArrayGrid_t<3> _S_NS{}; //!< non-singlet coeffs (truncated)
 		std::vector<ArrayGrid> _F{}; //!< final distributions
 
 		std::array<double,8> _r1{}; //!< real solution to N3LO quadratic
 		std::array<double,8> _b{};  //!< \f$-2*\mathrm{Re}[r_2]\f$
 		std::array<double,8> _c{};  //!< \f$|r_2|^2\f$
-
-		// for purposes of comparing with benchmarks,
-		// this flag lets one enable whether or not to use
-		// the n3lo matching conditions in the n3lo evolution
-		bool _use_n3lo_matching_conditions{true}; //!< switch for whether to use n3lo matching at nnlo (for benchmarking purposes)
-		bool _disable_matching{false}; //!< switch for whether to use matching at all
-		bool _use_n3lo_heavyquark_asymmetry{true}; //!< use new OME from arXiv:2512.13508v1
 
 		std::map<std::string_view, std::unique_ptr<Expression>> _expressions{}; //!< list of internal stores Expression objects
 		/**
@@ -113,13 +119,6 @@ namespace Candia2
 		/** getter for the @a Grid object */
 		inline Grid const& getGrid() const { return _grid; }
 
-		/** sets the flag to use the NNLO matching at N3LO */
-		inline void useNNLOMatchingAtN3LO() { _use_n3lo_matching_conditions = false;};
-		/** sets the flag to disable all matching condition */
-		inline void disableMatching() { _disable_matching = true; }
-		/** disables the new n3lo heavy quark asymmetry from arXiv:2512.13508v1 */
-		inline void disableN3LOHeavyQuarkAsymmetry() { _use_n3lo_heavyquark_asymmetry = false; }
-
 		/**
 		 *  @brief Performs the full evolution.
 		 */
@@ -146,6 +145,9 @@ namespace Candia2
 			std::vector<ArrayGrid>& resum_singlet,
 			std::vector<ArrayGrid>& resum);
 
+		/** @brief takes the default exact coefficients (A, B, ...) and sets up S to contain all necessary info */
+		void setupTruncatedDistributions();
+
 		void evolveSinglet(std::reference_wrapper<std::vector<ArrayGrid>> arr, double L1);
 		/**
 		 *  @brief Evolves the non-singlet distributions
@@ -159,6 +161,15 @@ namespace Candia2
 		void evolveNonSinglet(
 			std::reference_wrapper<std::vector<ArrayGrid>> arr, 
 			double L1, double L2, double L3, double L4);
+
+		/**
+		 *  @brief Evolves the non-singlet distributions with the truncated ansatz
+		 *  @param arr Reference to the array in which to place the resummed results,
+		 *  which will be different if resumming to the final energy vs a threshold one
+		 *  @param L1 The LO logarithmic coefficient
+		 */
+		void evolveNonSingletTrunc(std::vector<ArrayGrid>& arr, double L1);
+		
 
 #if ENABLE_THREADING
 		/**
@@ -224,8 +235,9 @@ namespace Candia2
 		 *  @param j distribution index
 		 *  @param k current grid index
 		 *  @param SP pre-calculated piece independent of @a j
+		 *  @param qh the output q array to place the results. not the heavy quark dist, but a suitable enough name
 		 */
-		void HFT_N3LO1(ArrayGrid& q, ArrayGrid& qb, uint j, uint k, double SP);
+		void HFT_N3LO1(ArrayGrid& q, ArrayGrid& qb, uint j, uint k, double SP, ArrayGrid& qh);
 		/**
 		 *  @brief relation 2 for N3LO HFT
 		 *  @param q quark arraygrid
@@ -233,8 +245,9 @@ namespace Candia2
 		 *  @param j distribution index
 		 *  @param k current grid index
 		 *  @param SP pre-calculated piece independent of @a j
+		 *  @param qhb the output qbar array to place the results. not the heavy quark dist, but a suitable enough name
 		 */
-		void HFT_N3LO2(ArrayGrid& q, ArrayGrid& qb, uint j, uint k, double SP);
+		void HFT_N3LO2(ArrayGrid& q, ArrayGrid& qb, uint j, uint k, double SP, ArrayGrid& qhb);
 		/**
 		 *  @brief relation 3 for N3LO HFT
 		 *  @param g gluon arraygrid
@@ -248,8 +261,10 @@ namespace Candia2
 		 *  @param qp q^(+) arraygrid
 		 *  @param qminus q^(-) arraygrid
 		 *  @param k current grid index
+		 *  @param qh the heavy quark array to place the results
+		 *  @param qhb the heavy quark bar array to place the results
 		 */
-		void HFT_N3LO4(ArrayGrid& g, ArrayGrid& qp, ArrayGrid& qminus, uint k);
+		void HFT_N3LO4(ArrayGrid& g, ArrayGrid& qp, ArrayGrid& qminus, uint k, ArrayGrid& qh, ArrayGrid& qhb);
 		/** @} */
 
 

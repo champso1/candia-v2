@@ -5,8 +5,6 @@
 #include <algorithm>
 #include <cstdlib>
 #include <cmath>
-#include <gsl/gsl_errno.h>
-#include <gsl/gsl_integration.h>
 #include <iterator>
 #include <limits>
 #include <set>
@@ -44,12 +42,11 @@ namespace Candia2
 	}
 
 	Grid::Grid(Grid& other)
-		: _points{other._points}, _ntab{other._ntab}, _xtab{other._xtab},
+		: OptionsBase<GridOptions>{other},
+		  _points{other._points}, _ntab{other._ntab}, _xtab{other._xtab},
 		  _split_interval{other._split_interval},
 		  _Xi{other._Xi}, _Wi{other._Wi},
 		  _interval_sizes{other._interval_sizes},
-		  _try_new_largex_mapping(other._try_new_largex_mapping),
-		  _use_gsl_routine_for_high_x(other._use_gsl_routine_for_high_x),
 		  _workspace{std::move(gsl::make_workspace(other._workspace->limit))}
 	{
 		_workspaces.reserve(DISTS);
@@ -66,8 +63,7 @@ namespace Candia2
 		_Xi = other._Xi;
 		_Wi = other._Wi;
 		_interval_sizes = other._interval_sizes;
-		_try_new_largex_mapping = other._try_new_largex_mapping;
-		_use_gsl_routine_for_high_x = other._use_gsl_routine_for_high_x;
+		options = other.options;
 	    _workspace = std::move(gsl::make_workspace(other._workspace->limit));
 
 		_workspaces.clear();
@@ -264,9 +260,11 @@ namespace Candia2
 	{
 		// this means we just accept the default splitting
 		if (intervals.empty() && sizes.empty()) {
+			log(LOG_INFO, "Grid", "");
 			_split_interval = true;
 		    return;
-		}
+		} else if ((intervals.empty() && !sizes.empty()) || (!intervals.empty() && sizes.empty()))
+			log(LOG_ERROR, "Grid::splitConvolution()", "Must provide either both intervals and sizes or neither (for default).");
 		
 		if (intervals.size()-1 != sizes.size())
 			log(LOG_ERROR, "Grid::splitConvolution()", "Invalid number of element in the intervals and sizes vectors.");
@@ -486,7 +484,8 @@ namespace Candia2
 		static YandJAccessor f3  = [](double x, double z) { return std::make_pair(0.75+0.25*z, 0.25); };
 		static YandJAccessor f3x = [](double x, double z) { return std::make_pair(x+(1.0-x)*z, 1.0-x); };
 
-		// we use this in order to skip the first, which is always just [0,1]
+		// we use this nice convenience view for skipping the first gauleg points/weights
+		// which are the default 0-1 that is used directly
 		static auto gauleg_enum = [&](uint d) {
 			return 
 				std::views::iota(1)
@@ -497,11 +496,11 @@ namespace Candia2
 		if (!_split_interval) {
 			gauleg_conv(_Xi[0], _Wi[0]);
 		} else {
-			if (!_use_gsl_routine_for_high_x && !_try_new_largex_mapping) {
+			if (!options.use_gsl_routine_for_high_x && !options.try_new_largex_mapping) {
 				for (auto const& [i, X, W] : gauleg_enum(0))
 					gauleg_conv(*X, *W);
 
-			} else if (!_use_gsl_routine_for_high_x && _try_new_largex_mapping) {
+			} else if (!options.use_gsl_routine_for_high_x && options.try_new_largex_mapping) {
 				if (x < 0.1) {
 					double z0 = std::log(0.1)/logx;
 					gauleg_type X(DEFAULT_GAULEG_POINTS, 0.0), W(DEFAULT_GAULEG_POINTS, 0.0);

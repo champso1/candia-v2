@@ -8,12 +8,13 @@
 
 #include "Candia-v2/Common.hpp"
 #include "Candia-v2/Expression.hpp"
+#include "Candia-v2/Options.hpp"
 
-#include <gsl/gsl_errno.h>
 #include <vector>
 #include <memory>
 
 #include <gsl/gsl_integration.h>
+#include <gsl/gsl_errno.h>
 
 
 namespace Candia2
@@ -49,11 +50,17 @@ namespace Candia2
 		static bool error_handler_set = (([](){ gsl_set_error_handler(error_handler); })(), true);
 	}
 	
+	struct GridOptions final
+	{
+		bool use_gsl_routine_for_high_x{false}; //!< flag for whether to use the gsl routine for high x
+		bool try_new_largex_mapping{false}; //!< flag to try another mapping for large-x (x>0.5)
+	};
+
     class ArrayGrid;
 	/**
 	 *  @brief Class that contains the interpolation/convolution grid and the methods to perform the interpolation and convolution.
 	 */
-	class Grid final
+	class Grid final : public OptionsBase<GridOptions>
 	{
 	public:
 		using grid_type = std::vector<double>; //!< alias for the underlying grid type
@@ -95,8 +102,6 @@ namespace Candia2
 		std::vector<gauleg_type> _Xi{}; //!< list of split-up gauleg abscissae per interval
 		std::vector<gauleg_type> _Wi{}; //!< list of split-up gauleg weights per interval
 		std::vector<uint> _interval_sizes{}; //!< number of points per interval
-		bool _use_gsl_routine_for_high_x{false}; //!< flag for whether to use the gsl routine for high x
-		bool _try_new_largex_mapping{false}; //!< flag to try another mapping for large-x (x>0.5)
 		gsl::workspace_type _workspace{nullptr}; //!< gsl workspace for calling gsl integration routines
 		std::vector<gsl::workspace_type> _workspaces; //!< gsl workspaces for calling gsl integration routines
 
@@ -162,12 +167,6 @@ namespace Candia2
 		void splitConvolution(
 			std::vector<double> const& intervals=DEFAULT_SPLIT_INTERVALS,
 			std::vector<double> const& sizes=DEFAULT_SPLIT_SIZES);
-
-		/** @brief sets a flag that uses a higher accuracy (but slower) GSL routine for x>0.8 */
-		inline void useGSLRoutineForHighX() { _use_gsl_routine_for_high_x = true; }
-
-		/** @brief sets a flag that uses a different mapping for x>0.5 */
-		inline void tryNewLargeXMapping() { _try_new_largex_mapping = true; }
 
 		/** @brief Accepts x and z, and returns y and the Jacobian */
 		using YandJAccessor = std::function<std::pair<double,double>(double,double)>;

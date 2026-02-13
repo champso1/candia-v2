@@ -53,8 +53,7 @@ namespace Candia2
 		: _order{order},  _grid{grid}, _Qf{Qf},
 		  _alpha_s{alpha_s},
 		  _mur2_muf2{mur2_muf2}, _log_mur2_muf2{std::log(mur2_muf2)}, _log_muf2_mur2{-_log_mur2_muf2}, _is_scale_difference{mur2_muf2 != 1.0},
-		  _iterations{iterations}, _trunc_idx{trunc_idx},
-		  _use_n3lo_matching_conditions{true}
+		  _iterations{iterations}, _trunc_idx{trunc_idx}
 	{
 		log(::CANDIA_OPENING_TEXT);
 
@@ -260,13 +259,14 @@ namespace Candia2
     void DGLAPSolver::setupCoefficients()
     {
 		auto get_dist = [&](uint j, uint k) -> double& {
+			if (options.use_truncated_nonsinglet_sol)
+				return _S_NS[0][j][0][k];
 			switch (_order) {
 				case 0: return _A[j][0][k]; break;
 				case 1: return _B[j][0][0][k]; break;
 				case 2: return _C[j][0][0][0][k]; break;
 				case 3: return _D[j][0][0][0][0][k]; break;
-				default:
-					exit(EXIT_FAILURE); // unreachable
+				default: throw "unreachable";
 			}
 		};
 
@@ -299,11 +299,20 @@ namespace Candia2
 		std::vector<ArrayGrid>& resum)
     {
         for (uint t=1; t<=_trunc_idx; ++t) {
-            for (uint j=0; j<=1; ++j) {
-                for (uint n=0; n<=1; ++n)
-                    _S[t][j][n].zero();
-            }
+			for (uint j=0; j<=1; ++j) {
+				for (uint n=0; n<=1; ++n) 
+					_S[t][j][n].zero();
+			}
         }
+
+		if (options.use_truncated_nonsinglet_sol) {
+			for (uint t=1; t<=_trunc_idx; ++t) {
+				for (uint j=0; j<DISTS; ++j) {
+					for (uint n=0; n<=1; ++n) 
+						_S_NS[t][j][n].zero();
+				}
+			}
+		}
 
 		for (uint j=0; j<=1; ++j)
 			resum[j*31] = resum_singlet[j*31];
@@ -360,11 +369,44 @@ namespace Candia2
 		}
     }
 
+	void DGLAPSolver::setupTruncatedDistributions()
+	{
+		log(LOG_INFO, "Grid", "Using truncated ansatz for non-singlet sector.");
+		
+	    _S_NS = decltype(_S_NS){
+			_trunc_idx+1, std::vector<std::vector<ArrayGrid>>{
+				DISTS, std::vector<ArrayGrid>{
+					2, ArrayGrid(_grid.size())
+				}
+			}
+		};
+
+		auto coeff_accessor = [&](uint j) -> ArrayGrid const& {
+			switch (_order) {
+				case 0: return _A[j][0];
+				case 1: return _B[j][0][0];
+				case 2: return _C[j][0][0][0];
+				case 3: return _D[j][0][0][0][0];
+				default: throw "unreachable";
+			}
+		};
+		for (uint j=0; j<DISTS; ++j)
+			_S_NS[0][j][0] = coeff_accessor(j);
+		
+		_A.clear();
+		_B.clear();
+		_C.clear();
+		_D.clear();
+	}
+
 	std::vector<ArrayGrid> const& DGLAPSolver::evolve()
 	{
 		log(LOG_INFO, "DGLAP", "Evolving to {} flavors.", _alpha_s.nff());
 		using out_type = decltype(_F);
 		loadAllExpressions();
+
+		if (options.use_truncated_nonsinglet_sol)
+			setupTruncatedDistributions();
 
 		//std::array<double,1> Qtab{_Qf};
 		out_type final_dists;
@@ -454,7 +496,7 @@ namespace Candia2
 #if ENABLE_THREADING
 				evolveSingletThreaded(resum_singlet, L1);
 #else
-				evolveSinglet(resum_singlet, L1);
+			    evolveSinglet(resum_singlet, L1);
 #endif
 				log(LOG_INFO, "DGLAP", "Finished singlet evolution and resummation.");
 
@@ -462,7 +504,9 @@ namespace Candia2
 #if ENABLE_THREADING
 				evolveNonSingletThreaded(resum_ns, L1, L2, L3, L4);
 #else
-				evolveNonSinglet(resum_ns, L1, L2, L3, L4);
+				options.use_truncated_nonsinglet_sol ?
+					evolveNonSingletTrunc(resum_ns, L1) :
+					evolveNonSinglet(resum_ns, L1, L2, L3, L4);
 #endif
 				log(LOG_INFO, "DGLAP", "Finished non-singlet evolution and resummation.");
 
@@ -481,13 +525,16 @@ namespace Candia2
 					// from the temporary array
 					// back to the n=0 piece
 					for (uint j=0; j<DISTS; ++j) {
-						switch (_order) {
-							case 0: _A[j][0] 		   = resum[j]; break;
-							case 1: _B[j][0][0] 	   = resum[j]; break;
-							case 2: _C[j][0][0][0]     = resum[j]; break;
-							case 3: _D[j][0][0][0][0]  = resum[j]; break;
+						if (options.use_truncated_nonsinglet_sol) {
+							_S_NS[0][j][0] = resum[j];
+						} else {
+							switch (_order) {
+								case 0: _A[j][0] 		   = resum[j]; break;
+								case 1: _B[j][0][0] 	   = resum[j]; break;
+								case 2: _C[j][0][0][0]     = resum[j]; break;
+								case 3: _D[j][0][0][0][0]  = resum[j]; break;
+							}
 						}
-						
 					}
 					for (uint j=0; j<=1; ++j)
 						_S[0][j][0] = resum[j*31];
