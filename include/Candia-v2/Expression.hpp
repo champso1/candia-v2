@@ -41,6 +41,14 @@ namespace Candia2
 			DELTA
 		};
 
+		/** @brief clears all the cache values */
+		inline virtual void clear()
+		{
+			_reg_cache.clear();
+			_plus_cache.clear();
+			_delta_cache.clear();
+		}
+
 		/**
 		 *  @brief Fills the cache with the gauss-legendre points given @a grid_points and @a gauss_points in the small-x mapping
 		 *  @param grid_points The array of grid points.
@@ -66,9 +74,9 @@ namespace Candia2
 		 */
 		virtual inline void fill(array_type const& grid_points, std::vector<array_type> const& gauss_points)
 		{
-			for (auto it = gauss_points.begin(); it!=gauss_points.end()-1; ++it)
+			clear();
+			for (auto it = gauss_points.begin(); it!=gauss_points.end(); ++it)
 				fill(grid_points, *it);
-			fill2(grid_points, gauss_points.back());
 		}
 
 		/** @brief actually calculates the regular distribution */

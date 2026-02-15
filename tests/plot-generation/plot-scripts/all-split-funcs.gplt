@@ -1,0 +1,5 @@
+set terminal png
+set border lw 2
+set size ratio 0.65
+set ylabel 'P(x)'
+set xlabel 'x'

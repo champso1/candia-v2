@@ -9,6 +9,7 @@
 #include <limits>
 #include <set>
 #include <ranges>
+#include <stdexcept>
 #include <tuple>
 #include <utility>
 
@@ -34,6 +35,7 @@ namespace Candia2
 		{
 			case LOG: initGridLog(_xtab, nx); break;
 			case LOG_LIN: initGridLogLin(_xtab, nx); break;
+			case LIN: initGridLin(_xtab, nx); break;
 			default:
 				log(LOG_ERROR, "Grid", "Invalid grid fill type. Found {}, expected 1(LOG) or 2(LOG_LIN).", grid_fill_type);
 		}
@@ -149,21 +151,14 @@ namespace Candia2
 
 	void Grid::initGridLogLin(std::vector<double> const& xtab, uint nx)
 	{
-		log(LOG_WARNING, "Grid", "This grid initialization method is unfinished.");
-
 		double log_min = std::log10(1e-5);
 		double log_max = std::log10(0.1);
 		uint num_log_intervals = std::round(log_max-log_min);
 		double dlog = (log_max-log_min)/static_cast<double>(num_log_intervals);
 		uint log_interval_size = nx/num_log_intervals;
-		
-		double lin1_min = 0.1;
-		double lin1_max = 0.75;
-		double lin2_min = 0.75;
-		double lin2_max = 1.0;
 
-		double lin3_min = 0.1;
-		double lin3_max = 1.0;
+		double lin_min = 0.1;
+		double lin_max = 1.0;
 
 		_points.clear();
 		for (uint i=0; i<num_log_intervals; ++i) {
@@ -174,19 +169,34 @@ namespace Candia2
 				_points.emplace_back(std::pow(10, l));
 			}
 		}
+		
+		for (uint k=0; k<nx; ++k) {
+		    double x = lin_min + (lin_max-lin_min)*k/static_cast<double>(nx);
+			_points.emplace_back(x);
+		}
+		
+		std::set<double> points_set(_points.begin(), _points.end());
+		points_set.insert(xtab.begin(), xtab.end());
+		_points = std::vector<double>(points_set.begin(), points_set.end());
+		
+		_ntab.clear();
+		for (double x : xtab) {
+			if (auto it = std::find(_points.begin(), _points.end(), x); it != _points.end()) {
+				_ntab.emplace_back(std::distance(_points.begin(), it));
+				continue;
+			}
+		}
+	}
 
-		/*
+	void Grid::initGridLin(std::vector<double> const& xtab, uint nx)
+	{
+		double lin_min = 1e-5;
+		double lin_max = 1.0;
+
+		_points.clear();
+		
 		for (uint k=0; k<nx; ++k) {
-		    double x = lin1_min + (lin1_max-lin1_min)*k/static_cast<double>(nx);
-			_points.emplace_back(x);
-		}
-		for (uint k=0; k<nx; ++k) {
-		    double x = lin2_min + (lin2_max-lin2_min)*k/static_cast<double>(nx-1);
-			_points.emplace_back(x);
-		}
-		*/
-		for (uint k=0; k<nx; ++k) {
-		    double x = lin3_min + (lin3_max-lin3_min)*k/static_cast<double>(nx-1);
+		    double x = lin_min + (lin_max-lin_min)*k/static_cast<double>(nx);
 			_points.emplace_back(x);
 		}
 		
@@ -260,7 +270,7 @@ namespace Candia2
 	{
 		// this means we just accept the default splitting
 		if (intervals.empty() && sizes.empty()) {
-			log(LOG_INFO, "Grid", "");
+			log(LOG_INFO, "Grid", "Using default set of intervals");
 			_split_interval = true;
 		    return;
 		} else if ((intervals.empty() && !sizes.empty()) || (!intervals.empty() && sizes.empty()))
@@ -317,9 +327,6 @@ namespace Candia2
 			auto max = intervals[i+1];
 			
 			log(LOG_DEBUG, "Grid::splitConvolution()", "Interval of size {} in range [{}, {}]", s, min, max);
-			log(LOG_DEBUG, "Grid::splitConvolution()", "Abscissae: ");
-			for (auto x : X)
-				log(LOG_DEBUG, "Grid::splitConvolution()", "  - {}", x);
 		}
 		
 		assert(_Xi.size() == _Wi.size() && _Xi.size() == _interval_sizes.size()+1, "Failed to split convolution intervals.");
@@ -379,7 +386,7 @@ namespace Candia2
 				if (std::abs(ho-hp) < 1e-15) {
 					log(LOG_ERROR_NOQUIT, "Grid::interpolate()", "found a denominator equal to 0.0 ({}, {}, {})", x, xa[i], xa[i+m]);
 					std::string msg = std::format("found a denominator equal to 0.0 ({}, {}, {})", x, xa[i], xa[i+m]);
-					throw "interpolation error";
+					throw std::runtime_error("interpolate failed.");
 				}
 
 				den = w/den;
@@ -399,24 +406,24 @@ namespace Candia2
 		auto& g = params->g;
 		auto x = params->x;
 		auto k = params->k;
-		auto logx = params->logx;
 		auto eplus1 = params->eplus1;
 		auto& A = params->A;
 		auto& E = params->E;
-		auto print_count = params->print_count;
 
-		double a = std::pow(x, 1.0-y);
-		double b = std::pow(x, y);
-
-		double interp1 = g.interpolate(A, b);
-		double interp2 = g.interpolate(A, a);
-
-		double erega = E.calcRegular(a);
-		double eplusb = E.calcPlus(b);
-
-		double res = -logx*a*erega*interp1;
-		res -= logx*b*(eplusb*interp2 - eplus1*A[k])/(1.0-b);
-
+		double Ak = A[k];
+		double a = x/y;
+		
+		double res = 0.0;
+		{ // regular piece
+			double interpy = g.interpolate(A, y);
+			res += (1.0/y)*a*interpy;
+		}
+		{ // delta function piece
+			double interpa = g.interpolate(A, a);
+			double eplusy = E.calcPlus(y);
+			res += (eplusy*interpa - eplus1*Ak)/(1-y);
+		}
+		
 		return res;
 	}
 
@@ -437,12 +444,12 @@ namespace Candia2
 			double a = x/y;
 			double d1y = 1.0-y;
 
-			double erega = E.calcRegular(a);
-			double interpy = interpolate(A, y);
-			out += w*J * (a/y)*erega*interpy;
-
-			double eplusy = E.calcPlus(y);
+			double eregy = E.calcRegular(y);
 			double interpa = interpolate(A, a);
+			out += w*J * eregy*interpa;
+			
+			double eplusy = E.calcPlus(y);
+			
 			out += w*J * (1.0/d1y)*(eplusy*interpa - eplus1*ak);
 		}
 		return out;
@@ -450,39 +457,36 @@ namespace Candia2
 
 	double Grid::convolution(ArrayGrid& A, Expression &E, uint k)
 	{
-		static int print_count = 20;
+		static int print_count = 100;
 
 		double x = _points[k];
 		double d1 = 1.0-x;
 		double d2 = x*d1;
 		double logx =  std::log(x);
-		double eplus1 = E.plus(1.0);
-		double ed1 = E.delta(1.0);
+		double eplus1 = E.calcPlus(1.0);
+		double ed1 = E.calcDelta(1.0);
 		double res = (eplus1*std::log1p(-x) + ed1) * A[k];
 
 		auto gauleg_conv = [&](gauleg_type const& X, gauleg_type const& W) {
 			for (uint i=0; i<X.size(); i++) {
-				double y = X[i];
+				double z = X[i];
 				double w = W[i];
 
-				double a = std::pow(x, 1.0-y);
-				double b = std::pow(x, y);
+				double y = std::pow(x, z);
+				double a = std::pow(x, 1.0-z);
 
-				double interp1 = interpolate(A, b);
-				double interp2 = interpolate(A, a);
+				double interpa = interpolate(A, a);
 
-				double erega = E.calcRegular(a);
-				double eplusb = E.calcPlus(b);
+				double eregy = E.calcRegular(y);
+				double eplusy = E.calcPlus(y);
 
-				res -= w*logx*a*erega*interp1;
-				res -= w*logx*b*(eplusb*interp2 - eplus1*A[k])/(1.0-b);
+				res -= w*logx * y*eregy*interpa;
+				res -= w*logx * y*(eplusy*interpa - eplus1*A[k])/(1.0-y);
 			}
 		};
 
-		static YandJAccessor f2  = [](double x, double z) { return std::make_pair(0.1+0.65*z, 0.65); };
-		static YandJAccessor f2x = [](double x, double z) { return std::make_pair(x+(0.75-x)*z, 0.75-x); };
-		static YandJAccessor f3  = [](double x, double z) { return std::make_pair(0.75+0.25*z, 0.25); };
-		static YandJAccessor f3x = [](double x, double z) { return std::make_pair(x+(1.0-x)*z, 1.0-x); };
+		static YandJAccessor f2  = [](double x, double z) { return std::make_pair(1.0-0.9*(1.0-z)*(1.0-z), 1.8*(1.0-z)); };
+		static YandJAccessor f2x = [](double x, double z) { return std::make_pair(1.0-(1.0-x)*(1.0-z)*(1.0-z), 2.0*(1.0-x)*(1.0-z)); };
 
 		// we use this nice convenience view for skipping the first gauleg points/weights
 		// which are the default 0-1 that is used directly
@@ -496,29 +500,22 @@ namespace Candia2
 		if (!_split_interval) {
 			gauleg_conv(_Xi[0], _Wi[0]);
 		} else {
-			if (!options.use_gsl_routine_for_high_x && !options.try_new_largex_mapping) {
+			if (!options.use_gsl_routine && !options.try_new_largex_mapping) {
 				for (auto const& [i, X, W] : gauleg_enum(0))
 					gauleg_conv(*X, *W);
 
-			} else if (!options.use_gsl_routine_for_high_x && options.try_new_largex_mapping) {
+			} else if (!options.use_gsl_routine && options.try_new_largex_mapping) {
 				if (x < 0.1) {
 					double z0 = std::log(0.1)/logx;
 					gauleg_type X(DEFAULT_GAULEG_POINTS, 0.0), W(DEFAULT_GAULEG_POINTS, 0.0);
 					initGauLeg(z0, 1.0, X, W);
 					gauleg_conv(X, W);
 
-					res += largeXMappingFunctionBase(k, x, f2, E, A, eplus1, _Xi[0], _Wi[0]);
-					res += largeXMappingFunctionBase(k, x, f3, E, A, eplus1, _Xi[0], _Wi[0]);
-				} else if (x >= 0.1 && x < 0.75) {
-					res += largeXMappingFunctionBase(k, x, f2x, E, A, eplus1, _Xi[0], _Wi[0]);
-					res += largeXMappingFunctionBase(k, x, f3,  E, A, eplus1, _Xi[0], _Wi[0]);
+					res += largeXMappingFunctionBase(k, x, f2,  E, A, eplus1, _Xi[0], _Wi[0]);
 				} else {
-					res += largeXMappingFunctionBase(k, x, f3x,  E, A, eplus1, _Xi[0], _Wi[0]);
+					res += largeXMappingFunctionBase(k, x, f2x, E, A, eplus1, _Xi[0], _Wi[0]);
 				}
 			} else {
-				for (auto const& [i, X, W] : gauleg_enum(1))
-					gauleg_conv(*X, *W);
-
 				GSLIntegrationParams p{
 					.g = *this,
 					.x = x,
@@ -526,15 +523,14 @@ namespace Candia2
 					.logx = logx,
 					.eplus1 = eplus1,
 					.A = A,
-					.E = E,
-					.res = ConvolutionRes{}};
+					.E = E};
 				
 				gsl_function f{
 					.function = gsl_convolution_function,
 					.params = reinterpret_cast<void*>(&p) };
-				double a = 0.8, b = 1.0-1e-10;
+				double a = x, b = 1.0-1e-15;
 				double epsabs = 0.0, epsrel = 1e-5;
-				int key = GSL_INTEG_GAUSS41;
+				int key = GSL_INTEG_GAUSS21;
 				std::size_t limit = gsl::DEFAULT_WORKSPACE_SIZE;
 				double out{}, abserr{};
 				gsl_integration_workspace* w = _workspaces[thread_index+1].get();
@@ -543,12 +539,8 @@ namespace Candia2
 					&f, a, b, epsabs, epsrel,
 					limit, w,
 					&out, &abserr);
-				p.res.out = out;
 				if (rc != GSL_SUCCESS) {
-					if (print_count++ > 0) 
-						log(LOG_WARNING, "Grid::convolution()", "GSL integration routine failed for x = {: }", print_count, x);
-					if (print_count == 0)
-						log(LOG_WARNING, "Grid::convolution()", "Suppressing further GSL relating warnings.");
+				    _gsl_conv_errors.emplace_back(x, out, abserr);
 				}
 				
 				res += out;

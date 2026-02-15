@@ -29,21 +29,18 @@ namespace Candia2
 		static constexpr uint DEFAULT_WORKSPACE_SIZE = 1000;
 		inline auto make_default_workspace = [](){return workspace_type(gsl_integration_workspace_alloc(DEFAULT_WORKSPACE_SIZE), workspace_deleter); };
 
-		static inline int error_print_count = 20;
+		static inline int error_print_count = 100;
 
 		extern "C" {
 			static inline void error_handler(
 				const char * reason, const char * file,
 				int line, int gsl_errno)
 			{
-				if (error_print_count > 0) {
-					log(LOG_ERROR_NOQUIT, "GSL", "({}:{}) {}", file, line, reason);
-					error_print_count--;
-				}
-				if (error_print_count == 0) {
-					log(LOG_WARNING, "GSL", "Reached more than 20 GSL failures, suppressing additional ones.");
-					error_print_count--;
-				}
+				UNUSED(reason);
+				UNUSED(file);
+				UNUSED(line);
+				UNUSED(gsl_errno);
+			    return;
 			}
 		}
 
@@ -52,7 +49,7 @@ namespace Candia2
 	
 	struct GridOptions final
 	{
-		bool use_gsl_routine_for_high_x{false}; //!< flag for whether to use the gsl routine for high x
+		bool use_gsl_routine{false}; //!< flag for whether to use a gsl routine to perform the integration
 		bool try_new_largex_mapping{false}; //!< flag to try another mapping for large-x (x>0.5)
 	};
 
@@ -71,13 +68,9 @@ namespace Candia2
 		{
 			LOG = 0, //!< simple logarithmic intervals
 			LOG_LIN, //!< logarithmic intervals until 0.1, then linear until 1.0
+			LIN,     //!< linear
 		};
 
-		struct ConvolutionRes final
-		{
-			double out{};
-			std::vector<double> y{}, w{}, a{}, b{}, interp1{}, interp2{}, erega{}, eplusb{};
-		};
 		struct GSLIntegrationParams final
 		{
 			Grid& g;
@@ -89,14 +82,13 @@ namespace Candia2
 
 			ArrayGrid& A;
 			Expression& E;
-
-			int print_count;
-			ConvolutionRes res;
 		};
+
 	private:
 		grid_type _points{}; //!< grid points
 		ntab_type _ntab;     //!< stored indices for the tabulated grid points
 		grid_type _xtab;     //!< stored values of the tabulated grid points
+		using gsl_conv_errors = std::vector<std::tuple<double,double,double>>;
 
 		bool _split_interval{false}; //!< flag that declares if the user has split the convolution into intervals
 		std::vector<gauleg_type> _Xi{}; //!< list of split-up gauleg abscissae per interval
@@ -108,6 +100,8 @@ namespace Candia2
 		static constexpr uint DEFAULT_GAULEG_POINTS = 100;
 		static inline std::vector<double> DEFAULT_SPLIT_INTERVALS{1e-5, 0.1, 0.8, 1.0};
 		static inline std::vector<double> DEFAULT_SPLIT_SIZES{DEFAULT_GAULEG_POINTS,DEFAULT_GAULEG_POINTS,DEFAULT_GAULEG_POINTS};
+
+		gsl_conv_errors _gsl_conv_errors{};
 	public:
 		Grid() = delete; //!< default constructor deleted; must provide information to fill the grid
 		/**
@@ -205,12 +199,15 @@ namespace Candia2
 		 *  @param k the grid index to perform the convolution at
 		 */
 		double convolution(ArrayGrid& A, Expression &E, uint k);
-		
+
+		inline auto const& getGSLConvolutionErrors() const { return _gsl_conv_errors; }
 	private:
 		/** Fills the grid according to the original candia-v2 method (log-spaced) */
 		void initGridLog(grid_type const& xtab, uint nx);
 		/** Fills the grid with log-spacing and a calculated set of additional linear points from \f$0.1<x<1.0\f$ */
 		void initGridLogLin(grid_type const& xtab, uint nx);
+		/** Fills the grid with linear spacing */
+		void initGridLin(grid_type const& xtab, uint nx);
 		
 		/** Initializes the set of gauss-legendre weights and abscissae */
 		void initGauLeg(double x1, double x2, std::vector<double> & Xi, std::vector<double> & Wi);

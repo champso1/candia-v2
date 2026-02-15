@@ -130,7 +130,6 @@ namespace Candia2
 		return res;
 	}
 
-
 	double AlphaS::preMatch(double alpha, uint nf)
 	{
 		double Nf = static_cast<double>(nf);
@@ -140,15 +139,20 @@ namespace Candia2
 		double a = alpha;
 		double res = alpha;
 
+		auto L = options.use_broken_log_value ? 1.0 : _L;
+		auto L2 = L*L;
+		auto L3 = L2*L;
+		log(LOG_DEBUG, "AlphaS::preMatch()", "Using L={}", L);
+
 		if (_order >= 1)
-			res += -a*a*(1.0/6.0)*_L/PI;
+			res += -a*a*(1.0/6.0)*L/PI;
 		if (_order >= 2)
-			res += a*a*a*(-(7.0/24.0) - (19.0/24.0)*_L + (1.0/36.0)*_L*_L)/PI_2;
+			res += a*a*a*(-(7.0/24.0) - (19.0/24.0)*L + (1.0/36.0)*L2)/PI_2;
 		if (_order >= 3) {
 		    res += std::pow(alpha, 4)*(
 				-(58933.0/124416.0) - (2.0/3.0)*Zeta2 - (2.0/9.0)*Zeta2*std::numbers::log2e - (80507.0/27648.0)*Zeta3
-				- (8521.0/1728.0)*_L - (131.0/576.0)*_L*_L - (1.0/216.0)*_L*_L*_L
-				+ Nf*((2479.0/31104.0) + (1.0/9.0)*Zeta2 + (409.0/1728.0)*_L))/PI_3;
+				- (8521.0/1728.0)*L - (131.0/576.0)*L2 - (1.0/216.0)*L3
+				+ Nf*((2479.0/31104.0) + (1.0/9.0)*Zeta2 + (409.0/1728.0)*L))/PI_3;
 		}
 
 		return res;
@@ -163,15 +167,20 @@ namespace Candia2
 		double a = alpha;
 		double res = alpha;
 
+		auto L = options.use_broken_log_value ? 1.0 : _L;
+		auto L2 = L*L;
+		auto L3 = L2*L;
+		log(LOG_DEBUG, "AlphaS::postMatch()", "Using L={}", L);
+
 	    if (_order >= 1)
-			res += a*a*(1.0/6.0)*_L/PI;
+			res += a*a*(1.0/6.0)*L/PI;
 		if (_order >= 2)
-			res += a*a*a*((7.0/24.0) + (19.0/24.0)*_L + (1.0/36.0)*_L*_L)/PI_2;
+			res += a*a*a*((7.0/24.0) + (19.0/24.0)*L + (1.0/36.0)*L2)/PI_2;
 		if (_order >= 3) {
 			res += std::pow(alpha, 4)*(
 				(58933.0/124416.0) + (2.0/3.0)*Zeta2 + (2.0/9.0)*Zeta2*std::numbers::log2e + (80507.0/27648.0)*Zeta3
-				+ (8521.0/1728.0)*_L + (131.0/576.0)*_L*_L + (1.0/216.0)*_L*_L*_L
-				- Nf*((2479.0/31104.0) + (1.0/9.0)*Zeta2 + (409.0/1728.0)*_L))/PI_3;
+				+ (8521.0/1728.0)*L + (131.0/576.0)*L2 + (1.0/216.0)*L3
+				- Nf*((2479.0/31104.0) + (1.0/9.0)*Zeta2 + (409.0/1728.0)*L))/PI_3;
 		}
 
 		return res;
@@ -180,15 +189,13 @@ namespace Candia2
 
 	void AlphaS::calculateThresholdValues()
 	{
-		// TODO: maybe add a flag for if we want to do matching even if
-		// we are in the VFNS?
-
-		double mur_muf = std::sqrt(_mur2_muf2);
+	    double mur_muf = std::sqrt(_mur2_muf2);
 		log(LOG_DEBUG, "AlphaS::calculateThresholdValues()", "Using mur/muf={}", mur_muf);
 		uint nf1 = 0;
+
+		if (options.use_broken_log_value)
+			log(LOG_WARNING, "AlphaS::calculateThresholdValues()", "Temporarily using broken value of the logarithm term (1.0).");
 		
-		// set nf1 correctly
-		// TODO: handle kr != 1
 		for (nf1=_nff; _Q0<mur_muf*_masses[nf1]; nf1--);
 		if (nf1<_nfi)
 			nf1++;

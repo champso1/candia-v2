@@ -12,8 +12,6 @@ namespace Candia2
 		
 		log(LOG_INFO, "HFT", "Treating heavy flavors: {}th quark mass threshold (mass {})", _nf+1, _alpha_s.masses(_nf+1));
 		OpMatElem::update(-_log_mur2_muf2, _nf);
-		for (auto& [_, expr] : _expressions)
-			expr->fill(_grid.points(), _grid.abscissae());
 
 		// Copy of pre-threshold distributions
 		// the nf+1 dists are defined in terms of the nf dists,
@@ -224,6 +222,6 @@ namespace Candia2
         const double res_qh = 0.5*(res + fac_n3lo*conv3);
 		const double res_qb = 0.5*(res - fac_n3lo*conv3);
 		qh[k] = res_qh;
-        qh[k] = res_qb;
+        qhb[k] = res_qb;
 	}
 } // namespace Candia2

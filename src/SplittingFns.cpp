@@ -9,6 +9,7 @@ namespace Candia2
 {		
 	uint SplittingFunction::_nf = 4; // good default
 	double SplittingFunction::_beta0 = 0.0; // will be set later
+	double SplittingFunction::_log_muf2_mur2 = 0.0; // will be set later
 	
 	double P0ns::calcRegular(double x) const
 	{
@@ -1483,139 +1484,193 @@ namespace Candia2
 
 	double P3gq::calcRegular(double x) const
 	{
-		const double Nf = static_cast<double>(_nf);
-		const double Nf2     = Nf*Nf;
-		const double xm   = 1.0 / x;
-		const double x1   = 1.0 - x;
-		const double dl   = std::log(x);
-		const double dl2  = dl * dl;
-		const double dl3  = dl * dl2;
-		const double dl4  = dl * dl3;
-		const double dl5  = dl * dl4;
-		const double dl6  = dl * dl5;
-		const double dlm  = std::log1p(-x);
-		const double dlm2 = dlm * dlm;
-		const double dlm3 = dlm * dlm2;
-		const double dlm4 = dlm * dlm3;
-		const double dlm5 = dlm * dlm4;
+		double nf = static_cast<double>(_nf);
+		
+		double YM  = 1.0 / x;
+		double Y1  = 1.0 - x;
+		double DL  = std::log(x);
+		double DL1 = std::log(Y1);
 
+		int nf2 = nf * nf;
+		int nf3 = nf * nf2;   // (kept for strict faithfulness)
+
+		// --------------------------------------------------------------
 		// Known large-x coefficients
-		const double x1L5cff = 1.3443073e1 - 5.4869684e-1 * Nf;
-		const double x1L4cff = 3.7539831e2 - 3.4494742e1  * Nf + 8.7791495e-1 * Nf2;
-		const double y1L5cff = 2.2222222e1 - 5.4869684e-1 * Nf;
-		const double y1L4cff = 6.6242163e2 - 4.7992684e1  * Nf + 8.7791495e-1 * Nf2;
+		// --------------------------------------------------------------
 
-		// x^-1 small-x coeff's, Casimir scaled from P_gg (approx. for bfkl1)
-		const double bfkl0 =   - 8.3086173e3 / 2.25;
-		const double bfkl1 = ( - 1.0691199e5 - Nf * 9.9638304e2 ) / 2.25;
+		double x1L5cff = 1.3443073e1 - 5.4869684e-1 * nf;
+		double x1L4cff = 3.7539831e2 - 3.4494742e1 * nf
+			+ 8.7791495e-1 * nf2;
 
-		// Small-x double-logs with x^0
-		const double x0L6cff =   5.2235940e1 - 7.3744856e0 * Nf;
-		const double x0L5cff = - 2.9221399e2 + 1.8436214e0 * Nf;
-		const double x0L4cff =   7.3106077e3 - 3.7887135e2 * Nf - 3.2438957e1 * Nf2;
+		double y1L5cff = 2.2222222e1 - 5.4869684e-1 * nf;
+		double y1L4cff = 6.6242163e2 - 4.7992684e1 * nf
+			+ 8.7791495e-1 * nf2;
 
-		// The resulting part of the function
-		const double P3gq01 =
-			+ bfkl0   * xm * dl3
-			+ bfkl1   * xm * dl2
-			+ x0L6cff * dl6
-			+ x0L5cff * dl5
-			+ x0L4cff * dl4
-			+ x1L4cff * dlm4
-			+ x1L5cff * dlm5
-			+ y1L4cff * x1 * dlm4
-			+ y1L5cff * x1 * dlm5;
+		// --------------------------------------------------------------
+		// Small-x x^-1 coefficients
+		// --------------------------------------------------------------
 
-		// The selected approximations for nf = 3, 4, 5
-		double P3gqApp1 = P3gq01;
-		double P3gqApp2 = P3gq01;
-		if (_nf <= 3) {
-			P3gqApp1 +=
-				+ 6.       * bfkl1 * xm * dl
-				- 744384.  * xm * x1
-				+ 2453640.
-				- 1540404. * x * ( 2. + x )
-				+ 1933026. * dl
-				+ 1142069. * dl2
-				+ 162196.  * dl3
-				- 2172.1   * dlm3
-				- 93264.1  * dlm2
-				- 786973.  * dlm
-				+ 875383.  * x1 * dlm2;
-			P3gqApp2 +=
-				+ 3.       * bfkl1 *  xm * dl
-				+ 142414.  * xm * x1
-				- 326525.
-				+ 2159787. * x * ( 2. - x )
-				- 289064.  * dl
-				- 176358.  * dl2
-				+ 156541.  * dl3
-				+ 9016.5   * dlm3
-				+ 136063.  * dlm2
-				+ 829482.  * dlm
-				- 2359050. * dl * dlm;
+		double bfkl0 = -8.3086173e3 / 2.25;
+		double bfkl1 = (-1.0691199e5 - nf * 9.9638304e2) / 2.25;
+
+		// --------------------------------------------------------------
+		// Small-x double logs
+		// --------------------------------------------------------------
+
+		double x0L6cff =  5.2235940e1 - 7.3744856e0 * nf;
+		double x0L5cff = -2.9221399e2 + 1.8436214e0 * nf;
+		double x0L4cff =  7.3106077e3 - 3.7887135e2 * nf
+			- 3.2438957e1 * nf2;
+
+		// --------------------------------------------------------------
+		// Base function: P3gq01
+		// --------------------------------------------------------------
+
+		double P3gq01 =
+			bfkl0 * YM * std::pow(DL, 3)
+			+ bfkl1 * YM * std::pow(DL, 2)
+			+ x0L6cff * std::pow(DL, 6)
+			+ x0L5cff * std::pow(DL, 5)
+			+ x0L4cff * std::pow(DL, 4)
+			+ x1L4cff * std::pow(DL1, 4)
+			+ x1L5cff * std::pow(DL1, 5)
+			+ y1L4cff * Y1 * std::pow(DL1, 4)
+			+ y1L5cff * Y1 * std::pow(DL1, 5);
+
+		double P3gqApp1 = 0.0;
+		double P3gqApp2 = 0.0;
+
+		// --------------------------------------------------------------
+		// nf-specific approximations
+		// --------------------------------------------------------------
+
+		if (_nf == 3) {
+			P3gqApp1 =
+				P3gq01
+				+ 3.5 * bfkl1 * YM * DL
+				- 27891.  * YM * Y1
+				- 309124.
+				+ 1056866. * x * (2.0 - x)
+				- 124735. * DL
+				- 16246.  * std::pow(DL,2)
+				+ 131175. * std::pow(DL,3)
+				+ 4970.1  * std::pow(DL1,3)
+				+ 60041.  * std::pow(DL1,2)
+				+ 343181. * DL1
+				- 958330. * DL * DL1;
+
+			P3gqApp2 =
+				P3gq01
+				+ 7.0 * bfkl1 * YM * DL
+				- 1139334. * YM * Y1
+				+ 143008.
+				- 290390. * x * (2.0 - x)
+				- 659492. * DL
+				+ 303685. * std::pow(DL,2)
+				- 81867.  * std::pow(DL,3)
+				+ 1811.8  * std::pow(DL1,3)
+				- 465.9   * std::pow(DL1,2)
+				- 51206.  * DL1
+				+ 274249. * DL * DL1;
 		} else if (_nf == 4) {
-			P3gqApp1 +=
-				+ 6.       * bfkl1 * xm * dl
-				- 743535.  * xm * x1
-				+ 2125286.
-				- 1332472. * x * ( 2. + x )
-				+ 1631173. * dl
-				+ 1015255. * dl2
-				+ 142612.  * dl3
-				- 1910.4   * dlm3
-				- 80851.   * dlm2
-				- 680219.  * dlm
-				+ 752733.  * x1 * dlm2;
-			P3gqApp2 +=
-				+ 3.       * bfkl1 * xm * dl
-				+ 160568.  * xm * x1
-				- 361207.
-				+ 2048948. * x * ( 2. - x )
-				- 245963.  * dl
-				- 171312.  * dl2
-				+ 163099.  * dl3
-				+ 8132.2   * dlm3
-				+ 124425.  * dlm2
-				+ 762435.  * dlm
-				- 2193335. * dl * dlm;
-		} else if (_nf >= 5) {
-			P3gqApp1 +=
-				+ 6.      * bfkl1 * xm * dl
-				- 785864. * xm * x1
-				+ 285034.
-				- 131648. * x * ( 2. + x )
-				- 162840. * dl
-				+ 321220. * dl2
-				+ 12688.  * dl3
-				+ 1423.4  * dlm3
-				+ 1278.9  * dlm2
-				- 30919.9 * dlm
-				+ 47588.  * x1 * dlm2;
-			P3gqApp2 +=
-				+ 3.       * bfkl1 * xm * dl
-				+ 177094.  * xm * x1
-				- 470694.
-				+ 1348823. * x * ( 2. - x )
-				- 52985.   * dl
-				- 87354.   * dl2
-				+ 176885.  * dl3
-				+ 4748.8   * dlm3
-				+ 65811.9  * dlm2
-				+ 396390.  * dlm
-				- 1190212. * dl * dlm;
+			P3gqApp1 =
+				P3gq01
+				+ 3.5 * bfkl1 * YM * DL
+				- 8302.8 * YM * Y1
+				- 347706.
+				+ 1105306. * x * (2.0 - x)
+				- 127650. * DL
+				- 29728.  * std::pow(DL,2)
+				+ 137537. * std::pow(DL,3)
+				+ 4658.1  * std::pow(DL1,3)
+				+ 59205.  * std::pow(DL1,2)
+				+ 345513. * DL1
+				- 995120. * DL * DL1;
+
+			P3gqApp2 =
+				P3gq01
+				+ 7.0 * bfkl1 * YM * DL
+				- 1129822. * YM * Y1
+				+ 108527.
+				- 254166. * x * (2.0 - x)
+				- 667254. * DL
+				+ 293099. * std::pow(DL,2)
+				- 77437.  * std::pow(DL,3)
+				+ 1471.3  * std::pow(DL1,3)
+				- 1850.3  * std::pow(DL1,2)
+				- 52451.  * DL1
+				+ 248634. * DL * DL1;
+		} else if (_nf == 5) {
+			P3gqApp1 =
+				P3gq01
+				+ 3.5 * bfkl1 * YM * DL
+				+ 14035. * YM * Y1
+				- 384003.
+				+ 1152711. * x * (2.0 - x)
+				- 126346. * DL
+				- 42967.  * std::pow(DL,2)
+				+ 144270. * std::pow(DL,3)
+				+ 4385.5  * std::pow(DL1,3)
+				+ 58688.  * std::pow(DL1,2)
+				+ 348988. * DL1
+				- 1031165. * DL * DL1;
+
+			P3gqApp2 =
+				P3gq01
+				+ 7.0 * bfkl1 * YM * DL
+				- 1117561. * YM * Y1
+				+ 76329.
+				- 218973. * x * (2.0 - x)
+				- 670799. * DL
+				+ 282763. * std::pow(DL,2)
+				- 72633.  * std::pow(DL,3)
+				+ 1170.0  * std::pow(DL1,3)
+				- 2915.5  * std::pow(DL1,2)
+				- 52548.  * DL1
+				+ 223771. * DL * DL1;
+		} else if (_nf == 6) {
+			P3gqApp1 =
+				P3gq01
+				+ 3.5 * bfkl1 * YM * DL
+				+ 39203. * YM * Y1
+				- 417914.
+				+ 1199042. * x * (2.0 - x)
+				- 120750. * DL
+				- 55941.  * std::pow(DL,2)
+				+ 151383. * std::pow(DL,3)
+				+ 4149.2  * std::pow(DL1,3)
+				+ 58466.  * std::pow(DL1,2)
+				+ 353589. * DL1
+				- 1066510. * DL * DL1;
+
+			P3gqApp2 =
+				P3gq01
+				+ 7.0 * bfkl1 * YM * DL
+				- 1102470. * YM * Y1
+				+ 46517.
+				- 184858. * x * (2.0 - x)
+				- 670056. * DL
+				+ 272689. * std::pow(DL,2)
+				- 67453.  * std::pow(DL,3)
+				+ 905.0   * std::pow(DL1,3)
+				- 3686.2  * std::pow(DL1,2)
+				- 51523.  * DL1
+				+ 199594. * DL * DL1;
+		} else {
+			log(LOG_ERROR, "P3gq::calcRegular()", "nf ({}) out of bounds, not between 3 and 6.", _nf);
 		}
 
-		// We return (for now) one of the two error-band boundaries or the
-		// present best estimate, their average
-		double res = std::numeric_limits<double>::max();
+		// --------------------------------------------------------------
+		// Return according to IMOD
+		// --------------------------------------------------------------
+
+		double res{};
 		if (_imod == 1)
 			res = P3gqApp1;
 		else if (_imod == 2)
 			res = P3gqApp2;
 		else
-			res = 0.5 * ( P3gqApp1 + P3gqApp2 );
-
+			res = 0.5 * (P3gqApp1 + P3gqApp2);
 		return res/16.0;
 	}
 

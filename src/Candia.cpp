@@ -432,13 +432,10 @@ namespace Candia2
 				break;
 			}
 
-			log(LOG_DEBUG, "DGLAP", "Loading relevant splitting function / OME values into cache");
 			// update all values
 			_alpha_s.update(_nf);
-			SplittingFunction::update(_nf, _alpha_s.beta0());
-			for (auto& [_, expr] : _expressions)
-				expr->fill(_grid.points(), _grid.abscissae());
-
+			log(LOG_DEBUG, "DGLAP", "Loading relevant splitting function / OME values into cache");
+			SplittingFunction::update(_nf, _alpha_s.beta0(), _log_muf2_mur2);
 			log(LOG_DEBUG, "DGLAP", "Retrieving values of alpha_s, and calculating all logarithm factors");
 			bool resum_tab = _alpha_s.resumTabulated();
 			bool resum_threshold = !resum_tab;
@@ -485,7 +482,7 @@ namespace Candia2
 
 			log(LOG_DEBUG, "DGLAP::evolve()", "Values of log coeffs:");
 			std::vector<std::pair<double, std::string_view>> coeffs{{L1, "L1"}, {L2, "L2"}, {L3, "L3"}, {L4, "L4"}};
-			for (auto [x, xname] : coeffs)
+			for (auto [x, xname] : coeffs)
 				log(LOG_DEBUG, "DGLAP::evolve()", "  - {} = {: }", xname, x);
 			
 			log(LOG_INFO, "DGLAP", "Doing {} resummation", (resum_tab ? "tabulated" : "threshold" ));
@@ -547,6 +544,9 @@ namespace Candia2
 				}
 			} // if (alpha0 != alpha1)
 
+			// +1 is the mass at the end of the current threshold,
+			// so if +2 is zero then there is no next threshold,
+			// meaning there is no use to do heavy flavor treatment/matching
 			if (resum_threshold && _order>=2 && _alpha_s.masses(_nf+2)!=0.0)
 				heavyFlavorTreatment();
 			

@@ -11,7 +11,7 @@ namespace Candia2
     {
         using options_type = TOptions;
         options_type options{};
-        virtual TOptions& getOptions() { return options; };
+        virtual options_type& getOptions() { return options; };
     };
 }
 

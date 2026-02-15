@@ -1,6 +1,6 @@
-#include "Candia-v2/Common.hpp"
 #include <iomanip>
 #include <iostream>
+#include <iterator>
 #include <sstream>
 #include <vector>
 #include <fstream>
@@ -8,6 +8,7 @@
 #include <cstdlib>
 #include <chrono>
 #include <filesystem>
+#include <ranges>
 using namespace std;
 namespace fs = filesystem;
 
@@ -116,11 +117,12 @@ int main(int argc, char *argv[]) {
 	
 	vector<double> xtab{1e-5, 1e-4, 1e-3, 1e-2, 0.1, 0.3, 0.5, 0.7, 0.9, 1.0};
 	Grid grid(xtab, num_grid_points, Grid::LOG_LIN);
-	auto& grid_options = grid.getOptions();
-	grid.splitConvolution({1e-5, 0.7, 1.0}, {100, 50});
+	grid.splitConvolution({1e-5, 0.8, 1.0}, {100, 50});
 	
 	LesHouchesDistribution dist{};
 	AlphaS alphas(order, dist.Q0(), Qf, dist.alpha0(), kr);
+	auto& alphas_options = alphas.getOptions();
+	alphas_options.use_broken_log_value = true; // why...
 	alphas.setVFNS(dist.masses(), dist.nfi());
 	// alphas.setFFNS(4);
 
@@ -128,7 +130,6 @@ int main(int argc, char *argv[]) {
 	auto& dglap_options = solver.getOptions();
 	dglap_options.use_truncated_nonsinglet_sol = true;
 	dglap_options.use_n3lo_heavyquark_asymmetry = true;
-	dglap_options.disable_heavy_flavor_matching = false;
 
 	auto t0 = chrono::high_resolution_clock::now();
 	auto F = solver.evolve();
@@ -137,4 +138,13 @@ int main(int argc, char *argv[]) {
 	log(LOG_INFO, "evolve.cpp", "Evolution took {}.", mins);
 
 	outputData(F, xtab, grid, order, num_grid_points, iterations, trunc_idx, kr, datafile_name);
+
+	if (grid.getOptions().use_gsl_routine) {
+		auto const& gsl_conv_errors = solver.getGrid().getGSLConvolutionErrors();
+		fs::path gsl_conv_errors_log_path("gsl-conv-errors.dat");
+		std::ofstream gsl_conv_errors_log_file(gsl_conv_errors_log_path);
+		std::ranges::copy(
+			gsl_conv_errors | std::views::transform([](auto&& _t){ auto [x,out,res] = _t; return std::format("{},{},{}", x, out, res); }),
+			std::ostream_iterator<std::string>(gsl_conv_errors_log_file, "\n"));
+	}
 }

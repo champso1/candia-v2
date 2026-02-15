@@ -20,6 +20,7 @@ static void usage()
 	log(LOG_INFO, "compare.cpp", "    <type>: 0=all flavors independently");
 	log(LOG_INFO, "compare.cpp", "    		  1=special combos from benchmark paper");
 	log(LOG_INFO, "compare.cpp", "    		  2=special combos from benchmark paper with q(-)");
+	log(LOG_INFO, "compare.cpp", "    		  3=specific non-singlet and singlet distributions");
 	exit(EXIT_FAILURE);
 }
 

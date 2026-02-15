@@ -10,16 +10,22 @@
 #include <cmath>
 
 #include "Candia-v2/Common.hpp"
+#include "Candia-v2/Options.hpp"
 
 namespace Candia2
 {
+
+	struct AlphaSOptions final
+	{
+		bool use_broken_log_value{false}; //!< purely for debugging
+	};
 
 	class LHAPDFDistribution;
 
 	/**
 	 *  @brief Class to handle the evolution of the QCD running coupling
 	 */
-	class AlphaS
+	class AlphaS : public OptionsBase<AlphaSOptions>
 	{
 	private:
 		uint _order{}; //!< Perturbative order.

@@ -19,15 +19,17 @@ namespace Candia2
 	protected:
 		static uint _nf;      //!< number of active/currently massless flavors
 		static double _beta0; //!< \f$\beta_0\f$ value for P0gg calculation
-		static double _kr;    //!< log of mu_f/mu_r
+		static double _log_muf2_mur2;    //!< log of mu_f/mu_r
 	public:
 		SplittingFunction() = default; //!< default constructor
 		virtual ~SplittingFunction() = default; //!< default deconstructor
 
 		/** updates the global value of nf and \f$\beta_0\f$ */
-		inline static void update(uint nf, double beta0)
+		inline static void update(uint nf, double beta0, double log_muf2_mur2)
 		{
-			_nf = nf; _beta0 = beta0;
+			_nf = nf;
+			_beta0 = beta0;
+		    _log_muf2_mur2 = log_muf2_mur2;
 		}
 	};
 

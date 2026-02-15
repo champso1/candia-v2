@@ -69,7 +69,7 @@ enum CompareType
 static std::vector<std::string> cols_all_flavors{"g", "xu", "xd", "xs", "xc", "xb", "xub", "xdb", "xsb", "xcb", "xbb"};
 static std::vector<std::string> cols_special_combos{"xuv", "xdv", "xL-", "xL+", "xs+", "xc+", "xb+", "xg"};
 static std::vector<std::string> cols_special_combos_qm{"xuv", "xdv", "xL-", "xL+", "xs+", "xc+", "xb+", "xg", "xq(-)"};
-static std::vector<std::string> cols_special_combos_ns_and_s{"xq_u^{(-)}", "xq_s^{(-)}", "xq_c^{(-)}", "xq_b^{(-)}", "xq_{NS,1d}^{(+)}", "xq_{NS,1c}^{(+)}", "xq^{(+)}", "xg"};
+static std::vector<std::string> cols_special_combos_ns_and_s{"xq_d^{(-)}", "xq_c^{(-)}", "xq_{NS,1d}^{(-)}", "xq_{NS,1c}^{(-)}", "xq_{NS,1d}^{(+)}", "xq_{NS,1c}^{(+)}", "xq^{(-)}", "xq^{(+)}", "xg"};
 static std::vector<std::reference_wrapper<const std::vector<std::string>>> cols{
 	std::cref(cols_all_flavors),  std::cref(cols_special_combos), std::cref(cols_special_combos_qm), std::cref(cols_special_combos_ns_and_s)};
 
@@ -166,20 +166,24 @@ static dist_type fix_dists(dist_type const& dists, int type)
 		case 3: {
 			dist_type dists_fixed(ncols, std::vector<double>(dists.at(0).size(), 0.0));
 			for (int k=0; k<dists_fixed.at(0).size(); ++k) {
-				dists_fixed.at(0).at(k) = dists[1][k] - dists[6+1][k];
-				dists_fixed.at(1).at(k) = dists[3][k] - dists[6+3][k];
-				dists_fixed.at(2).at(k) = dists[4][k] - dists[6+4][k];
-				dists_fixed.at(3).at(k) = dists[5][k] - dists[6+5][k];
+				dists_fixed.at(0).at(k) = dists[2][k] - dists[6+2][k];
+				dists_fixed.at(1).at(k) = dists[4][k] - dists[6+4][k];
 
-				double qp = dists[1][k] + dists[6+1][k];
-				dists_fixed.at(4).at(k) = qp - (dists[2][k] + dists[6+2][k]);
-				dists_fixed.at(5).at(k) = qp - (dists[4][k] + dists[6+4][k]);
+				double qpu = dists[1][k] + dists[6+1][k];
+				double qmu = dists[1][k] - dists[6+1][k];
+				dists_fixed.at(2).at(k) = qmu - (dists[2][k] - dists[6+2][k]);
+				dists_fixed.at(3).at(k) = qmu - (dists[4][k] - dists[6+2][k]);
+				dists_fixed.at(4).at(k) = qpu - (dists[2][k] + dists[6+2][k]);
+				dists_fixed.at(5).at(k) = qpu - (dists[4][k] + dists[6+4][k]);
 
+				
 				dists_fixed.at(6).at(k) = 0.0;
-				dists_fixed.at(7).at(k) = dists[0][k];
+				dists_fixed.at(7).at(k) = 0.0;
+				dists_fixed.at(8).at(k) = dists[0][k];
 
 				for (uint j=1; j<=6; ++j) {
-					dists_fixed.at(6).at(k) += dists[j][k] + dists[j+6][k];
+					dists_fixed.at(6).at(k) += dists[j][k] - dists[j+6][k];
+					dists_fixed.at(7).at(k) += dists[j][k] + dists[j+6][k];
 				}
 			}
 			return dists_fixed;

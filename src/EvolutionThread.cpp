@@ -32,12 +32,16 @@ namespace Candia2
 					log(LOG_INFO, "DGLAP", "LO Singlet Iteration {}", n);
                     
                     for (uint k=0; k<_grid.size()-1; k++) {
+						double v1 = recrelS_1(_S[0][1][0], k, p0qq);
+						double v2 = recrelS_1(_S[0][0][0], k, p0qg);
+						double v3 = recrelS_1(_S[0][1][0], k, p0gq);
+						double v4 = recrelS_1(_S[0][0][0], k, p0gg);
                         _S[0][1][1][k] =
-							recrelS_1(_S[0][1][0], k, p0qq) +
-							recrelS_1(_S[0][0][0], k, p0qg);
+							v1 +
+							v2;
                         _S[0][0][1][k] =
-							recrelS_1(_S[0][1][0], k, p0gq) +
-							recrelS_1(_S[0][0][0], k, p0gg);
+							v3 +
+							v4;
 
 						for (uint j=0; j<=1; j++)
 							arr.get()[j*31][k] += _S[0][j][1][k] * std::pow(L1, n)/factorial(n);
@@ -243,6 +247,15 @@ namespace Candia2
 				auto& p3qg = getExpression("P3qg");
 				auto& p3gq = getExpression("P3gq");
 				auto& p3gg = getExpression("P3gg");
+
+				auto beta0 = _alpha_s.beta0();
+				auto beta1 = _alpha_s.beta1();
+				auto beta2 = _alpha_s.beta2();
+				auto beta3 = _alpha_s.beta3();
+				
+				auto fac1 = beta1/(4.0*PI*beta0);
+				auto fac2 = beta2/(16.0*PI_2*beta0);
+				auto fac3 = beta3/(64.0*PI_3*beta0);
 				
 			    for (uint n=1; n<_iterations; n++) {
 					log(LOG_INFO, "DGLAP", "N3LO Singlet Iteration {}", n);
@@ -260,7 +273,7 @@ namespace Candia2
                     // new NLO piece non-convolution
                     for (uint k=0; k<_grid.size()-1; k++) {
                         for (uint j=0; j<=1; j++)
-                            _S[1][j][1][k] = -_S[0][j][1][k] * _alpha_s.beta1()/(4.0*PI*_alpha_s.beta0()) - _S[1][j][0][k];
+                            _S[1][j][1][k] = -_S[0][j][1][k]*fac1 - _S[1][j][0][k];
                     }
 
                     // new NLO piece convolution
@@ -277,10 +290,10 @@ namespace Candia2
                     for (uint k=0; k<_grid.size()-1; k++) {
                         for (uint j=0; j<=1; j++)
                             _S[2][j][1][k] =
-                                - (_alpha_s.beta1()/(4.0*PI*_alpha_s.beta0()))*_S[1][j][1][k]
-                                - (_alpha_s.beta2()/(16.0*PI_2*_alpha_s.beta0()))*_S[0][j][1][k]
+                                - fac1*_S[1][j][1][k]
+                                - fac2*_S[0][j][1][k]
                                 - 2.0*_S[2][j][0][k]
-                                - (_alpha_s.beta1()/(4.0*PI*_alpha_s.beta0()))*_S[1][j][0][k];
+                                - fac1*_S[1][j][0][k];
                     }
 
                     // new NNLO piece non-convolution
@@ -288,7 +301,6 @@ namespace Candia2
                         _S[2][1][1][k] += 
                             recrelS_3(_S[2][1][0], _S[1][1][0], _S[0][1][0], k, p0qq, p1qq, p2qq) +
                             recrelS_3(_S[2][0][0], _S[1][0][0], _S[0][0][0], k, p0qg, p1qg, p2qg);
-
                         _S[2][0][1][k] += 
                             recrelS_3(_S[2][1][0], _S[1][1][0], _S[0][1][0], k, p0gq, p1gq, p2gq) +
                             recrelS_3(_S[2][0][0], _S[1][0][0], _S[0][0][0], k, p0gg, p1gg, p2gg);
@@ -298,12 +310,12 @@ namespace Candia2
                     for (uint k=0; k<_grid.size()-1; k++) {
                         for (uint j=0; j<=1; j++)
                             _S[3][j][1][k] =
-                                - (_alpha_s.beta1()/(4.0*PI*_alpha_s.beta0()))*_S[2][j][1][k]
-                                - (_alpha_s.beta2()/(16.0*PI_2*_alpha_s.beta0()))*_S[1][j][1][k]
-                                - (_alpha_s.beta3()/(64.0*PI_3*_alpha_s.beta0()))*_S[0][j][1][k]
+                                - fac1*_S[2][j][1][k]
+                                - fac2*_S[1][j][1][k]
+                                - fac3*_S[0][j][1][k]
                                 - 3.0*_S[3][j][0][k]
-                                - 2.0*(_alpha_s.beta1()/(4.0*PI*_alpha_s.beta0()))*_S[2][j][0][k]
-                                - (_alpha_s.beta2()/(16.0*PI_2*_alpha_s.beta0()))*_S[1][j][0][k];
+                                - 2.0*fac1*_S[2][j][0][k]
+                                - fac2*_S[1][j][0][k];
                     }
 
 					{
@@ -326,13 +338,13 @@ namespace Candia2
                         for (uint k=0; k<_grid.size()-1; k++) {
                             for (uint j=0; j<=1; j++)
                                 _S[t][j][1][k] =
-                                    - (_alpha_s.beta1()/(4.0*PI*_alpha_s.beta0()))*_S[t-1][j][1][k]
-                                    - (_alpha_s.beta2()/(16.0*PI_2*_alpha_s.beta0()))*_S[t-2][j][1][k]
-                                    - (_alpha_s.beta3()/(64.0*PI_3*_alpha_s.beta0()))*_S[t-3][j][1][k]
+                                    - fac1*_S[t-1][j][1][k]
+                                    - fac2*_S[t-2][j][1][k]
+                                    - fac3*_S[t-3][j][1][k]
                                     - T*_S[t][j][0][k]
-                                    - (T-1.0)*(_alpha_s.beta1()/(4.0*PI*_alpha_s.beta0()))*_S[t-1][j][0][k]
-                                    - (T-2.0)*(_alpha_s.beta2()/(16.0*PI_2*_alpha_s.beta0()))*_S[t-2][j][0][k]
-                                    - (T-3.0)*(_alpha_s.beta3()/(64.0*PI_3*_alpha_s.beta0()))*_S[t-3][j][0][k];
+                                    - (T-1.0)*fac1*_S[t-1][j][0][k]
+                                    - (T-2.0)*fac2*_S[t-2][j][0][k]
+                                    - (T-3.0)*fac3*_S[t-3][j][0][k];
                         }
 
 						std::vector<std::thread> threads{};
@@ -366,8 +378,6 @@ namespace Candia2
 	void DGLAPSolver::_mt_EvolveDistributions_S_NLO(uint t, int thread_idx, uint min, uint max)
 	{
 		initializeThreadIndex(thread_idx);
-        // log(LOG_THREAD, "SingletNLO", "Thread {} evolving in range [{},{}]",
-            // thread_idx, _grid[min], _grid[max]);
 
 		auto& p0qq = getExpression("P0qq");
 		auto& p0qg = getExpression("P0qg");
@@ -391,8 +401,6 @@ namespace Candia2
 	void DGLAPSolver::_mt_EvolveDistributions_S_NNLO(uint t, int thread_idx, uint min, uint max)
 	{
 		initializeThreadIndex(thread_idx);
-        // log(LOG_THREAD, "SingletNNLO", "Thread {} evolving in range [{},{}]",
-            // thread_idx, _grid[min], _grid[max]);
 
 		auto& p0qq = getExpression("P0qq");
 		auto& p0qg = getExpression("P0qg");
@@ -421,8 +429,6 @@ namespace Candia2
 	void DGLAPSolver::_mt_EvolveDistributions_S_N3LO(uint t, int thread_idx, uint min, uint max)
 	{
 		initializeThreadIndex(thread_idx);
-        // log(LOG_THREAD, "SingletN3LO", "Thread {} evolving in range [{},{}]",
-            // thread_idx, _grid[min], _grid[max]);
 
 		auto& p0qq = getExpression("P0qq");
 		auto& p0qg = getExpression("P0qg");
