@@ -1,4 +1,5 @@
 module xpgg3a_2410
+  use iso_c_binding
 !  character(len=*), parameter :: name_xpgg3 = "xpgg3a"
 contains
 !
@@ -28,11 +29,10 @@ contains
 !
 ! ..The regular part
 !
-       FUNCTION P3GGA_2410 (Y, NF, IMOD)
+       FUNCTION P3GGA_2410 (Y, NF, IMOD) bind(c, name="p3gga_2410")
 !
        IMPLICIT REAL*8 (A-Z)
        INTEGER IMOD, nf,nf2,nf3
-       COMMON / P3GSOFT / A4gluon
 !
        YM  = 1.D0/Y
        Y1  = 1.D0-Y
@@ -192,17 +192,16 @@ contains
 ! ..The singular (soft) piece of P_gg^(3).
 !   Note: A4gluon is provided by a common block set in P3GGA
 !
-       FUNCTION P3GGB_2410 (Y, NF, IMOD)
+       FUNCTION P3GGB_2410 (Y, NF, IMOD) bind(c, name="p3ggb_2410")
        IMPLICIT REAL*8 (A - Z)
        INTEGER nf, IMOD
-       COMMON / P3GSOFT / A4gluon
-       !
+!
        nf2 = nf*nf
        nf3 = nf*nf2
-       !!
+!
        A4gluon =  40880.330D0     - 11714.246D0*nf &
             &          + 440.04876D0*nf2 + 7.3627750D0*nf3
-       P3GGB_2410  = A4gluon/(1.D0-Y)
+       P3GGB_2410  = A4gluon
 !
        RETURN
        END
@@ -213,11 +212,10 @@ contains
 ! ..The 'local' piece of P_gg^(3).
 !   Note: A4gluon is provided by a common block set in P3GGA
 !
-       FUNCTION P3GGC_2410 (Y, NF, IMOD)
+       FUNCTION P3GGC_2410 (Y, NF, IMOD) bind(c, name="p3ggc_2410")
 !
        IMPLICIT REAL*8 (A - Z)
        INTEGER IMOD, nf,nf2,nf3
-       COMMON / P3GSOFT / A4gluon
 !
        nf2 = nf*nf
        nf3 = nf*nf2
@@ -231,7 +229,7 @@ contains
        IF ( IMOD .EQ. 1 ) B4gluon = B4gluon - 0.2
        IF ( IMOD .EQ. 2 ) B4gluon = B4gluon + 0.2
 !
-       P3GGC_2410 = DLOG (1.D0-Y)* A4gluon + B4gluon
+       P3GGC_2410 = B4gluon
 !
        RETURN
        END

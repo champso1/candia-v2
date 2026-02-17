@@ -7,5 +7,5 @@ find_dependency(GSL REQUIRED)
 # include the exported targets, all the important stuff
 include("${CMAKE_CURRENT_LIST_DIR}/candiaTargets.cmake")
 set_and_check(CANDIA_INCLUDE_DIR "@PACKAGE_INSTALL_INCLUDE_DIR@")
-set(CANDIA_LIBRARIES candia::candia candia::hplog candia::ome)
+set(CANDIA_LIBRARIES candia::candia candia::hplog candia::AQqPSs3 canida::n3lo_splitfuncs_fortran candia::ome)
 check_required_components(candia)

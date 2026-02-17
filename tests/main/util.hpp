@@ -12,19 +12,25 @@ namespace fs = std::filesystem;
 
 #include "Candia-v2/Common.hpp"
 using namespace Candia2;
-using dist_type = std::vector<std::vector<double>>;
-using xtab_type = std::vector<double>;
 
-static std::string percentToLatex(double percent)
+template <typename T>
+using dist_type = std::vector<std::vector<T>>;
+template <typename T>
+using xtab_type = std::vector<T>;
+
+template <typename T>
+static std::string percentToLatex(T percent)
 {
 	return std::format("${:.2f}$\\%", percent);
 }
-static std::string scientificToLatex(double num, int precision, bool benchmark_format)
+
+template <typename T>
+static std::string scientificToLatex(T num, int precision, bool benchmark_format)
 {
 	int exponent = std::floor(std::log10(std::abs(num)));
 	if (std::abs(exponent) > 20)
 		return std::format("???");
-	double mantissa = num / std::pow(10, exponent);
+	T mantissa = num / std::pow(10.0, static_cast<T>(exponent));
 	if (benchmark_format) {
 		return std::vformat("${0: .{1}f}^{{{2:+}}}$",
 			std::make_format_args(mantissa, precision, exponent));
@@ -34,11 +40,13 @@ static std::string scientificToLatex(double num, int precision, bool benchmark_f
 			std::make_format_args(mantissa, precision_new, exponent));
 	}
 }
-static std::string percentToLatex2(double percent)
+
+template <typename T>
+static std::string percentToLatex2(T percent)
 {
 	if (percent >= 1e-8) {
 		int exponent = std::floor(std::log10(std::abs(percent)));
-		double mantissa = percent / std::pow(10, exponent);
+		T mantissa = percent / std::pow(10.0, static_cast<T>(exponent));
 		return std::format("{:.2f}e{:+}\\%", mantissa, exponent);
 	} else {
 		return std::format("0.00\\%");
@@ -51,7 +59,8 @@ static void file_exists(fs::path const& path)
 		log(LOG_ERROR, "compare.cpp", "Failed to find file '{}'", path.string());
 }
 
-static void print_dist(dist_type const& dist) {
+template <typename T>
+static void print_dist(dist_type<T> const& dist) {
 	for (int j=0; j<dist.at(0).size(); ++j) {
 		for (int i=0; i<dist.size(); ++i)
 			std::cout << dist[i][j] << ' ';
@@ -64,23 +73,32 @@ enum CompareType
 {
 	ALL_FLAVORS = 0,
 	SPECIAL_COMBOS = 1,
-	SPECIAL_COMBOS_QM = 2
+	SPECIAL_COMBOS_QM = 2,
+	SPECIAL_COMBOES_NS_AND_S = 3,
+	SPECIAL_COMBOES_FFNS = 4,
 };
 static std::vector<std::string> cols_all_flavors{"g", "xu", "xd", "xs", "xc", "xb", "xub", "xdb", "xsb", "xcb", "xbb"};
 static std::vector<std::string> cols_special_combos{"xuv", "xdv", "xL-", "xL+", "xs+", "xc+", "xb+", "xg"};
 static std::vector<std::string> cols_special_combos_qm{"xuv", "xdv", "xL-", "xL+", "xs+", "xc+", "xb+", "xg", "xq(-)"};
-static std::vector<std::string> cols_special_combos_ns_and_s{"xq_d^{(-)}", "xq_c^{(-)}", "xq_{NS,1d}^{(-)}", "xq_{NS,1c}^{(-)}", "xq_{NS,1d}^{(+)}", "xq_{NS,1c}^{(+)}", "xq^{(-)}", "xq^{(+)}", "xg"};
+static std::vector<std::string> cols_special_combos_ns_and_s{"xq_{NS,1d}^{(-)}", "xq_{NS,1c}^{(-)}", "xq_{NS,1b}^{(-)}", "xq_{NS,1d}^{(+)}", "xq_{NS,1c}^{(+)}", "xq_{NS,1b}^{(+)}", "xq^{(-)}", "xq^{(+)}", "xg"};
+static std::vector<std::string> cols_special_combos_ffns{"xuv", "xdv", "xL-", "xL+", "xs-", "xs+", "xc+", "xg"};
 static std::vector<std::reference_wrapper<const std::vector<std::string>>> cols{
-	std::cref(cols_all_flavors),  std::cref(cols_special_combos), std::cref(cols_special_combos_qm), std::cref(cols_special_combos_ns_and_s)};
+	std::cref(cols_all_flavors),
+	std::cref(cols_special_combos),
+	std::cref(cols_special_combos_qm),
+	std::cref(cols_special_combos_ns_and_s),
+	std::cref(cols_special_combos_ffns)
+};
 
-static std::pair<xtab_type, dist_type> read_candia_file(fs::path const &path, int size)
+template <typename T>
+static std::pair<xtab_type<T>, dist_type<T>> read_candia_file(fs::path const &path, int size)
 {
-	dist_type dists(size, std::vector<double>{});
+	dist_type<T> dists(size, std::vector<T>{});
 	std::ifstream file(path);
 	
-	std::vector<double> xtab{};
+	std::vector<T> xtab{};
 	std::vector<int> ntab{};
-	double temp;
+	T temp;
 	int temp2;
 	std::string line{};
 
@@ -105,7 +123,7 @@ static std::pair<xtab_type, dist_type> read_candia_file(fs::path const &path, in
 		}
 
 	}
-	dist_type dists_ntabbed(size, std::vector<double>(ntab.size()-1, 0.0));
+	dist_type<T> dists_ntabbed(size, std::vector<T>(ntab.size()-1, 0.0));
 	for (uint i=0; i<size; ++i) {
 		for (uint j=0; j<ntab.size()-1; ++j) {
 			uint idx = ntab[j];
@@ -115,12 +133,13 @@ static std::pair<xtab_type, dist_type> read_candia_file(fs::path const &path, in
 	return {{xtab.begin(), xtab.end()-1}, dists_ntabbed};
 }
 
-static dist_type fix_dists(dist_type const& dists, int type)
+template <typename T>
+static dist_type<T> fix_dists(dist_type<T> const& dists, int type)
 {
 	uint ncols = cols[type].get().size();
 	switch (type) {
 		case 0: {
-			dist_type dists_fixed(ncols, std::vector<double>(dists.at(0).size(), 0.0));
+			dist_type<T> dists_fixed(ncols, std::vector<T>(dists.at(0).size(), 0.0));
 			for (int k=0; k<dists_fixed.at(0).size(); ++k) {
 				for (int j=0; j<dists_fixed.size(); ++j) {
 					int idx = j;
@@ -132,7 +151,7 @@ static dist_type fix_dists(dist_type const& dists, int type)
 			return dists_fixed;
 		} break;
 		case 1: {
-			dist_type dists_fixed(ncols, std::vector<double>(dists.at(0).size(), 0.0));
+			dist_type<T> dists_fixed(ncols, std::vector<T>(dists.at(0).size(), 0.0));
 			for (int k=0; k<dists_fixed.at(0).size(); ++k) {
 				dists_fixed.at(0).at(k) = dists[1][k] - dists[6+1][k];
 				dists_fixed.at(1).at(k) = dists[2][k] - dists[6+2][k];
@@ -146,7 +165,7 @@ static dist_type fix_dists(dist_type const& dists, int type)
 			return dists_fixed;
 		} break;
 		case 2: {
-			dist_type dists_fixed(ncols, std::vector<double>(dists.at(0).size(), 0.0));
+			dist_type<T> dists_fixed(ncols, std::vector<T>(dists.at(0).size(), 0.0));
 			for (int k=0; k<dists_fixed.at(0).size(); ++k) {
 				dists_fixed.at(0).at(k) = dists[1][k] - dists[6+1][k];
 				dists_fixed.at(1).at(k) = dists[2][k] - dists[6+2][k];
@@ -158,25 +177,24 @@ static dist_type fix_dists(dist_type const& dists, int type)
 				dists_fixed.at(7).at(k) = dists[0][k];
 				dists_fixed.at(8).at(k) = 0.0;
 
-				for (uint j=0; j<=6; ++j)
+				for (uint j=1; j<=6; ++j)
 					dists_fixed.at(8).at(k) += dists[j][k] - dists[j+6][k];
 			}
 			return dists_fixed;
 		}; break;
 		case 3: {
-			dist_type dists_fixed(ncols, std::vector<double>(dists.at(0).size(), 0.0));
+			dist_type<T> dists_fixed(ncols, std::vector<T>(dists.at(0).size(), 0.0));
 			for (int k=0; k<dists_fixed.at(0).size(); ++k) {
-				dists_fixed.at(0).at(k) = dists[2][k] - dists[6+2][k];
-				dists_fixed.at(1).at(k) = dists[4][k] - dists[6+4][k];
-
-				double qpu = dists[1][k] + dists[6+1][k];
-				double qmu = dists[1][k] - dists[6+1][k];
-				dists_fixed.at(2).at(k) = qmu - (dists[2][k] - dists[6+2][k]);
-				dists_fixed.at(3).at(k) = qmu - (dists[4][k] - dists[6+2][k]);
-				dists_fixed.at(4).at(k) = qpu - (dists[2][k] + dists[6+2][k]);
-				dists_fixed.at(5).at(k) = qpu - (dists[4][k] + dists[6+4][k]);
-
+				T qpu = dists[1][k] + dists[6+1][k];
+				T qmu = dists[1][k] - dists[6+1][k];
 				
+				dists_fixed.at(0).at(k) = qmu - (dists[2][k] - dists[6+2][k]);
+				dists_fixed.at(1).at(k) = qmu - (dists[4][k] - dists[6+4][k]);
+				dists_fixed.at(2).at(k) = qmu - (dists[5][k] - dists[6+5][k]);
+				dists_fixed.at(3).at(k) = qpu - (dists[2][k] + dists[6+2][k]);
+				dists_fixed.at(4).at(k) = qpu - (dists[4][k] + dists[6+4][k]);
+				dists_fixed.at(5).at(k) = qpu - (dists[5][k] + dists[6+5][k]);
+
 				dists_fixed.at(6).at(k) = 0.0;
 				dists_fixed.at(7).at(k) = 0.0;
 				dists_fixed.at(8).at(k) = dists[0][k];
@@ -188,19 +206,34 @@ static dist_type fix_dists(dist_type const& dists, int type)
 			}
 			return dists_fixed;
 		}; break;
+		case 4: {
+			dist_type<T> dists_fixed(ncols, std::vector<T>(dists.at(0).size(), 0.0));
+			for (int k=0; k<dists_fixed.at(0).size(); ++k) {
+				dists_fixed.at(0).at(k) = dists[1][k] - dists[6+1][k];
+				dists_fixed.at(1).at(k) = dists[2][k] - dists[6+2][k];
+				dists_fixed.at(2).at(k) = dists[6+2][k] - dists[6+1][k];
+				dists_fixed.at(3).at(k) = 2.0*(dists[2+6][k] + dists[6+1][k]);
+				dists_fixed.at(4).at(k) = dists[3][k] - dists[6+3][k];
+				dists_fixed.at(5).at(k) = dists[3][k] + dists[6+3][k];
+				dists_fixed.at(6).at(k) = dists[4][k] + dists[6+3][k];
+				dists_fixed.at(7).at(k) = dists[0][k];
+			}
+			return dists_fixed;
+		} break;
 	}
 	return {};
 }
 
-static std::pair<xtab_type, dist_type> read_other_file(fs::path const &path, int size)
+template <typename T>
+static std::pair<xtab_type<T>, dist_type<T>> read_other_file(fs::path const &path, int size)
 {
-	dist_type dists(size, std::vector<double>{});
+	dist_type<T> dists(size, std::vector<T>{});
 	std::ifstream file(path);
 	file.ignore(1000, '\n');
 
-	xtab_type xtab{};
+	xtab_type<T> xtab{};
 	std::string line;
-	double temp;
+	T temp;
 	while (std::getline(file, line)) {
 		std::istringstream iss(line);
 		iss >> temp;
@@ -221,9 +254,10 @@ constexpr static char const* TEX_TABLE_COL_LINE{"    \\multicolumn{1}{c|} {$^COL
 constexpr static char const* TEX_TABLE_COL_LINE_FINAL{"    \\multicolumn{1}{c||}{$^COL^$} \\\\[0.5mm]"};
 constexpr static char const* TEX_TABLE_COL_DEF{"r|"};
 
+template <typename T>
 static void outputLatexTable(
-	std::vector<double> const& xtab,
-	dist_type const& diffs, std::string const& filename,
+    xtab_type<T> const& xtab,
+	dist_type<T> const& diffs, std::string const& filename,
 	std::vector<std::string> const& cols, int format, bool benchmark_format)
 {
 	fs::path tex_table_dir = fs::current_path()/TEX_TABLE_DIR;
@@ -288,7 +322,7 @@ static void outputLatexTable(
 	    log(LOG_INFO, "util.hpp", "'latex' directory exists. Continuing.");
 	}
 
-	auto format_val = [t=format,f=benchmark_format](double val) -> std::string {
+	auto format_val = [t=format,f=benchmark_format](T val) -> std::string {
 		switch (t) {
 			case 0: return percentToLatex(val);
 			case 1: return scientificToLatex(val, 4, f);
@@ -299,7 +333,7 @@ static void outputLatexTable(
 
 	log(LOG_INFO, "util.hpp", "Printing table information.");
 	for (int i=0; i<diffs.at(0).size(); ++i) {
-		double x = xtab.at(i);
+		T x = xtab.at(i);
 		table_text += scientificToLatex(x, 1, benchmark_format) + " & ";
 				
 		for (uint j=0; j<diffs.size()-1; ++j)

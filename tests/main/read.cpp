@@ -4,12 +4,12 @@
 #include <vector>
 #include <filesystem>
 using uint = unsigned;
-using dist_type = std::vector<std::vector<double>>;
 
 #include "Candia-v2/Common.hpp"
 using namespace Candia2;
 
 #include "util.hpp"
+using value_type = long double;
 
 static void usage()
 {
@@ -22,6 +22,7 @@ static void usage()
 	log(LOG_INFO, "read.cpp", "            1=special combos from benchmark paper");
 	log(LOG_INFO, "read.cpp", "            2=special combos from benchmark paper, with q(-)");
 	log(LOG_INFO, "read.cpp", "            3=mixture of special singlet and non-singlet");
+	log(LOG_INFO, "read.cpp", "            4=ffns");
 	exit(EXIT_FAILURE);
 }
 
@@ -38,7 +39,10 @@ int main(int argc, char *argv[])
 	std::from_chars(argv[3], argv[3] + 1, format);
 	std::from_chars(argv[4], argv[4] + 1, type);
 
-	auto [xtab, dists_raw] = origin == 0 ? read_candia_file(datafile_path, 13) : read_other_file(datafile_path, 13);
+	auto [xtab, dists_raw] =
+		(origin == 0) ?
+		read_candia_file<value_type>(datafile_path, 13)
+		: read_other_file<value_type>(datafile_path, 13);
 	dist_type dists = fix_dists(dists_raw, type);
 
 	std::string basename = datafile_path.filename().string().substr(0, datafile_path.filename().string().rfind('.'));	

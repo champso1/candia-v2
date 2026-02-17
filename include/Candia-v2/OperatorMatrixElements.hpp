@@ -116,9 +116,14 @@ namespace Candia2
 
 		inline double calcRegular(double x) const override
 		{
+			static int print_count = 10;
 			if (!_ome.has_regular())
 				return 0;
 
+			if (print_count > 0) {
+				log(LOG_DEBUG, "OpMatElemN3LO::calcRegular()", "Using LM = {}, NF = {}, x = {}", _lm, _nf, x);
+				print_count--;
+			}
 			auto reg = _ome.get_regular().value();
 			return reg[3](_lm, _nf, x);
 		}

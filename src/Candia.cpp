@@ -235,13 +235,26 @@ namespace Candia2
 			log(LOG_DEBUG, "DGLAPSolver::loadAllExpressions()", "Loading 'P3nsm, P3nsp, P3nsv, P3qq, P3qg, P3gq, P3gg' at N3LO");
 			log(LOG_DEBUG, "DGLAPSolver::loadAllExpressions()", "Loading 'A3nsm, A3nsp, A3gq, A3gg, A3hq, A3hg, A3psqq, A3sqg' at N3LO (libome)");
 			log(LOG_DEBUG, "DGLAPSolver::loadAllExpressions()", "Loading 'AQqPSs3' at N3LO");
-            createExpression<P3nsm>("P3nsm");
-            createExpression<P3nsp>("P3nsp");
-            createExpression<P3nsv>("P3nsv");
-            createExpression<P3qq>("P3qq");
-            createExpression<P3qg>("P3qg");
-            createExpression<P3gq>("P3gq");
-            createExpression<P3gg>("P3gg");
+
+			if (options.use_fortran_n3lo_splitfuncs) {
+				createExpression<mvv_p3::P3nsm>("P3nsm");
+				createExpression<mvv_p3::P3nsp>("P3nsp");
+				createExpression<mvv_p3::P3nsv>("P3nsv");
+				createExpression<mvv_p3::P3qq>("P3qq");
+				createExpression<mvv_p3::P3qg>("P3qg");
+				createExpression<mvv_p3::P3gq>("P3gq");
+				createExpression<mvv_p3::P3gg>("P3gg");
+			} else {
+				createExpression<P3nsm>("P3nsm");
+				createExpression<P3nsp>("P3nsp");
+				createExpression<P3nsv>("P3nsv");
+				createExpression<P3qq>("P3qq");
+				createExpression<P3qg>("P3qg");
+				createExpression<P3gq>("P3gq");
+				createExpression<P3gg>("P3gg");
+			}
+
+			SplittingFunction::setN3LOApproxType(getOptions().n3lo_splitfunc_imod);
 
             createExpression<OpMatElemN3LO>("A3nsm", ome::AqqQNSEven);
             createExpression<OpMatElemN3LO>("A3nsp", ome::AqqQNSOdd);

@@ -1,4 +1,5 @@
 module xpgq3a
+  use iso_c_binding
   character(len=*), parameter :: name_xpgq3 = "xpgq3a"
 contains
 !
@@ -21,7 +22,7 @@ contains
 ! =====================================================================
 !
 !
-       FUNCTION P3GQA (Y, NF, IMOD)
+       FUNCTION P3GQA (Y, NF, IMOD) bind(c, name="p3gqa")
 !
        IMPLICIT REAL*8 (A-Z)
        INTEGER IMOD, nf,nf2,nf3

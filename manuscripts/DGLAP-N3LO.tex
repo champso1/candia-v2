@@ -6,6 +6,7 @@
 \usepackage{bm}% bold math
 \usepackage{slashed}
 \usepackage{physics}
+\usepackage{cancel}
 \usepackage{extarrows}
 \usepackage{multirow,array}
 \usepackage{amsmath,amssymb,mathtools}
@@ -15,6 +16,7 @@
 \usepackage{xcolor}
 \usepackage{url}
 \usepackage{slashed}
+\usepackage{soul}
 \usepackage{siunitx}
 \usepackage{import}
 \usepackage{hyperref}
@@ -84,7 +86,7 @@ is publicly available at \url{https://github.com/champso1/candia-v2}~\cite{candi
 \newpage 
 \section{Introduction}
 The collinear substructure of the nucleon is described by parton distribution functions (PDFs), which map out the longitudinal momentum fractions of its inner constituent quarks and gluons in high-energy collisions. PDFs are essential components of factorization formulae in Quantum Chromodynamics (QCD), which allow for the perturbative calculation of hadronic cross sections. A precise and accurate determination of PDFs is a major endeavor~\cite{Hou:2019efy,Bailey:2020ooq,NNPDF:2021njg} and is necessary to advance the current precision frontier of cross-section calculations at hadron colliders. In the QCD framework of collinear factorization, PDFs depend on two variables: the parton longitudinal momentum fraction $x$ and the energy scale $Q$ of the reaction. 
-The PDF $x$-dependence cannot be predicted by first principles, at least within our current knowledge, and has to be extracted from global QCD analyses of experimental data for a wide variety of hadronic cross sections \cite{Hou:2019efy,Bailey:2020ooq,NNPDF:2021njg,NNPDF:2024nan,McGowan:2022nag,Ablat:2024muy}. 
+\textcolor{red}{The}\textcolor{blue}{While efforts in lattice QCD have been largely successful at determining PDF $x$-dependence at low energies, the general} PDF $x$-dependence \textcolor{blue}{at higher energies} cannot be \textcolor{blue}{directly} predicted by first principles, at least within our current knowledge, and has to be extracted from global QCD analyses of experimental data for a wide variety of hadronic cross sections \cite{Hou:2019efy,Bailey:2020ooq,NNPDF:2021njg,NNPDF:2024nan,McGowan:2022nag,Ablat:2024muy}. 
 %
 The energy behavior of the PDFs instead, is predicted by perturbative QCD (pQCD) and is described by the Dokshitzer-Gribov-Lipatov-Altarelli-Parisi (DGLAP)~\cite{Gribov:1972rt,Gribov:1972ri,Lipatov:1974qm,Dokshitzer:1977sg,Altarelli:1977zs} integro-differential renormalization group equations. The latter require knowledge of the $x$-dependent PDF functional form extracted from experimental data at an initial energy scale $Q_0$.
 
@@ -478,7 +480,8 @@ D^s_{t,m,n} = Z_{11}^n\otimes
 \label{eq:n3lo-resummed-recrels}
 \end{eqnarray}
 
-The strategy we adopt when more than one recursion relation in Eqns.~(\ref{eq:n3lo-resum-1})--(\ref{eq:n3lo-resum-4}) is eligible for the computation of a specific $D^{s}_{t,m,n}$ coefficient, is based on following procedure:
+\textcolor{red}{The strategy we adopt when more than one recursion relation in Eqns.~(\ref{eq:n3lo-resum-1})--(\ref{eq:n3lo-resum-4}) is eligible for the computation of a specific $D^{s}_{t,m,n}$ coefficient, is based on following procedure:}
+\textcolor{blue}{While it may seem as if any of the recursion relations in Eqns.~(\ref{eq:n3lo-resum-1}-\ref{eq:n3lo-resum-4}) may be viable for determining a specific coefficient $D^{s}_{t,m,n}$, each one requires that particular other coefficients are known already. Hence, there is one procedure that can be followed for a given value of $s$, the ``outermost'' coefficient, to determine all of the others:}
 
 \begin{enumerate}
 \item All $D^s_{t,m,n}$ with $n\neq0$ are computed using Eq.~(\ref{eq:n3lo-resum-1}),
@@ -662,11 +665,20 @@ g^{(n_f+1)}(x) = g^{(n_f)}(x) + \left[ A_{gq,h}^{\mathrm{S}} \otimes q^{+,(n_f)}
 %
 and for the heavy-quark PDFs, we have   
 %
+\begin{equation*}
+  \mathcolor{red}{q_h^{(n_f+1)}(x) = \bar{q}^{(n_f+1)}(x) = \frac{1}{2}\Big\{ [A_{hq}^{\mathrm{S}} \otimes q^{+,(n_f)}](x) + [A_{hg}^{\mathrm{S}} \otimes g^{(n_f)}](x) \Big\}\,,}
+\end{equation*}
 \begin{equation}
-q_h^{(n_f+1)}(x) = \bar{q}^{(n_f+1)}(x) = \frac{1}{2}\Big\{ [A_{hq}^{\mathrm{S}} \otimes q^{+,(n_f)}](x) + [A_{hg}^{\mathrm{S}} \otimes g^{(n_f)}](x) \Big\}\,,
+  \mathcolor{blue}{q_h^{(n_f+1)}(x) + \bar{q}^{(n_f+1)}(x) = [A_{hq}^{\mathrm{S}} \otimes q^{+,(n_f)}](x) + [A_{hg}^{\mathrm{S}} \otimes g^{(n_f)}](x)}
 \end{equation}
 %
-where we used the relation $q_h^{(n_f+1)}(m_h) = \bar{q}_h^{(n_f+1)}(m_h)$. The OMEs have the perturbative expansions given below  
+where we used the relation $q_h^{(n_f+1)}(m_h) = \bar{q}_h^{(n_f+1)}(m_h)$. \textcolor{blue}{However, very recently it has been shown (Ref.~\cite{Behring:2025avs}) that, at N$^3$LO, there is an asymmetry in the heavy flavors with the inclusion of the pure-singlet OME $A_{hq}^{\mathrm{PS},\mathrm{s},(3)}$, which gives the following new relation for the heavy-flavor difference PDF:}
+%
+\begin{equation}
+  \mathcolor{blue}{q_h^{(n_f+1)}(x) - \bar{q}_h^{(n_f+1)} = [A_{hq}^{\mathrm{PS},\mathrm{s}} \otimes q^{-,(n_f)}](x).}
+\end{equation}
+%
+The OMEs have the perturbative expansions given below  
 %
 \begin{align}
 A^{\textrm{NS},\pm}_{qq,h}(x) &= \left(\frac{\alpha_s(m_h^2)}{4\pi}\right)^2 A^{\textrm{NS},\pm,(2)}_{qq,h}(x) + 
@@ -675,10 +687,11 @@ A^{\textrm{S}}_{gk,h}(x) &= \left(\frac{\alpha_s(m_h^2)}{4\pi}\right)^2 A^{\text
 \left(\frac{\alpha_s(m_h^2)}{4\pi}\right)^3 A^{\textrm{S},(3)}_{gk,h}(x),~~~~ k = q,g \\
 A^{\textrm{S}}_{hk}(x) &= \left(\frac{\alpha_s(m_h^2)}{4\pi}\right)^2 A^{\textrm{S}(2)}_{hk}(x) + 
 \left(\frac{\alpha_s(m_h^2)}{4\pi}\right)^3 A^{\textrm{S},(3)}_{hk}(x),~~~~ k = q,g \\
-A^{\textrm{PS}}_{qq,h}(x) &= \left(\frac{\alpha_s(m_h^2)}{4\pi}\right)^3 A^{\textrm{PS},(3)}_{qq,h}(x) \\
-A^{\textrm{S}}_{qg,h}(x) &= \left(\frac{\alpha_s(m_h^2)}{4\pi}\right)^3 A^{\textrm{S},(3)}_{qg,h}(x)\,, 
+A^{\textrm{PS}}_{qq,h}(x) &= \left(\frac{\alpha_s(m_h^2)}{4\pi}\right)^3 A^{\textrm{PS},(3)}_{qq,h}(x)\,, \\
+A^{\textrm{S}}_{qg,h}(x) &= \left(\frac{\alpha_s(m_h^2)}{4\pi}\right)^3 A^{\textrm{S},(3)}_{qg,h}(x)\,, \\
+\mathcolor{blue}{A_{hq}^{\mathrm{PS},\mathrm{s}}(x) &= \left(\frac{\alpha_s(m_h^2)}{4\pi}\right)^3 A_{hq}^{\mathrm{PS},\mathrm{s},(3)}(x)\,,}
 \end{align}
-where the 2-loop OMEs $A^{(2)}_{ij}$ have been calculated in Refs.~\cite{Buza:1995ie,Buza:1996wv} while the most recent 3-loop calculation is presented in Refs.~\cite{Ablinger:2025nnq,Ablinger:2025joi,Ablinger:2024qxg,Ablinger:2024xtt,Ablinger:2023ahe,Bierenbaum:2022biv,Ablinger:2022wbb,Behring:2021asx,Ablinger:2020snj,Ablinger:2019etw,Ablinger:2018brx,Ablinger:2017xml,Ablinger:2017err,Ablinger:2014tla,Ablinger:2014uka,Behring:2014eya,transitionAqg,Ablinger:2012qm,Blumlein:2012vq,Blumlein:2011mi,Ablinger:2010ty,Bierenbaum:2009zt,Bierenbaum:2008yu,Bierenbaum:2007qe,Bierenbaum:2007dm}.
+where the 2-loop OMEs $A^{(2)}_{ij}$ have been calculated in Refs.~\cite{Buza:1995ie,Buza:1996wv} while the most recent 3-loop \textcolor{red}{calculation is}\textcolor{blue}{calculations are} presented in Refs.~\cite{Ablinger:2025nnq,Ablinger:2025joi,Ablinger:2024qxg,Ablinger:2024xtt,Ablinger:2023ahe,Bierenbaum:2022biv,Ablinger:2022wbb,Behring:2021asx,Ablinger:2020snj,Ablinger:2019etw,Ablinger:2018brx,Ablinger:2017xml,Ablinger:2017err,Ablinger:2014tla,Ablinger:2014uka,Behring:2014eya,transitionAqg,Ablinger:2012qm,Blumlein:2012vq,Blumlein:2011mi,Ablinger:2010ty,Bierenbaum:2009zt,Bierenbaum:2008yu,Bierenbaum:2007qe,Bierenbaum:2007dm,Behring:2025avs}.\textcolor{nicegreen}{Added the citation for $A_{hq}^{\mathrm{PS},\mathrm{s},(3)}$ here, too.}
 
 
 
@@ -712,7 +725,7 @@ a logarithmic $x$-grid with 2000 grid points while each gaussian quadrature inte
 \label{fig:ratios2}
 \end{figure}
 
-In Table~\ref{tbl:hoppet-comparison}, we compare the results of \texttt{Candia-v2} to those from the recent \texttt{Hoppet-v2} computer code release, documented in Ref.~\cite{Karlberg:2025hxk}. The $x$-space \texttt{Hoppet}'s algorithm is based on higher-order Runge-Kutta methods for both the $x$-integrations and $Q$ evolution. Table~\ref{tbl:hoppet-comparison} shows percentage errors, where the \texttt{Hoppet-v2} result is used as the reference. The differences between \texttt{Candia-v2} and  \texttt{Hoppet-v2} for the N$^3$LO evolution with approximate splitting functions are overall at the sub-percent level, except for the $xc_+$ distribution at very large $x$, and $xb_+$ where differences are approximately $1\%$ in the $10^{-4}\lesssim x \lesssim 0.3$ range. The $xL_-$ combination at $x\lesssim 10^{-4}$ has differences that are between 1.6\% and 2.3\%.   
+In Table~\ref{tbl:hoppet-comparison}, we compare the results of \texttt{Candia-v2} to those from the recent \texttt{Hoppet-v2} computer code release, documented in Ref.~\cite{Karlberg:2025hxk}. The $x$-space \texttt{Hoppet}'s algorithm is based on higher-order Runge-Kutta methods for both the $x$-integrations and $Q$ evolution. Table~\ref{tbl:hoppet-comparison} shows percentage errors, where the \texttt{Hoppet-v2} result is used as the reference. The differences between \texttt{Candia-v2} and  \texttt{Hoppet-v2} for the N$^3$LO evolution with approximate splitting functions are overall at the sub-percent level, except for the $xc_+$ distribution at very large $x$, and $xb_+$ where differences are approximately $1\%$ in the $10^{-4}\lesssim x \lesssim 0.3$ range. The $xL_-$ combination at $x\lesssim 10^{-4}$ has differences that are between 1.6\% and 2.3\%\textcolor{red}{.}\textcolor{blue}{, however this is purely a numerical artifact due to large cancellations in the percent difference calculation, as the $x\bar{u}$ and $x\bar{d}$ PDFs, which comprise $xL_-$, themselves individually exhibit a percent difference on the order of 0.01\% in the $x\lesssim 10^{-4}$ range.}
 
 
 

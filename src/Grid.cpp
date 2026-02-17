@@ -36,6 +36,7 @@ namespace Candia2
 			case LOG: initGridLog(_xtab, nx); break;
 			case LOG_LIN: initGridLogLin(_xtab, nx); break;
 			case LIN: initGridLin(_xtab, nx); break;
+			case LOG_LIN_QUAD: initGridLogLinQuad(_xtab, nx); break;
 			default:
 				log(LOG_ERROR, "Grid", "Invalid grid fill type. Found {}, expected 1(LOG) or 2(LOG_LIN).", grid_fill_type);
 		}
@@ -74,7 +75,7 @@ namespace Candia2
 			_workspaces.emplace_back(gsl::make_workspace(other._workspaces[i]->limit));
 	}
 
-	void Grid::initGridLog(std::vector<double> const& xtab, const uint nx)
+	void Grid::initGridLog(std::vector<double> const& xtab, uint nx)
 	{
 		const uint xtab_len = xtab.size();
 		std::vector<double> Ntab(xtab_len);
@@ -151,6 +152,13 @@ namespace Candia2
 
 	void Grid::initGridLogLin(std::vector<double> const& xtab, uint nx)
 	{
+		// this is to make the intervals less "clean"
+		// sometimes, when they are "clean", the linear mapping places points basically right on
+		// the xtab points, like 0.3, but off by a delta which is small enough to mess up interpolation
+		// if this number is a bit uneven, the hope is that points won't be placed so "cleanly" near
+		// xtabbed points, avoiding these errors
+		nx += 1;
+
 		double log_min = std::log10(1e-5);
 		double log_max = std::log10(0.1);
 		uint num_log_intervals = std::round(log_max-log_min);
@@ -190,6 +198,12 @@ namespace Candia2
 
 	void Grid::initGridLin(std::vector<double> const& xtab, uint nx)
 	{
+		// this is to make the intervals less "clean"
+		// sometimes, when they are "clean", the linear mapping places points basically right on
+		// the xtab points, like 0.3, but off by a delta which is small enough to mess up interpolation
+		// if this number is a bit uneven, the hope is that points won't be placed so "cleanly" near
+		// xtabbed points, avoiding these errors
+		nx += 1;
 		double lin_min = 1e-5;
 		double lin_max = 1.0;
 
@@ -197,6 +211,63 @@ namespace Candia2
 		
 		for (uint k=0; k<nx; ++k) {
 		    double x = lin_min + (lin_max-lin_min)*k/static_cast<double>(nx);
+			_points.emplace_back(x);
+		}
+		
+		std::set<double> points_set(_points.begin(), _points.end());
+		points_set.insert(xtab.begin(), xtab.end());
+		_points = std::vector<double>(points_set.begin(), points_set.end());
+		
+		_ntab.clear();
+		for (double x : xtab) {
+			if (auto it = std::find(_points.begin(), _points.end(), x); it != _points.end()) {
+				_ntab.emplace_back(std::distance(_points.begin(), it));
+				continue;
+			}
+		}
+	}
+
+	void Grid::initGridLogLinQuad(std::vector<double> const& xtab, uint nx)
+	{
+		// this is to make the intervals less "clean"
+		// sometimes, when they are "clean", the linear mapping places points basically right on
+		// the xtab points, like 0.3, but off by a delta which is small enough to mess up interpolation
+		// if this number is a bit uneven, the hope is that points won't be placed so "cleanly" near
+		// xtabbed points, avoiding these errors
+		nx += 1;
+
+		double log_min = std::log10(1e-5);
+		double log_max = std::log10(0.1);
+		uint num_log = 300;
+		uint num_log_intervals = std::round(log_max-log_min);
+		double dlog = (log_max-log_min)/static_cast<double>(num_log_intervals);
+		uint log_interval_size = num_log/num_log_intervals;
+
+		_points.clear();
+		for (uint i=0; i<num_log_intervals; ++i) {
+			double l0 = log_min + i*dlog;
+			double l1 = l0 + dlog;
+			for (uint k=0; k<log_interval_size; ++k) {
+				double l = l0 + (l1-l0)*k/static_cast<double>(log_interval_size);
+				_points.emplace_back(std::pow(10, l));
+			}
+		}
+
+		double lin_min = 0.1;
+		double lin_max = 0.9;
+		uint num_lin = 150;
+		
+		for (uint k=0; k<num_lin; ++k) {
+		    double x = lin_min + (lin_max-lin_min)*k/static_cast<double>(num_lin);
+			_points.emplace_back(x);
+		}
+
+		double quad_min = 0.9;
+		double quad_max = 1.0;
+		uint num_quad = 50;
+
+		for (uint k=0; k<num_quad; ++k) {
+		    double x = quad_max - (quad_max-quad_min)*(1.0 - k/static_cast<double>(num_quad));
 			_points.emplace_back(x);
 		}
 		
@@ -357,6 +428,7 @@ namespace Candia2
 
 		int k = interpFindIdx(x);
 
+		
 		double const* xa = &(_points.data()[k]);
 		double const* ya = &(yy.base().data()[k]);
 		
@@ -427,8 +499,8 @@ namespace Candia2
 		return res;
 	}
 
-	double Grid::largeXMappingFunctionBase(
-		uint k, double x, YandJAccessor const& yandjaccessor,
+	double Grid::mappingFunctionBase(
+		uint k, double x, YJAccessor auto&& yandjaccessor,
 		Expression& E, ArrayGrid& A,
 		double eplus1,
 		gauleg_type const& X, gauleg_type const& W)
@@ -439,18 +511,14 @@ namespace Candia2
 		for (uint i=0; i<s; i++) {
 			double z = X[i];
 			double w = W[i];
-
 			auto [y, J] = yandjaccessor(x, z);
 			double a = x/y;
-			double d1y = 1.0-y;
-
 			double eregy = E.calcRegular(y);
 			double interpa = interpolate(A, a);
-			out += w*J * eregy*interpa;
-			
 			double eplusy = E.calcPlus(y);
 			
-			out += w*J * (1.0/d1y)*(eplusy*interpa - eplus1*ak);
+			out += w*J * eregy*interpa;
+			out += w*J * (1.0/(1.0-y))*(eplusy*interpa - eplus1*ak);
 		}
 		return out;
 	}
@@ -485,9 +553,6 @@ namespace Candia2
 			}
 		};
 
-		static YandJAccessor f2  = [](double x, double z) { return std::make_pair(1.0-0.9*(1.0-z)*(1.0-z), 1.8*(1.0-z)); };
-		static YandJAccessor f2x = [](double x, double z) { return std::make_pair(1.0-(1.0-x)*(1.0-z)*(1.0-z), 2.0*(1.0-x)*(1.0-z)); };
-
 		// we use this nice convenience view for skipping the first gauleg points/weights
 		// which are the default 0-1 that is used directly
 		static auto gauleg_enum = [&](uint d) {
@@ -500,20 +565,37 @@ namespace Candia2
 		if (!_split_interval) {
 			gauleg_conv(_Xi[0], _Wi[0]);
 		} else {
-			if (!options.use_gsl_routine && !options.try_new_largex_mapping) {
+			if (!options.use_gsl_routine && !options.use_alt_mapping) {
 				for (auto const& [i, X, W] : gauleg_enum(0))
 					gauleg_conv(*X, *W);
 
-			} else if (!options.use_gsl_routine && options.try_new_largex_mapping) {
-				if (x < 0.1) {
-					double z0 = std::log(0.1)/logx;
-					gauleg_type X(DEFAULT_GAULEG_POINTS, 0.0), W(DEFAULT_GAULEG_POINTS, 0.0);
-					initGauLeg(z0, 1.0, X, W);
-					gauleg_conv(X, W);
+			} else if (!options.use_gsl_routine && options.use_alt_mapping) {
+				// [x, 0.1]
+			    static auto mapping1 = [&](double x, double z){
+					auto a = 0.1/x;
+					return std::make_pair(x*std::pow(a, z), x*std::pow(a, z)*std::log(a)); };
 
-					res += largeXMappingFunctionBase(k, x, f2,  E, A, eplus1, _Xi[0], _Wi[0]);
+				// [0.1,0.9]
+				static auto mapping2 = [&](double x, double z){
+					return std::make_pair(0.1+0.8*z, 0.8); };
+				static auto mapping2x = [&](double x, double z){
+					return std::make_pair(x+(0.9-x)*z, 0.9-x); };
+
+				// [0.9, 1.0]
+				static auto mapping3 = [&](double x, double z){
+					return std::make_pair(1.0-0.1*std::pow(1.0-z, 3), 0.3*(1.0-z)*(1.0-z)); };
+				static auto mapping3x = [&](double x, double z){
+					return std::make_pair(1.0-(1.0-x)*std::pow(1.0-z, 3), 3.0*(1-x)*(1.0-z)*(1.0-z)); };
+
+				if (x < 0.1) {
+					mappingFunctionBase(k, x, mapping1, E, A, eplus1, _Xi[0], _Wi[0]);
+					mappingFunctionBase(k, x, mapping2, E, A, eplus1, _Xi[0], _Wi[0]);
+					mappingFunctionBase(k, x, mapping3, E, A, eplus1, _Xi[0], _Wi[0]);
+				} else if (x >= 0.1 && x < 0.9) {
+					mappingFunctionBase(k, x, mapping2x, E, A, eplus1, _Xi[0], _Wi[0]);
+					mappingFunctionBase(k, x, mapping3, E, A, eplus1, _Xi[0], _Wi[0]);
 				} else {
-					res += largeXMappingFunctionBase(k, x, f2x, E, A, eplus1, _Xi[0], _Wi[0]);
+					mappingFunctionBase(k, x, mapping3x, E, A, eplus1, _Xi[0], _Wi[0]);
 				}
 			} else {
 				GSLIntegrationParams p{

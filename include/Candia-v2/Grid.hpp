@@ -10,6 +10,8 @@
 #include "Candia-v2/Expression.hpp"
 #include "Candia-v2/Options.hpp"
 
+#include <concepts>
+#include <type_traits>
 #include <vector>
 #include <memory>
 
@@ -50,7 +52,13 @@ namespace Candia2
 	struct GridOptions final
 	{
 		bool use_gsl_routine{false}; //!< flag for whether to use a gsl routine to perform the integration
-		bool try_new_largex_mapping{false}; //!< flag to try another mapping for large-x (x>0.5)
+		bool use_alt_mapping{false}; //!< flag for whether to use a different mapping for convolutions to try and increase accuracy
+	};
+
+	template <typename TYJAccessor>
+	concept YJAccessor = requires() {
+		std::invocable<TYJAccessor, double,double>;
+		std::same_as<std::invoke_result_t<TYJAccessor, double,double>, std::pair<double,double>>;
 	};
 
     class ArrayGrid;
@@ -68,7 +76,8 @@ namespace Candia2
 		{
 			LOG = 0, //!< simple logarithmic intervals
 			LOG_LIN, //!< logarithmic intervals until 0.1, then linear until 1.0
-			LIN,     //!< linear
+			LIN,     //!< linear all throughout
+			LOG_LIN_QUAD //!< log from min-0.1, lin from 0.1-0.9, quadratic (packed at higher x) from 0.9-1.0
 		};
 
 		struct GSLIntegrationParams final
@@ -97,11 +106,8 @@ namespace Candia2
 		gsl::workspace_type _workspace{nullptr}; //!< gsl workspace for calling gsl integration routines
 		std::vector<gsl::workspace_type> _workspaces; //!< gsl workspaces for calling gsl integration routines
 
-		static constexpr uint DEFAULT_GAULEG_POINTS = 100;
-		static inline std::vector<double> DEFAULT_SPLIT_INTERVALS{1e-5, 0.1, 0.8, 1.0};
-		static inline std::vector<double> DEFAULT_SPLIT_SIZES{DEFAULT_GAULEG_POINTS,DEFAULT_GAULEG_POINTS,DEFAULT_GAULEG_POINTS};
-
-		gsl_conv_errors _gsl_conv_errors{};
+		static constexpr uint DEFAULT_GAULEG_POINTS = 100; //!< default number of gauss-legendre points to place in the interval
+		gsl_conv_errors _gsl_conv_errors{}; //!< stored values of information whenever GSL fails to perform the integration to the requested accuracy
 	public:
 		Grid() = delete; //!< default constructor deleted; must provide information to fill the grid
 		/**
@@ -157,15 +163,20 @@ namespace Candia2
 		 *  @brief Splits the grid intervals into the provided intervals.
 		 *  @param intervals A list of points at which to split the interval
 		 *  @param sizes Sizes of each interval
+		 *
+		 *  These may be left empty to not split the intervals, in which case
+		 *  one single interval will be used.
 		 */
 		void splitConvolution(
-			std::vector<double> const& intervals=DEFAULT_SPLIT_INTERVALS,
-			std::vector<double> const& sizes=DEFAULT_SPLIT_SIZES);
+			std::vector<double> const& intervals={},
+			std::vector<double> const& sizes={});
 
+		
+		
 		/** @brief Accepts x and z, and returns y and the Jacobian */
 		using YandJAccessor = std::function<std::pair<double,double>(double,double)>;
 		/**
-		 *  @brief Handles a convolution with a simple linear mapping y -> z
+		 *  @brief Handles a convolution with simple mappings for y -> z
 		 *  @param k grid index
 		 *  @param x x-value at the grid index
 		 *  @param yandjaccessor a @a YandJAccessor to retrieve y and the jacobian given x and z (the mapped value, a gauleg abscissa)
@@ -175,8 +186,8 @@ namespace Candia2
 		 *  @param X the list of gauleg abscissae
 		 *  @param W the list of gauleg weights
 		 */
-		double largeXMappingFunctionBase(
-			uint k, double x, YandJAccessor const& yandjaccessor,
+		double mappingFunctionBase(
+			uint k, double x, YJAccessor auto&& yandjaccessor,
 			Expression& E, ArrayGrid& A,
 			double eplus1,
 			gauleg_type const& X, gauleg_type const& W);
@@ -200,6 +211,7 @@ namespace Candia2
 		 */
 		double convolution(ArrayGrid& A, Expression &E, uint k);
 
+		/** @brief retrieves info on all GSL errors, if any */
 		inline auto const& getGSLConvolutionErrors() const { return _gsl_conv_errors; }
 	private:
 		/** Fills the grid according to the original candia-v2 method (log-spaced) */
@@ -208,6 +220,8 @@ namespace Candia2
 		void initGridLogLin(grid_type const& xtab, uint nx);
 		/** Fills the grid with linear spacing */
 		void initGridLin(grid_type const& xtab, uint nx);
+		/** Fills the grid with part logarithmic, part linear, and part quadratic */
+		void initGridLogLinQuad(grid_type const& xtab, uint nx);
 		
 		/** Initializes the set of gauss-legendre weights and abscissae */
 		void initGauLeg(double x1, double x2, std::vector<double> & Xi, std::vector<double> & Wi);

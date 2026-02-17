@@ -64,8 +64,21 @@ add_library(hplog STATIC src/fortran/hplog.f)
 target_link_libraries(hplog PUBLIC gfortran)
 
 add_library(AQqPSs3 STATIC src/fortran/OME.f)
-target_sources(AQqPSs3 PRIVATE ${AQqPSs3_sources})
 target_link_libraries(AQqPSs3 PUBLIC gfortran hplog)
+
+set(n3lo_splitfuncs_fortran_src
+  src/fortran/mvv_p3/xpgg3a.f90
+  src/fortran/mvv_p3/xpgg3a_2410.f90
+  src/fortran/mvv_p3/xpgq3a.f90
+  src/fortran/mvv_p3/xpgq3a_2404.f90
+  src/fortran/mvv_p3/xpgq3a_2512.f90
+  src/fortran/mvv_p3/xpns3m.f90
+  src/fortran/mvv_p3/xpns3p.f90
+  src/fortran/mvv_p3/xpns3s.f90
+  src/fortran/mvv_p3/xpps3a.f90
+  src/fortran/mvv_p3/xpqg3a.f90)
+add_library(n3lo_splitfuncs_fortran STATIC ${n3lo_splitfuncs_fortran_src})
+target_link_libraries(n3lo_splitfuncs_fortran PUBLIC gfortran)
 
 find_package(GSL REQUIRED)
 
@@ -102,7 +115,7 @@ else()
   target_compile_definitions(candia PRIVATE ENABLE_THREADING=0)
 endif()
 
-target_link_libraries(candia PRIVATE hplog AQqPSs3 ome GSL::gsl)
+target_link_libraries(candia PRIVATE hplog AQqPSs3 n3lo_splitfuncs_fortran ome GSL::gsl)
 target_include_directories(candia PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:include>)
@@ -132,7 +145,7 @@ endif(BUILD_DOCS)
 # INSTALLATION
 # ====================
 include(GNUInstallDirs)
-install(TARGETS candia hplog AQqPSs3
+install(TARGETS candia hplog AQqPSs3 n3lo_splitfuncs_fortran
   EXPORT candiaTargets
   FILE_SET cxx_headers DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
 install(EXPORT candiaTargets

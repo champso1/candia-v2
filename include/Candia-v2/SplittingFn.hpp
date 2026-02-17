@@ -8,9 +8,11 @@
 
 #include "Candia-v2/Common.hpp"
 #include "Candia-v2/Expression.hpp"
+#include "Candia-v2/SpecialFuncs.hpp"
 
 namespace Candia2
 {
+	
 	/**
 	 *  @brief Class to handle the implementation of the splitting functions.
 	 */
@@ -20,9 +22,13 @@ namespace Candia2
 		static uint _nf;      //!< number of active/currently massless flavors
 		static double _beta0; //!< \f$\beta_0\f$ value for P0gg calculation
 		static double _log_muf2_mur2;    //!< log of mu_f/mu_r
+		static uint _imod; //!< approximation type for n3lo splitting functions
 	public:
 		SplittingFunction() = default; //!< default constructor
 		virtual ~SplittingFunction() = default; //!< default deconstructor
+
+		/** @brief sets what aproximation type to use for the n3lo splitting functions */
+		inline static void setN3LOApproxType(uint imod){ _imod = imod; }
 
 		/** updates the global value of nf and \f$\beta_0\f$ */
 		inline static void update(uint nf, double beta0, double log_muf2_mur2)
@@ -303,9 +309,6 @@ namespace Candia2
 	 */
 	class P3nsp final: public SplittingFunction
 	{
-	private:
-		const uint _imod{3}; //!< flag for which approximation to use
-		
 	public:
 		using SplittingFunction::SplittingFunction;
 		
@@ -320,9 +323,6 @@ namespace Candia2
 	 */
 	class P3nsm final: public SplittingFunction
 	{
-	private:
-		const uint _imod{3}; //!< flag for which approximation to use
-		
 	public:
 		using SplittingFunction::SplittingFunction;
 		
@@ -337,9 +337,6 @@ namespace Candia2
 	 */
 	class P3nsv final: public SplittingFunction
 	{
-	private:
-		const uint _imod{3}; //!< flag for which approximation to use
-		
 	public:
 		using SplittingFunction::SplittingFunction;
 		
@@ -354,9 +351,6 @@ namespace Candia2
 	 */
 	class P3ps final: public SplittingFunction
 	{
-	private:
-		const uint _imod{3}; //!< flag for which approximation to use
-
 	public:
 		using SplittingFunction::SplittingFunction;
 		
@@ -369,9 +363,6 @@ namespace Candia2
 	 */
 	class P3qq final: public SplittingFunction
 	{
-	private:
-		const uint _imod{3}; //!< flag for which approximation to use
-
 	public:
 		using SplittingFunction::SplittingFunction;
 		
@@ -386,9 +377,6 @@ namespace Candia2
 	 */
 	class P3qg final: public SplittingFunction
 	{
-	private:
-		const uint _imod{3}; //!< flag for which approximation to use
-
 	public:
 		using SplittingFunction::SplittingFunction;
 		
@@ -401,9 +389,6 @@ namespace Candia2
 	 */
 	class P3gq final: public SplittingFunction
 	{
-	private:
-		const uint _imod{3}; //!< flag for which approximation to use
-
 	public:
 		using SplittingFunction::SplittingFunction;
 		
@@ -416,9 +401,6 @@ namespace Candia2
 	 */
 	class P3gg final: public SplittingFunction
 	{
-	private:
-		const uint _imod{3}; //!< flag for which approximation to use
-
 	public:
 		using SplittingFunction::SplittingFunction;
 		
@@ -426,6 +408,209 @@ namespace Candia2
 		double calcPlus(double x) const override;
 		double calcDelta(double x) const override;
 	};
+
+
+
+	/** @defgroup n3lo_splitfuncs_fortran Fortran Versions of P3 Splitting Functions */
+	namespace mvv_p3
+	{
+		/**
+		 *  @ingroup n3lo_splitfuncs_fortran
+		 *  @brief Implements \f$P_{\mathrm{NS}}^{+,(3)}\f$
+		 */
+		class P3nsp final: public SplittingFunction
+		{
+		public:
+			using SplittingFunction::SplittingFunction;
+		
+			inline double calcRegular(double x) const override
+			{
+				int nf = static_cast<int>(_nf);
+				int imod = static_cast<int>(_imod);
+				return p3nspa(&x, &nf, &imod)/16.0;
+			}
+			inline double calcPlus(double x) const override
+			{
+				int nf = static_cast<int>(_nf);
+				int imod = static_cast<int>(_imod);
+				return p3nspb(&x, &nf, &imod)/16.0;
+			}
+			inline double calcDelta(double x) const override
+			{
+				int nf = static_cast<int>(_nf);
+				int imod = static_cast<int>(_imod);
+				return p3nspc(&x, &nf, &imod)/16.0;
+			}
+		};
+
+		/**
+		 *  @ingroup n3lo_splitfuncs_fortran
+		 *  @brief Implements \f$P_{\mathrm{NS}}^{-,(3)}\f$
+		 */
+		class P3nsm final: public SplittingFunction
+		{
+		public:
+			using SplittingFunction::SplittingFunction;
+		
+			inline double calcRegular(double x) const override
+			{
+				int nf = static_cast<int>(_nf);
+				int imod = static_cast<int>(_imod);
+				return p3nsma(&x, &nf, &imod)/16.0;
+			}
+			inline double calcPlus(double x) const override
+			{
+				int nf = static_cast<int>(_nf);
+				int imod = static_cast<int>(_imod);
+				return p3nsmb(&x, &nf, &imod)/16.0;
+			}
+			inline double calcDelta(double x) const override
+			{
+				int nf = static_cast<int>(_nf);
+				int imod = static_cast<int>(_imod);
+				return p3nsmc(&x, &nf, &imod)/16.0;
+			}
+		};
+
+		/**
+		 *  @ingroup n3lo_splitfuncs_fortran
+		 *  @brief Implements \f$P_{\mathrm{NS}}^{V,(3)}\f$
+		 */
+		class P3nsv final: public SplittingFunction
+		{
+		public:
+			using SplittingFunction::SplittingFunction;
+		
+			inline double calcRegular(double x) const override
+			{
+				int nf = static_cast<int>(_nf);
+				int imod = static_cast<int>(_imod);
+				return (p3nsma(&x, &nf, &imod) + p3nssa(&x, &nf, &imod))/16.0;
+			}
+			inline double calcPlus(double x) const override
+			{
+				int nf = static_cast<int>(_nf);
+				int imod = static_cast<int>(_imod);
+				return p3nsmb(&x, &nf, &imod)/16.0;
+			}
+			inline double calcDelta(double x) const override
+			{
+				int nf = static_cast<int>(_nf);
+				int imod = static_cast<int>(_imod);
+				return p3nsmc(&x, &nf, &imod)/16.0;
+			}
+		};
+
+		/**
+		 *  @ingroup n3lo_splitfuncs_fortran
+		 *  @brief Implements \f$P_{\mathrm{ps}}^{(3)}\f$ (pure-singlet)
+		 */
+		class P3ps final: public SplittingFunction
+		{
+		public:
+			using SplittingFunction::SplittingFunction;
+		
+			inline double calcRegular(double x) const override
+			{
+				int nf = static_cast<int>(_nf);
+				int imod = static_cast<int>(_imod);
+				return p3psa(&x, &nf, &imod)/16.0;
+			}
+		};
+
+		/**
+		 *  @ingroup n3lo_splitfuncs_fortran
+		 *  @brief Implements \f$P_{qq}^{(3)}\f$
+		 */
+		class P3qq final: public SplittingFunction
+		{
+		public:
+			using SplittingFunction::SplittingFunction;
+		
+			inline double calcRegular(double x) const override
+			{
+				int nf = static_cast<int>(_nf);
+				int imod = static_cast<int>(_imod);
+				return (p3nspa(&x, &nf, &imod) + p3psa(&x, &nf, &imod))/16.0;
+			}
+			inline double calcPlus(double x) const override
+			{
+				int nf = static_cast<int>(_nf);
+				int imod = static_cast<int>(_imod);
+				return p3nspb(&x, &nf, &imod)/16.0;
+			}
+			inline double calcDelta(double x) const override
+			{
+				int nf = static_cast<int>(_nf);
+				int imod = static_cast<int>(_imod);
+				return p3nspc(&x, &nf, &imod)/16.0;
+			}
+		};
+
+		/**
+		 *  @ingroup n3lo_splitfuncs_fortran
+		 *  @brief Implements \f$P_{qg}^{(3)}\f$
+		 */
+		class P3qg final: public SplittingFunction
+		{
+		public:
+			using SplittingFunction::SplittingFunction;
+		
+			inline double calcRegular(double x) const override
+			{
+				int nf = static_cast<int>(_nf);
+				int imod = static_cast<int>(_imod);
+				return p3qga(&x, &nf, &imod)/16.0;
+			}
+		};
+
+		/**
+		 *  @ingroup n3lo_splitfuncs_fortran
+		 *  @brief Implements \f$P_{gq}^{(3)}\f$
+		 */
+		class P3gq final: public SplittingFunction
+		{
+		public:
+			using SplittingFunction::SplittingFunction;
+		
+			inline double calcRegular(double x) const override
+			{
+				int nf = static_cast<int>(_nf);
+				int imod = static_cast<int>(_imod);
+				return p3gqa_2512(&x, &nf, &imod)/16.0;
+			}
+		};
+
+		/**
+		 *  @ingroup n3lo_splitfuncs_fortran
+		 *  @brief Implements \f$P_{gg}^{(3)}\f$
+		 */
+		class P3gg final: public SplittingFunction
+		{
+		public:
+			using SplittingFunction::SplittingFunction;
+		
+			inline double calcRegular(double x) const override
+			{
+				int nf = static_cast<int>(_nf);
+				int imod = static_cast<int>(_imod);
+				return p3gga_2410(&x, &nf, &imod)/16.0;
+			}
+			inline double calcPlus(double x) const override
+			{
+				int nf = static_cast<int>(_nf);
+				int imod = static_cast<int>(_imod);
+				return p3ggb_2410(&x, &nf, &imod)/16.0;
+			}
+			inline double calcDelta(double x) const override
+			{
+				int nf = static_cast<int>(_nf);
+				int imod = static_cast<int>(_imod);
+				return p3ggc_2410(&x, &nf, &imod)/16.0;
+			}
+		};
+	}
+	
 } // namespace Candia2
 
 

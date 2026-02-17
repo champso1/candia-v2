@@ -117,12 +117,15 @@ int main(int argc, char *argv[]) {
 	
 	vector<double> xtab{1e-5, 1e-4, 1e-3, 1e-2, 0.1, 0.3, 0.5, 0.7, 0.9, 1.0};
 	Grid grid(xtab, num_grid_points, Grid::LOG_LIN);
-	grid.splitConvolution({1e-5, 0.8, 1.0}, {100, 50});
+	auto& grid_options = grid.getOptions();
+	grid_options.use_alt_mapping = false;
+	grid_options.use_gsl_routine = false;
+	grid.splitConvolution({1e-5, 0.1, 0.9, 1.0}, {100, 50, 30});
 	
 	LesHouchesDistribution dist{};
 	AlphaS alphas(order, dist.Q0(), Qf, dist.alpha0(), kr);
 	auto& alphas_options = alphas.getOptions();
-	alphas_options.use_broken_log_value = true; // why...
+	alphas_options.use_broken_log_value = true;
 	alphas.setVFNS(dist.masses(), dist.nfi());
 	// alphas.setFFNS(4);
 
@@ -130,6 +133,7 @@ int main(int argc, char *argv[]) {
 	auto& dglap_options = solver.getOptions();
 	dglap_options.use_truncated_nonsinglet_sol = true;
 	dglap_options.use_n3lo_heavyquark_asymmetry = true;
+	dglap_options.use_fortran_n3lo_splitfuncs = true;
 
 	auto t0 = chrono::high_resolution_clock::now();
 	auto F = solver.evolve();

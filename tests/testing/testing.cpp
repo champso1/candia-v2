@@ -1,12 +1,15 @@
-#include "Candia-v2/Expression.hpp"
 #include "Candia-v2/SplittingFn.hpp"
+#include "Candia-v2/SpecialFuncs.hpp"
+#include <limits>
 using namespace Candia2;
 
 #include <cmath>
 #include <iostream>
 #include <stdexcept>
 #include <memory>
+#include <iomanip>
 
+namespace orig{
 namespace P3GSOFT {
     double A4gluon = 0.0;  // Mimics the Fortran COMMON block
 }
@@ -1274,13 +1277,14 @@ double P3NSSA(double Y, int nf, int IMOD)
              + std::pow(nf, 2) * P3NSSA2;
 	return res/16.0;
 }
-
+}
 
 
 int main()
 {
-	auto compute_diff = [](double x, double y){ return std::abs((x-y)/((x+y)/2.));};
-	SplittingFunction::update(4, 0, 0.0);
+	auto compute_diff = [](double x, double y){ return std::abs((x-y)/((x+y)/2.0));};
+	SplittingFunction::setN3LOApproxType(3);
+	SplittingFunction::update(5, 0, 0.0);
 	std::unique_ptr<SplittingFunction> p3gg = std::make_unique<P3gg>();
 	std::unique_ptr<SplittingFunction> p3gq = std::make_unique<P3gq>();
 	std::unique_ptr<SplittingFunction> p3qg = std::make_unique<P3qg>();
@@ -1288,9 +1292,13 @@ int main()
 	std::unique_ptr<SplittingFunction> p3nsm = std::make_unique<P3nsm>();
 	std::unique_ptr<SplittingFunction> p3nsp = std::make_unique<P3nsp>();
 	std::unique_ptr<SplittingFunction> p3nsv = std::make_unique<P3nsv>();
-	
+
+	int four = 4;
+	int five = 5;
+	int three = 3;
+	std::cout << std::setprecision(std::numeric_limits<double>::max_digits10);
 	for (double x = 1e-5; x<1.0; x+= (1.0-1e-5)/200.0) {
-		double diff = compute_diff(p3nsv->calcDelta(x), P3NSMC(x, 4, 3));
+		double diff = compute_diff(p3nsm->calcDelta(x), p3nsmc(&x, &five, &three)/16.0);
 		std::cout << "x=" << x << "  ->  " << diff << '\n';
 	}
 }

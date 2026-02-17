@@ -46,6 +46,31 @@ namespace Candia2
 			double* Hr1, double* Hr2, double* Hr3, double* Hr4, double* Hr5,
 			double* Hi1, double* Hi2, double* Hi3, double* Hi4, double* Hi5,
 			int* n1, int* n2);
+
+		double p3gga(double* y, int* nf, int* imod);
+		double p3ggb(double* y, int* nf, int* imod);
+		double p3ggc(double* y, int* nf, int* imod);
+
+		double p3gga_2410(double* y, int* nf, int* imod);
+		double p3ggb_2410(double* y, int* nf, int* imod);
+		double p3ggc_2410(double* y, int* nf, int* imod);
+
+		double p3gqa(double* y, int* nf, int* imod);
+		double p3gqa_2404(double* y, int* nf, int* imod);
+		double p3gqa_2512(double* y, int* nf, int* imod);
+
+		double p3nsma(double* y, int* nf, int* imod);
+		double p3nsmb(double* y, int* nf, int* imod);
+		double p3nsmc(double* y, int* nf, int* imod);
+
+		double p3nspa(double* y, int* nf, int* imod);
+		double p3nspb(double* y, int* nf, int* imod);
+		double p3nspc(double* y, int* nf, int* imod);
+
+		double p3nssa(double* y, int* nf, int* imod);
+		double p3psa(double* y, int* nf, int* imod);
+
+		double p3qga(double* y, int* nf, int* imod);		
 	}
 	
 }; // namespace Candia2

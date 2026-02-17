@@ -1,4 +1,5 @@
 module xpns3s
+  use iso_c_binding
   character(len=*), parameter :: name_xpns3s = "xpns3s"
 contains
 !
@@ -33,7 +34,7 @@ contains
 !
 ! ..The regular piece of P_ns^(3)s. 
 !
-  FUNCTION P3NSSA (Y, NF, IMOD)
+  FUNCTION P3NSSA (Y, NF, IMOD) bind(c, name="p3nssa")
 !
        IMPLICIT REAL*8 (A-Z)
        INTEGER IMOD, nf

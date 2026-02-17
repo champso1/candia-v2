@@ -1,4 +1,5 @@
 module xpns3m
+  use iso_c_binding
   character(len=*), parameter :: name_xpns3m = "xpns3m"
 contains
 !
@@ -35,7 +36,7 @@ contains
 !
 ! ..The regular piece of P_ns^(3)-. 
 !
-       FUNCTION P3NSMA (Y, NF, IMOD)
+       FUNCTION P3NSMA (Y, NF, IMOD) bind(c, name="p3nsma")
 !
        IMPLICIT REAL*8 (A-Z)
        INTEGER IMOD, nf
@@ -103,7 +104,7 @@ contains
          P3NSMA = P3NSMAI &
                 + 0.5D0* ((P3NMA01+P3NMA02) + nf* (P3NMA11+P3NMA12))
        END IF
-!*
+       !*
        RETURN
      END FUNCTION P3NSMA
 !
@@ -111,11 +112,10 @@ contains
 !
 ! ..The singular piece.
 !
-       FUNCTION P3NSMB (Y, NF, IMOD)
+       FUNCTION P3NSMB (Y, NF, IMOD) bind(c, name="p3nsmb")
 !
        IMPLICIT REAL*8 (A-Z)
        INTEGER IMOD, nf
-       D1 = 1.D0/(1.D0-Y)
 !
        A4qI  = 2.120902D+4 &
              - 5.179372D+3* nf &
@@ -125,13 +125,13 @@ contains
        A4ap2 = -502.481D0 + 7.82077D0*nf
 !
        IF (IMOD .EQ. 1) THEN
-         P3NSMB = (A4qI + A4ap1)* D1
+         P3NSMB = (A4qI + A4ap1)
        ELSE IF (IMOD .EQ. 2) THEN
-         P3NSMB = (A4qI + A4ap2)* D1
+         P3NSMB = (A4qI + A4ap2)
        ELSE
-         P3NSMB = (A4qI + 0.5D0* (A4ap1+A4ap2) )* D1
+         P3NSMB = (A4qI + 0.5D0* (A4ap1+A4ap2) )
        ENDIF
-!
+       !
        RETURN
      END FUNCTION P3NSMB
 !
@@ -139,18 +139,10 @@ contains
 !
 ! ..The 'local' piece.
 !
-       FUNCTION P3NSMC (Y, NF, IMOD)
+       FUNCTION P3NSMC (Y, NF, IMOD) bind(c, name="p3nsmc")
 !
        IMPLICIT REAL*8 (A-Z)
-       INTEGER IMOD, nf
-       DL1 = LOG (1.D0-Y)
-!
-       A4qI  = 2.120902D+4 &
-             - 5.179372D+3* nf &
-             + 1.955772D+2* nf**2 &
-             + 3.272344D+0* nf**3 
-       A4ap1 = -511.228D0 + 7.08645D0*nf
-       A4ap2 = -502.481D0 + 7.82077D0*nf
+       INTEGER IMOD, nf      
 !
        B4qI =    2.579609D+4 + 0.08D0 &
              - ( 5.818637D+3 + 0.97D0)* nf&
@@ -160,14 +152,13 @@ contains
        B4ap2 = -2380.255D0 + 270.518D0*nf - 0.05D0*nf
 !
        IF (IMOD .EQ. 1) THEN
-         P3NSMC = (A4qI+A4ap1)* DL1 + B4qI+B4ap1
+         P3NSMC = B4qI+B4ap1
        ELSE IF (IMOD .EQ. 2) THEN
-         P3NSMC = (A4qI+A4ap1)* DL1 + B4qI+B4ap2
+         P3NSMC = B4qI+B4ap2
        ELSE
-         P3NSMC = (A4qI + 0.5D0*(A4ap1+A4ap2))* DL1 &
-                 + B4qI + 0.5D0*(B4ap1+B4ap2)
+         P3NSMC = B4qI + 0.5D0*(B4ap1+B4ap2)
        ENDIF  
-!
+       !
        RETURN
      END FUNCTION P3NSMC
 !

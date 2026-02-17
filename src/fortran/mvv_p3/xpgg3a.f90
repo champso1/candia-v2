@@ -1,4 +1,5 @@
 module xpgg3a
+  use iso_c_binding
   character(len=*), parameter :: name_xpgg3 = "xpgg3a"
 contains
 ! ..File: xPgg3a.f   
@@ -26,11 +27,10 @@ contains
 !
 ! ..The regular part
 !
-       FUNCTION P3GGA (Y, NF, IMOD)
+       FUNCTION P3GGA (Y, NF, IMOD) bind(c, name="p3gga")
 !
        IMPLICIT REAL*8 (A-Z)
        INTEGER IMOD, nf
-       COMMON / P3GSOFT / A4gluon
 !
        YM  = 1.D0/Y
        Y1  = 1.D0-Y
@@ -130,10 +130,9 @@ contains
 ! ..The singular (soft) piece of P_gg^(3).
 !   Note: A4gluon is provided by a common block set in P3GGA
 !
-       FUNCTION P3GGB (Y, NF, IMOD)
+       FUNCTION P3GGB (Y, NF, IMOD) bind(c, name="p3ggb")
        IMPLICIT REAL*8 (A - Z)
        INTEGER nf, IMOD
-       COMMON / P3GSOFT / A4gluon
        !
        nf2 = nf*nf
        nf3 = nf*nf2
@@ -142,7 +141,7 @@ contains
        ! called. Should check later if this is ever the case.
        A4gluon =  40880.330D0     - 11714.246D0*nf &
             + 440.04876D0*nf2 + 7.3627750D0*nf3
-       P3GGB  = A4gluon/(1.D0-Y)
+       P3GGB  = A4gluon
        !
        RETURN
      END FUNCTION P3GGB
@@ -153,11 +152,10 @@ contains
 ! ..The 'local' piece of P_gg^(3).
 !   Note: A4gluon is provided by a common block set in P3GGA
 !
-       FUNCTION P3GGC (Y, NF, IMOD)
+       FUNCTION P3GGC (Y, NF, IMOD) bind(c, name="p3ggc")
 !
        IMPLICIT REAL*8 (A - Z)
        INTEGER nf, IMOD
-       COMMON / P3GSOFT / A4gluon
 !
        nf2 = nf*nf
        nf3 = nf*nf2
@@ -169,7 +167,7 @@ contains
        B4gluon =  68587.64D0        - 18143.983D0*nf &
                 + 423.81135D0*nf2 + 9.0672154D-1*nf3
 !
-       P3GGC = LOG (1.D0-Y)* A4gluon + B4gluon
+       P3GGC = B4gluon
 !
        RETURN
      END FUNCTION P3GGC

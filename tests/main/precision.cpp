@@ -4,9 +4,9 @@
 #include <cmath>
 #include <vector>
 #include <filesystem>
-using dist_type = std::vector<std::vector<double>>;
 
 #include "util.hpp"
+using value_type = long double;
 
 static void usage()
 {
@@ -17,7 +17,11 @@ static void usage()
 	exit(EXIT_FAILURE);
 }
 
-static dist_type compute_diffs(dist_type const& candia, dist_type const& other);
+static
+dist_type<value_type>
+compute_diffs(
+	dist_type<value_type> const& candia,
+	dist_type<value_type> const& other);
 
 int main(int argc, char* argv[])
 {
@@ -31,8 +35,8 @@ int main(int argc, char* argv[])
 	file_exists(filepath2);
 	std::string title(argv[3]);
 
-    auto [xtab_candia1, candia_dists_raw1] = read_candia_file(filepath1, 13);
-	auto [xtab_candia2, candia_dists_raw2] = read_candia_file(filepath2, 13);
+    auto [xtab_candia1, candia_dists_raw1] = read_candia_file<value_type>(filepath1, 13);
+	auto [xtab_candia2, candia_dists_raw2] = read_candia_file<value_type>(filepath2, 13);
 
 	if (!std::ranges::equal(xtab_candia1, xtab_candia2))
 	{
@@ -49,19 +53,23 @@ int main(int argc, char* argv[])
 	outputLatexTable(xtab_candia1, diffs, latex_filename, cols[type].get(), 2, false);
 }
 
-static dist_type compute_diffs(dist_type const& candia_data1, dist_type const& candia_data2)
+static
+dist_type<value_type>
+compute_diffs(
+	dist_type<value_type> const& candia_data1,
+	dist_type<value_type> const& candia_data2)
 {
 	auto reldiff =
-		[](double candia1, double candia2) -> double {
-			double avg = (candia1+candia2)/2.0;
+		[](value_type candia1, value_type candia2) -> value_type {
+			value_type avg = (candia1+candia2)/2.0;
 			return std::abs((candia1-candia2)/avg)*100.0;
 		};
 
-	dist_type diffs{candia_data1.size(), std::vector<double>(candia_data1.at(0).size(), 0.0)};
+	dist_type<value_type> diffs{candia_data1.size(), std::vector<value_type>(candia_data1.at(0).size(), 0.0)};
 	for (uint j=0; j<candia_data1.size(); ++j) {
 		for (uint k=0; k<candia_data1.at(0).size(); ++k) {
-			double candia1 = candia_data1.at(j).at(k);
-			double candia2 = candia_data2.at(j).at(k);
+			value_type candia1 = candia_data1.at(j).at(k);
+			value_type candia2 = candia_data2.at(j).at(k);
 			diffs.at(j).at(k) = reldiff(candia1, candia2);
 		}
 	}

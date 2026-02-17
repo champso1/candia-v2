@@ -6,51 +6,63 @@
 #include <filesystem>
 #include <sstream>
 #include <iterator>
-using dist_type = std::vector<std::vector<double>>;
+using value_type = long double;
 
 #include "util.hpp"
 
 static void usage()
 {
-	log(LOG_INFO, "compare.cpp", "USAGE: ./compare <candia-file> <other-file> <format> <type>");
+	log(LOG_INFO, "compare.cpp", "USAGE: ./compare <candia-file> <other-file> <format> <type> <diff-type>");
 	log(LOG_INFO, "compare.cpp", "    <candia-file>: path to the candia datafile");
+	log(LOG_INFO, "compare.cpp", "");
 	log(LOG_INFO, "compare.cpp", "    <other-file>: path to the other datafile (should contain only tabulated values)");
-	log(LOG_INFO, "compare.cpp", "    <format>: 0=benchmark format (0.1 -> 1.0^{{-1}}");
-	log(LOG_INFO, "compare.cpp", "              1=normal format (0.1 -> 1e-1)");
-	log(LOG_INFO, "compare.cpp", "    <type>: 0=all flavors independently");
-	log(LOG_INFO, "compare.cpp", "    		  1=special combos from benchmark paper");
-	log(LOG_INFO, "compare.cpp", "    		  2=special combos from benchmark paper with q(-)");
-	log(LOG_INFO, "compare.cpp", "    		  3=specific non-singlet and singlet distributions");
+	log(LOG_INFO, "compare.cpp", "");
+	log(LOG_INFO, "compare.cpp", "    <format>:    0=benchmark format (0.1 -> 1.0^{{-1}}");
+	log(LOG_INFO, "compare.cpp", "                 1=normal format (0.1 -> 1e-1)");
+	log(LOG_INFO, "compare.cpp", "");
+	log(LOG_INFO, "compare.cpp", "    <type>:      0=all flavors independently");
+	log(LOG_INFO, "compare.cpp", "                 1=special combos from benchmark paper");
+	log(LOG_INFO, "compare.cpp", "                 2=special combos from benchmark paper with q(-)");
+	log(LOG_INFO, "compare.cpp", "                 3=specific non-singlet and singlet distributions");
+	log(LOG_INFO, "compare.cpp", "                 4=ffns");
+	log(LOG_INFO, "compare.cpp", "");
+	log(LOG_INFO, "compare.cpp", "    <diff-type>: 0=percent error (i.e treating the other file as the base)");
+	log(LOG_INFO, "compare.cpp", "                 1=percent difference (i.e. treating neither file as the base)");
 	exit(EXIT_FAILURE);
 }
 
-dist_type compute_diffs(dist_type const& candia, dist_type const& other);
+dist_type<value_type>
+compute_diffs(
+	dist_type<value_type> const& candia,
+	dist_type<value_type> const& other,
+	int diff_type);
 
 int main(int argc, char *argv[])
 {
-	if (argc != 5)
+	if (argc != 6)
 		usage();
 
 	fs::path candia_filepath{argv[1]}, other_filepath{argv[2]};
 	file_exists(candia_filepath);
 	file_exists(other_filepath);
 
-	int type{}, format{};
+	int type{}, format{}, diff_type{};
 	std::from_chars(argv[3], argv[3] + 1, format);
 	std::from_chars(argv[4], argv[4] + 1, type);
+	std::from_chars(argv[5], argv[5] + 1, diff_type);
 
 	int ncols = cols[type].get().size();
 	
-	auto [xtab_candia, candia_dists_raw] = read_candia_file(candia_filepath, 13);
-	auto [xtab_other, other_dists_raw] = read_other_file(other_filepath, 13);
+	auto [xtab_candia, candia_dists_raw] = read_candia_file<value_type>(candia_filepath, 13);
+	auto [xtab_other, other_dists_raw] = read_other_file<value_type>(other_filepath, 13);
 	if (!std::ranges::equal(xtab_candia, xtab_other)) {
 		log(LOG_ERROR_NOQUIT, "compare.cpp", "Two xtab arrays for the candia and other datafile are not equivalent:");
 
 		std::ostringstream ss{};
-		std::ranges::copy(xtab_candia, std::ostream_iterator<double>(ss, ", "));
+		std::ranges::copy(xtab_candia, std::ostream_iterator<value_type>(ss, ", "));
 		log(LOG_INFO, "compare.cpp", "Candia xtab: {}", ss.str());
 		ss = {};
-		std::ranges::copy(xtab_other, std::ostream_iterator<double>(ss, ", "));
+		std::ranges::copy(xtab_other, std::ostream_iterator<value_type>(ss, ", "));
 		log(LOG_INFO, "compare.cpp", "Other xtab: {}", ss.str());
 		exit(EXIT_FAILURE);
 	}
@@ -66,7 +78,7 @@ int main(int argc, char *argv[])
 			candia_dists.size(), other_dists.size());
 	}
 	
-	auto diffs = compute_diffs(candia_dists, other_dists);
+	auto diffs = compute_diffs(candia_dists, other_dists, diff_type);
     
 	std::string identifier = candia_filepath.filename().string().substr(0, candia_filepath.filename().string().rfind('.'));
 	std::string latex_filename = std::format("diffs-other-{}", identifier);
@@ -74,19 +86,23 @@ int main(int argc, char *argv[])
 }
 
 
-dist_type compute_diffs(dist_type const& candia_data, dist_type const& other_data)
+dist_type<value_type>
+compute_diffs(
+	dist_type<value_type> const& candia_data,
+	dist_type<value_type> const& other_data,
+	int diff_type)
 {
 	auto reldiff =
-		[](double candia, double other) -> double {
-			double avg = (candia+other)/2.0;
-			return std::abs((candia-other)/avg)*100.0;
+		[&](value_type candia, value_type other) -> value_type {
+			value_type base = diff_type == 0 ? other : (candia+other)/2.0;
+			return std::abs((candia-other)/base)*100.0;
 		};
 
-	dist_type diffs{candia_data.size(), std::vector<double>(candia_data.at(0).size(), 0.0)};
+	dist_type<value_type> diffs{candia_data.size(), std::vector<value_type>(candia_data.at(0).size(), 0.0)};
 	for (uint j=0; j<candia_data.size(); ++j) {
 		for (uint k=0; k<candia_data.at(0).size(); ++k) {
-			double candia = candia_data.at(j).at(k);
-			double other = other_data.at(j).at(k);
+			value_type candia = candia_data.at(j).at(k);
+			value_type other = other_data.at(j).at(k);
 			diffs.at(j).at(k) = reldiff(candia, other);
 		}
 	}

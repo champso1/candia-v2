@@ -1,4 +1,5 @@
 module xpns3p
+  use iso_c_binding
   character(len=*), parameter :: name_xpns3p = "xpns3p"
 contains
 !
@@ -35,7 +36,7 @@ contains
 !
 ! ..The regular piece of P_ns^(3)+. 
 !
-       FUNCTION P3NSPA (Y, NF, IMOD)
+       FUNCTION P3NSPA (Y, NF, IMOD) bind(c, name="p3nspa")
 !
        IMPLICIT REAL*8 (A-Z)
        INTEGER IMOD, nf
@@ -102,14 +103,13 @@ contains
 !
        P3NSPAI = P3NSA0 + nf*P3NSA1 + nf**2*P3NSPA2 + nf**3*P3NSA3
        IF (IMOD .EQ. 1) THEN
-         P3NSPA = P3NSPAI + P3NPA01 + nf* P3NPA11
+         P3NSPA = (P3NSPAI + P3NPA01 + nf* P3NPA11)
        ELSE IF (IMOD .EQ. 2) THEN
-         P3NSPA = P3NSPAI + P3NPA02 + nf* P3NPA12
+         P3NSPA = (P3NSPAI + P3NPA02 + nf* P3NPA12)
        ELSE
-         P3NSPA = P3NSPAI &
-                + 0.5D0* ((P3NPA01+P3NPA02) + nf* (P3NPA11+P3NPA12))
+         P3NSPA = (P3NSPAI &
+                + 0.5D0* ((P3NPA01+P3NPA02) + nf* (P3NPA11+P3NPA12)))
        END IF
-!
        RETURN
      END FUNCTION P3NSPA
 !
@@ -117,11 +117,10 @@ contains
 !
 ! ..The singular piece.
 !
-       FUNCTION P3NSPB (Y, NF, IMOD)
+       FUNCTION P3NSPB (Y, NF, IMOD) bind(c, name="p3nspb")
 !
        IMPLICIT REAL*8 (A-Z)
        INTEGER IMOD, nf
-       D1 = 1./(1.-Y)
 !
        A4qI  = 2.120902D+4 &
              - 5.179372D+3* nf &
@@ -131,11 +130,11 @@ contains
        A4ap2 = -505.209D0 + 7.53662D0*nf
 !
        IF (IMOD .EQ. 1) THEN
-         P3NSPB = (A4qI + A4ap1)* D1
+         P3NSPB = (A4qI + A4ap1)
        ELSE IF (IMOD .EQ. 2) THEN
-         P3NSPB = (A4qI + A4ap2)* D1
+         P3NSPB = (A4qI + A4ap2)
        ELSE
-         P3NSPB = (A4qI + 0.5D0* (A4ap1+A4ap2) )* D1
+         P3NSPB = (A4qI + 0.5D0* (A4ap1+A4ap2) )
        ENDIF
 !
        RETURN
@@ -145,18 +144,10 @@ contains
 !
 ! ..The 'local' piece.
 !
-       FUNCTION P3NSPC (Y, NF, IMOD)
+       FUNCTION P3NSPC (Y, NF, IMOD) bind(c, name="p3nspc")
 !
        IMPLICIT REAL*8 (A-Z)
        INTEGER IMOD, nf
-       DL1 = LOG (1.-Y)
-!
-       A4qI  = 2.120902D+4 &
-             - 5.179372D+3* nf &
-             + 1.955772D+2* nf**2 &
-             + 3.272344D+0* nf**3 
-       A4ap1 = -507.152D0 + 7.33927D0*nf
-       A4ap2 = -505.209D0 + 7.53662D0*nf
 !
        B4qI =    2.579609D+4 + 0.08D0 &
              - ( 5.818637D+3 + 0.97D0)* nf&
@@ -166,14 +157,13 @@ contains
        B4ap2 = -2394.47D0 + 269.028D0*nf
 !
        IF (IMOD .EQ. 1) THEN
-         P3NSPC = (A4qI+A4ap1)* DL1 + B4qI+B4ap1
+         P3NSPC = B4qI+B4ap1
        ELSE IF (IMOD .EQ. 2) THEN
-         P3NSPC = (A4qI+A4ap1)* DL1 + B4qI+B4ap2
+         P3NSPC = B4qI+B4ap2
        ELSE
-         P3NSPC = (A4qI + 0.5D0*(A4ap1+A4ap2))* DL1 &
-                 + B4qI + 0.5D0*(B4ap1+B4ap2)
+         P3NSPC = B4qI + 0.5D0*(B4ap1+B4ap2)
        ENDIF  
-!
+       !
        RETURN
      END FUNCTION P3NSPC
 !
