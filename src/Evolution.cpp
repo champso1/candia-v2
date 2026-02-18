@@ -1,5 +1,6 @@
 #include "Candia-v2/Candia.hpp"
 #include "Candia-v2/ArrayGrid.hpp"
+#include "Candia-v2/Common.hpp"
 #include "Candia-v2/Math.hpp"
 
 #include <cmath>
@@ -15,6 +16,7 @@ namespace Candia2
         for (uint j=0; j<=1; ++j)
             arr.get()[j*31] = _S[0][j][0];
 		
+        startLogIterations();
         switch (_order) {
             case 0: {
 				auto& p0qq = getExpression("P0qq");
@@ -23,7 +25,7 @@ namespace Candia2
 				auto& p0gg = getExpression("P0gg");
 				
                 for (uint n=1; n<_iterations; n++) {
-					log(LOG_INFO, "DGLAP", "LO Singlet Iteration {}", n);
+                    logIterations(n, _iterations-1, "SingletLO");
                     
                     for (uint k=0; k<_grid.size()-1; k++) {
                         _S[0][1][1][k] =
@@ -52,7 +54,7 @@ namespace Candia2
 				auto& p1gg = getExpression("P1gg");
 				
 			    for (uint n=1; n<_iterations; n++) {
-					log(LOG_INFO, "DGLAP", "NLO Singlet Iteration {}", n);
+                    logIterations(n, _iterations-1, "SingletNLO");
 
                     // LO piece (non truncated)
                     for (uint k=0; k<_grid.size()-1; k++) {
@@ -132,7 +134,7 @@ namespace Candia2
 				auto& p2gg = getExpression("P2gg");
 				
                 for (uint n=1; n<_iterations; n++) {
-					log(LOG_INFO, "DGLAP", "NNLO Singlet Iteration {}", n);
+                    logIterations(n, _iterations-1, "SingletNNLO");
 
                     // LO piece (non truncated)
                     for (uint k=0; k<_grid.size()-1; k++) {
@@ -237,7 +239,7 @@ namespace Candia2
 				auto& p3gg = getExpression("P3gg");
 				
                 for (uint n=1; n<_iterations; n++) {
-					log(LOG_INFO, "DGLAP", "N3LO Singlet Iteration {}", n);
+                    logIterations(n, _iterations-1, "SingletN3LO");
 
                     // LO piece
                     for (uint k=0; k<_grid.size()-1; k++) {
@@ -349,6 +351,7 @@ namespace Candia2
                 }
             } break;
         }
+        endLogIterations();
     }
 
 
@@ -357,6 +360,7 @@ namespace Candia2
         std::reference_wrapper<std::vector<ArrayGrid>> arr,
         double L1, double L2, double L3, double L4) 
     {
+        startLogIterations();
         switch (_order) {
             case 0: {
 				auto& p0ns = getExpression("P0ns");
@@ -367,7 +371,7 @@ namespace Candia2
                     arr.get()[j] = _A[j][0];
 
                 for (uint n=1; n<_iterations; n++) {
-					log(LOG_INFO, "DGLAP", "LO Non-Singlet Iteration {}", n);
+                    logIterations(n, _iterations-1, "NonSingletLO");
                     for (uint k=0; k<_grid.size()-1; k++) {
                         for (uint j=13; j<=30+_nf; j++) {
                             _A[j][1][k] = recrelLO(_A[j][0], k, p0ns);
@@ -396,8 +400,7 @@ namespace Candia2
                     arr.get()[j] = _B[j][0][0];
 
                 for (uint s=1; s<_iterations; s++) {
-					
-					log(LOG_INFO, "DGLAP", "NLO Non-Singlet Iteration {}", s);
+					logIterations(s, _iterations-1, "NonSingletNLO");
 
 					for (uint k=0; k<_grid.size()-1;k++) {
 						for (uint j=13; j<=12+_nf; j++) {
@@ -453,8 +456,7 @@ namespace Candia2
                 arr.get()[25] = _C[25][0][0][0];
 
                 for (uint s=1; s<_iterations; s++) {
-					
-					log(LOG_INFO, "DGLAP", "NNLO Non-Singlet Iteration {}", s);
+					logIterations(s, _iterations-1, "NonSingletNNLO");
 
 					for (uint k=0; k<_grid.size()-1; k++) {
 						for (uint j=26; j<=24+_nf; j++) {
@@ -644,7 +646,7 @@ namespace Candia2
 				double gamma = (r1*r1 + r1*b + c)*_alpha_s.beta3();
 
                 for (uint s=1; s<_iterations; s++) {
-                    log(LOG_INFO, "DGLAP", "N3LO Non-Singlet Iteration {}", s);
+                    logIterations(s, _iterations-1, "NonSingletN3LO");
 					
 					for (uint k=0; k<_grid.size()-1; k++) {
 						// minus distributions
@@ -1001,6 +1003,7 @@ namespace Candia2
 	{
 		log(LOG_INFO, "DGLAP", "Using the truncated ansatz for the non-singlet sector");
         switch (_order) {
+            startLogIterations();
             case 0: {
 				auto& p0ns = getExpression("P0ns");
 
@@ -1013,7 +1016,7 @@ namespace Candia2
                     arr[j] = _S_NS[0][j][0];
 				
                 for (uint n=1; n<_iterations; n++) {
-					log(LOG_INFO, "DGLAP", "LO Non-Singlet Iteration (trunc) {}", n);
+                    logIterations(n, _iterations-1, "NonSingletLO (trunc)");
 					
 					double fac = std::pow(L1, n)/factorial(n);
 
@@ -1075,7 +1078,7 @@ namespace Candia2
 				};
 				
 				for (uint n=1; n<_iterations; n++) {
-					log(LOG_INFO, "DGLAP", "NLO Non-Singlet Iteration (trunc) {}", n);
+                    logIterations(n, _iterations-1, "NonSingletNLO (trunc)");
 					double fac = std::pow(L1, n)/factorial(n);
 					for (uint j=13; j<=12+_nf; ++j)
 						go(j, fac, p1nsm);
@@ -1144,7 +1147,7 @@ namespace Candia2
 				};
 				
 				for (uint n=1; n<_iterations; n++) {
-					log(LOG_INFO, "DGLAP", "NNLO Non-Singlet Iteration (trunc) {}", n);
+                    logIterations(n, _iterations-1, "NonSingletNNLO (trunc)");
 					double fac = std::pow(L1, n)/factorial(n);
 					for (uint j=26; j<=24+_nf; j++)
 						go(j, fac, p1nsm, p2nsm);
@@ -1242,7 +1245,7 @@ namespace Candia2
 				};
 				
 				for (uint n=1; n<_iterations; n++) {
-					log(LOG_INFO, "DGLAP", "N3LO Non-Singlet Iteration (trunc) {}", n);
+                    logIterations(n, _iterations-1, "NonSingletN3LO (trunc)");
 					double fac = std::pow(L1, n)/factorial(n);
 					for (uint j=26; j<=24+_nf; j++)
 						go(j, fac, p1nsm, p2nsm, p3nsm);
