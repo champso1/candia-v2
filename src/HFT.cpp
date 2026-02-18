@@ -1,3 +1,4 @@
+#include "Candia-v2/ArrayGrid.hpp"
 #include "Candia-v2/Candia.hpp"
 #include "Candia-v2/OperatorMatrixElements.hpp"
 
@@ -30,24 +31,17 @@ namespace Candia2
 
 		auto arr_accessor = [&](uint j) -> ArrayGrid& {
 			if (_order == 2) {
-				return options.use_truncated_nonsinglet_sol ? _S_NS[0][j][0] : _C[j][0][0][0];
+				return getOptions().use_truncated_nonsinglet_sol ? _S_NS[0][j][0] : _C[j][0][0][0];
 			} else if (_order == 3) {
-				return options.use_truncated_nonsinglet_sol ? _S_NS[0][j][0] : _D[j][0][0][0][0];
+				return getOptions().use_truncated_nonsinglet_sol ? _S_NS[0][j][0] : _D[j][0][0][0][0];
 			}
 			throw "unreachable";
 		};
 		
-		if (_order == 2) {
-			for (uint i=1; i<=_nf; i++) {
-				for (uint j=i; j<=i+6; j+=6)
-					arr[j] = arr_accessor(j);
-			}
-		} else if (_order == 3) {
-            for (uint i=1; i<=_nf; i++) {
-				for (uint j=i; j<=i+6; j+=6)
-					arr[j] = arr_accessor(j);
-			}
-        }
+		for (uint i=1; i<=_nf; i++) {
+			for (uint j=i; j<=i+6; j+=6)
+				arr[j] = arr_accessor(j);
+		}
 
 		double as = _alpha_s.post(_nf+1);
 		log(LOG_INFO, "HFT", "Value of alpha_s post threshold: {}", as);
@@ -109,7 +103,8 @@ namespace Candia2
 			}
 		}
     }
-    void DGLAPSolver::HFT_NNLO1(ArrayGrid& c, uint k, ArrayGrid& q)
+
+	void DGLAPSolver::HFT_NNLO1(ArrayGrid& c, uint k, ArrayGrid& q)
     {
 		static auto& a2ns = getExpression("A2ns");
         double const as = _alpha_s.post(_nf+1);
@@ -117,6 +112,7 @@ namespace Candia2
         
 	    q[k] += std::pow(as/(4.0*PI), 2) * conv;
     }
+
     void DGLAPSolver::HFT_NNLO2(ArrayGrid& g, ArrayGrid& qp, uint k)
     {
 		static auto& a2gq = getExpression("A2gq");
@@ -127,6 +123,7 @@ namespace Candia2
 
 		_S[0][0][0][k] += std::pow(as/(4.0*PI), 2) * (conv1 + conv2);
     }
+
     void DGLAPSolver::HFT_NNLO3(ArrayGrid& g, ArrayGrid& qp, uint k, ArrayGrid& qh, ArrayGrid& qhb)
     {
 		static auto& a2hq = getExpression("A2hq");
@@ -227,4 +224,5 @@ namespace Candia2
 		qh[k] = res_qh;
         qhb[k] = res_qb;
 	}
+	
 } // namespace Candia2

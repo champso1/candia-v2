@@ -181,11 +181,11 @@ namespace Candia2
 		log(LOG_INFO, "DGLAP", "Setting initial conditions... ");
 
 		dist.fillSingletCoeffs(
-			[&](uint j, uint k) -> double& {
+			[&](uint j, uint k) -> ArrayGrid::value_type& {
 				return _S[0][j][0][k]; },
 			_grid.points());
 		dist.fillNonSingletCoeffs(
-			[&](uint j, uint k) -> double& {
+			[&](uint j, uint k) -> ArrayGrid::value_type& {
 			switch (_order) {
 				case 0: return _A[j][0][k]; break;
 				case 1: return _B[j][0][0][k]; break;

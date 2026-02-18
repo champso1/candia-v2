@@ -1,4 +1,5 @@
 #include "Candia-v2/Common.hpp"
+#include "Candia-v2/AlphaS.hpp"
 #include "Candia-v2/SplittingFn.hpp"
 using namespace Candia2;
 
@@ -12,6 +13,7 @@ using namespace Candia2;
 #include <iterator>
 #include <cstdio>
 #include <functional>
+#include <cmath>
 
 struct splitfunc_type_t final
 {
@@ -31,6 +33,11 @@ static splitfunc_type_t make_splitfunc_type(std::string_view title)
 
 int main()
 {
+	AlphaS alphas(3, std::numbers::sqrt2, 100, 0.35, 1.0); // args largely useless, just need to update()
+	alphas.update(4);
+	SplittingFunction::update(4, alphas.beta0(), 0);
+	SplittingFunction::setN3LOApproxType(3);
+	
 	std::vector<splitfunc_type_t> splitfuncs{};
     splitfuncs.emplace_back(make_splitfunc_type<P0ns>("p0ns"));
 	splitfuncs.emplace_back(make_splitfunc_type<P0qq>("p0qq"));

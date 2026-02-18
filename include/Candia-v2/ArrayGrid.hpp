@@ -6,6 +6,7 @@
 #ifndef __ARRAYGRID_HPP
 #define __ARRAYGRID_HPP
 
+#include <concepts>
 #include <initializer_list>
 
 #include "Candia-v2/Common.hpp"
@@ -17,12 +18,16 @@ namespace Candia2
 	 */
 	class ArrayGrid final
 	{
-	private:
-		using base_type = std::vector<double>; //!< alias for the underlying array type
+	public:
+		using value_type = double;
 		using size_type = std::size_t; //!< alias for a size type
+		using base_type = std::vector<value_type>; //!< alias for the underlying array type
 
+	private:
 		base_type _base{}; //!< underlying array
 	public:
+		/** @brief default constructor */
+		ArrayGrid() {}
 		/**
 		 *  @brief default Initializes the array with zeros
 		 *  @param size Size of the array
@@ -44,21 +49,23 @@ namespace Candia2
 		 *  @brief Initializes using list-initialization
 		 *  @param l an initializer list of values to initialize the array with
 		 */
-		ArrayGrid(std::initializer_list<double> l) : _base(l) {}
+		ArrayGrid(std::initializer_list<value_type> l) : _base(l) {}
 
 		/** Copy assignment operator performs like the copy constructor */
-		inline void operator=(ArrayGrid const& other) { _base = other._base; }
+		inline void operator=(ArrayGrid const& other) { _base = other.base(); }
 		void operator=(ArrayGrid&& other) = delete; //!< no move assignment operator
 
-		~ArrayGrid() = default; //!< default destructor
+
+		/** @brief returns the size of the array */
+		inline size_type size() const noexcept { return _base.size(); }
 
 		/** getter for the underlying array */
 		inline base_type  const& base() const noexcept { return _base; }
 		/** Zeros the entire array and performs some cleanup. */
-		void zero() noexcept;
+		inline void zero() noexcept { for (double& x : _base) x = 0; }
 		
-		double operator[](uint idx) const;  //!< accessor for points on the grid (const)
-		double& operator[](uint idx);       //!< accessor for points on the grid (reference)
+		inline value_type operator[](size_type idx) const { return _base[idx]; }
+		inline value_type& operator[](size_type idx) { return _base[idx]; }
 
 		/** const begin iterator */
 		inline base_type::const_iterator begin() const { return _base.cbegin(); }
@@ -79,14 +86,16 @@ namespace Candia2
 		typedef typename MultiDimArrayGrid<N-1>::type Nested;
 		typedef std::vector<Nested> type;
 	};
-	template <>
+	template<>
 	struct MultiDimArrayGrid<1>
 	{
 		typedef std::vector<ArrayGrid> type;
 	};
 
-	template <uint N>
+    template <uint N>
 	using MultiDimArrayGrid_t = MultiDimArrayGrid<N>::type;
+
+	
 }
 
 #endif // __ARRAYGRID_HPP

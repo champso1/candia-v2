@@ -1030,7 +1030,7 @@ double P3NSPA(double Y, int nf, int IMOD)
     double Y1  = 1.0 - Y;
     double DM  = 1.0 / Y1;
     double DL  = std::log(Y);
-    double DL1 = std::log(1.0 - Y);
+    double DL1 = std::log1p(-Y);
 
     // Leading large-nc
     double P3NSA0 =
@@ -1160,7 +1160,7 @@ double P3NSPA(double Y, int nf, int IMOD)
         res = P3NSPAI
             + 0.5*((P3NPA01 + P3NPA02)
             + nf*(P3NPA11 + P3NPA12));
-	return res/16.0;
+	return res;
 }
 
 double P3NSPB(double Y, int nf, int IMOD)
@@ -1181,7 +1181,7 @@ double P3NSPB(double Y, int nf, int IMOD)
         res = (A4qI + A4ap2);
     else
         res = (A4qI + 0.5*(A4ap1 + A4ap2));
-	return res/16.0;
+	return res;
 }
 
 double P3NSPC(double Y, int nf, int IMOD)
@@ -1202,7 +1202,7 @@ double P3NSPC(double Y, int nf, int IMOD)
         res = B4qI + B4ap2;
     else
         res = B4qI + 0.5*(B4ap1 + B4ap2);
-	return res/16.0;
+	return res;
 }
 
 // -------------------------------------------------------------
@@ -1285,6 +1285,7 @@ int main()
 	auto compute_diff = [](double x, double y){ return std::abs((x-y)/((x+y)/2.0));};
 	SplittingFunction::setN3LOApproxType(3);
 	SplittingFunction::update(5, 0, 0.0);
+	
 	std::unique_ptr<SplittingFunction> p3gg = std::make_unique<P3gg>();
 	std::unique_ptr<SplittingFunction> p3gq = std::make_unique<P3gq>();
 	std::unique_ptr<SplittingFunction> p3qg = std::make_unique<P3qg>();
@@ -1298,7 +1299,7 @@ int main()
 	int three = 3;
 	std::cout << std::setprecision(std::numeric_limits<double>::max_digits10);
 	for (double x = 1e-5; x<1.0; x+= (1.0-1e-5)/200.0) {
-		double diff = compute_diff(p3nsm->calcDelta(x), p3nsmc(&x, &five, &three)/16.0);
+		double diff = compute_diff(p3nsp->calcRegular(x), p3nspa(&x, &five, &three)/16.0);
 		std::cout << "x=" << x << "  ->  " << diff << '\n';
 	}
 }

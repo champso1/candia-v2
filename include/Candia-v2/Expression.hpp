@@ -13,16 +13,15 @@
 
 namespace Candia2
 {
-	class Grid;
-
 	/**
 	 *  @brief Main base class that defines default behavior every "three-part" expression should have.
 	 */
 	class Expression
 	{
 	public:
-		using cache_type = std::map<double, double>; //!< alias for cache
-		using array_type = std::vector<double>; //!< alias for passed-in grid array
+		using value_type = double;
+		using cache_type = std::map<value_type, value_type>; //!< alias for cache
+		using array_type = std::vector<value_type>; //!< alias for passed-in grid array
 		
 	protected:
 		cache_type _reg_cache{}; //!< stores the values of the regular part of the expression
@@ -80,26 +79,20 @@ namespace Candia2
 		}
 
 		/** @brief actually calculates the regular distribution */
-		inline virtual double calcRegular(double x) const { return 0.0; }
+		inline virtual value_type calcRegular(value_type x) const { return 0.0; }
 		/** @brief actually calculates the plus distribution */
-		inline virtual double calcPlus(double x) const { return 0.0; }
+		inline virtual value_type calcPlus(value_type x) const { return 0.0; }
 		/** @brief actually calculates the delta distribution */
-		inline virtual double calcDelta(double x) const { return 0.0; }
+		inline virtual value_type calcDelta(value_type x) const { return 0.0; }
 		
 
 		/** @brief Retrieves the regular part of the expression evaluated at x from the cache */
-		inline virtual double regular(double x) { return _reg_cache[x]; }
+		inline virtual value_type regular(value_type x) { return _reg_cache[x]; }
 		/** @brief Retrieves the plus part of the expression evaluated at x from the cache */
-		inline virtual double plus(double x) { return _plus_cache[x]; }
+		inline virtual value_type plus(value_type x) { return _plus_cache[x]; }
 		/** @brief Retrieves the delta part of the expression evaluated at x from the cache */
-		inline virtual double delta(double x) { return _delta_cache[x]; }
-
-		/**
-		 *  @brief evaluates the @a function_part of the splitting function at @a x
-		 */
-		virtual double operator()(double x, uint function_part);
+		inline virtual value_type delta(value_type x) { return _delta_cache[x]; }
 	};
-	
 };
 
 #endif

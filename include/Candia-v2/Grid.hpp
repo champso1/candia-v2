@@ -9,15 +9,15 @@
 #include "Candia-v2/Common.hpp"
 #include "Candia-v2/Expression.hpp"
 #include "Candia-v2/Options.hpp"
+#include "Candia-v2/ArrayGrid.hpp"
 
-#include <concepts>
-#include <type_traits>
 #include <vector>
 #include <memory>
 
 #include <gsl/gsl_integration.h>
+#include <gsl/gsl_interp.h>
+#include <gsl/gsl_spline.h>
 #include <gsl/gsl_errno.h>
-
 
 namespace Candia2
 {
@@ -31,10 +31,21 @@ namespace Candia2
 		static constexpr uint DEFAULT_WORKSPACE_SIZE = 1000;
 		inline auto make_default_workspace = [](){return workspace_type(gsl_integration_workspace_alloc(DEFAULT_WORKSPACE_SIZE), workspace_deleter); };
 
-		static inline int error_print_count = 100;
+		inline auto interp_deleter = [](gsl_interp* interp){ gsl_interp_free(interp); };
+		using interp_deleter_type = decltype(interp_deleter);
+		using interp_type = std::unique_ptr<gsl_interp, interp_deleter_type>;
+		inline auto interp_accel_deleter = [](gsl_interp_accel* accel){ gsl_interp_accel_alloc(); };
+		using interp_accel_deleter_type = decltype(interp_accel_deleter);
+		using interp_accel_type = std::unique_ptr<gsl_interp_accel, interp_accel_deleter_type>;
+		inline auto const* interp_cspline_type = gsl_interp_cspline;
+
+		inline auto make_interp = [](uint size){ return interp_type(gsl_interp_alloc(interp_cspline_type, size), interp_deleter); };
+		inline auto make_interp_accel = [](){ return interp_accel_type(gsl_interp_accel_alloc(), interp_accel_deleter); };
+
+		static inline int error_print_count = 50;
 
 		extern "C" {
-			static inline void error_handler(
+			static inline void void_error_handler(
 				const char * reason, const char * file,
 				int line, int gsl_errno)
 			{
@@ -46,31 +57,29 @@ namespace Candia2
 			}
 		}
 
-		static bool error_handler_set = (([](){ gsl_set_error_handler(error_handler); })(), true);
+		static bool error_handler_set = (([](){ /* gsl_set_error_handler(void_error_handler); */ return; })(), true);
 	}
 	
 	struct GridOptions final
 	{
-		bool use_gsl_routine{false}; //!< flag for whether to use a gsl routine to perform the integration
+		bool use_gsl_conv_routine{false};  //!< flag for whether to use a gsl routine to perform the convolution
+		bool use_gsl_interp_routine{true}; //!< flag for whether to use a gsl routine to perform the interpolation
 		bool use_alt_mapping{false}; //!< flag for whether to use a different mapping for convolutions to try and increase accuracy
+		
 	};
 
-	template <typename TYJAccessor>
-	concept YJAccessor = requires() {
-		std::invocable<TYJAccessor, double,double>;
-		std::same_as<std::invoke_result_t<TYJAccessor, double,double>, std::pair<double,double>>;
-	};
-
-    class ArrayGrid;
 	/**
 	 *  @brief Class that contains the interpolation/convolution grid and the methods to perform the interpolation and convolution.
 	 */
 	class Grid final : public OptionsBase<GridOptions>
 	{
 	public:
-		using grid_type = std::vector<double>; //!< alias for the underlying grid type
-		using gauleg_type = std::vector<double>; //!< alias for the type of the array of gauss-legendre weights/abscissae
+		using value_type = double;
+		using grid_type = std::vector<value_type>; //!< alias for the underlying grid type
+		using gauleg_type = std::vector<value_type>; //!< alias for the type of the array of gauss-legendre weights/abscissae
 		using ntab_type = std::vector<int>; //!< alias for the type of the calulated ntab array
+		using arraygrid_type = ArrayGrid;
+		using expression_type = Expression;
 
 		enum GridFillType : uint
 		{
@@ -84,12 +93,12 @@ namespace Candia2
 		{
 			Grid& g;
 
-			double x;
+			value_type x;
 			uint k;
-			double logx;
-			double eplus1;
+			value_type logx;
+			value_type eplus1;
 
-			ArrayGrid& A;
+			arraygrid_type& A;
 			Expression& E;
 		};
 
@@ -97,14 +106,15 @@ namespace Candia2
 		grid_type _points{}; //!< grid points
 		ntab_type _ntab;     //!< stored indices for the tabulated grid points
 		grid_type _xtab;     //!< stored values of the tabulated grid points
-		using gsl_conv_errors = std::vector<std::tuple<double,double,double>>;
+		using gsl_conv_errors = std::vector<std::tuple<value_type,value_type,value_type>>;
 
 		bool _split_interval{false}; //!< flag that declares if the user has split the convolution into intervals
 		std::vector<gauleg_type> _Xi{}; //!< list of split-up gauleg abscissae per interval
 		std::vector<gauleg_type> _Wi{}; //!< list of split-up gauleg weights per interval
 		std::vector<uint> _interval_sizes{}; //!< number of points per interval
-		gsl::workspace_type _workspace{nullptr}; //!< gsl workspace for calling gsl integration routines
 		std::vector<gsl::workspace_type> _workspaces; //!< gsl workspaces for calling gsl integration routines
+		std::vector<gsl::interp_type> _interps; //!< gsl interp objects for interpolation
+		std::vector<gsl::interp_accel_type> _interp_accels; //!< interp interpolation acceleration objects 
 
 		static constexpr uint DEFAULT_GAULEG_POINTS = 100; //!< default number of gauss-legendre points to place in the interval
 		gsl_conv_errors _gsl_conv_errors{}; //!< stored values of information whenever GSL fails to perform the integration to the requested accuracy
@@ -130,9 +140,9 @@ namespace Candia2
 		/** Getter for point on the grid */
 		inline grid_type const& points() const { return _points; }
 		/** Getter for point on the grid */
-		inline double at(uint idx) const { return _points.at(idx); };
+		inline value_type at(uint idx) const { return _points.at(idx); };
 		/** Getter for point on the grid */
-		inline double operator[](uint idx) const { return _points[idx]; }
+		inline value_type operator[](uint idx) const { return _points[idx]; }
 
 		inline bool splitIntervals() const { return _split_interval; }
 		
@@ -168,13 +178,9 @@ namespace Candia2
 		 *  one single interval will be used.
 		 */
 		void splitConvolution(
-			std::vector<double> const& intervals={},
-			std::vector<double> const& sizes={});
+			std::vector<value_type> const& intervals={},
+			std::vector<value_type> const& sizes={});
 
-		
-		
-		/** @brief Accepts x and z, and returns y and the Jacobian */
-		using YandJAccessor = std::function<std::pair<double,double>(double,double)>;
 		/**
 		 *  @brief Handles a convolution with simple mappings for y -> z
 		 *  @param k grid index
@@ -187,29 +193,29 @@ namespace Candia2
 		 *  @param W the list of gauleg weights
 		 */
 		double mappingFunctionBase(
-			uint k, double x, YJAccessor auto&& yandjaccessor,
-			Expression& E, ArrayGrid& A,
-			double eplus1,
+			uint k, value_type x, auto&& yandjaccessor,
+			expression_type& E, arraygrid_type& A,
+			value_type eplus1,
 			gauleg_type const& X, gauleg_type const& W);
 
 		/**
 		 *  @brief Uses a binary search to find the grid point closest to the given value of x
 		 *  @param x value to search for
 		 */
-		int interpFindIdx(double x);
+		int interpFindIdx(value_type x);
 		/**
 		 *  @brief Interpolates array @a y at @a x on the grid.
 		 *  @param y the array grid to interpolate
 		 *  @param x the value of x to interpolate at
 		 */
-		double interpolate(ArrayGrid& y, double x);
+		value_type interpolate(arraygrid_type& y, value_type x);
 		/**
 		 *  @brief Performs a convolution between an array @a A and an expression @a E
 		 *  @param A the array
 		 *  @param E the expression
 		 *  @param k the grid index to perform the convolution at
 		 */
-		double convolution(ArrayGrid& A, Expression &E, uint k);
+		value_type convolution(arraygrid_type& A, expression_type& E, uint k);
 
 		/** @brief retrieves info on all GSL errors, if any */
 		inline auto const& getGSLConvolutionErrors() const { return _gsl_conv_errors; }
@@ -224,7 +230,7 @@ namespace Candia2
 		void initGridLogLinQuad(grid_type const& xtab, uint nx);
 		
 		/** Initializes the set of gauss-legendre weights and abscissae */
-		void initGauLeg(double x1, double x2, std::vector<double> & Xi, std::vector<double> & Wi);
+		void initGauLeg(value_type x1, value_type x2, gauleg_type& Xi, gauleg_type& Wi);
 	};
 }
 

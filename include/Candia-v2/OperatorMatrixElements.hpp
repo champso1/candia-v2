@@ -9,6 +9,7 @@
 #include "Candia-v2/Common.hpp"
 #include "Candia-v2/Expression.hpp"
 
+#include <concepts>
 #include <ome/ome.h>
 
 namespace Candia2
@@ -105,7 +106,6 @@ namespace Candia2
 	public:
 		/** Alias for underlying libome type */
 		using ome_type = ome::rpd_distribution<ome::ome_as_view<double>, ome::ome_as_plus_view<double>, ome::ome_as_const_view<double>>;
-
 	private:
 		ome_type _ome; //!< underlying libome interface
 
@@ -116,14 +116,9 @@ namespace Candia2
 
 		inline double calcRegular(double x) const override
 		{
-			static int print_count = 10;
 			if (!_ome.has_regular())
 				return 0;
 
-			if (print_count > 0) {
-				log(LOG_DEBUG, "OpMatElemN3LO::calcRegular()", "Using LM = {}, NF = {}, x = {}", _lm, _nf, x);
-				print_count--;
-			}
 			auto reg = _ome.get_regular().value();
 			return reg[3](_lm, _nf, x);
 		}

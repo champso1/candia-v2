@@ -21,10 +21,12 @@ namespace Candia2
 	 */
 	class LHAPDFDistribution final : public Distribution
 	{
+	public:
+		using typename Distribution::value_type;
+		using typename Distribution::accessor_type;
 	private:
 		lhapdf_pdf_ptr_type _pdf; //!< underlying PDF type
 		std::vector<int> _pids; //!< list of the pdf's PIDs
-
 	public:
 		/**
 		 *  @brief constructs a standard LHAPDFDistribution
@@ -32,27 +34,27 @@ namespace Candia2
 		 *  @param Q0 the initial evolution energy
 		 *  @param Qf the final evolution energy
 		 */
-		LHAPDFDistribution(lhapdf_pdf_ptr_type lhapdf_pdf, double Q0, double Qf);
+		LHAPDFDistribution(lhapdf_pdf_ptr_type lhapdf_pdf, value_type Q0, value_type Qf);
 
 		/** Getter for underlying pdf */
 		inline LHAPDF::PDF const& pdf() const { return *_pdf; }
 
-		double xg (double x) const override { return _pdf->xfxQ(21, x, _Q0); }
-		double xu (double x) const override { return _pdf->xfxQ(1,  x, _Q0); }
-		double xd (double x) const override { return _pdf->xfxQ(2,  x, _Q0); }
-		double xs (double x) const override { return _pdf->xfxQ(3,  x, _Q0); }
-		double xc (double x) const override { return _pdf->xfxQ(4,  x, _Q0); }
-		double xdb(double x) const override { return _pdf->xfxQ(-1, x, _Q0); }
-		double xub(double x) const override { return _pdf->xfxQ(-2, x, _Q0); }
-		double xsb(double x) const override { return _pdf->xfxQ(-3, x, _Q0); }
-		double xcb(double x) const override { return _pdf->xfxQ(-4, x, _Q0); }
+		value_type xg (value_type x) const override { return _pdf->xfxQ(21, x, _Q0); }
+		value_type xu (value_type x) const override { return _pdf->xfxQ(1,  x, _Q0); }
+		value_type xd (value_type x) const override { return _pdf->xfxQ(2,  x, _Q0); }
+		value_type xs (value_type x) const override { return _pdf->xfxQ(3,  x, _Q0); }
+		value_type xc (value_type x) const override { return _pdf->xfxQ(4,  x, _Q0); }
+		value_type xdb(value_type x) const override { return _pdf->xfxQ(-1, x, _Q0); }
+		value_type xub(value_type x) const override { return _pdf->xfxQ(-2, x, _Q0); }
+		value_type xsb(value_type x) const override { return _pdf->xfxQ(-3, x, _Q0); }
+		value_type xcb(value_type x) const override { return _pdf->xfxQ(-4, x, _Q0); }
 
 		void fillSingletCoeffs(
-			coefficient_accessor_type const& accessor,
-			std::vector<double> const& grid_points) const override;
+			accessor_type const& accessor,
+			std::vector<value_type> const& grid_points) const override;
 		void fillNonSingletCoeffs(
-			coefficient_accessor_type const& accessor,
-			std::vector<double> const& grid_points) const override;
+			accessor_type const& accessor,
+			std::vector<value_type> const& grid_points) const override;
 	};
 }
 

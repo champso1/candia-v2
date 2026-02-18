@@ -2,7 +2,7 @@
 
 namespace Candia2
 {
-	LHAPDFDistribution::LHAPDFDistribution(lhapdf_pdf_ptr_type lhapdf_pdf, double Q0, double Qf)
+	LHAPDFDistribution::LHAPDFDistribution(lhapdf_pdf_ptr_type lhapdf_pdf, value_type Q0, value_type Qf)
 		: _pdf{std::move(lhapdf_pdf)}
 	{
 		_Q0 = Q0;
@@ -45,8 +45,8 @@ namespace Candia2
 	}
 
 	void LHAPDFDistribution::fillSingletCoeffs(
-		coefficient_accessor_type const& accessor,
-		std::vector<double> const& grid_points) const
+		accessor_type const& accessor,
+		std::vector<value_type> const& grid_points) const
 	{
 		for (uint k=0; k<grid_points.size()-1; k++) {
 			double x = grid_points[k];
@@ -56,8 +56,8 @@ namespace Candia2
 	}
 	
 	void LHAPDFDistribution::fillNonSingletCoeffs(
-		coefficient_accessor_type const& accessor,
-		std::vector<double> const& grid_points) const
+		accessor_type const& accessor,
+		std::vector<value_type> const& grid_points) const
 	{
 		for (uint k=0; k<grid_points.size()-1; k++) {
 			double x = grid_points[k];

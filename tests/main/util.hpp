@@ -77,7 +77,7 @@ enum CompareType
 	SPECIAL_COMBOES_NS_AND_S = 3,
 	SPECIAL_COMBOES_FFNS = 4,
 };
-static std::vector<std::string> cols_all_flavors{"g", "xu", "xd", "xs", "xc", "xb", "xub", "xdb", "xsb", "xcb", "xbb"};
+static std::vector<std::string> cols_all_flavors{"g", "xu", "xs", "xc", "xb", "xub", "xsb", "xcb", "xbb"};
 static std::vector<std::string> cols_special_combos{"xuv", "xdv", "xL-", "xL+", "xs+", "xc+", "xb+", "xg"};
 static std::vector<std::string> cols_special_combos_qm{"xuv", "xdv", "xL-", "xL+", "xs+", "xc+", "xb+", "xg", "xq(-)"};
 static std::vector<std::string> cols_special_combos_ns_and_s{"xq_{NS,1d}^{(-)}", "xq_{NS,1c}^{(-)}", "xq_{NS,1b}^{(-)}", "xq_{NS,1d}^{(+)}", "xq_{NS,1c}^{(+)}", "xq_{NS,1b}^{(+)}", "xq^{(-)}", "xq^{(+)}", "xg"};
@@ -87,7 +87,8 @@ static std::vector<std::reference_wrapper<const std::vector<std::string>>> cols{
 	std::cref(cols_special_combos),
 	std::cref(cols_special_combos_qm),
 	std::cref(cols_special_combos_ns_and_s),
-	std::cref(cols_special_combos_ffns)
+	std::cref(cols_special_combos_ffns),
+	std::cref(cols_special_combos_ns_and_s),
 };
 
 template <typename T>
@@ -140,13 +141,19 @@ static dist_type<T> fix_dists(dist_type<T> const& dists, int type)
 	switch (type) {
 		case 0: {
 			dist_type<T> dists_fixed(ncols, std::vector<T>(dists.at(0).size(), 0.0));
+
+			std::vector<int> js{0, 1, 3, 4, 5, 7, 9, 10, 11};
+			auto tie =
+				std::views::iota(0)
+				| std::views::take(js.size())
+				| std::views::transform([&](int i){ return std::make_pair(i, js[i]); });
+		    
 			for (int k=0; k<dists_fixed.at(0).size(); ++k) {
-				for (int j=0; j<dists_fixed.size(); ++j) {
-					int idx = j;
-					if (j > 5)
-						idx += 1;
-					dists_fixed.at(j).at(k) = dists[idx][k];
+				for (auto [i, j] : tie) {
+					dists_fixed.at(i).at(k) = dists[j][k];
 				}
+
+				log(LOG_INFO, "util.hpp (fix_dists)", "b-bb = {}-{} = {}", dists[5][k], dists[6+5][k], dists[5][k]-dists[6+5][k]);
 			}
 			return dists_fixed;
 		} break;
@@ -220,8 +227,24 @@ static dist_type<T> fix_dists(dist_type<T> const& dists, int type)
 			}
 			return dists_fixed;
 		} break;
+		case 5: {
+			dist_type<T> dists_fixed(ncols, std::vector<T>(dists.at(0).size(), 0.0));
+			for (int k=0; k<dists_fixed.at(0).size(); ++k) {
+			    dists_fixed.at(0).at(k) = dists[26][k];
+				dists_fixed.at(1).at(k) = dists[28][k];
+				dists_fixed.at(2).at(k) = dists[29][k];
+				dists_fixed.at(3).at(k) = dists[32][k];
+				dists_fixed.at(4).at(k) = dists[34][k];
+				dists_fixed.at(5).at(k) = dists[35][k];
+
+				dists_fixed.at(6).at(k) = dists[25][k];
+				dists_fixed.at(7).at(k) = dists[31][k];
+				dists_fixed.at(8).at(k) = dists[0][k];
+			}
+			return dists_fixed;
+		}; break;
 	}
-	return {};
+	return dists;
 }
 
 template <typename T>

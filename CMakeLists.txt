@@ -12,12 +12,6 @@ if (NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
   "Debug" "Release" "MinSizeRel" "RelWithDebInfo")
 endif()
 
-option(ENABLE_THREADING "Enable multi-threading support" OFF)
-
-if (ENABLE_THREADING)
-  message("candia-v2: Compiling with threading support.")
-endif()
-
 option(BUILD_MANUSCRIPTS "Use pdflatex/bibtex to compile the available manuscripts" OFF)
 if (BUILD_MANUSCRIPTS)
   message("candia-v2: building manuscripts")
@@ -91,10 +85,11 @@ target_sources(candia PUBLIC
   FILES ${headers})
 
 option(WITH_LHAPDF "Compile in LHAPDF interface" OFF)
+option(LHAPDF_ROOT_DIR "Path to the installation root/prefix of LHAPDF." "/usr")
 if (WITH_LHAPDF)
-  option(LHAPDF_ROOT_DIR "Path to the installation root/prefix of LHAPDF." "/usr")
   list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/share/cmake")
   find_package(LHAPDF REQUIRED)
+  message("candia-v2: Compiling with LHAPDF support.")
   target_include_directories(candia PUBLIC ${LHAPDF_INCLUDE_DIR})
   target_link_libraries(candia PUBLIC ${LHAPDF_LIBRARIES})
 
@@ -106,7 +101,9 @@ if (WITH_LHAPDF)
   target_sources(candia PRIVATE src/LHAPDFDistribution.cpp)
 endif()
 
+option(ENABLE_THREADING "Use Multi-Threading capabilities to perform the evolution." OFF)
 if(ENABLE_THREADING)
+  message("candia-v2: Compiling with threading support.")
   find_package(Threads REQUIRED)
   target_sources(candia PRIVATE src/EvolutionThread.cpp)
   target_link_libraries(candia PRIVATE Threads::Threads)
@@ -114,6 +111,7 @@ if(ENABLE_THREADING)
 else()
   target_compile_definitions(candia PRIVATE ENABLE_THREADING=0)
 endif()
+
 
 target_link_libraries(candia PRIVATE hplog AQqPSs3 n3lo_splitfuncs_fortran ome GSL::gsl)
 target_include_directories(candia PUBLIC
@@ -164,3 +162,4 @@ install(
   FILES ${CMAKE_CURRENT_BINARY_DIR}/candiaConfig.cmake
   DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/candia)
 
+include(CPack)

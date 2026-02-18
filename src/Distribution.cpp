@@ -3,8 +3,8 @@
 namespace Candia2
 {
 	void LesHouchesDistribution::fillSingletCoeffs(
-		coefficient_accessor_type const& accessor,
-		std::vector<double> const& grid_points) const
+		accessor_type const& accessor,
+		std::vector<value_type> const& grid_points) const
 	{
 		for (uint k=0; k<grid_points.size()-1; k++) {
 			double x = grid_points[k];
@@ -14,8 +14,8 @@ namespace Candia2
 	}
 	
 	void LesHouchesDistribution::fillNonSingletCoeffs(
-		coefficient_accessor_type const& accessor,
-		std::vector<double> const& grid_points) const
+		accessor_type const& accessor,
+		std::vector<value_type> const& grid_points) const
 	{
 		for (uint k=0; k<grid_points.size()-1; k++) {
 			double x = grid_points[k];

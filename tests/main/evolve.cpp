@@ -70,15 +70,11 @@ static void outputData(
 		outfile << ix << ' ';
 	outfile << '\n';
 
-	// construct all the distributions
-	array<int, 13> dists{};
-	iota(dists.begin(), dists.end(), 0);
-
 	// print them out
 	for (uint k=0; k<grid.size(); k++){
 		outfile << setw(15) << setprecision(8) << grid.at(k) << ' ';
 		outfile << setprecision(15);	
-		for (const uint j : dists)
+		for (uint j=0; j<DISTS; ++j)
 			outfile << setw(15) << F[j][k] << ' ';
 		outfile << '\n';
 	}
@@ -116,11 +112,12 @@ int main(int argc, char *argv[]) {
 	log_options.log_output_stream = log_output_file;
 	
 	vector<double> xtab{1e-5, 1e-4, 1e-3, 1e-2, 0.1, 0.3, 0.5, 0.7, 0.9, 1.0};
-	Grid grid(xtab, num_grid_points, Grid::LOG_LIN);
+	Grid grid(xtab, num_grid_points, Grid::LOG_LIN_QUAD);
 	auto& grid_options = grid.getOptions();
-	grid_options.use_alt_mapping = false;
-	grid_options.use_gsl_routine = false;
-	grid.splitConvolution({1e-5, 0.1, 0.9, 1.0}, {100, 50, 30});
+	grid_options.use_alt_mapping = true;
+	grid_options.use_gsl_conv_routine = false;
+	grid_options.use_gsl_interp_routine = true;
+	grid.splitConvolution();
 	
 	LesHouchesDistribution dist{};
 	AlphaS alphas(order, dist.Q0(), Qf, dist.alpha0(), kr);
@@ -133,7 +130,7 @@ int main(int argc, char *argv[]) {
 	auto& dglap_options = solver.getOptions();
 	dglap_options.use_truncated_nonsinglet_sol = true;
 	dglap_options.use_n3lo_heavyquark_asymmetry = true;
-	dglap_options.use_fortran_n3lo_splitfuncs = true;
+	dglap_options.use_fortran_n3lo_splitfuncs = false;
 
 	auto t0 = chrono::high_resolution_clock::now();
 	auto F = solver.evolve();
@@ -143,7 +140,7 @@ int main(int argc, char *argv[]) {
 
 	outputData(F, xtab, grid, order, num_grid_points, iterations, trunc_idx, kr, datafile_name);
 
-	if (grid.getOptions().use_gsl_routine) {
+	if (grid.getOptions().use_gsl_conv_routine) {
 		auto const& gsl_conv_errors = solver.getGrid().getGSLConvolutionErrors();
 		fs::path gsl_conv_errors_log_path("gsl-conv-errors.dat");
 		std::ofstream gsl_conv_errors_log_file(gsl_conv_errors_log_path);

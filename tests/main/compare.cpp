@@ -17,17 +17,20 @@ static void usage()
 	log(LOG_INFO, "compare.cpp", "");
 	log(LOG_INFO, "compare.cpp", "    <other-file>: path to the other datafile (should contain only tabulated values)");
 	log(LOG_INFO, "compare.cpp", "");
-	log(LOG_INFO, "compare.cpp", "    <format>:    0=benchmark format (0.1 -> 1.0^{{-1}}");
-	log(LOG_INFO, "compare.cpp", "                 1=normal format (0.1 -> 1e-1)");
+	log(LOG_INFO, "compare.cpp", "    <format>:    0: benchmark format (0.1 -> 1.0^{{-1}}");
+	log(LOG_INFO, "compare.cpp", "                 1: normal format (0.1 -> 1e-1)");
 	log(LOG_INFO, "compare.cpp", "");
-	log(LOG_INFO, "compare.cpp", "    <type>:      0=all flavors independently");
-	log(LOG_INFO, "compare.cpp", "                 1=special combos from benchmark paper");
-	log(LOG_INFO, "compare.cpp", "                 2=special combos from benchmark paper with q(-)");
-	log(LOG_INFO, "compare.cpp", "                 3=specific non-singlet and singlet distributions");
-	log(LOG_INFO, "compare.cpp", "                 4=ffns");
+	log(LOG_INFO, "compare.cpp", "    <type>:      0: all flavors independently");
+	log(LOG_INFO, "compare.cpp", "                 1: special combos from benchmark paper");
+	log(LOG_INFO, "compare.cpp", "                 2: special combos from benchmark paper with q(-)");
+	log(LOG_INFO, "compare.cpp", "                 3: specific non-singlet and singlet distributions");
+	log(LOG_INFO, "compare.cpp", "                 4: ffns distributions");
+	log(LOG_INFO, "compare.cpp", "                 5: same as (3), but using the distributions directly");
+	log(LOG_INFO, "compare.cpp", "                    rather than reconstructing from the individual quark PDFs");
+	log(LOG_INFO, "compare.cpp", "                    requires that the other datafile contains exactly the same info as candia");
 	log(LOG_INFO, "compare.cpp", "");
-	log(LOG_INFO, "compare.cpp", "    <diff-type>: 0=percent error (i.e treating the other file as the base)");
-	log(LOG_INFO, "compare.cpp", "                 1=percent difference (i.e. treating neither file as the base)");
+	log(LOG_INFO, "compare.cpp", "    <diff-type>: 0: percent error (i.e treating the other file as the base)");
+	log(LOG_INFO, "compare.cpp", "                 1: percent difference (i.e. treating neither file as the base)");
 	exit(EXIT_FAILURE);
 }
 
@@ -53,8 +56,8 @@ int main(int argc, char *argv[])
 
 	int ncols = cols[type].get().size();
 	
-	auto [xtab_candia, candia_dists_raw] = read_candia_file<value_type>(candia_filepath, 13);
-	auto [xtab_other, other_dists_raw] = read_other_file<value_type>(other_filepath, 13);
+	auto [xtab_candia, candia_dists_raw] = read_candia_file<value_type>(candia_filepath, 37);
+	auto [xtab_other, other_dists_raw] = read_other_file<value_type>(other_filepath, 37);
 	if (!std::ranges::equal(xtab_candia, xtab_other)) {
 		log(LOG_ERROR_NOQUIT, "compare.cpp", "Two xtab arrays for the candia and other datafile are not equivalent:");
 
