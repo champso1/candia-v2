@@ -258,7 +258,7 @@ namespace Candia2
 
 		double log_min = std::log10(1e-5);
 		double log_max = std::log10(0.1);
-		uint num_log = 101;
+		uint num_log = 51;
 		uint num_log_intervals = std::round(log_max-log_min);
 		double dlog = (log_max-log_min)/static_cast<double>(num_log_intervals);
 		uint log_interval_size = num_log/num_log_intervals;
@@ -275,7 +275,7 @@ namespace Candia2
 
 		double lin_min = 0.1;
 		double lin_max = 0.9;
-		uint num_lin = 51;
+		uint num_lin = 26;
 		
 		for (uint k=0; k<num_lin; ++k) {
 		    double x = lin_min + (lin_max-lin_min)*k/static_cast<double>(num_lin);
@@ -284,7 +284,7 @@ namespace Candia2
 
 		double quad_min = 0.9;
 		double quad_max = 1.0;
-		uint num_quad = 51;
+		uint num_quad = 26;
 
 		for (uint k=0; k<num_quad; ++k) {
 			double f = 1.0 - k/static_cast<double>(num_quad);

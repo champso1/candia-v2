@@ -9,7 +9,7 @@ using uint = unsigned;
 using namespace Candia2;
 
 #include "util.hpp"
-using value_type = long double;
+using value_type = double;
 
 static void usage()
 {

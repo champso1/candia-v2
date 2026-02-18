@@ -7,12 +7,16 @@
 #define __COMMON_HPP
 
 #include <functional>
+#include <string_view>
+#include <unordered_map>
 #include <vector>
 #include <numbers>
 #include <format>
 #include <iostream>
 #include <sstream>
 #include <iterator>
+#include <ranges>
+#include <mutex>
 
 using uint = unsigned;
 
@@ -47,20 +51,6 @@ namespace Candia2
 	constexpr const uint DEFAULT_TRUNC_IDX = 5;
 	/** @{ */
 
-	/**
-	 *  @brief Template class for more easily typing an @a std::vector with multiple layers of nesting.
-	 */
-	template <typename T, uint N>
-	struct MultiDimVector
-	{
-		typedef typename MultiDimVector<T,N-1>::type Nested;
-		typedef std::vector<Nested> type;
-	};
-	template <typename T>
-	struct MultiDimVector<T,1>
-	{
-		typedef std::vector<T> type;
-	};
 
 	// colors for printing to the terminal
 	inline constexpr char const* ANSI_COLOR_RED =         "\x1b[31m";
@@ -70,6 +60,11 @@ namespace Candia2
 	inline constexpr char const* ANSI_COLOR_MAGENTA =     "\x1b[35m";
 	inline constexpr char const* ANSI_COLOR_CYAN =        "\x1b[36m";
 	inline constexpr char const* ANSI_COLOR_RESET =       "\x1b[0m";
+	inline constexpr char const* ANSI_LINEFEED_CLEAR =    "\033[2K";
+	inline constexpr auto ANSI_LINEFEED_UP   = [](uint count){ return std::format("\033[{}F", count); };
+	inline constexpr auto ANSI_LINEFEED_DOWN = [](uint count){ return std::format("\033[{}E", count); };
+	inline constexpr std::string loading_block("█");
+
 	
 	/** Enum for defining a set of standard logging types. */
 	enum LogType : int
@@ -159,6 +154,91 @@ namespace Candia2
 		std::cout << log_text;
 	}
 
+	inline std::unordered_map<uint, uint> log_threads_line_offset{};
+	inline void registerThreadLogs(std::vector<uint> const& ids)
+	{
+		for (int i=0; i<ids.size(); ++i) {
+			log_threads_line_offset[ids[i]] = ids.size()-i;
+			std::cout << '\n';
+		}
+	}
+	inline void unregisterThreadLogs(std::vector<uint> const& ids)
+	{
+		log_threads_line_offset.clear();
+	}
+	inline std::mutex log_threads_mutex;
+	/**
+	 *  @brief Prints messages to standard out for threaded iterations in a nice way that doesn't flood stdout
+	 *  @param thread_idx used in threaded printing, 
+	 *  @param val the i in i/j, for the iteration count
+	 *  @param end the j in i/j, for the iteration count
+	 *  @param prefix an identifier of some kind to include within the message, often a function name
+	 */
+	template <typename... TArgs>
+	void logThreadIterations(uint thread_idx, uint val, uint end, std::string_view prefix)
+	{
+		if (!getLogOptions().show_thread_output)
+			return;
+		auto log_type = LOG_THREAD;
+
+		auto count = log_threads_line_offset[thread_idx];
+		auto ansi_jump_up   = ANSI_LINEFEED_UP(count);
+		auto ansi_jump_down = ANSI_LINEFEED_DOWN(count);
+		double ratio = static_cast<double>(val)/static_cast<double>(end);
+		int num_blocks = static_cast<int>(ratio*50.0);
+		std::string blocks{};
+		for (int i=0; i<num_blocks; ++i)
+			blocks += loading_block;
+
+		std::string all_text = std::format("{}[{}] {}: Distribution {} : Iteration {:0>2}/{} ({: >3}%) [{: <50}]",
+			log_string_colors[log_type],
+			log_string_reps[log_type], prefix,
+			thread_idx, val, end, static_cast<uint>(ratio*100.0),
+			blocks,
+			ANSI_COLOR_RESET);
+		if (getLogOptions().use_log_output_stream)
+			getLogOptions().log_output_stream.get() << all_text;
+
+		{
+			std::lock_guard<std::mutex> guard{log_threads_mutex};
+
+			std::cout << ansi_jump_up << ANSI_LINEFEED_CLEAR
+					  << all_text << std::flush
+					  << ansi_jump_down << std::flush;
+		}
+	}
+
+	inline void startLogIterations(){ return; }
+	inline void endLogIterations(){ std::cout << '\n'; }
+	/**
+	 *  @brief Prints messages to standard out for iterations in a nice way that doesn't flood stdout
+	 *  @param val the i in i/j, for the iteration count
+	 *  @param end the j in i/j, for the iteration count
+	 *  @param prefix an identifier of some kind to include within the message, often a function name
+	 */
+	template <typename... TArgs>
+	void logIterations(uint val, uint end, std::string_view prefix)
+	{
+		if (!getLogOptions().show_thread_output)
+			return;
+		auto log_type = LOG_INFO;
+
+		double ratio = static_cast<double>(val)/static_cast<double>(end);
+		int num_blocks = static_cast<int>(ratio*50.0);
+		std::string blocks{};
+		for (int i=0; i<num_blocks; ++i)
+			blocks += loading_block;
+
+		std::string all_text = std::format("\r{}[{}] {}: Iteration {:0>2}/{} ({: >3}%) [{: <50}]{}",
+			log_string_colors[log_type],
+			log_string_reps[log_type], prefix,
+			val, end, static_cast<uint>(ratio*100.0),
+			blocks,
+			ANSI_COLOR_RESET);
+		if (getLogOptions().use_log_output_stream)
+			getLogOptions().log_output_stream.get() << all_text;
+		std::cout << all_text << std::flush;
+	}
 
 	template <typename... TArgs>
 	void assert(bool stmnt, std::format_string<TArgs...> fmt_string, TArgs&&... args)

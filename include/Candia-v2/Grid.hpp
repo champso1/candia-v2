@@ -42,7 +42,7 @@ namespace Candia2
 		inline auto make_interp = [](uint size){ return interp_type(gsl_interp_alloc(interp_cspline_type, size), interp_deleter); };
 		inline auto make_interp_accel = [](){ return interp_accel_type(gsl_interp_accel_alloc(), interp_accel_deleter); };
 
-		static inline int error_print_count = 50;
+		static inline int error_print_count = 35;
 
 		extern "C" {
 			static inline void void_error_handler(

@@ -381,9 +381,14 @@ static void outputLatexTable(
 	log(LOG_INFO, "util.hpp", "Cleaning up auxilliary files...");
 
 	auto output_dir = (format == 0 || format == 2) ? "diffs" : "tables";
-	fs::path pdf_path(fs::current_path()/fs::path("latex")/fs::path(filename + ".pdf")), new_pdf_path{fs::current_path()/output_dir};
-	log(LOG_INFO, "util.hpp", "{}  ->  {}", pdf_path.string(), new_pdf_path.string());
-	fs::copy(pdf_path, new_pdf_path, fs::copy_options::overwrite_existing);
+	fs::path output_dir_path = fs::current_path()/fs::path(output_dir);
+	if (!fs::exists(output_dir_path)) {
+		if (!fs::create_directory(output_dir_path))
+			log(LOG_ERROR, "util.hpp", "Failed to create output directory '{}'.", output_dir_path.string());
+	}
+	fs::path pdf_path(fs::current_path()/fs::path("latex")/fs::path(filename + ".pdf"));
+	log(LOG_INFO, "util.hpp", "{}  ->  {}", pdf_path.string(), output_dir_path.string());
+	fs::copy(pdf_path, output_dir_path, fs::copy_options::overwrite_existing);
 	auto dir_view =
 		fs::directory_iterator{fs::current_path()/"latex"}
 		| std::ranges::views::filter([&filename](fs::directory_entry const& e) -> bool {

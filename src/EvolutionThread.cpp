@@ -21,6 +21,7 @@ namespace Candia2
 		uint size = _grid.size()-1;
 		uint part_size = size/NUM_SINGLET_THREADS;
 
+		startLogIterations();
         switch (_order) {
             case 0: {
 				auto& p0qq = getExpression("P0qq");
@@ -29,7 +30,8 @@ namespace Candia2
 				auto& p0gg = getExpression("P0gg");
 				
                 for (uint n=1; n<_iterations; n++) {
-					log(LOG_INFO, "DGLAP", "LO Singlet Iteration {}", n);
+					logIterations(n, _iterations-1, "SingletLO");
+					// log(LOG_INFO, "DGLAP", "LO Singlet Iteration {}", n);
                     
                     for (uint k=0; k<_grid.size()-1; k++) {
 						double v1 = recrelS_1(_S[0][1][0], k, p0qq);
@@ -62,7 +64,8 @@ namespace Candia2
 				auto& p1gg = getExpression("P1gg");
 				
 			    for (uint n=1; n<_iterations; n++) {
-					log(LOG_INFO, "DGLAP", "NLO Singlet Iteration {}", n);
+					// log(LOG_INFO, "DGLAP", "NLO Singlet Iteration {}", n);
+					logIterations(n, _iterations-1, "SingletNLO");
 
                     // LO piece (non truncated)
                     for (uint k=0; k<_grid.size()-1; k++) {
@@ -143,7 +146,8 @@ namespace Candia2
 				auto& p2gg = getExpression("P2gg");
 				
                 for (uint n=1; n<_iterations; n++) {
-					log(LOG_INFO, "DGLAP", "NNLO Singlet Iteration {}", n);
+					// log(LOG_INFO, "DGLAP", "NNLO Singlet Iteration {}", n);
+					logIterations(n, _iterations-1, "SingletNNLO");
 
                     // LO piece (non truncated)
                     for (uint k=0; k<_grid.size()-1; k++) {
@@ -258,7 +262,8 @@ namespace Candia2
 				auto fac3 = beta3/(64.0*PI_3*beta0);
 				
 			    for (uint n=1; n<_iterations; n++) {
-					log(LOG_INFO, "DGLAP", "N3LO Singlet Iteration {}", n);
+					// log(LOG_INFO, "DGLAP", "N3LO Singlet Iteration {}", n);
+					logIterations(n, _iterations-1, "SingletN3LO");
 
                     // LO piece
                     for (uint k=0; k<_grid.size()-1; k++) {
@@ -373,8 +378,8 @@ namespace Candia2
                 }
             } break;
         }
+		endLogIterations();
     }
-
 	void DGLAPSolver::_mt_EvolveDistributions_S_NLO(uint t, int thread_idx, uint min, uint max)
 	{
 		initializeThreadIndex(thread_idx);
@@ -397,7 +402,6 @@ namespace Candia2
 				recrelS_2(_S[t][0][0], _S[t-1][0][0], k, p0gg, p1gg);
 		}
 	}
-	
 	void DGLAPSolver::_mt_EvolveDistributions_S_NNLO(uint t, int thread_idx, uint min, uint max)
 	{
 		initializeThreadIndex(thread_idx);
@@ -424,8 +428,6 @@ namespace Candia2
 				recrelS_3(_S[t][0][0], _S[t-1][0][0], _S[t-2][0][0], k, p0gg, p1gg, p2gg);
 		}
 	}
-
-
 	void DGLAPSolver::_mt_EvolveDistributions_S_N3LO(uint t, int thread_idx, uint min, uint max)
 	{
 		initializeThreadIndex(thread_idx);
@@ -465,13 +467,19 @@ namespace Candia2
 			case 0: { // LO
 				log(LOG_INFO, "NonSingletLO", "Performing LO non-singlet evolution threaded.");
 
+				std::vector<uint> idxs{};
+				for (uint j=13; j<=12+_nf; ++j)
+					idxs.emplace_back(j);
+				for (uint j=32; j<=30+_nf; ++j)
+					idxs.emplace_back(j);
+				registerThreadLogs(idxs);
+
                 for (uint j=13; j<=12+_nf; ++j)
                     arr.get()[j] = _A[j][0];
                 for (uint j=32; j<=30+_nf; ++j)
                     arr.get()[j] = _A[j][0];
-                    
-				std::vector<std::thread> threads{};
 
+				std::vector<std::thread> threads{};
 				for (uint j=13; j<=12+_nf; j++)
 					threads.emplace_back(&DGLAPSolver::_mt_EvolveDistribution_NS_LO, this, arr, j, L1);	
 				for (uint j=32; j<=30+_nf; j++)
@@ -484,6 +492,13 @@ namespace Candia2
 			} break;
 			case 1: { // NLO
 				log(LOG_INFO, "NonSingletNLO", "Performing NLO non-singlet evolution threaded.");
+
+				std::vector<uint> idxs{};
+				for (uint j=13; j<=12+_nf; ++j)
+					idxs.emplace_back(j);
+				for (uint j=32; j<=30+_nf; ++j)
+					idxs.emplace_back(j);
+				registerThreadLogs(idxs);
 
                 for (uint j=13; j<=12+_nf; ++j)
                     arr.get()[j] = _B[j][0][0];
@@ -506,6 +521,14 @@ namespace Candia2
 			case 2: { // NNLO
 				log(LOG_INFO, "NonSingletNNLO", "Performing NNLO non-singlet evolution threaded.");
 
+				std::vector<uint> idxs{};
+				for (uint j=26; j<=24+_nf; ++j)
+					idxs.emplace_back(j);
+				for (uint j=32; j<=30+_nf; ++j)
+					idxs.emplace_back(j);
+				idxs.emplace_back(25);
+				registerThreadLogs(idxs);
+				
                 for (uint j=26; j<=24+_nf; ++j)
                     arr.get()[j] = _C[j][0][0][0];
                 for (uint j=32; j<=30+_nf; ++j)
@@ -532,6 +555,14 @@ namespace Candia2
 			} break;
 			case 3: { // N3LO
 				log(LOG_INFO, "NonSingletN3LO", "Performing N3LO non-singlet evolution threaded.");
+
+				std::vector<uint> idxs{};
+				for (uint j=26; j<=24+_nf; ++j)
+					idxs.emplace_back(j);
+				for (uint j=32; j<=30+_nf; ++j)
+					idxs.emplace_back(j);
+				idxs.emplace_back(25);
+				registerThreadLogs(idxs);
 
 				for (uint j=26; j<=24+_nf; ++j)
                     arr.get()[j] = _D[j][0][0][0][0];
@@ -566,12 +597,11 @@ namespace Candia2
         uint j, double L1)
     {
 		initializeThreadIndex(j);
-        log(LOG_THREAD, "NonSingletLO", "Thread {} initialized evolving distribution {}.", j, j);
 
 		static auto& p0ns = getExpression("P0ns");
 		
         for (uint n=1; n<_iterations; n++) {
-            log(LOG_THREAD, "NonSingletLO", "  [j={}] Iteration {}/{}", j, n, _iterations-1);
+			logThreadIterations(j, n, _iterations-1, "NonSingletLO");
 			for (uint k=0; k<_grid.size()-1; k++) {
 				_A[j][1][k] = recrelLO(_A[j][0], k, p0ns);
                 arr.get()[j][k] += _A[j][1][k]*std::pow(L1, n)/factorial(n);
@@ -584,7 +614,6 @@ namespace Candia2
         uint j, std::string const& P1, std::array<double, 2> const&  L)
     {
 		initializeThreadIndex(j);
-        log(LOG_THREAD, "NonSingletNLO", "Thread {} initialized evolving distribution {}.", j, j);
 
 		static auto& p0ns = getExpression("P0ns");
 		static auto& p1 = getExpression(P1);
@@ -593,7 +622,7 @@ namespace Candia2
         double const L2 = L[1];
 		
         for (uint s=1; s<_iterations; s++) {
-            log(LOG_THREAD, "NonSingletNLO", "  [j={}] Iteration {}/{}", j, s, _iterations-1);
+            logThreadIterations(j, s, _iterations-1, "NonSingletNLO");
             for (uint k=0; k<_grid.size()-1;k++) {
                 for (uint n=1; n<=s; n++) {
                     _B[j][1][n][k] = recrelNLO_1(_B[j][0][n-1], k, p0ns);
@@ -616,7 +645,6 @@ namespace Candia2
         uint j, std::array<std::string, 2> const& P, std::array<double, 3> const& L)
     {
 		initializeThreadIndex(j);
-        log(LOG_THREAD, "NonSingletNNLO", "Thread {} initialized evolving distribution {}.", j, j);
 
 		static auto& p0ns = getExpression("P0ns");
 		static auto& p1 = getExpression(P[0]);
@@ -627,7 +655,7 @@ namespace Candia2
         double const L3 = L[2];
 
         for (uint s=1; s<_iterations; s++) {
-            log(LOG_THREAD, "NonSingletNNLO", "  [j={}] Iteration {}/{}", j, s, _iterations-1);
+			logThreadIterations(j, s, _iterations-1, "NonSingletNNLO");
             for (uint k=0; k<_grid.size()-1; k++) {
                 // recrel #1:
                 for (uint t=1; t<=s; t++) {
@@ -691,7 +719,6 @@ namespace Candia2
 			uint j, std::array<std::string, 3> const& P, std::array<double, 4> const& L)
     {
 		initializeThreadIndex(j);
-        log(LOG_THREAD, "NonSingletN3LO", "Thread {} initialized evolving distribution {}.", j, j);
 
 		static auto& p0ns = getExpression("P0ns");
 		static auto& p1 = getExpression(P[0]);
@@ -710,7 +737,7 @@ namespace Candia2
         double gamma = (r1*r1 + r1*b + c)*_alpha_s.beta3();
 
         for (uint s=1; s<_iterations; s++) {
-			log(LOG_THREAD, "NonSingletN3LO", "  [j={}] Iteration {}/{}", j, s, _iterations-1);
+			logThreadIterations(j, s, _iterations-1, "NonSingletN3LO");
             for (uint k=0; k<_grid.size()-1; k++) {
                 // recrel #1:
                 for (uint t=1; t<=s; t++) {
@@ -833,6 +860,13 @@ namespace Candia2
             case 0: {
 				log(LOG_INFO, "NonSingletLO (trunc)", "Performing LO non-singlet evolution threaded.");
 				
+				std::vector<uint> idxs{};
+				for (uint j=13; j<=12+_nf; ++j)
+					idxs.emplace_back(j);
+				for (uint j=32; j<=30+_nf; ++j)
+					idxs.emplace_back(j);
+				registerThreadLogs(idxs);
+
 				for (uint j=13; j<=12+_nf; ++j)
                     arr.get()[j] = _S_NS[0][j][0];
                 for (uint j=32; j<=30+_nf; ++j)
@@ -852,6 +886,13 @@ namespace Candia2
 			case 1: {
 				log(LOG_INFO, "NonSingletNLO (trunc)", "Performing NLO non-singlet evolution threaded.");
 
+				std::vector<uint> idxs{};
+				for (uint j=13; j<=12+_nf; ++j)
+					idxs.emplace_back(j);
+				for (uint j=32; j<=30+_nf; ++j)
+					idxs.emplace_back(j);
+				registerThreadLogs(idxs);
+
 				for (uint j=13; j<=12+_nf; ++j)
                     arr.get()[j] = _S_NS[0][j][0];
                 for (uint j=32; j<=30+_nf; ++j)
@@ -870,6 +911,14 @@ namespace Candia2
 			}; break;
 			case 2: {
 				log(LOG_INFO, "NonSingletNNLO (trunc)", "Performing NNLO non-singlet evolution threaded.");
+
+				std::vector<uint> idxs{};
+				for (uint j=26; j<=24+_nf; j++)
+					idxs.emplace_back(j);
+				for (uint j=32; j<=30+_nf; ++j)
+					idxs.emplace_back(j);
+				idxs.emplace_back(25);
+				registerThreadLogs(idxs);
 
 				for (uint j=26; j<=24+_nf; j++)
                     arr.get()[j] = _S_NS[0][j][0];
@@ -891,6 +940,14 @@ namespace Candia2
 			}; break;
 			case 3: {
 				log(LOG_INFO, "NonSingletN3LO (trunc)", "Performing N3LO non-singlet evolution threaded.");
+
+				std::vector<uint> idxs{};
+				for (uint j=26; j<=24+_nf; j++)
+					idxs.emplace_back(j);
+				for (uint j=32; j<=30+_nf; ++j)
+					idxs.emplace_back(j);
+				idxs.emplace_back(25);
+				registerThreadLogs(idxs);
 
 				for (uint j=26; j<=24+_nf; j++)
                     arr.get()[j] = _S_NS[0][j][0];
@@ -916,12 +973,11 @@ namespace Candia2
 	void DGLAPSolver::_mt_EvolveDistribution_NST_LO(std::reference_wrapper<std::vector<ArrayGrid>> arr, uint j, double L1)
 	{
 		initializeThreadIndex(j);
-        log(LOG_THREAD, "NonSingletLO (trunc)", "Thread {0} initialized evolving distribution {0}.", j);
 
 		static auto& p0ns = getExpression("P0ns");
 
 		for (uint n=1; n<_iterations; n++) {
-			log(LOG_THREAD, "NonSingletLO (trunc)", "  [j={}] Iteration {}/{}", j, n, _iterations-1);	
+			logThreadIterations(j, n, _iterations-1, "NonSingletLO (trunc)");
 			double fac = std::pow(L1, n)/factorial(n);
 
 			for (uint k=0; k<_grid.size()-1; k++) {
@@ -938,13 +994,12 @@ namespace Candia2
 		std::string_view _p1, double L1)
 	{
 		initializeThreadIndex(j);
-        log(LOG_THREAD, "NonSingletNLO (trunc)", "Thread {0} initialized evolving distribution {0}.", j);
 
 		static auto& p0ns = getExpression("P0ns");
 		auto& p1 =   getExpression(_p1);
 
 		for (uint n=1; n<_iterations; n++) {
-			log(LOG_THREAD, "NonSingletNLO (trunc)", "  [j={}] Iteration {}/{}", j, n, _iterations-1);
+			logThreadIterations(j, n, _iterations-1, "NonSingletNLO (trunc)");
 			double fac = std::pow(L1, n)/factorial(n);
 
 			// LO piece
@@ -985,14 +1040,13 @@ namespace Candia2
 		std::string_view _p1, std::string_view _p2, double L1)
 	{
 		initializeThreadIndex(j);
-        log(LOG_THREAD, "NonSingletNNLO (trunc)", "Thread {0} initialized evolving distribution {0}.", j);
 
 		static auto& p0ns = getExpression("P0ns");
 		auto& p1 = getExpression(_p1);
 		auto& p2 = getExpression(_p2);
 
 		for (uint n=1; n<_iterations; n++) {
-			log(LOG_THREAD, "NonSingletNNLO (trunc)", "  [j={}] Iteration {}/{}", j, n, _iterations-1);	
+			logThreadIterations(j, n, _iterations-1, "NonSingletNNLO (trunc)");
 			double fac = std::pow(L1, n)/factorial(n);
 
 			// LO piece
@@ -1045,7 +1099,6 @@ namespace Candia2
 		std::string_view _p1, std::string_view _p2, std::string_view _p3, double L1)
 	{
 		initializeThreadIndex(j);
-        log(LOG_THREAD, "NonSingletN3LO (trunc)", "Thread {0} initialized evolving distribution {0}.", j);
 
 		static auto& p0ns = getExpression("P0ns");
 		auto& p1 =   getExpression(_p1);
@@ -1058,7 +1111,7 @@ namespace Candia2
 		double beta3 = _alpha_s.beta3();
 
 		for (uint n=1; n<_iterations; n++) {
-			log(LOG_THREAD, "NonSingletN3LO (trunc)", "  [j={}] Iteration {}/{}", j, n, _iterations-1);	
+			logThreadIterations(j, n, _iterations-1, "NonSingletN3LO (trunc)");
 			double fac = std::pow(L1, n)/factorial(n);
 
 			// LO piece
