@@ -513,7 +513,7 @@ namespace Candia2
 				for (uint j=32; j<=30+_nf; j++)
 					threads.emplace_back(&DGLAPSolver::_mt_EvolveDistribution_NS_NLO, this, arr, j, "P1nsp", L);
 
-				for (std::thread & t : threads)
+				for (std::thread& t : threads)
 					t.join();
 
 				log(LOG_INFO, "NonSingletNLO", "Finished performing threaded NLO non-singlet evolution.");
@@ -615,8 +615,8 @@ namespace Candia2
     {
 		initializeThreadIndex(j);
 
-		static auto& p0ns = getExpression("P0ns");
-		static auto& p1 = getExpression(P1);
+		auto& p0ns = getExpression("P0ns");
+		auto& p1 = getExpression(P1);
 		
         double const L1 = L[0];
         double const L2 = L[1];

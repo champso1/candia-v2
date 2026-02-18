@@ -128,7 +128,7 @@ int main(int argc, char *argv[]) {
 
 	DGLAPSolver solver(order, grid, alphas, Qf, iterations, trunc_idx, dist, kr);
 	auto& dglap_options = solver.getOptions();
-	dglap_options.use_truncated_nonsinglet_sol = true;
+	dglap_options.use_truncated_nonsinglet_sol = false;
 	dglap_options.use_n3lo_heavyquark_asymmetry = true;
 	dglap_options.use_fortran_n3lo_splitfuncs = false;
 

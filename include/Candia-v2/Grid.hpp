@@ -116,7 +116,7 @@ namespace Candia2
 		std::vector<gsl::interp_type> _interps; //!< gsl interp objects for interpolation
 		std::vector<gsl::interp_accel_type> _interp_accels; //!< interp interpolation acceleration objects 
 
-		static constexpr uint DEFAULT_GAULEG_POINTS = 100; //!< default number of gauss-legendre points to place in the interval
+		static constexpr uint DEFAULT_GAULEG_POINTS = 75; //!< default number of gauss-legendre points to place in the interval
 		gsl_conv_errors _gsl_conv_errors{}; //!< stored values of information whenever GSL fails to perform the integration to the requested accuracy
 	public:
 		Grid() = delete; //!< default constructor deleted; must provide information to fill the grid
