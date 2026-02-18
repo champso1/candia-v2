@@ -40,9 +40,9 @@
                 "CMAKE_CXX_COMPILER": "clang++",
                 "CMAKE_CONFIGURATION_TYPES": "Release;Debug;RelWithDebInfo",
                 "ENABLE_THREADING": "NO",
-                "BUILD_DOCS": "YES",
-                "BUILD_MANUSCRIPTS": "YES",
-                "WITH_LHAPDF": "YES"
+                "BUILD_DOCS": "NO",
+                "BUILD_MANUSCRIPTS": "NO",
+                "WITH_LHAPDF": "NO"
             }
         }
     ],

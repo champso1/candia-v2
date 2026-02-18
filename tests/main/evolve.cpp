@@ -122,7 +122,7 @@ int main(int argc, char *argv[]) {
 	LesHouchesDistribution dist{};
 	AlphaS alphas(order, dist.Q0(), Qf, dist.alpha0(), kr);
 	auto& alphas_options = alphas.getOptions();
-	alphas_options.use_broken_log_value = true;
+	// alphas_options.use_broken_log_value = true;
 	alphas.setVFNS(dist.masses(), dist.nfi());
 	// alphas.setFFNS(4);
 

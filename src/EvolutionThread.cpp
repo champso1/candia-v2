@@ -598,7 +598,7 @@ namespace Candia2
     {
 		initializeThreadIndex(j);
 
-		static auto& p0ns = getExpression("P0ns");
+		auto& p0ns = getExpression("P0ns");
 		
         for (uint n=1; n<_iterations; n++) {
 			logThreadIterations(j, n, _iterations-1, "NonSingletLO");
@@ -616,7 +616,7 @@ namespace Candia2
 		initializeThreadIndex(j);
 
 		auto& p0ns = getExpression("P0ns");
-		auto& p1 = getExpression(P1);
+		auto& p1   = getExpression(P1);
 		
         double const L1 = L[0];
         double const L2 = L[1];
@@ -646,9 +646,9 @@ namespace Candia2
     {
 		initializeThreadIndex(j);
 
-		static auto& p0ns = getExpression("P0ns");
-		static auto& p1 = getExpression(P[0]);
-		static auto& p2 = getExpression(P[1]);
+		auto& p0ns = getExpression("P0ns");
+		auto& p1   = getExpression(P[0]);
+		auto& p2   = getExpression(P[1]);
 		
         double const L1 = L[0];
         double const L2 = L[1];
@@ -720,10 +720,10 @@ namespace Candia2
     {
 		initializeThreadIndex(j);
 
-		static auto& p0ns = getExpression("P0ns");
-		static auto& p1 = getExpression(P[0]);
-		static auto& p2 = getExpression(P[1]);
-		static auto& p3 = getExpression(P[2]);
+		auto& p0ns = getExpression("P0ns");
+		auto& p1   = getExpression(P[0]);
+		auto& p2   = getExpression(P[1]);
+		auto& p3   = getExpression(P[2]);
 		
 		double const L1 = L[0];
         double const L2 = L[1];
