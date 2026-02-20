@@ -704,8 +704,8 @@ To facilitate benchmarking, we utilize the initial conditions given in Sec.~4.4 
 precise local overlapping series expansion. 
 For the 2-loop OMEs, we use the analytical expressions computed in Refs.~\cite{Buza:1995ie,Buza:1996wv}.  
 
-\import{./res/tables}{results-newformat.tex}
-\import{./res/tables}{compare-hoppet.tex}
+\import{./res/tables}{n3lo-exact.tex}
+\import{./res/tables}{diffs-other-n3lo-exact.tex}
 
 In Table~\ref{tab:n3lo_evolution_results}, we report the output results of \texttt{Candia-v2} at aN$^3$LO at an evolution scale $\mu_F$ of 100 GeV, obtained with the approximate kernels discussed above.
 The evolution is performed by using 
@@ -713,19 +713,19 @@ a logarithmic $x$-grid with 2000 grid points while each gaussian quadrature inte
 
 \begin{figure}[ht]
 \centering
-\includegraphics[width=0.89\linewidth]{res/gfx/ratio-n3lomatching}
+\includegraphics[width=0.89\linewidth]{res/gfx/n3lo-matching-exact}
 \caption{N$^3$LO/NNLO PDF ratios in the VFNS scheme at $\mu_F=100~\unit{\GeV}$ with N$^3$LO matching conditions.}
 \label{fig:ratios1}
 \end{figure}
 %
 \begin{figure}
 \centering
-\includegraphics[width=0.89\linewidth]{res/gfx/ratio-nnlomatching}
+\includegraphics[width=0.89\linewidth]{res/gfx/nnlo-matching-exact}
 \caption{Same as in Fig.~\ref{fig:ratios1}, but with NNLO matching conditions (with the $A^{(2)}$ OMEs only).}
 \label{fig:ratios2}
 \end{figure}
 
-In Table~\ref{tbl:hoppet-comparison}, we compare the results of \texttt{Candia-v2} to those from the recent \texttt{Hoppet-v2} computer code release, documented in Ref.~\cite{Karlberg:2025hxk}. The $x$-space \texttt{Hoppet}'s algorithm is based on higher-order Runge-Kutta methods for both the $x$-integrations and $Q$ evolution. Table~\ref{tbl:hoppet-comparison} shows percentage errors, where the \texttt{Hoppet-v2} result is used as the reference. The differences between \texttt{Candia-v2} and  \texttt{Hoppet-v2} for the N$^3$LO evolution with approximate splitting functions are overall at the sub-percent level, except for the $xc_+$ distribution at very large $x$, and $xb_+$ where differences are approximately $1\%$ in the $10^{-4}\lesssim x \lesssim 0.3$ range. The $xL_-$ combination at $x\lesssim 10^{-4}$ has differences that are between 1.6\% and 2.3\%\textcolor{red}{.}\textcolor{blue}{, however this is purely a numerical artifact due to large cancellations in the percent difference calculation, as the $x\bar{u}$ and $x\bar{d}$ PDFs, which comprise $xL_-$, themselves individually exhibit a percent difference on the order of 0.01\% in the $x\lesssim 10^{-4}$ range.}
+In Table~\ref{tbl:hoppet-comparison}, we compare the results of \texttt{Candia-v2} to those from the recent \texttt{Hoppet-v2} computer code release, documented in Ref.~\cite{Karlberg:2025hxk}. The $x$-space \texttt{Hoppet}'s algorithm is based on higher-order Runge-Kutta methods for both the $x$-integrations and $Q$ evolution. Table~\ref{tbl:hoppet-comparison} shows percentage errors, where the \texttt{Hoppet-v2} result is used as the reference. The differences between \texttt{Candia-v2} and  \texttt{Hoppet-v2} for the N$^3$LO evolution with approximate splitting functions are overall at the sub-percent level, except for the $xc_+$ distribution at very large $x$, and $xb_+$ where differences are approximately $1\%$ in the $10^{-4}\lesssim x \lesssim 0.3$ range. The $xL_-$ combination at $x\lesssim 10^{-4}$ has differences that are between 1.6\% and 2.3\%\textcolor{red}{.}\textcolor{blue}{, however this is purely a numerical artifact due to large cancellations in the percent difference calculation, since the $x\bar{u}$ and $x\bar{d}$ PDFs are very similar at low-x -- these, which comprise $xL_-$, themselves individually exhibit a percent difference on the order of 0.01\% in the $x\lesssim 10^{-4}$ range. The $>1\%$ error in the heavy quark PDFs at $x=0.9$ can also be attributed to numerical artifacts, since the PDFs themselves are vanishingly small, while the evolution distributions containing them (e.g. $q_{NS,1c}^{\pm}$, $q^{(-)}$, and $q^{(+)}$) themselves exhibit $\sim 0.3\%$ difference at $x=0.9$.}
 
 
 
@@ -740,12 +740,12 @@ In both the singlet and non-singlet sectors, the ``outer'' iteration over the in
 %
 This issue was not addressed in the original \texttt{C} implementation of \texttt{Candia} and can be particularly severe at N$^3$LO, where the presence of an additional dimension leads to exponentially growing memory requirements.
 
-Moreover, all convolutions are performed using Gauss–Legendre quadrature with a fixed set of weights and abscissae. Consequently, the splitting functions need to be evaluated only at a finite, fixed set of points—the quadrature abscissae. This allows the splitting functions evaluated at these abscissae to be cached so that, in subsequent convolutions, the cached values can be reused instead of repeatedly recomputing the splitting functions, which becomes extremely costly at higher perturbative orders.
+Moreover, all convolutions are performed using Gauss–Legendre quadrature with a fixed set of weights and abscissae. Consequently, the splitting functions \textcolor{blue}{and operator matrix elements} need to be evaluated only at a finite, fixed set of points—the quadrature abscissae. This allows the splitting functions evaluated at these abscissae to be cached so that, in subsequent convolutions, the cached values can be reused instead of repeatedly recomputing the splitting functions, which \textcolor{red}{becomes}\textcolor{blue}{can become} \textcolor{red}{extremely} costly at higher perturbative orders. \textcolor{blue}{This optimization gives an approximately $\sim 20-25\%$ speedup on average using the exact solution (likely due to the exponentially increasing number of evaluations of the splitting functions and operator matrix elements), while there is little to no noticeable improvement on average using the truncated solution. The tradeoff is that the memory footprint of the program increases, especially for larger grid sizes.}
 
-The final major optimization exploits the fact that, unlike the coupled singlet PDFs, the non-singlet PDFs are completely decoupled. This property allows the evolution of the non-singlet PDFs to be parallelized by assigning them to separate threads. Apart from the overhead associated with thread creation and management, this strategy can in principle yield an approximately 
-$N$-fold speedup in the non-singlet sector when using $N$ threads.
+The final major optimization exploits the fact that \textcolor{, unlike the coupled singlet PDFs,} the non-singlet PDFs are completely decoupled. This property allows the evolution of the non-singlet PDFs to be parallelized by assigning them to separate threads. Apart from the overhead associated with thread creation and management, this strategy can in principle yield an approximately 
+$N$-fold speedup in the non-singlet sector when using $N$ threads. \textcolor{blue}{Further, while the singlet sector evolves a set of coupled PDFs, meaning they cannot be assigned to separate threads, we can still split up the convolution into a separate pieces and perform them concurrently. This is possible due to the fact that, as mentioned previously, the convolutions require information only from the previous iteration.}
 %
-After implementing these optimizations, \texttt{Candia-v2} exhibits significantly improved performance relative to \texttt{Candia} at higher perturbative orders.
+After implementing these optimizations, \texttt{Candia-v2} exhibits significantly improved performance relative to \texttt{Candia} at higher perturbative orders. \textcolor{blue}{The original C++ implementation of the N$^3$LO evolution, which was effectively \texttt{Candia} with the N$^3LO$ pieces tacked on top, took, for high-precision runs, upwards of 20 minutes. We can now perform the evolution in well under a minute, with even higher accuracy.}
 
 Further improvements to the \texttt{Candia-v2} computer code are currently underway and are expected to enhance both numerical precision and CPU performance. These developments will be presented in a forthcoming publication, which will represent the official new release of \texttt{Candia-v2}.
 
