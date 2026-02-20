@@ -20,14 +20,7 @@ static void usage()
 	log(LOG_INFO, "compare.cpp", "    <format>:    0: benchmark format (0.1 -> 1.0^{{-1}}");
 	log(LOG_INFO, "compare.cpp", "                 1: normal format (0.1 -> 1e-1)");
 	log(LOG_INFO, "compare.cpp", "");
-	log(LOG_INFO, "compare.cpp", "    <type>:      0: all flavors independently");
-	log(LOG_INFO, "compare.cpp", "                 1: special combos from benchmark paper");
-	log(LOG_INFO, "compare.cpp", "                 2: special combos from benchmark paper with q(-)");
-	log(LOG_INFO, "compare.cpp", "                 3: specific non-singlet and singlet distributions");
-	log(LOG_INFO, "compare.cpp", "                 4: ffns distributions");
-	log(LOG_INFO, "compare.cpp", "                 5: same as (3), but using the distributions directly");
-	log(LOG_INFO, "compare.cpp", "                    rather than reconstructing from the individual quark PDFs");
-	log(LOG_INFO, "compare.cpp", "                    requires that the other datafile contains exactly the same info as candia");
+	print_compare_types("compare.cpp");
 	log(LOG_INFO, "compare.cpp", "");
 	log(LOG_INFO, "compare.cpp", "    <diff-type>: 0: percent error (i.e treating the other file as the base)");
 	log(LOG_INFO, "compare.cpp", "                 1: percent difference (i.e. treating neither file as the base)");

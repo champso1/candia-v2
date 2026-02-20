@@ -1,6 +1,8 @@
+#include "Candia-v2/Grid.hpp"
 #include <iomanip>
 #include <iostream>
 #include <iterator>
+#include <limits>
 #include <sstream>
 #include <vector>
 #include <fstream>
@@ -22,13 +24,12 @@ static void usage()
 	cout << "[ERROR] evolve.cpp: Invalid arguments.\n";
 	cout << "Usage:\n";
 	cout << "-------------------------------------------------------\n";
-	cout << "./evolve(.exe) <order> <num_grid_points> <iterations> <trunc_idx> <kr> [title]\n";
+	cout << "./evolve(.exe) <order> <iterations> <trunc_idx> <kr> [title]\n";
 	cout << "    <order>: perturbative order to perform the calculation.\n";
-	cout << "    <num_grid_points>: number of grid points to use.\n";
 	cout << "    <iterations>: number of total iterations to perform.\n";
 	cout << "    <trunc_idx>: number of truncation iterations to perform (for each main iteration!)\n";
 	cout << "    <kr>: ratio of mu_R / mu_F.\n";
-	cout << "    [title]: optional -- gives a title for the resulting datafile\n";
+	cout << "    [title]: optional -- gives a title for the resulting datafile and logfile\n";
 	cout << "-------------------------------------------------------\n\n";
 	exit(EXIT_FAILURE);
 }
@@ -73,51 +74,50 @@ static void outputData(
 	// print them out
 	for (uint k=0; k<grid.size(); k++){
 		outfile << setw(15) << setprecision(8) << grid.at(k) << ' ';
-		outfile << setprecision(15);	
+		outfile << setprecision(std::numeric_limits<double>::max_digits10);	
 		for (uint j=0; j<DISTS; ++j)
-			outfile << setw(15) << F[j][k] << ' ';
+			outfile << F[j][k] << ' ';
 		outfile << '\n';
 	}
 }
 
 int main(int argc, char *argv[]) {
-	if (argc != 6 && argc != 7)
+	if (argc != 5 && argc != 6)
 		usage();
 
 	const uint order = stoi(argv[1]);
-	const uint num_grid_points = stoi(argv[2]);
-	const uint iterations = stoi(argv[3]);
-	const uint trunc_idx = stoi(argv[4]);
-	const double kr = stold(argv[5]);
+	const uint iterations = stoi(argv[2]);
+	const uint trunc_idx = stoi(argv[3]);
+	const double kr = stold(argv[4]);
 	const double Qf = 100.0;
 
 	std::string datafile_name{};
-	if (argc == 7)
-		datafile_name = argv[6];
+	if (argc == 6)
+		datafile_name = argv[5];
 
 	ostringstream logfile_ss{};
 	logfile_ss << ((order == 3) ? "n3lo" : (order == 2) ? "nnlo" : (order == 1) ? "nlo" : "lo");
-	logfile_ss << "-g" << num_grid_points << "-i" << iterations << "-t" << trunc_idx << "-r" << setprecision(2) << kr << ".log";
+	logfile_ss << "-i" << iterations << "-t" << trunc_idx << "-r" << setprecision(2) << kr << ".log";
 	if (!fs::exists("log")) {
 		if (!fs::create_directory("log"))
 			log(LOG_ERROR, "evolve.cpp", "Failed to create log output directory");
 	}
-	fs::path log_path = fs::current_path()/"log"/logfile_ss.str();
+	fs::path log_path = fs::current_path()/"log"/(datafile_name.empty() ? logfile_ss.str() : datafile_name);
+	log_path.replace_extension(".log");
 	std::ofstream log_output_file(log_path);
 
 	auto& log_options = getLogOptions();
-	log_options.show_debug_messages = true;
+	log_options.show_debug_messages = false;
 	log_options.show_thread_output = true;
 	log_options.use_log_output_stream = true;
 	log_options.log_output_stream = log_output_file;
 	
 	vector<double> xtab{1e-5, 1e-4, 1e-3, 1e-2, 0.1, 0.3, 0.5, 0.7, 0.9, 1.0};
-	Grid grid(xtab, num_grid_points, Grid::LOG_LIN_QUAD);
+	Grid grid(xtab, make_grid_filler<GridFillerLogLinQuad>(), {.split_interval = true});
 	auto& grid_options = grid.getOptions();
 	grid_options.use_alt_mapping = true;
 	grid_options.use_gsl_conv_routine = false;
 	grid_options.use_gsl_interp_routine = true;
-	grid.splitConvolution();
 	
 	LesHouchesDistribution dist{};
 	AlphaS alphas(order, dist.Q0(), Qf, dist.alpha0(), kr);
@@ -128,24 +128,27 @@ int main(int argc, char *argv[]) {
 
 	DGLAPSolver solver(order, grid, alphas, Qf, iterations, trunc_idx, dist, kr);
 	auto& dglap_options = solver.getOptions();
-	dglap_options.use_truncated_nonsinglet_sol = false;
+	dglap_options.use_truncated_nonsinglet_sol = true;
+	dglap_options.use_nnlo_matching_conditions_at_n3lo = false;
 	dglap_options.use_n3lo_heavyquark_asymmetry = true;
 	dglap_options.use_fortran_n3lo_splitfuncs = false;
+	dglap_options.cache_exprs = true;
 
 	auto t0 = chrono::high_resolution_clock::now();
 	auto F = solver.evolve();
 	auto tf = chrono::high_resolution_clock::now();
-	chrono::duration<double, ratio<60>> mins = tf-t0;
-	log(LOG_INFO, "evolve.cpp", "Evolution took {}.", mins);
+	chrono::duration<double, ratio<1>> secs = tf-t0;
+	log(LOG_INFO, "evolve.cpp", "Evolution took {}.", secs);
 
-	outputData(F, xtab, grid, order, num_grid_points, iterations, trunc_idx, kr, datafile_name);
+	datafile_name += ".dat";
+	outputData(F, xtab, grid, order, grid.size(), iterations, trunc_idx, kr, datafile_name);
 
 	if (grid.getOptions().use_gsl_conv_routine) {
 		auto const& gsl_conv_errors = solver.getGrid().getGSLConvolutionErrors();
 		fs::path gsl_conv_errors_log_path("gsl-conv-errors.dat");
 		std::ofstream gsl_conv_errors_log_file(gsl_conv_errors_log_path);
 		std::ranges::copy(
-			gsl_conv_errors | std::views::transform([](auto&& _t){ auto [x,out,res] = _t; return std::format("{},{},{}", x, out, res); }),
+			gsl_conv_errors | std::views::transform([](auto&& _t){ auto [x,out,res] = _t; return std::format("{} {} {}", x, out, res); }),
 			std::ostream_iterator<std::string>(gsl_conv_errors_log_file, "\n"));
 	}
 }

@@ -190,7 +190,7 @@ namespace Candia2
 		for (int i=0; i<num_blocks; ++i)
 			blocks += loading_block;
 
-		std::string all_text = std::format("{}[{}] {}: Distribution {} : Iteration {:0>2}/{} ({: >3}%) [{: <50}]",
+		std::string all_text = std::format("{}[{}] {}: [{}] Iteration {:0>2}/{} ({: >3}%) [{: <50}]",
 			log_string_colors[log_type],
 			log_string_reps[log_type], prefix,
 			thread_idx, val, end, static_cast<uint>(ratio*100.0),

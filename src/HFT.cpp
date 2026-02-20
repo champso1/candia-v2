@@ -12,8 +12,6 @@ namespace Candia2
 		}
 		
 		log(LOG_INFO, "HFT", "Treating heavy flavors: {}th quark mass threshold (mass {})", _nf+1, _alpha_s.masses(_nf+1));
-		OpMatElem::update(-_log_mur2_muf2, _nf);
-
 		// Copy of pre-threshold distributions
 		// the nf+1 dists are defined in terms of the nf dists,
 		// so we need this copy since we would otherwise be overwriting

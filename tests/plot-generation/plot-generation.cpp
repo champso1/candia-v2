@@ -14,22 +14,26 @@ using namespace Candia2;
 
 static void usage()
 {
-	log(LOG_INFO, "plot-generation", "USAGE: ./plot-generation <n3lo-datafile> <nnlo-datafile>");
+	log(LOG_INFO, "plot-generation", "USAGE: ./plot-generation <n3lo-datafile> <nnlo-datafile> <plot-name>");
 	exit(EXIT_FAILURE);
 }
 
 std::tuple<vec_type, std::vector<double>> read_datafile(fs::path const& path);
-void generate_ratios(vec_type const& n3lo_data, vec_type const& nnlo_data, std::vector<double> const& X);
+void generate_ratios(
+	vec_type const& n3lo_data, vec_type const& nnlo_data,
+	std::vector<double> const& X,
+	std::string const& title);
 
 int main(int argc, char *argv[])
 {
-	if (argc != 3) {
+	if (argc != 4) {
 		log(LOG_ERROR_NOQUIT, "plot-generation", "Invalid number of arguments: {}", argc-1);
 		usage();
 	}
 
-	fs::path n3lo_file{argv[1]};
-	fs::path nnlo_file{argv[2]};
+	fs::path n3lo_file(argv[1]);
+	fs::path nnlo_file(argv[2]);
+	std::string filename(argv[3]);
 
     auto [n3lo_data, n3lo_x] = read_datafile(n3lo_file);
 	auto [nnlo_data, nnlo_x] = read_datafile(nnlo_file);
@@ -47,7 +51,7 @@ int main(int argc, char *argv[])
 		exit(EXIT_FAILURE);
 	}
 
-	generate_ratios(n3lo_data, nnlo_data, n3lo_x);
+	generate_ratios(n3lo_data, nnlo_data, n3lo_x, filename);
 }
 
 
@@ -108,9 +112,12 @@ std::tuple<vec_type, std::vector<double>> read_datafile(fs::path const& path)
 	return {dists, X};
 }
 
-void generate_ratios(vec_type const& n3lo_data, vec_type const& nnlo_data, std::vector<double> const& X)
+void generate_ratios(
+	vec_type const& n3lo_data, vec_type const& nnlo_data,
+	std::vector<double> const& X,
+	std::string const& title)
 {
-	std::ofstream outfile{"ratio.dat"};
+	std::ofstream outfile(title);
     const uint N = n3lo_data.at(0).size();
 	const uint J = n3lo_data.size();
 	for (uint k=0; k<N; ++k) {

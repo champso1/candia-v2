@@ -26,19 +26,21 @@
 namespace
 {
 	inline constexpr char const* CANDIA_OPENING_TEXT = 
-		"==================================================\n"
+		"============================================================\n"
     	"| \033[1mCandia-v2\033[0m — DGLAP evolution up to \033[1mN³LO\033[0m\n"
     	"| Based on Candia (C version)\n"
-    	"| \033[2mPlease cite arXiv:2512.22667 "
-    	"| (Hampson, Guzzi)\033[0m\n"
-		"==================================================\n";
+    	"| \033[2mPlease cite \033[4marXiv:2512.22667\033[0m\033[2m for this version and\033[0m\n"
+		"| \033[2m\033[4marXiv:0803.0462\033[0m\033[2m for Candia-v1\033[0m\n"
+    	"| \033[2m(Hampson, Guzzi)\033[0m\n"
+		"============================================================\n";
 		inline constexpr char const* CANDIA_CLOSING_TEXT = 
-		"==================================================\n"
+		"============================================================\n"
     	"| \033[1mCandia-v2\033[0m — DGLAP evolution up to \033[1mN³LO\033[0m\n"
     	"| Thanks for using this program!\n"
-    	"| \033[2mPlease cite arXiv:2512.22667 "
-    	"| (Hampson, Guzzi)\033[0m\n"
-		"==================================================\n";
+        "| \033[2mPlease cite \033[4marXiv:2512.22667\033[0m\033[2m for this version and\033[0m\n"
+		"| \033[2m\033[4marXiv:0803.0462\033[0m\033[2m for Candia-v1\033[0m\n"
+    	"| \033[2m(Hampson, Guzzi)\033[0m\n"
+		"============================================================\n";
 
 }
 
@@ -417,6 +419,7 @@ namespace Candia2
 		log(LOG_INFO, "DGLAP", "Evolving to {} flavors.", _alpha_s.nff());
 		using out_type = decltype(_F);
 		loadAllExpressions();
+		_grid.setupMappings();
 
 		if (options.use_truncated_nonsinglet_sol)
 			setupTruncatedDistributions();
@@ -449,6 +452,13 @@ namespace Candia2
 			_alpha_s.update(_nf);
 			log(LOG_DEBUG, "DGLAP", "Loading relevant splitting function / OME values into cache");
 			SplittingFunction::update(_nf, _alpha_s.beta0(), _log_muf2_mur2);
+			OpMatElem::update(-_log_mur2_muf2, _nf);
+			if (getOptions().cache_exprs) {
+				log(LOG_INFO, "DGLAP", "Loading all expression values into caches...");
+				_grid.useCachedExpressions();
+				for (auto& [_,expr] : _expressions)
+					expr->fill(_grid.points(), _grid.abscissae(), _grid.getMappings());
+			}
 			log(LOG_DEBUG, "DGLAP", "Retrieving values of alpha_s, and calculating all logarithm factors");
 			bool resum_tab = _alpha_s.resumTabulated();
 			bool resum_threshold = !resum_tab;

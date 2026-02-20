@@ -15,98 +15,48 @@
 
 namespace Candia2
 {
-	Grid::Grid(grid_type const& xtab, uint nx, uint grid_fill_type)
-		: _points(nx), _ntab{}, _xtab{xtab}, _interval_sizes{DEFAULT_GAULEG_POINTS},
-		  _Xi(1, gauleg_type(DEFAULT_GAULEG_POINTS, 0.0)), _Wi(1, gauleg_type(DEFAULT_GAULEG_POINTS, 0.0))
+	uint GridFillerLin::fill(std::vector<double>& points)
 	{
-		if (!std::ranges::is_sorted(xtab)) {
-			log(LOG_WARNING, "Grid", "xtab array was not sorted. will sort it and continue");
-			std::ranges::sort(_xtab);
-		}
+		// this is to make the intervals less "clean"
+		// sometimes, when they are "clean", the linear mapping places points basically right on
+		// the xtab points, like 0.3, but off by a delta which is small enough to mess up interpolation
+		// if this number is a bit uneven, the hope is that points won't be placed so "cleanly" near
+		// xtabbed points, avoiding these errors
+		double max = 1.0;
 
-		_workspaces.reserve(DISTS);
-		_interps.reserve(DISTS);
-		_interp_accels.reserve(DISTS);
-		for (uint i=0; i<DISTS; ++i)
-			_workspaces.emplace_back(gsl::make_default_workspace());
-
-	    assert(gsl::error_handler_set, "GSL error handler failed to set correctly.");
-		
-		switch (grid_fill_type)
-		{
-			case LOG: initGridLog(_xtab, nx); break;
-			case LOG_LIN: initGridLogLin(_xtab, nx); break;
-			case LIN: initGridLin(_xtab, nx); break;
-			case LOG_LIN_QUAD: initGridLogLinQuad(_xtab, nx); break;
-			default:
-				log(LOG_ERROR, "Grid", "Invalid grid fill type. Found {}, expected 1(LOG) or 2(LOG_LIN).", grid_fill_type);
+		points.clear();
+		for (uint k=0; k<size; ++k) {
+		    double x = min + (max-min)*k/static_cast<double>(size);
+			points.emplace_back(x);
 		}
 		
-		initGauLeg(0.0, 1.0, _Xi[0], _Wi[0]);
-	}
-
-	Grid::Grid(Grid& other)
-		: OptionsBase<GridOptions>{other},
-		_points{other._points}, _ntab{other._ntab}, _xtab{other._xtab},
-		_split_interval{other._split_interval},
-		_Xi{other._Xi}, _Wi{other._Wi},
-		_interval_sizes{other._interval_sizes}
-	{
-		_workspaces.reserve(DISTS);
-		_interps.reserve(DISTS);
-		_interp_accels.reserve(DISTS);
-		for (uint i=0; i<DISTS; ++i)
-			_workspaces.emplace_back(gsl::make_workspace(other._workspaces[i]->limit));
-
-		if (!other._interps.empty()) {
-			for (uint i=0; i<DISTS; ++i) {
-				_interps.emplace_back(gsl::make_interp(other._interps[i]->size));
-				_interp_accels.emplace_back(gsl::make_interp_accel());
+		std::set<double> points_set(points.begin(), points.end());
+		points_set.insert(xtab.begin(), xtab.end());
+		points = std::vector<double>(points_set.begin(), points_set.end());
+		
+		ntab.clear();
+		for (double x : xtab) {
+			if (auto it = std::find(points.begin(), points.end(), x); it != points.end()) {
+				ntab.emplace_back(std::distance(points.begin(), it));
+				continue;
 			}
 		}
-	}
-	
-	void Grid::operator=(Grid& other)
-	{
-		_points = other._points;
-		_ntab = other._ntab;
-		_xtab = other._xtab;
-		_split_interval = other._split_interval;
-		_Xi = other._Xi;
-		_Wi = other._Wi;
-		_interval_sizes = other._interval_sizes;
-		options = other.options;
 
-		_workspaces.clear();
-		_interps.clear();
-		_interp_accels.clear();
-		
-		_workspaces.reserve(DISTS);
-		_interps.reserve(DISTS);
-		_interp_accels.reserve(DISTS);
-		for (uint i=0; i<DISTS; ++i)
-			_workspaces.emplace_back(gsl::make_workspace(other._workspaces[i]->limit));
-
-		if (!other._interps.empty()) {
-			for (uint i=0; i<DISTS; ++i) {
-				_interps.emplace_back(gsl::make_interp(other._interps[i]->size));
-				_interp_accels.emplace_back(gsl::make_interp_accel());
-			}
-		}
+		return points.size();
 	}
 
-	void Grid::initGridLog(grid_type const& xtab, uint nx)
+	uint GridFillerLog::fill(std::vector<double>& points)
 	{
 		const uint xtab_len = xtab.size();
 		std::vector<double> Ntab(xtab_len);
-	    std::vector<int> ntab(xtab_len);
+		ntab = std::vector<int>(xtab_len);
 
 		double temp = -std::log10(xtab[0]);
 
 		for (uint i=1; i<xtab_len; i++)
-			Ntab[i] = (double)(nx-1)*std::log10(xtab[i]/xtab[i-1])/temp;
+			Ntab[i] = (double)(size-1)*std::log10(xtab[i]/xtab[i-1])/temp;
 
-		ntab[0] = nx-1;
+		ntab[0] = size-1;
 
 		for (uint i=1; i<xtab_len; i++) {
 			ntab[i] =  (int)Ntab[i];
@@ -159,156 +109,181 @@ namespace Candia2
 			lstep = std::log10(xtab[i+1]/xtab[i])/(double)(ntab[i+1]-ntab[i]);
 
 			for (int j=ntab[i]; j<ntab[i+1]; j++)
-				_points.at(j) = xtab[i]*std::pow(10.0, lstep*(double)(j-ntab[i]));
+				points.at(j) = xtab[i]*std::pow(10.0, lstep*(double)(j-ntab[i]));
 		}
 
-		_points.at(nx-1) = 1.0;
-		_ntab = ntab;
+		points.at(size-1) = 1.0;
 
-		return;
+		return points.size();
 	}
 
-
-
-	void Grid::initGridLogLin(grid_type const& xtab, uint nx)
+	uint GridFillerLogLin::fill(std::vector<double>& points)
 	{
-		// this is to make the intervals less "clean"
-		// sometimes, when they are "clean", the linear mapping places points basically right on
-		// the xtab points, like 0.3, but off by a delta which is small enough to mess up interpolation
-		// if this number is a bit uneven, the hope is that points won't be placed so "cleanly" near
-		// xtabbed points, avoiding these errors
-		nx += 1;
-
-		double log_min = std::log10(1e-5);
-		double log_max = std::log10(0.1);
+		double log_min = std::log10(min);
+		double log_max = std::log10(pivot);
 		uint num_log_intervals = std::round(log_max-log_min);
 		double dlog = (log_max-log_min)/static_cast<double>(num_log_intervals);
-		uint log_interval_size = nx/num_log_intervals;
+		uint log_interval_size = log_size/num_log_intervals;
 
-		double lin_min = 0.1;
+		double lin_min = pivot;
 		double lin_max = 1.0;
 
-		_points.clear();
+		points.clear();
 		for (uint i=0; i<num_log_intervals; ++i) {
 			double l0 = log_min + i*dlog;
 			double l1 = l0 + dlog;
 			for (uint k=0; k<log_interval_size; ++k) {
 				double l = l0 + (l1-l0)*k/static_cast<double>(log_interval_size);
-				_points.emplace_back(std::pow(10, l));
+				points.emplace_back(std::pow(10, l));
 			}
 		}
 		
-		for (uint k=0; k<nx; ++k) {
-		    double x = lin_min + (lin_max-lin_min)*k/static_cast<double>(nx);
-			_points.emplace_back(x);
+		for (uint k=0; k<lin_size; ++k) {
+		    double x = lin_min + (lin_max-lin_min)*k/static_cast<double>(lin_size);
+			points.emplace_back(x);
 		}
 		
-		std::set<double> points_set(_points.begin(), _points.end());
+		std::set<double> points_set(points.begin(), points.end());
 		points_set.insert(xtab.begin(), xtab.end());
-		_points = std::vector<double>(points_set.begin(), points_set.end());
+		points = std::vector<double>(points_set.begin(), points_set.end());
 		
-		_ntab.clear();
+		ntab.clear();
 		for (double x : xtab) {
-			if (auto it = std::find(_points.begin(), _points.end(), x); it != _points.end()) {
-				_ntab.emplace_back(std::distance(_points.begin(), it));
+			if (auto it = std::find(points.begin(), points.end(), x); it != points.end()) {
+				ntab.emplace_back(std::distance(points.begin(), it));
 				continue;
 			}
 		}
+
+		return points.size();
 	}
 
-	void Grid::initGridLin(grid_type const& xtab, uint nx)
+	uint GridFillerLogLinQuad::fill(std::vector<double>& points)
 	{
-		// this is to make the intervals less "clean"
-		// sometimes, when they are "clean", the linear mapping places points basically right on
-		// the xtab points, like 0.3, but off by a delta which is small enough to mess up interpolation
-		// if this number is a bit uneven, the hope is that points won't be placed so "cleanly" near
-		// xtabbed points, avoiding these errors
-		nx += 1;
-		double lin_min = 1e-5;
-		double lin_max = 1.0;
-
-		_points.clear();
-		
-		for (uint k=0; k<nx; ++k) {
-		    double x = lin_min + (lin_max-lin_min)*k/static_cast<double>(nx);
-			_points.emplace_back(x);
-		}
-		
-		std::set<double> points_set(_points.begin(), _points.end());
-		points_set.insert(xtab.begin(), xtab.end());
-		_points = std::vector<double>(points_set.begin(), points_set.end());
-		
-		_ntab.clear();
-		for (double x : xtab) {
-			if (auto it = std::find(_points.begin(), _points.end(), x); it != _points.end()) {
-				_ntab.emplace_back(std::distance(_points.begin(), it));
-				continue;
-			}
-		}
-	}
-
-	void Grid::initGridLogLinQuad(grid_type const& xtab, uint nx)
-	{
-		// this is to make the intervals less "clean"
-		// sometimes, when they are "clean", the linear mapping places points basically right on
-		// the xtab points, like 0.3, but off by a delta which is small enough to mess up interpolation
-		// if this number is a bit uneven, the hope is that points won't be placed so "cleanly" near
-		// xtabbed points, avoiding these errors
-		nx += 1;
-
-		double log_min = std::log10(1e-5);
-		double log_max = std::log10(0.1);
-		uint num_log = 51;
+		double log_min = std::log10(min);
+		double log_max = std::log10(pivot1);
 		uint num_log_intervals = std::round(log_max-log_min);
 		double dlog = (log_max-log_min)/static_cast<double>(num_log_intervals);
-		uint log_interval_size = num_log/num_log_intervals;
+		uint log_interval_size = log_size/num_log_intervals;
 
-		_points.clear();
+		points.clear();
 		for (uint i=0; i<num_log_intervals; ++i) {
 			double l0 = log_min + i*dlog;
 			double l1 = l0 + dlog;
 			for (uint k=0; k<log_interval_size; ++k) {
 				double l = l0 + (l1-l0)*k/static_cast<double>(log_interval_size);
-				_points.emplace_back(std::pow(10, l));
+				points.emplace_back(std::pow(10, l));
 			}
 		}
 
-		double lin_min = 0.1;
-		double lin_max = 0.9;
-		uint num_lin = 26;
+		double lin_min = pivot1;
+		double lin_max = pivot2;
 		
-		for (uint k=0; k<num_lin; ++k) {
-		    double x = lin_min + (lin_max-lin_min)*k/static_cast<double>(num_lin);
-			_points.emplace_back(x);
+		for (uint k=0; k<lin_size; ++k) {
+		    double x = lin_min + (lin_max-lin_min)*k/static_cast<double>(lin_size);
+			points.emplace_back(x);
 		}
 
-		double quad_min = 0.9;
+		double quad_min = pivot2;
 		double quad_max = 1.0;
-		uint num_quad = 26;
 
-		for (uint k=0; k<num_quad; ++k) {
-			double f = 1.0 - k/static_cast<double>(num_quad);
+		for (uint k=0; k<quad_size; ++k) {
+			double f = 1.0 - k/static_cast<double>(quad_size);
 		    double x = quad_max - (quad_max-quad_min)*f*f;
-			_points.emplace_back(x);
+			points.emplace_back(x);
 		}
 		
-		std::set<double> points_set(_points.begin(), _points.end());
+		std::set<double> points_set(points.begin(), points.end());
 		points_set.insert(xtab.begin(), xtab.end());
-		_points = std::vector<double>(points_set.begin(), points_set.end());
+		points = std::vector<double>(points_set.begin(), points_set.end());
 		
-		_ntab.clear();
+		ntab.clear();
 		for (double x : xtab) {
-			if (auto it = std::find(_points.begin(), _points.end(), x); it != _points.end()) {
-				_ntab.emplace_back(std::distance(_points.begin(), it));
+			if (auto it = std::find(points.begin(), points.end(), x); it != points.end()) {
+				ntab.emplace_back(std::distance(points.begin(), it));
 				continue;
 			}
 		}
+		
+		return points.size();
+	}
+	
+	Grid::Grid(grid_type const& xtab, grid_filler_type grid_filler, GaussLegendreArgs const& gauleg_args)
+		: _xtab{xtab}, _gauleg_args{gauleg_args},
+		  _Xi(1, gauleg_type(gauleg_args.default_gauss_points, 0.0)),
+		  _Wi(1, gauleg_type(gauleg_args.default_gauss_points, 0.0))
+	{
+		if (!std::ranges::is_sorted(xtab)) {
+			log(LOG_WARNING, "Grid", "xtab array was not sorted. will sort it and continue");
+			std::ranges::sort(_xtab);
+		}
+		
+		grid_filler->xtab = xtab;
+		grid_filler->fill(_points);
+		_ntab = grid_filler->ntab;
 
+		_workspaces.reserve(DISTS);
+		_interps.reserve(DISTS);
+		_interp_accels.reserve(DISTS);
 		for (uint i=0; i<DISTS; ++i) {
+			_workspaces.emplace_back(gsl::make_default_workspace());
 			_interps.emplace_back(gsl::make_interp(_points.size()));
 			_interp_accels.emplace_back(gsl::make_interp_accel());
 		}
+
+	    assert(gsl::error_handler_set, "GSL error handler failed to set correctly.");
+		
+		initGauLeg(grid_filler->min, 1.0, _Xi[0], _Wi[0]);
+		if (gauleg_args.split_interval) {
+
+			for (auto [lo,hi,s] : gauleg_args.intervals) {
+				gauleg_type X(s, 0.0), W(s, 0.0);
+				initGauLeg(lo, hi, X, W);
+				_Xi.emplace_back(std::move(X));
+				_Wi.emplace_back(std::move(W));
+			}
+		}
 	}
+
+	Grid::Grid(Grid& other)
+		: OptionsBase<GridOptions>{other},
+		_points{other._points}, _ntab{other._ntab}, _xtab{other._xtab},
+		_gauleg_args{other._gauleg_args},
+		_Xi{other._Xi}, _Wi{other._Wi}
+	{
+		_workspaces.reserve(DISTS);
+		_interps.reserve(DISTS);
+		_interp_accels.reserve(DISTS);
+		for (uint i=0; i<DISTS; ++i) {
+			_workspaces.emplace_back(gsl::make_workspace(other._workspaces[i]->limit));
+			_interps.emplace_back(gsl::make_interp(other._interps[i]->size));
+			_interp_accels.emplace_back(gsl::make_interp_accel());
+		}
+	}
+	
+	void Grid::operator=(Grid& other)
+	{
+		_points = other._points;
+		_ntab = other._ntab;
+		_xtab = other._xtab;
+		_Xi = other._Xi;
+		_Wi = other._Wi;
+		options = other.options;
+
+		_workspaces.clear();
+		_interps.clear();
+		_interp_accels.clear();
+		
+		_workspaces.reserve(DISTS);
+		_interps.reserve(DISTS);
+		_interp_accels.reserve(DISTS);
+		for (uint i=0; i<DISTS; ++i) {
+			_workspaces.emplace_back(gsl::make_workspace(other._workspaces[i]->limit));
+			_interps.emplace_back(gsl::make_interp(other._interps[i]->size));
+			_interp_accels.emplace_back(gsl::make_interp_accel());
+		}
+	}
+
 
 	void Grid::initGauLeg(value_type x1, value_type x2, gauleg_type& Xi, gauleg_type& Wi)
 	{
@@ -361,75 +336,6 @@ namespace Candia2
 		}
 	}
 
-	void Grid::splitConvolution(
-		std::vector<value_type> const& intervals,
-		std::vector<value_type> const& sizes)
-	{
-		// this means we just accept the default splitting
-		if (intervals.empty() && sizes.empty()) {
-			log(LOG_INFO, "Grid", "Using default set of intervals");
-			_split_interval = true;
-		    return;
-		} else if ((intervals.empty() && !sizes.empty()) || (!intervals.empty() && sizes.empty()))
-			log(LOG_ERROR, "Grid::splitConvolution()", "Must provide either both intervals and sizes or neither (for default).");
-		
-		if (intervals.size()-1 != sizes.size())
-			log(LOG_ERROR, "Grid::splitConvolution()", "Invalid number of element in the intervals and sizes vectors.");
-		
-		auto num_intervals = intervals.size()-1;
-		if (num_intervals > 5)
-			log(LOG_WARNING, "Grid::splitConvolution()", ">5 convolution intervals is a little excessive.");
-		
-		if (auto it = std::find_if(intervals.begin(), intervals.end(), [](double x) { return (x < 1e-7) || (x > 1.0); });
-			it != std::ranges::end(intervals))
-		{
-			log(LOG_ERROR, "Grid::splitConvolution()", "A provided point ({}) is outside the range [1e-7, 1.0]", *it);
-		}
-
-		_Xi.clear();
-		_Wi.clear();
-		_interval_sizes.clear();
-		{
-			gauleg_type X(DEFAULT_GAULEG_POINTS, 0.0), W(DEFAULT_GAULEG_POINTS, 0.0);
-			initGauLeg(0, 1.0, X, W);
-			_Xi.emplace_back(X);
-			_Wi.emplace_back(W);
-		}
-		
-		auto points_per_interval = size()/num_intervals;
-		
-		auto it = intervals.begin() + 1;
-		auto it_size = sizes.begin();
-		while (it != intervals.end() && it_size != sizes.end()) {
-			auto prev_x = *(it-1);
-			auto new_x = *it;
-			auto size = *it_size;
-			gauleg_type Xi(size, 0.0), Wi(size, 0.0);
-			initGauLeg(prev_x, new_x, Xi, Wi);
-			_Xi.emplace_back(Xi);
-			_Wi.emplace_back(Wi);
-			_interval_sizes.emplace_back(size);
-			
-			++it;
-			++it_size;
-		}
-
-		log(LOG_DEBUG, "Grid::splitConvolution", "Using the following sizes: {}", vec_to_str(_interval_sizes));
-		auto tie =
-			std::views::iota(0)
-			| std::views::take(num_intervals)
-			| std::views::transform([&](int i){ return std::make_tuple(i, _Xi[i+1], _Wi[i+1], _interval_sizes[i]); });
-		for (auto const& [i, X, W, s] : tie) {
-			auto min = intervals[i];
-			auto max = intervals[i+1];
-			
-			log(LOG_DEBUG, "Grid::splitConvolution()", "Interval of size {} in range [{}, {}]", s, min, max);
-		}
-		
-		assert(_Xi.size() == _Wi.size() && _Xi.size() == _interval_sizes.size()+1, "Failed to split convolution intervals.");
-		_split_interval = true;
-	}
-
     int Grid::interpFindIdx(value_type x)
 	{
 		const static int n = static_cast<int>(size());
@@ -446,7 +352,7 @@ namespace Candia2
 		return k;
 	}
 
-	Grid::value_type Grid::interpolate(arraygrid_type& yy, value_type x)
+	Grid::value_type Grid::interpolate(ArrayGrid& yy, value_type x)
 	{
 		const static int n = 2*INTERP_POINTS;
 		int ns=0;
@@ -510,6 +416,19 @@ namespace Candia2
 
 		double Ak = A[k];
 		double a = x/y;
+
+		auto reg = [&](double y) {
+			if (g.usingCachedExpressions())
+				return E.regular(y);
+			else
+				return E.calcRegular(y);
+		};
+		auto plus = [&](double y) {
+			if (g.usingCachedExpressions())
+				return E.plus(y);
+			else
+				return E.calcPlus(y);
+		};
 		
 		double res = 0.0;
 		{ // regular piece
@@ -525,9 +444,54 @@ namespace Candia2
 		return res;
 	}
 
+	Grid::mapping_type const& Grid::getMappings()
+	{
+		if (!_mappings.empty())
+			return _mappings;
+
+		if (!getOptions().use_alt_mapping) {
+			mapping_type::value_type mapping = [](double x, double z) {
+				double y = std::pow(x, z);
+				double J = y*std::log(x);
+				return std::make_pair(y, J);
+			};
+			_mappings.emplace_back(std::move(mapping));
+			return _mappings;
+		}
+
+		// [x, 0.1]
+		mapping_type::value_type mapping1 = [&](double x, double z) {
+			auto a = 0.1/x;
+			return std::make_pair(x*std::pow(a, z), x*std::pow(a, z)*std::log(a));
+		};
+
+		// [0.1,0.9]
+		mapping_type::value_type mapping2 = [&](double x, double z) {
+			return std::make_pair(0.1+0.8*z, 0.8);
+		};
+		mapping_type::value_type mapping2x = [&](double x, double z) {
+			return std::make_pair(x+(0.9-x)*z, 0.9-x);
+		};
+
+		// [0.9, 1.0]
+		mapping_type::value_type mapping3 = [&](double x, double z) {
+			return std::make_pair(1.0-0.1*std::pow(1.0-z, 3), 0.3*(1.0-z)*(1.0-z));
+		};
+		mapping_type::value_type mapping3x = [&](double x, double z) {
+			return std::make_pair(1.0-(1.0-x)*std::pow(1.0-z, 3), 3.0*(1-x)*(1.0-z)*(1.0-z));
+		};
+
+		_mappings.emplace_back(std::move(mapping1));
+		_mappings.emplace_back(std::move(mapping2));
+		_mappings.emplace_back(std::move(mapping2x));
+		_mappings.emplace_back(std::move(mapping3));
+		_mappings.emplace_back(std::move(mapping3x));
+		return _mappings;
+	}
+
 	Grid::value_type Grid::mappingFunctionBase(
 		uint k, value_type x, auto&& yandjaccessor,
-		expression_type& E, arraygrid_type& A,
+		Expression& E, ArrayGrid& A,
 		value_type eplus1,
 		gauleg_type const& X, gauleg_type const& W)
 	{
@@ -539,6 +503,19 @@ namespace Candia2
 		auto const* ya = A.base().data();
 		gsl_interp_accel_reset(accel);
 		gsl_interp_init(interp, xa, ya, size());
+
+		auto reg = [&](double y) {
+			if (_use_cached_expressions)
+				return E.regular(y);
+			else
+				return E.calcRegular(y);
+		};
+		auto plus = [&](double y) {
+			if (_use_cached_expressions)
+				return E.plus(y);
+			else
+				return E.calcPlus(y);
+		};
 		
 		double ak = A[k];
 		double out = 0.0;
@@ -548,10 +525,10 @@ namespace Candia2
 			double w = W[i];
 			auto [y, J] = yandjaccessor(x, z);
 			double a = x/y;
-			double eregy = E.calcRegular(y);
+			double eregy = reg(y);
 			double interpa = gsl_interp_eval(interp, xa, ya, a, accel);
 			// double interpa = interpolate(A, a);
-			double eplusy = E.calcPlus(y);
+			double eplusy = plus(y);
 			
 			out += w*J * eregy*interpa;
 			out += w*J * (1.0/(1.0-y))*(eplusy*interpa - eplus1*ak);
@@ -559,7 +536,7 @@ namespace Candia2
 		return out;
 	}
 
-	Grid::value_type Grid::convolution(arraygrid_type& A, expression_type &E, uint k)
+	Grid::value_type Grid::convolution(ArrayGrid& A, Expression &E, uint k)
 	{
 		static int print_count = 100;
 
@@ -567,61 +544,33 @@ namespace Candia2
 		double d1 = 1.0-x;
 		double d2 = x*d1;
 		double logx =  std::log(x);
-		double eplus1 = E.calcPlus(1.0);
-		double ed1 = E.calcDelta(1.0);
+		double eplus1 = _use_cached_expressions ? E.plus(1.0) : E.calcPlus(1.0);
+		double ed1 = _use_cached_expressions ? E.delta(1.0) : E.calcDelta(1.0);
 		double res = (eplus1*std::log1p(-x) + ed1) * A[k];
 
-		auto gauleg_conv = [&](gauleg_type const& X, gauleg_type const& W) {
-			for (uint i=0; i<X.size(); i++) {
-				double z = X[i];
-				double w = W[i];
-
-				double y = std::pow(x, z);
-				double a = std::pow(x, 1.0-z);
-
-				double interpa = interpolate(A, a);
-
-				double eregy = E.calcRegular(y);
-				double eplusy = E.calcPlus(y);
-
-				res -= w*logx * y*eregy*interpa;
-				res -= w*logx * y*(eplusy*interpa - eplus1*A[k])/(1.0-y);
-			}
-		};
-
 		// we use this nice convenience view for skipping the first gauleg points/weights
-		// which are the default 0-1 that is used directly
-		static auto gauleg_enum = [&](uint d) {
-			return 
+		// if we have some other intervals setup
+		// since the first set of points are default 0-1
+		static auto gauleg_enum =
 				std::views::iota(1)
-				| std::views::take(_Xi.size()-1-d)
+				| std::views::take(_Xi.size()-1)
 				| std::views::transform([&](int i){ return std::make_tuple(i, _Xi.begin()+i, _Wi.begin()+i); });
-		};
 		
-		if (!_split_interval) {
-			gauleg_conv(_Xi[0], _Wi[0]);
+		if (!_gauleg_args.split_interval) {
+			auto const& mapping = _mappings[0];
+			res += mappingFunctionBase(k, x, mapping, E, A, eplus1, _Xi[0], _Wi[0]);
 		} else {
 			if (!options.use_gsl_conv_routine && !options.use_alt_mapping) {
-				for (auto const& [i, X, W] : gauleg_enum(0))
-					gauleg_conv(*X, *W);
+				auto const& mapping = _mappings[0];
+				for (auto const& [i, X, W] : gauleg_enum)
+				    res += mappingFunctionBase(k, x, mapping, E, A, eplus1, *X, *W);
 
 			} else if (!options.use_gsl_conv_routine && options.use_alt_mapping) {
-				// [x, 0.1]
-			    static auto mapping1 = [&](double x, double z){
-					auto a = 0.1/x;
-					return std::make_pair(x*std::pow(a, z), x*std::pow(a, z)*std::log(a)); };
-
-				// [0.1,0.9]
-				static auto mapping2 = [&](double x, double z){
-					return std::make_pair(0.1+0.8*z, 0.8); };
-				static auto mapping2x = [&](double x, double z){
-					return std::make_pair(x+(0.9-x)*z, 0.9-x); };
-
-				// [0.9, 1.0]
-				static auto mapping3 = [&](double x, double z){
-					return std::make_pair(1.0-0.1*std::pow(1.0-z, 3), 0.3*(1.0-z)*(1.0-z)); };
-				static auto mapping3x = [&](double x, double z){
-					return std::make_pair(1.0-(1.0-x)*std::pow(1.0-z, 3), 3.0*(1-x)*(1.0-z)*(1.0-z)); };
+			    auto const& mapping1 = _mappings[0];
+				auto const& mapping2 = _mappings[1];
+				auto const& mapping2x = _mappings[2];
+				auto const& mapping3 = _mappings[3];
+				auto const& mapping3x = _mappings[4];
 
 				if (x < 0.1) {
 					res += mappingFunctionBase(k, x, mapping1, E, A, eplus1, _Xi[0], _Wi[0]);
@@ -631,10 +580,7 @@ namespace Candia2
 					res += mappingFunctionBase(k, x, mapping2x, E, A, eplus1, _Xi[0], _Wi[0]);
 					res += mappingFunctionBase(k, x, mapping3, E, A, eplus1, _Xi[0], _Wi[0]);
 				} else {
-					if ((1.0-x) < 1e-10)
-						res += 0;
-					else
-						res += mappingFunctionBase(k, x, mapping3x, E, A, eplus1, _Xi[0], _Wi[0]);
+					res += mappingFunctionBase(k, x, mapping3x, E, A, eplus1, _Xi[0], _Wi[0]);
 				}
 			} else {
 				GSLIntegrationParams p{

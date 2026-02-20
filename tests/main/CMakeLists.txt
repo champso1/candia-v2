@@ -18,6 +18,7 @@ set(resources
   hoppet-data
   tex-table
   benchmark-data
+  backup.sh
 )
 file(COPY ${resources} DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 

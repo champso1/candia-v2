@@ -77,10 +77,10 @@ enum CompareType
 	SPECIAL_COMBOES_NS_AND_S = 3,
 	SPECIAL_COMBOES_FFNS = 4,
 };
-static std::vector<std::string> cols_all_flavors{"g", "xu", "xs", "xc", "xb", "xub", "xsb", "xcb", "xbb"};
-static std::vector<std::string> cols_special_combos{"xuv", "xdv", "xL-", "xL+", "xs+", "xc+", "xb+", "xg"};
-static std::vector<std::string> cols_special_combos_qm{"xuv", "xdv", "xL-", "xL+", "xs+", "xc+", "xb+", "xg", "xq(-)"};
-static std::vector<std::string> cols_special_combos_ns_and_s{"xq_{NS,1d}^{(-)}", "xq_{NS,1c}^{(-)}", "xq_{NS,1b}^{(-)}", "xq_{NS,1d}^{(+)}", "xq_{NS,1c}^{(+)}", "xq_{NS,1b}^{(+)}", "xq^{(-)}", "xq^{(+)}", "xg"};
+static std::vector<std::string> cols_all_flavors{"g", "xu", "xs", "xc", "xb", "x\\bar{u}", "x\\bar{s}", "x\\bar{c}", "x\\bar{b}"};
+static std::vector<std::string> cols_special_combos{"xuv", "xdv", "xL_-", "xL_+", "xs_+", "xc_+", "xb_+", "xg"};
+static std::vector<std::string> cols_special_combos_qm{"xu_v", "xd_v", "x\\bar{u}", "x\\bar{d}", "xL_+", "xs_+", "xc_+", "xb_+", "xg"};
+static std::vector<std::string> cols_special_combos_ns_and_s{"xu_+", "xc_+", "xb_+", "xq_{NS,1d}^{(+)}", "xq_{NS,1c}^{(+)}", "xq_{NS,1b}^{(+)}", "xq^{(-)}", "xq^{(+)}", "xg"};
 static std::vector<std::string> cols_special_combos_ffns{"xuv", "xdv", "xL-", "xL+", "xs-", "xs+", "xc+", "xg"};
 static std::vector<std::reference_wrapper<const std::vector<std::string>>> cols{
 	std::cref(cols_all_flavors),
@@ -90,6 +90,18 @@ static std::vector<std::reference_wrapper<const std::vector<std::string>>> cols{
 	std::cref(cols_special_combos_ffns),
 	std::cref(cols_special_combos_ns_and_s),
 };
+
+static void print_compare_types(std::string_view filename)
+{
+	log(LOG_INFO, filename, "    <type>:      0: all flavors independently");
+	log(LOG_INFO, filename, "                 1: special combos from benchmark paper");
+	log(LOG_INFO, filename, "                 2: special combos from benchmark paper to avoid cancellations");
+	log(LOG_INFO, filename, "                 3: specific non-singlet and singlet distributions");
+	log(LOG_INFO, filename, "                 4: ffns distributions");
+	log(LOG_INFO, filename, "                 5: same as (3), but using the distributions directly");
+	log(LOG_INFO, filename, "                    rather than reconstructing from the individual quark PDFs");
+	log(LOG_INFO, filename, "                    requires that the other datafile contains exactly the same info as candia");
+}
 
 template <typename T>
 static std::pair<xtab_type<T>, dist_type<T>> read_candia_file(fs::path const &path, int size)
@@ -176,16 +188,13 @@ static dist_type<T> fix_dists(dist_type<T> const& dists, int type)
 			for (int k=0; k<dists_fixed.at(0).size(); ++k) {
 				dists_fixed.at(0).at(k) = dists[1][k] - dists[6+1][k];
 				dists_fixed.at(1).at(k) = dists[2][k] - dists[6+2][k];
-				dists_fixed.at(2).at(k) = dists[2+6][k] - dists[6+1][k];
-				dists_fixed.at(3).at(k) = 2.0*(dists[2+6][k] + dists[6+1][k]);
-				dists_fixed.at(4).at(k) = dists[3][k] + dists[6+3][k];
-				dists_fixed.at(5).at(k) = dists[4][k] + dists[6+4][k];
-				dists_fixed.at(6).at(k) = dists[5][k] + dists[6+5][k];
-				dists_fixed.at(7).at(k) = dists[0][k];
-				dists_fixed.at(8).at(k) = 0.0;
-
-				for (uint j=1; j<=6; ++j)
-					dists_fixed.at(8).at(k) += dists[j][k] - dists[j+6][k];
+				dists_fixed.at(2).at(k) = dists[1+6][k];
+				dists_fixed.at(3).at(k) = dists[2+6][k];
+				dists_fixed.at(4).at(k) = 2.0*(dists[2+6][k] + dists[6+1][k]);
+				dists_fixed.at(5).at(k) = dists[3][k] + dists[3+6][k];
+				dists_fixed.at(6).at(k) = dists[4][k] + dists[4+6][k];
+				dists_fixed.at(7).at(k) = dists[5][k] + dists[5+6][k];
+				dists_fixed.at(8).at(k) = dists[0][k];
 			}
 			return dists_fixed;
 		}; break;
@@ -230,9 +239,10 @@ static dist_type<T> fix_dists(dist_type<T> const& dists, int type)
 		case 5: {
 			dist_type<T> dists_fixed(ncols, std::vector<T>(dists.at(0).size(), 0.0));
 			for (int k=0; k<dists_fixed.at(0).size(); ++k) {
-			    dists_fixed.at(0).at(k) = dists[26][k];
-				dists_fixed.at(1).at(k) = dists[28][k];
-				dists_fixed.at(2).at(k) = dists[29][k];
+			    dists_fixed.at(0).at(k) = dists[19][k];
+				dists_fixed.at(1).at(k) = dists[22][k];
+				dists_fixed.at(2).at(k) = dists[23][k];
+				
 				dists_fixed.at(3).at(k) = dists[32][k];
 				dists_fixed.at(4).at(k) = dists[34][k];
 				dists_fixed.at(5).at(k) = dists[35][k];
