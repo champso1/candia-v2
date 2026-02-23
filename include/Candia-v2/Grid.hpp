@@ -137,8 +137,9 @@ namespace Candia2
 		double pivot1{0.1}, pivot2{0.9};
 
 		GridFillerLogLinQuad() = default;
-		GridFillerLogLinQuad(uint log_size_, uint lin_size_, uint quad_size_)
-			: log_size{log_size_}, lin_size{lin_size_}, quad_size{quad_size_} {}
+		GridFillerLogLinQuad(double min, uint log_size_, uint lin_size_, uint quad_size_)
+			: GridFillerBase(min),
+			  log_size{log_size_}, lin_size{lin_size_}, quad_size{quad_size_} {}
 		uint fill(std::vector<double>& points) override;
 	};
 
