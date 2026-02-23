@@ -412,6 +412,164 @@ namespace Candia2
 	};
 
 
+	/** @defgroup nnlo_splitfuncs_fortran Fortran Versions of P2 Splitting Functions */
+	namespace mvv_p2
+	{
+		/**
+		 *  @ingroup nnlo_splitfuncs_fortran
+		 *  @brief Implements \f$P_{\mathrm{NS}}^{+,(2)}\f$
+		 */
+		class P2nsp final : public SplittingFunction
+		{
+			using SplittingFunction::SplittingFunction;
+		
+			inline value_type calcRegular(value_type x) const override
+			{
+				int nf = static_cast<int>(_nf);
+				return p2nspa_(&x, &nf)/8.0;
+			}
+			inline value_type calcPlus(value_type x) const override
+			{
+				int nf = static_cast<int>(_nf);
+				return p2nsb_(&x, &nf)/8.0;
+			}
+			inline value_type calcDelta(value_type x) const override
+			{
+				int nf = static_cast<int>(_nf);
+				return p2nspc_(&x, &nf)/8.0;
+			}
+		};
+
+		/**
+		 *  @ingroup nnlo_splitfuncs_fortran
+		 *  @brief Implements \f$P_{\mathrm{NS}}^{-,(2)}\f$
+		 */
+		class P2nsm final : public SplittingFunction
+		{
+			using SplittingFunction::SplittingFunction;
+		
+			inline value_type calcRegular(value_type x) const override
+			{
+				int nf = static_cast<int>(_nf);
+				return p2nsma_(&x, &nf)/8.0;
+			}
+			inline value_type calcPlus(value_type x) const override
+			{
+				int nf = static_cast<int>(_nf);
+				return p2nsb_(&x, &nf)/8.0;
+			}
+			inline value_type calcDelta(value_type x) const override
+			{
+				int nf = static_cast<int>(_nf);
+				return p2nsmc_(&x, &nf)/8.0;
+			}
+		};
+
+		/**
+		 *  @ingroup nnlo_splitfuncs_fortran
+		 *  @brief Implements \f$P_{\mathrm{NS}}^{V,(2)}\f$
+		 */
+		class P2nsv final : public SplittingFunction
+		{
+			using SplittingFunction::SplittingFunction;
+		
+			inline value_type calcRegular(value_type x) const override
+			{
+				int nf = static_cast<int>(_nf);
+				return (p2nsma_(&x, &nf) + p2nssa_(&x, &nf))/8.0;
+			}
+			inline value_type calcPlus(value_type x) const override
+			{
+				int nf = static_cast<int>(_nf);
+				return p2nsb_(&x, &nf)/8.0;
+			}
+			inline value_type calcDelta(value_type x) const override
+			{
+				int nf = static_cast<int>(_nf);
+				return p2nsmc_(&x, &nf)/8.0;
+			}
+		};
+
+		/**
+		 *  @ingroup nnlo_splitfuncs_fortran
+		 *  @brief Implements \f$P_{qq}^{(2)}\f$
+		 */
+		class P2qq final : public SplittingFunction
+		{
+			using SplittingFunction::SplittingFunction;
+		
+			inline value_type calcRegular(value_type x) const override
+			{
+				int nf = static_cast<int>(_nf);
+				return (p2nspa_(&x, &nf) + p2psa_(&x, &nf))/8.0;
+			}
+			inline value_type calcPlus(value_type x) const override
+			{
+				int nf = static_cast<int>(_nf);
+				return p2nsb_(&x, &nf)/8.0;
+			}
+			inline value_type calcDelta(value_type x) const override
+			{
+				int nf = static_cast<int>(_nf);
+				return p2nspc_(&x, &nf)/8.0;
+			}
+		};
+
+		/**
+		 *  @ingroup nnlo_splitfuncs_fortran
+		 *  @brief Implements \f$P_{qg}^{(2)}\f$
+		 */
+		class P2qg final : public SplittingFunction
+		{
+			using SplittingFunction::SplittingFunction;
+		
+			inline value_type calcRegular(value_type x) const override
+			{
+				int nf = static_cast<int>(_nf);
+				return p2qga_(&x, &nf)/8.0;
+			}
+		};
+
+		/**
+		 *  @ingroup nnlo_splitfuncs_fortran
+		 *  @brief Implements \f$P_{gq}^{(2)}\f$
+		 */
+		class P2gq final : public SplittingFunction
+		{
+			using SplittingFunction::SplittingFunction;
+		
+			inline value_type calcRegular(value_type x) const override
+			{
+				int nf = static_cast<int>(_nf);
+				return p2gqa_(&x, &nf)/8.0;
+			}
+		};
+
+		/**
+		 *  @ingroup nnlo_splitfuncs_fortran
+		 *  @brief Implements \f$P_{gg}^{(2)}\f$
+		 */
+		class P2gg final : public SplittingFunction
+		{
+			using SplittingFunction::SplittingFunction;
+		
+			inline value_type calcRegular(value_type x) const override
+			{
+				int nf = static_cast<int>(_nf);
+				return p2gga_(&x, &nf)/8.0;
+			}
+			inline value_type calcPlus(value_type x) const override
+			{
+				int nf = static_cast<int>(_nf);
+				return p2ggb_(&x, &nf)/8.0;
+			}
+			inline value_type calcDelta(value_type x) const override
+			{
+				int nf = static_cast<int>(_nf);
+				return p2ggc_(&x, &nf)/8.0;
+			}
+		};
+	}
 
 	/** @defgroup n3lo_splitfuncs_fortran Fortran Versions of P3 Splitting Functions */
 	namespace mvv_p3

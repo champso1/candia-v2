@@ -35,7 +35,7 @@ compute_diffs(
 
 int main(int argc, char *argv[])
 {
-	if (argc != 6)
+	if (argc != 6 && argc != 3)
 		usage();
 
 	fs::path candia_filepath{argv[1]}, other_filepath{argv[2]};
@@ -43,9 +43,15 @@ int main(int argc, char *argv[])
 	file_exists(other_filepath);
 
 	int type{}, format{}, diff_type{};
-	std::from_chars(argv[3], argv[3] + 1, format);
-	std::from_chars(argv[4], argv[4] + 1, type);
-	std::from_chars(argv[5], argv[5] + 1, diff_type);
+	if (argc != 3) {
+		std::from_chars(argv[3], argv[3] + 1, format);
+		std::from_chars(argv[4], argv[4] + 1, type);
+		std::from_chars(argv[5], argv[5] + 1, diff_type);
+	} else {
+		format = 1;
+		type = 2;
+		diff_type = 1;
+	}
 
 	int ncols = cols[type].get().size();
 	

@@ -200,7 +200,6 @@ namespace Candia2
 
 	void DGLAPSolver::loadAllExpressions()
     {
-		log(LOG_DEBUG, "DGLAPSolver::loadAllExpressions()", "Loading 'P0ns, P0qq, P0qg, P0gq, P0gg' at LO");
         createExpression<P0ns>("P0ns");
         createExpression<P0qq>("P0qq");
         createExpression<P0qg>("P0qg");
@@ -208,7 +207,6 @@ namespace Candia2
         createExpression<P0gg>("P0gg");
     
         if (_order >= 1) {
-			log(LOG_DEBUG, "DGLAPSolver::loadAllExpressions()", "Loading 'P1nsm, P1nsp, P1qq, P1qg, P1gq, P1gg' at NLO");
 		    createExpression<P1nsm>("P1nsm");
             createExpression<P1nsp>("P1nsp");
             createExpression<P1qq>("P1qq");
@@ -217,15 +215,25 @@ namespace Candia2
             createExpression<P1gg>("P1gg");
         }
         if (_order >= 2) {
-			log(LOG_DEBUG, "DGLAPSolver::loadAllExpressions()", "Loading 'P2nsm, P2nsp, P2nsv, P2qq, P2qg, P2gq, P2gg' at NNLO");
-			log(LOG_DEBUG, "DGLAPSolver::loadAllExpressions()", "Loading 'A2ns, A2gq, A2gg, A2hq, A2hg' at NNLO");
-            createExpression<P2nsm>("P2nsm");
-            createExpression<P2nsp>("P2nsp");
-            createExpression<P2nsv>("P2nsv");
-            createExpression<P2qq>("P2qq");
-            createExpression<P2qg>("P2qg");
-            createExpression<P2gq>("P2gq");
-            createExpression<P2gg>("P2gg");
+		    if (options.use_fortran_nnlo_splitfuncs) {
+				log(LOG_DEBUG, "DGLAP", "Loading Fortran versions of P2 splitting functions");
+				createExpression<mvv_p2::P2nsm>("P2nsm");
+				createExpression<mvv_p2::P2nsp>("P2nsp");
+				createExpression<mvv_p2::P2nsv>("P2nsv");
+				createExpression<mvv_p2::P2qq>("P2qq");
+				createExpression<mvv_p2::P2qg>("P2qg");
+				createExpression<mvv_p2::P2gq>("P2gq");
+				createExpression<mvv_p2::P2gg>("P2gg");
+			} else {
+				log(LOG_DEBUG, "DGLAP", "Loading C++ versions of P2 splitting functions");
+				createExpression<P2nsm>("P2nsm");
+				createExpression<P2nsp>("P2nsp");
+				createExpression<P2nsv>("P2nsv");
+				createExpression<P2qq>("P2qq");
+				createExpression<P2qg>("P2qg");
+				createExpression<P2gq>("P2gq");
+				createExpression<P2gg>("P2gg");
+			}
 			
             createExpression<A2ns>("A2ns");
             createExpression<A2gq>("A2gq");
@@ -234,11 +242,8 @@ namespace Candia2
             createExpression<A2hg>("A2hg");
         }
         if (_order >= 3) {
-			log(LOG_DEBUG, "DGLAPSolver::loadAllExpressions()", "Loading 'P3nsm, P3nsp, P3nsv, P3qq, P3qg, P3gq, P3gg' at N3LO");
-			log(LOG_DEBUG, "DGLAPSolver::loadAllExpressions()", "Loading 'A3nsm, A3nsp, A3gq, A3gg, A3hq, A3hg, A3psqq, A3sqg' at N3LO (libome)");
-			log(LOG_DEBUG, "DGLAPSolver::loadAllExpressions()", "Loading 'AQqPSs3' at N3LO");
-
 			if (options.use_fortran_n3lo_splitfuncs) {
+				log(LOG_DEBUG, "DGLAP", "Loading Fortran versions of P3 splitting functions");
 				createExpression<mvv_p3::P3nsm>("P3nsm");
 				createExpression<mvv_p3::P3nsp>("P3nsp");
 				createExpression<mvv_p3::P3nsv>("P3nsv");
@@ -247,6 +252,7 @@ namespace Candia2
 				createExpression<mvv_p3::P3gq>("P3gq");
 				createExpression<mvv_p3::P3gg>("P3gg");
 			} else {
+				log(LOG_DEBUG, "DGLAP", "Loading C++ versions of P3 splitting functions");
 				createExpression<P3nsm>("P3nsm");
 				createExpression<P3nsp>("P3nsp");
 				createExpression<P3nsv>("P3nsv");
@@ -256,7 +262,9 @@ namespace Candia2
 				createExpression<P3gg>("P3gg");
 			}
 
-			SplittingFunction::setN3LOApproxType(getOptions().n3lo_splitfunc_imod);
+			uint imod = getOptions().n3lo_splitfunc_imod;
+			SplittingFunction::setN3LOApproxType(imod);
+			log(LOG_DEBUG, "DGLAP", "Setting N3LO approximation type (imod) = {}", imod);
 
             createExpression<OpMatElemN3LO>("A3nsm", ome::AqqQNSEven);
             createExpression<OpMatElemN3LO>("A3nsp", ome::AqqQNSOdd);
@@ -266,7 +274,7 @@ namespace Candia2
             createExpression<OpMatElemN3LO>("A3hg", ome::AQg);
             createExpression<OpMatElemN3LO>("A3psqq", ome::AqqQPS);
             createExpression<OpMatElemN3LO>("A3sqg", ome::AqgQ);
-			createExpression<AQqPSs3>("AQqPSs3");
+			createExpression<OpMatElemN3LO>("A3PSshq", ome::AQqPSs);
         }
         
     }

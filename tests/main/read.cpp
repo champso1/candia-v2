@@ -24,16 +24,22 @@ static void usage()
 
 int main(int argc, char *argv[])
 {
-	if (argc != 5)
+	if (argc != 5 && argc != 2)
 		usage();
 
 	fs::path datafile_path(argv[1]);
 	file_exists(datafile_path);
 
 	int origin{}, type{}, format{};
-	std::from_chars(argv[2], argv[2] + 1, origin);
-	std::from_chars(argv[3], argv[3] + 1, format);
-	std::from_chars(argv[4], argv[4] + 1, type);
+	if (argc != 2) {
+		std::from_chars(argv[2], argv[2] + 1, origin);
+		std::from_chars(argv[3], argv[3] + 1, format);
+		std::from_chars(argv[4], argv[4] + 1, type);
+	} else {
+		origin = 0;
+		format = 1;
+		type = 2;
+	}
 
 	auto [xtab, dists_raw] =
 		(origin == 0) ?

@@ -143,21 +143,6 @@ namespace Candia2
 			return delta[3](_lm, _nf);
 		}
 	};
-
-	extern "C"
-	{
-		double aqqpss3_(double* x, double* NF, double* lm);
-	}
-
-	class AQqPSs3 final : public OpMatElem
-	{
-	public:
-		inline double calcRegular(double x) const override
-		{
-			double nf = static_cast<double>(_nf);
-			return aqqpss3_(&x, &nf, &_lm);
-		}
-	};
 };
 
 

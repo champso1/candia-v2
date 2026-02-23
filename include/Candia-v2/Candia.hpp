@@ -31,6 +31,7 @@ namespace Candia2
 		bool disable_heavy_flavor_matching{false}; //!< switch for whether to use matching at all for the heavy flavors
 		bool use_n3lo_heavyquark_asymmetry{true}; //!< use new OME from arXiv:2512.13508
 		bool use_truncated_nonsinglet_sol{false}; //!< whether to use the truncated ansatz in the non-singlet sector, as opposed to the exact solution
+		bool use_fortran_nnlo_splitfuncs{false}; //!< whether to use the fortran versions for the nnlo splitting functions or the C++-translated ones
 		bool use_fortran_n3lo_splitfuncs{false}; //!< whether to use the fortran versions for the n3lo splitting functions or the C++-translated ones
 		enum : uint {
 			APPROX_A = 1,

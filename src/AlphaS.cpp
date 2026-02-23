@@ -139,7 +139,7 @@ namespace Candia2
 		double a = alpha;
 		double res = alpha;
 
-		auto L = options.use_broken_log_value ? _L : 1.0;
+		auto L = options.use_broken_log_value ? 1.0 : _L;
 		auto L2 = L*L;
 		auto L3 = L2*L;
 		log(LOG_DEBUG, "AlphaS::preMatch()", "Using L={}", L);
@@ -167,7 +167,7 @@ namespace Candia2
 		double a = alpha;
 		double res = alpha;
 
-		auto L = options.use_broken_log_value ? _L : 1.0;
+		auto L = options.use_broken_log_value ? 1.0 : _L;
 		auto L2 = L*L;
 		auto L3 = L2*L;
 		log(LOG_DEBUG, "AlphaS::postMatch()", "Using L={}", L);

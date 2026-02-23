@@ -9,7 +9,7 @@ if (NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
   message("Defaulting to release build.")
   set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Build type." FORCE)
   set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS
-  "Debug" "Release" "MinSizeRel" "RelWithDebInfo")
+	"Debug" "Release" "MinSizeRel" "RelWithDebInfo")
 endif()
 
 option(BUILD_MANUSCRIPTS "Use pdflatex/bibtex to compile the available manuscripts" OFF)
@@ -34,11 +34,7 @@ set(sources
   src/OperatorMatrixElements.cpp
   src/RecRel.cpp
   src/SpecialFuncs.cpp
-  src/SplittingFns.cpp
-
-  src/fortran/hplog.f
-  src/fortran/xpij2p.f
-  src/fortran/xpns2p.f)
+  src/SplittingFns.cpp)
 set(headers
   include/Candia-v2/AlphaS.hpp
   include/Candia-v2/Candia.hpp
@@ -54,11 +50,14 @@ set(headers
   include/Candia-v2/SplittingFn.hpp)
 
 enable_language(Fortran)
-add_library(hplog STATIC src/fortran/hplog.f)
+add_library(hplog STATIC src/fortran/hplog5.f)
 target_link_libraries(hplog PUBLIC gfortran)
 
-add_library(AQqPSs3 STATIC src/fortran/OME.f)
-target_link_libraries(AQqPSs3 PUBLIC gfortran hplog)
+set(nnlo_splitfuncs_fortran_src
+  src/fortran/mvv_p2/xpij2p.f
+  src/fortran/mvv_p2/xpns2p.f)
+add_library(nnlo_splitfuncs_fortran STATIC ${nnlo_splitfuncs_fortran_src})
+target_link_libraries(nnlo_splitfuncs_fortran PUBLIC gfortran)
 
 set(n3lo_splitfuncs_fortran_src
   src/fortran/mvv_p3/xpgg3a.f90
@@ -113,7 +112,7 @@ else()
 endif()
 
 
-target_link_libraries(candia PRIVATE hplog AQqPSs3 n3lo_splitfuncs_fortran ome GSL::gsl)
+target_link_libraries(candia PRIVATE hplog nnlo_splitfuncs_fortran n3lo_splitfuncs_fortran ome GSL::gsl)
 target_include_directories(candia PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:include>)
@@ -143,7 +142,7 @@ endif(BUILD_DOCS)
 # INSTALLATION
 # ====================
 include(GNUInstallDirs)
-install(TARGETS candia hplog AQqPSs3 n3lo_splitfuncs_fortran
+install(TARGETS candia hplog nnlo_splitfuncs_fortran n3lo_splitfuncs_fortran
   EXPORT candiaTargets
   FILE_SET cxx_headers DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
 install(EXPORT candiaTargets

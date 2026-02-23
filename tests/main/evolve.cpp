@@ -113,7 +113,9 @@ int main(int argc, char *argv[]) {
 	log_options.log_output_stream = log_output_file;
 	
 	vector<double> xtab{1e-5, 1e-4, 1e-3, 1e-2, 0.1, 0.3, 0.5, 0.7, 0.9, 1.0};
-	Grid grid(xtab, make_grid_filler<GridFillerLogLinQuad>(), {.split_interval = true});
+	Grid grid(xtab,
+		make_grid_filler<GridFillerLogLinQuad>(1e-5, 201, 101, 51),
+		{ .default_gauss_points=100, .split_interval = true});
 	auto& grid_options = grid.getOptions();
 	grid_options.use_alt_mapping = true;
 	grid_options.use_gsl_conv_routine = false;
@@ -131,6 +133,7 @@ int main(int argc, char *argv[]) {
 	dglap_options.use_truncated_nonsinglet_sol = true;
 	dglap_options.use_nnlo_matching_conditions_at_n3lo = false;
 	dglap_options.use_n3lo_heavyquark_asymmetry = true;
+	dglap_options.use_fortran_nnlo_splitfuncs = false;
 	dglap_options.use_fortran_n3lo_splitfuncs = false;
 	dglap_options.cache_exprs = true;
 

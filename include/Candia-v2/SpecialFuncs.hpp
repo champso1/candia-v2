@@ -47,6 +47,19 @@ namespace Candia2
 			double* Hi1, double* Hi2, double* Hi3, double* Hi4, double* Hi5,
 			int* n1, int* n2);
 
+		double p2nspa_(double* y, int* nf);
+		double p2nsma_(double* y, int* nf);
+		double p2nsb_(double* y, int* nf);
+		double p2nspc_(double* y, int* nf);
+		double p2nsmc_(double* y, int* nf);
+		double p2nssa_(double* y, int* nf);
+		double p2psa_(double* y, int* nf);
+		double p2qga_(double* y, int* nf);
+		double p2gqa_(double* y, int* nf);
+		double p2gga_(double* y, int* nf);
+		double p2ggb_(double* y, int* nf);
+		double p2ggc_(double* y, int* nf);
+		
 		double p3gga(double* y, int* nf, int* imod);
 		double p3ggb(double* y, int* nf, int* imod);
 		double p3ggc(double* y, int* nf, int* imod);
