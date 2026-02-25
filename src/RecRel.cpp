@@ -99,12 +99,6 @@ namespace Candia2
 
 		static int print_count = 10;
 		if (_is_scale_difference) {
-			throw "DGLAPSolver::recrelS_4(): not ready for this yet";
-			if (print_count > 0) {
-				log(LOG_DEBUG, "DGLAPSolver::recrelS_4", "Doing additional stuff since scale difference.");
-				print_count--;
-			}
-			
 			const double beta0 = _alpha_s.beta0();
 			const double beta1 = _alpha_s.beta1();
 			const double beta2 = _alpha_s.beta2();

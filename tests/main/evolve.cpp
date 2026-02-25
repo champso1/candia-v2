@@ -24,11 +24,11 @@ static void usage()
 	cout << "[ERROR] evolve.cpp: Invalid arguments.\n";
 	cout << "Usage:\n";
 	cout << "-------------------------------------------------------\n";
-	cout << "./evolve(.exe) <order> <iterations> <trunc_idx> <kr> [title]\n";
+	cout << "./evolve(.exe) <order> <iterations> <trunc_idx> <mur2_muf2> [title]\n";
 	cout << "    <order>: perturbative order to perform the calculation.\n";
 	cout << "    <iterations>: number of total iterations to perform.\n";
 	cout << "    <trunc_idx>: number of truncation iterations to perform (for each main iteration!)\n";
-	cout << "    <kr>: ratio of mu_R / mu_F.\n";
+	cout << "    <mur2_muf2>: ratio of mu_R^2 / mu_F^2.\n";
 	cout << "    [title]: optional -- gives a title for the resulting datafile and logfile\n";
 	cout << "-------------------------------------------------------\n\n";
 	exit(EXIT_FAILURE);
@@ -88,7 +88,7 @@ int main(int argc, char *argv[]) {
 	const uint order = stoi(argv[1]);
 	const uint iterations = stoi(argv[2]);
 	const uint trunc_idx = stoi(argv[3]);
-	const double kr = stold(argv[4]);
+	const double mur2_muf2 = stold(argv[4]);
 	const double Qf = 100.0;
 
 	std::string datafile_name{};
@@ -97,7 +97,7 @@ int main(int argc, char *argv[]) {
 
 	ostringstream logfile_ss{};
 	logfile_ss << ((order == 3) ? "n3lo" : (order == 2) ? "nnlo" : (order == 1) ? "nlo" : "lo");
-	logfile_ss << "-i" << iterations << "-t" << trunc_idx << "-r" << setprecision(2) << kr << ".log";
+	logfile_ss << "-i" << iterations << "-t" << trunc_idx << "-r" << setprecision(2) << mur2_muf2 << ".log";
 	if (!fs::exists("log")) {
 		if (!fs::create_directory("log"))
 			log(LOG_ERROR, "evolve.cpp", "Failed to create log output directory");
@@ -107,30 +107,29 @@ int main(int argc, char *argv[]) {
 	std::ofstream log_output_file(log_path);
 
 	auto& log_options = getLogOptions();
-	log_options.show_debug_messages = false;
+	log_options.show_debug_messages = true;
 	log_options.show_thread_output = true;
 	log_options.use_log_output_stream = true;
 	log_options.log_output_stream = log_output_file;
 	
 	vector<double> xtab{1e-5, 1e-4, 1e-3, 1e-2, 0.1, 0.3, 0.5, 0.7, 0.9, 1.0};
 	Grid grid(xtab,
-		make_grid_filler<GridFillerLogLinQuad>(1e-5, 201, 101, 51),
-		{ .default_gauss_points=100, .split_interval = true});
+		make_grid_filler<GridFillerLogLinQuad>(1e-5, 101, 26, 26),
+		{ .default_gauss_points=50, .split_interval = true});
 	auto& grid_options = grid.getOptions();
 	grid_options.use_alt_mapping = true;
 	grid_options.use_gsl_conv_routine = false;
 	grid_options.use_gsl_interp_routine = true;
 	
 	LesHouchesDistribution dist{};
-	AlphaS alphas(order, dist.Q0(), Qf, dist.alpha0(), kr);
-	auto& alphas_options = alphas.getOptions();
-	// alphas_options.use_broken_log_value = true;
+	AlphaS alphas(order, dist.Q0(), Qf, dist.alpha0(), mur2_muf2);
 	alphas.setVFNS(dist.masses(), dist.nfi());
 	// alphas.setFFNS(4);
 
-	DGLAPSolver solver(order, grid, alphas, Qf, iterations, trunc_idx, dist, kr);
+	DGLAPSolver solver(order, grid, alphas, Qf, iterations, trunc_idx, dist, mur2_muf2);
 	auto& dglap_options = solver.getOptions();
-	dglap_options.use_truncated_nonsinglet_sol = true;
+	dglap_options.use_truncated_nonsinglet_sol = false;
+	dglap_options.disable_heavy_flavor_matching = false;
 	dglap_options.use_nnlo_matching_conditions_at_n3lo = false;
 	dglap_options.use_n3lo_heavyquark_asymmetry = true;
 	dglap_options.use_fortran_nnlo_splitfuncs = false;
@@ -144,14 +143,15 @@ int main(int argc, char *argv[]) {
 	log(LOG_INFO, "evolve.cpp", "Evolution took {}.", secs);
 
 	datafile_name += ".dat";
-	outputData(F, xtab, grid, order, grid.size(), iterations, trunc_idx, kr, datafile_name);
+	outputData(F, xtab, grid, order, grid.size(), iterations, trunc_idx, mur2_muf2, datafile_name);
 
 	if (grid.getOptions().use_gsl_conv_routine) {
 		auto const& gsl_conv_errors = solver.getGrid().getGSLConvolutionErrors();
 		fs::path gsl_conv_errors_log_path("gsl-conv-errors.dat");
 		std::ofstream gsl_conv_errors_log_file(gsl_conv_errors_log_path);
 		std::ranges::copy(
-			gsl_conv_errors | std::views::transform([](auto&& _t){ auto [x,out,res] = _t; return std::format("{} {} {}", x, out, res); }),
+			gsl_conv_errors | std::views::transform([](auto&& _t){
+				auto [x,out,res] = _t; return std::format("{} {} {}", x, out, res); }),
 			std::ostream_iterator<std::string>(gsl_conv_errors_log_file, "\n"));
 	}
 }

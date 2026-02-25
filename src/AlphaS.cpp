@@ -195,18 +195,17 @@ namespace Candia2
 
 		if (options.use_broken_log_value)
 			log(LOG_WARNING, "AlphaS::calculateThresholdValues()", "Temporarily using broken value of the logarithm term (1.0).");
-		
+
 		for (nf1=_nff; _Q0<mur_muf*_masses[nf1]; nf1--);
 		if (nf1<_nfi)
 			nf1++;
 
 		update(nf1);
 
-		_post[nf1] = evaluate(_Q0, mur_muf*_masses[nf1], _alpha0);
-		_pre[nf1]  = preMatch(_post[nf1], nf1); // might not need this value?
-
-		_pre[nf1+1] =  evaluate(_Q0, mur_muf*_masses[nf1+1], _alpha0);
-		_post[nf1+1] = postMatch(_pre[nf1+1], nf1);
+		// log(LOG_WARNING, "AlphaS", "REMEMBER TO SWITCH PRE AND POST BACK");
+		log(LOG_DEBUG, "AlphaS::calculateThresholdValues()", "May want to rewrite this function to be a little cleaner");
+		_pre[nf1] = evaluate(_Q0, mur_muf*_masses[nf1], _alpha0);
+		_post[nf1]  = postMatch(_pre[nf1], nf1);
 
 		uint nf;
 		for (nf=nf1-1; nf>=_nfi; nf--) {
@@ -215,10 +214,10 @@ namespace Candia2
 			_post[nf] = evaluate(mur_muf*_masses[nf+1], mur_muf*_masses[nf], _pre[nf+1]);
 			_pre[nf]  = preMatch(_post[nf], nf);
 		}
-
+		
 		for (nf=nf1+1; nf<=_nff+1; nf++) {
 			update(nf-1);
-			
+
 			_pre[nf]  = evaluate(mur_muf*_masses[nf-1], mur_muf*_masses[nf], _post[nf-1]);
 			_post[nf] = postMatch(_pre[nf], nf);
 		}
@@ -230,6 +229,7 @@ namespace Candia2
 	}
 
 
+	
 	double AlphaS::evaluate(double Qi, double Qf, double alpha0) const
 	{
 		// if the before/after energies are identical, there is nothing to evaluate
@@ -245,7 +245,7 @@ namespace Candia2
 		}
 
 		// otherwise, 4th order runge-kutta
-		const static uint steps = 200;
+		const static uint steps = 1000;
 		double h = 2.0*std::log(Qf/Qi) / static_cast<double>(steps);
 		double k1{}, k2{}, k3{}, k4{};
 		double a = alpha0;
@@ -261,8 +261,76 @@ namespace Candia2
 
 		return a;
 	}
+	
+	/*
+	static std::vector<double> get_qcd_coeffs(int loop_order, int nf)
+	{
+		std::vector<double> b;
+		if (loop_order < 1) return b;
 
+		// const double PI = 3.14159265358979323846;
+    
+		// 1-loop (b0)
+		b.push_back((33.0 - 2.0 * nf) / (12.0 * PI));
+		if (loop_order == 1) return b;
 
+		// 2-loop (b1)
+		b.push_back((153.0 - 19.0 * nf) / (24.0 * PI * PI));
+		if (loop_order == 2) return b;
+
+		// 3-loop (b2)
+		b.push_back((2857.0 - (5033.0 / 9.0) * nf + (325.0 / 27.0) * nf * nf) 
+			/ (128.0 * PI * PI * PI));
+		if (loop_order == 3) return b;
+
+		// 4-loop (b3)
+		// double zeta3 = 1.202056903159594;
+		double term1 = (149753.0 / 6.0) + 3564.0 * Zeta3;
+		double term2 = -(1078361.0 / 162.0) - (6508.0 / 27.0) * Zeta3;
+		double term3 = (50065.0 / 162.0) + (6472.0 / 81.0) * Zeta3;
+		double term4 = 1093.0 / 729.0;
+    
+		b.push_back((term1 + term2 * nf + term3 * nf * nf + term4 * nf * nf * nf) 
+			/ (256.0 * std::pow(PI, 4)));
+                
+		return b;
+	}
+
+	// Generic Beta Function Evaluator
+	static double beta_func(double alpha, const std::vector<double>& b) {
+		double beta = 0.0;
+		// Computes: - (b0*a^2 + b1*a^3 + b2*a^4 + ...)
+		for (size_t i = 0; i < b.size(); ++i) {
+			beta += b[i] * std::pow(alpha, i + 2);
+		}
+		return -beta;
+	}
+	
+
+	double AlphaS::evaluate(double Qi, double Qf, double alpha0) const
+	{
+		const static int steps = 1000;
+		std::vector<double> coeffs = get_qcd_coeffs(_order, _nf);
+    
+		// Grid setup: integrate over t = ln(Q^2) => dt = 2 * d(ln Q)
+		double t_i = 2.0 * std::log(Qi);
+		double t_f = 2.0 * std::log(Qf);
+		double h = (t_f - t_i) / steps;
+		double alpha = alpha0;
+
+		for (int i = 0; i < steps; ++i) {
+			double k1 = h * beta_func(alpha, coeffs);
+			double k2 = h * beta_func(alpha + 0.5 * k1, coeffs);
+			double k3 = h * beta_func(alpha + 0.5 * k2, coeffs);
+			double k4 = h * beta_func(alpha + k3, coeffs);
+
+			alpha += (k1 + 2.0 * k2 + 2.0 * k3 + k4) / 6.0;
+		}
+
+		return alpha;
+	}
+	*/
+	
 	void AlphaS::update(uint nf)
 	{
 		_nf = nf;

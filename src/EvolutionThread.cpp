@@ -267,12 +267,12 @@ namespace Candia2
 
                     // LO piece
                     for (uint k=0; k<_grid.size()-1; k++) {
-                        _S[0][1][1][k] =
-							recrelS_1(_S[0][1][0], k, p0qq) +
-							recrelS_1(_S[0][0][0], k, p0qg);
-                        _S[0][0][1][k] =
-							recrelS_1(_S[0][1][0], k, p0gq) +
-							recrelS_1(_S[0][0][0], k, p0gg);
+						double v1 = recrelS_1(_S[0][1][0], k, p0qq);
+						double v2 = recrelS_1(_S[0][0][0], k, p0qg);
+						double v3 = recrelS_1(_S[0][1][0], k, p0gq);
+						double v4 = recrelS_1(_S[0][0][0], k, p0gg);
+                        _S[0][1][1][k] = v1 + v2;
+                        _S[0][0][1][k] = v3 + v4;
                     }
 
                     // new NLO piece non-convolution
