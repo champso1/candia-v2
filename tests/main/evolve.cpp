@@ -114,8 +114,8 @@ int main(int argc, char *argv[]) {
 	
 	vector<double> xtab{1e-5, 1e-4, 1e-3, 1e-2, 0.1, 0.3, 0.5, 0.7, 0.9, 1.0};
 	Grid grid(xtab,
-		make_grid_filler<GridFillerLogLinQuad>(1e-5, 101, 26, 26),
-		{ .default_gauss_points=50, .split_interval = true});
+		make_grid_filler<GridFillerLogLinQuad>(1e-5, 101, 51, 26),
+		{ .default_gauss_points=75, .split_interval = true});
 	auto& grid_options = grid.getOptions();
 	grid_options.use_alt_mapping = true;
 	grid_options.use_gsl_conv_routine = false;
@@ -128,7 +128,7 @@ int main(int argc, char *argv[]) {
 
 	DGLAPSolver solver(order, grid, alphas, Qf, iterations, trunc_idx, dist, mur2_muf2);
 	auto& dglap_options = solver.getOptions();
-	dglap_options.use_truncated_nonsinglet_sol = false;
+	dglap_options.use_truncated_nonsinglet_sol = true;
 	dglap_options.disable_heavy_flavor_matching = false;
 	dglap_options.use_nnlo_matching_conditions_at_n3lo = false;
 	dglap_options.use_n3lo_heavyquark_asymmetry = true;

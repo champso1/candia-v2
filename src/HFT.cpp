@@ -67,8 +67,8 @@ namespace Candia2
 					}
 				}
 
-				static auto& a3psqq = getExpression("A3psqq");
-				static auto& a3sqg  = getExpression("A3sqg");
+				auto& a3psqq = getExpression("A3psqq");
+				auto& a3sqg  = getExpression("A3sqg");
 				for (uint k=0; k<_grid.size()-1;k++) {
 					const double fac_n3lo = as*as*as/(64.0*PI_3);
 					const double convSPa = _grid.convolution(arr_singlet[1], a3psqq, k);
@@ -104,7 +104,7 @@ namespace Candia2
 
 	void DGLAPSolver::HFT_NNLO1(ArrayGrid& c, uint k, ArrayGrid& q)
     {
-		static auto& a2ns = getExpression("A2ns");
+		auto& a2ns = getExpression("A2ns");
         double const as = _alpha_s.post(_nf+1);
         double const conv = _grid.convolution(c, a2ns, k);
         
@@ -113,8 +113,8 @@ namespace Candia2
 
     void DGLAPSolver::HFT_NNLO2(ArrayGrid& g, ArrayGrid& qp, uint k)
     {
-		static auto& a2gq = getExpression("A2gq");
-		static auto& a2gg = getExpression("A2gg");
+		auto& a2gq = getExpression("A2gq");
+		auto& a2gg = getExpression("A2gg");
         double const as = _alpha_s.post(_nf+1);
         double const conv1 = _grid.convolution(qp, a2gq, k);
         double const conv2 = _grid.convolution(g, a2gg, k);
@@ -124,8 +124,8 @@ namespace Candia2
 
     void DGLAPSolver::HFT_NNLO3(ArrayGrid& g, ArrayGrid& qp, uint k, ArrayGrid& qh, ArrayGrid& qhb)
     {
-		static auto& a2hq = getExpression("A2hq");
-		static auto& a2hg = getExpression("A2hg");
+		auto& a2hq = getExpression("A2hq");
+		auto& a2hg = getExpression("A2hg");
         double const as = _alpha_s.post(_nf+1);
         double const conv1 = _grid.convolution(qp, a2hq, k);
         double const conv2 = _grid.convolution(g, a2hg, k);

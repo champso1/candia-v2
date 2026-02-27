@@ -132,7 +132,7 @@ namespace Candia2
 
 	double AlphaS::preMatch(double alpha, uint nf)
 	{
-		double Nf = static_cast<double>(nf);
+		double Nf = static_cast<double>(nf-1);
 		if (_order == 0)
 			return alpha;
 
@@ -150,7 +150,7 @@ namespace Candia2
 			res += a*a*a*(-(7.0/24.0) - (19.0/24.0)*L + (1.0/36.0)*L2)/PI_2;
 		if (_order >= 3) {
 		    res += std::pow(alpha, 4)*(
-				-(58933.0/124416.0) - (2.0/3.0)*Zeta2 - (2.0/9.0)*Zeta2*std::numbers::log2e - (80507.0/27648.0)*Zeta3
+				-(58933.0/124416.0) - (2.0/3.0)*Zeta2 - (2.0/9.0)*Zeta2*std::log(2.0) - (80507.0/27648.0)*Zeta3
 				- (8521.0/1728.0)*L - (131.0/576.0)*L2 - (1.0/216.0)*L3
 				+ Nf*((2479.0/31104.0) + (1.0/9.0)*Zeta2 + (409.0/1728.0)*L))/PI_3;
 		}
@@ -160,7 +160,7 @@ namespace Candia2
 
 	double AlphaS::postMatch(double alpha, uint nf)
 	{
-		double Nf = static_cast<double>(nf);
+		double Nf = static_cast<double>(nf-1);
 		if (_order == 0)
 			return alpha;
 
@@ -178,8 +178,8 @@ namespace Candia2
 			res += a*a*a*((7.0/24.0) + (19.0/24.0)*L + (1.0/36.0)*L2)/PI_2;
 		if (_order >= 3) {
 			res += std::pow(alpha, 4)*(
-				(58933.0/124416.0) + (2.0/3.0)*Zeta2 + (2.0/9.0)*Zeta2*std::numbers::log2e + (80507.0/27648.0)*Zeta3
-				+ (8521.0/1728.0)*L + (131.0/576.0)*L2 + (1.0/216.0)*L3
+				(58933.0/124416.0) + (2.0/3.0)*Zeta2 + (2.0/9.0)*Zeta2*std::log(2.0) + (80507.0/27648.0)*Zeta3
+				+ (8941.0/1728.0)*L + (511.0/576.0)*L2 + (1.0/216.0)*L3
 				- Nf*((2479.0/31104.0) + (1.0/9.0)*Zeta2 + (409.0/1728.0)*L))/PI_3;
 		}
 
