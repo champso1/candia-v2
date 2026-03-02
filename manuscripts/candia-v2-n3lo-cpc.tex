@@ -40,6 +40,8 @@
 \hypersetup{colorlinks,citecolor=nicegreen,linkcolor=nicered,urlcolor=niceblue}
 \usepackage{siunitx}
 \usepackage{xparse}
+\usepackage{bm}
+\usepackage{soul}
 
 \ExplSyntaxOn
 \NewDocumentCommand{\comm}{mm}
@@ -54,7 +56,9 @@
 \ExplSyntaxOff
 
 \newcommand{\dd}{\mathrm{d}}
-
+\newcommand{\vv}[1]{\bm{\mathbf{#1}}}
+\newcommand{\ddp}{\partial}
+\newcommand{\mat}[1]{\hat{\vv{#1}}}
 
 
 %% The lineno packages adds line numbers. Start line numbering with
@@ -186,7 +190,7 @@ For files larger than 1Gb, if difficulties are encountered during upload the aut
   %Describe the method solution here.
 {\em Additional comments including restrictions and unusual features (approx. 50-250 words):}\\
   %Provide any additional comments here.
-  Due to the dependency on the GNU Scientific Library (GSL), which doesn't provide native binaries for Windows and is also difficult to build from source, WSL is recommended if using on Windows.
+  Due to the dependency on the GNU Scientific Library (GSL) and (optionally) LHAPDF, which don't provide native binaries for Windows and are also difficult to build from source on Windows, we recommend using WSL if a Unix-like system is unavailable. There are repositories such as \href{this one}{https://github.com/ampl/gsl} that aim to provide a CMake build structure for GSL, which importantly would provide the option to generate Visual Studio files and allow a native compilation on Windows, but this is not tested. As far as the authors are aware, there are no such accepted distributions of LHAPDF that allow native compilation on Windows.
    \\
    
 
@@ -215,6 +219,556 @@ Results for approximate N$^3$LO PDFs, evolved using the most recent approximatio
 are provided for benchmarking. The new version of the code, \texttt{Candia-v2}, 
 is publicly available at \url{https://github.com/champso1/candia-v2}~\cite{candiav2}.
 
+\section{The Algorithm}
+
+\subsection{Notation and Definitions}
+
+We start by summarizing the notations and definitions that we will be using in the description of the program.
+The general mathematical structure of the DGLAP equation is
+%
+\begin{equation}
+  \frac{\partial}{\partial\ln \mu_F^{2}}f(x,\mu_F^{2}) = P(x,\alpha_{s}(\mu_F^{2})) \otimes f(x,\mu_F^{2})
+\label{eq:DGLAP}
+\end{equation}
+%
+where the convolution product is defined by
+%
+\begin{equation}
+  \left[a \otimes b\right](x) = \int_{x}^{1}\frac{\dd y}{y}a\left(\frac{x}{y}\right)b(y) = \int_{x}^{1}\frac{\dd y}{y}a(y)b\left(\frac{x}{y}\right)
+\end{equation}
+%
+and the perturbative expansion of the kernels and of the beta function up to NNLO are respectively
+%
+\begin{equation}
+  P(x,\alpha_{s}) = \left(\frac{\alpha_{s}}{2\pi}\right)P^{(0)}(x)
+  + \left(\frac{\alpha_{s}}{2\pi}\right)^{2}P^{(1)}(x)
+  + \left(\frac{\alpha_{s}}{2\pi}\right)^{3}P^{(2)}(x)
+  + O(\alpha_{s}^{4})
+\label{eq:kernel_expansion}
+\end{equation}
+%
+and
+%
+\begin{equation}
+  \beta(\alpha_{s}) = \frac{\textrm{d}\alpha_{s}(\mu_R^{2})}{\textrm{d}\ln\mu_R^{2}} =
+  - \frac{\beta_{0}}{4\pi}\alpha_{s}^{2}
+  - \frac{\beta_{1}}{16\pi^{2}}\alpha_{s}^{3}
+  -\frac{\beta_{2}}{64\pi^{3}}\alpha_{s}^{4}
+  +O(\alpha_{s}^{5})
+\label{eq:beta_exp}
+\end{equation}
+%
+where
+%
+\begin{eqnarray}
+  \beta_{0} & = & \frac{11}{3}N_{C}-\frac{4}{3}T_{f} \label{eq:beta0} \\
+  \beta_{1} & = & \frac{34}{3}N_{C}^{2}-\frac{20}{3}N_{C}T_{f}-4C_{F}T_{f} \label{eq:beta1} \\
+  \beta_{2} & = & \frac{2857}{54}N_{C}^{3}+2C_{F}^{2}T_{f}-\frac{205}{9}C_{F}N_{C}T_{f}-\frac{1415}{27}N_{C}^{2}T_{f}+\frac{44}{9}C_{F}T_{f}^{2}+\frac{158}{27}N_{C}T_{f}^{2} \label{eq:beta2}
+\end{eqnarray}
+%
+and
+%
+\begin{equation}
+  N_{C}=3, \qquad C_{F}=\frac{N_{C}^{2}-1}{2N_{C}}=\frac{4}{3}, \qquad T_{f}=T_{R}n_{f}=\frac{1}{2}n_{f}.
+\end{equation}
+%
+$N_{C}$ is the number of colors and $n_{f}$ is the number of active flavors, selected by the mass condition $m_{q}\leq \mu_F$, for a given factorization scale $\mu_F$.
+We also denote with $\mu_R$ the renormalization scale.
+
+The evolution (DGLAP) kernels are distributions whose general form is given by
+%
+\begin{equation}
+  P(x) = P_{1}(x) + \frac{P_{2}(x)}{(1-x)_{+}} + P_{3}\delta(1-x),\label{eq:general_kernel}
+\end{equation}
+%
+with a regular part $P_{1}(x)$, a ``plus-distribution'' part $P_{2}(x)/(1-x)_{+}$, and a delta-function term $P_{3}\delta(1-x)$.
+Given a continuous and differentiable function $\alpha(x)$ defined in the $[0,1)$ interval, but singular at $x=1$, the action of the plus-distribution $[\alpha(x)]_{+}$ is defined by
+%
+\begin{equation}
+  \int_{0}^{1}f(x)[\alpha(x)]_{+}{\dd x} = \int_{0}^{1}\left(f(x)-f(1)\right)\alpha(x){\dd x},
+\end{equation}
+%
+where $f(x)$ is a regular test function.
+Alternatively, an operative definition (that assumes full mathematical meaning only when integrated) is the following
+%
+\begin{equation}
+  [\alpha(x)]_{+} = \alpha(x)-\delta(1-x)\int_{0}^{1}\alpha(y){\dd y}.\label{eq:def_plus}
+\end{equation}
+
+The Parton Distribution Functions (PDFs) appear in the evolution, in general, multiplied by a factor of $x$.
+Eq.~(\ref{eq:DGLAP}) for $\bar{f}(x)\equiv xf(x)$ would then read
+%
+\begin{equation}
+  \frac{\partial}{\partial\ln \mu_F^{2}}\bar{f}(x,\mu_F^{2})
+  = x\left[P(x,\alpha_{s}(\mu_F^{2}))\otimes f(x,\mu_F^{2})\right].
+\end{equation}
+%
+We are now going to compute the convolution products that we actually evaluate in the program, keeping in mind the general form of the kernel (Eq.~\ref{eq:general_kernel}).
+The treatment of the delta-function part is trivial
+\begin{equation}
+  x\left[P_{3}\delta(1-x) \otimes f(x)\right]
+  = xP_{3}\int_{x}^{1}\frac{\dd y}{y}\delta(1-y)f\left(\frac{x}{y}\right)
+  = P_{3}\bar{f}(x),
+\label{eq:conv_3}
+\end{equation}
+%
+while for the regular part we get
+%
+\begin{equation}
+  x\left[P_{1}(x) \otimes f(x)\right]
+  = x\int_{x}^{1}\frac{\dd y}{y}P_{1}\left(\frac{x}{y}\right)f(y)
+  = \int_{x}^{1}\frac{\dd y}{y}\frac{x}{y}P_{1}\left(\frac{x}{y}\right)\bar{f}(y).
+  \label{eq:conv_1}
+\end{equation}
+%
+Since the functions that we have to integrate are strongly varying or even singular at low $x$, to enhance the numerical accuracy we introduce a new integration variable $z$ defined by $y=x^z$, and Eq.~(\ref{eq:conv_1}) is mapped into
+%
+\begin{equation}
+  x\left[P_{1}(x)\otimes f(x)\right] = -{\ln x}\int_{0}^{1}{\dd z}\, x^{1-z}P_{1}(x^{1-z})\bar{f}(x^z).
+  \label{eq:conv_1_mapped}
+\end{equation}
+%
+Finally, for the plus-distribution part we get, after some algebraic manipulations, the relation
+%
+\begin{equation}
+  x\left[\frac{P_{2}(x)}{(1-x)_{+}}\otimes f(x)\right]
+  = \int_{x}^{1}{\dd y}\frac{P_{2}(y)\bar{f}(x/y) - P_{2}(1)\bar{f}(x)}{1-y} + P_2(1)\bar{f}(x)\ln(1-x)
+\label{eq:conv_2}
+\end{equation}
+%
+that, with the mapping $y=x^z$, becomes
+%
+\begin{equation}
+  x\left[ \frac{P_{2}(x)}{(1-x)_{+}}\otimes f(x)\right]
+  = -\ln x\int_{0}^{1}{\dd z} \, x^z\frac{P_{2}(x^z)\bar{f}(x^{1-z})-P_{2}(1)\bar{f}(x)}{1-x^z}+P_2(1)\bar{f}(x)\ln(1-x).
+\label{eq:conv_2_mapped}
+\end{equation}
+
+\subsection{Singlet and Non-Singlet Structure}
+\label{sec:s-and-ns-structure}
+
+We start by defining the combinations
+%
+\begin{align}
+q_{i}^{(\pm)} &= q_{i}\pm\overline{q}_{i} \\
+q^{(\pm)} &= \sum_{i=1}^{n_{f}}q_{i}^{(\pm)}.
+\end{align}
+%
+From a mathematical point of view, the distributions belonging to the non-singlet sector evolve with a decoupled DGLAP equation of form (\ref{eq:DGLAP}), while the singlet combinations mix with the gluon distribution.
+The singlet DGLAP matrix equation is
+%
+\begin{equation}
+  \frac{\ddp}{\ddp {\ln \mu_F^2}} \begin{pmatrix} q^{(+)}(x,\mu_F^2) \\ g(x,\mu_F^2)\end{pmatrix}
+  = \begin{pmatrix}P_{qq}(x, \alpha_s(\mu_F^2)) & P_{qg}(x, \alpha_s(\mu_F^2)) \\ P_{gq}(x, \alpha_s(\mu_F^2)) & P_{gg}(x, \alpha_s(\mu_F^2))\end{pmatrix}
+  \otimes \begin{pmatrix} q^{(+)}(x,\mu_F^2) \\ g(x,\mu_F^2),\end{pmatrix}
+\end{equation}
+%
+or, in vectorial notation
+%
+\begin{equation}
+\frac{\ddp}{\ddp {\ln \mu_F^2}}\vv{s}(x,\mu_F^{2}) = \mat{P}(x,\alpha_{s}(\mu_F^{2})) \otimes \vv{s}(x,\mu_F^{2}).
+\end{equation}
+
+The general structure of the non-singlet splitting functions is given by
+%
+\begin{equation}
+P_{q_{i}q_{k}} = P_{\overline{q}_{i}\overline{q}_{k}} = \delta_{ik}P_{qq}^{V}+P_{qq}^{S},
+\end{equation}
+%
+\begin{equation}
+P_{q_{i}\overline{q}_{k}} = P_{\overline{q}_{i}q_{k}} = \delta_{ik}P_{q\bar{q}}^{V}+P_{q\bar{q}}^{S}.
+\end{equation}
+%
+where $V$ and $S$ are usually referred to as the ``valence'' and ``sea'' contributions.
+This leads to three types of non-singlet distributions which evolve independently: the flavor asymmetries
+%
+\begin{equation}
+q_{NS,ik}^{(\pm)}=q_{i}^{(\pm)}-q_{k}^{(\pm)}\,,
+\end{equation}
+%
+governed by the combinations
+%
+\begin{equation}
+P_{NS}^{\pm} = P_{qq}^{V} \pm P_{q\bar{q}}^{V}\,,
+\end{equation}
+%
+and the sum of the valence distributions of all flavors $q^{(-)}$ which evolves with
+%
+\begin{equation}
+P_{NS}^{V} = P_{qq}^{V}-P_{q\bar{q}}^{V}+n_{f}\left(P_{qq}^{S} - P_{q\bar{q}}^{S}\right) \equiv P_{NS}^{-}+P_{NS}^{S}.
+\label{eq:PNSv}
+\end{equation}
+%
+Notice that the quark-quark splitting function $P_{qq}$ can be expressed as
+%
+\begin{equation}
+P_{qq} = P_{NS}^{+}+n_{f}\left(P_{qq}^{S}+P_{q\bar{q}}^{S}\right) \equiv P_{NS}^{+}+P_{ps}.
+\label{eq:Pqq}
+\end{equation}
+%
+with $ps$ denoting the so-called ``pure singlet'' terms.
+We remark that the non-singlet contribution is the most relevant one in  Eq.~(\ref{eq:Pqq}) at large $x$, where the \emph{pure singlet} term $P_{ps}=P_{qq}^{S}+P_{q\bar{q}}^{S}$ is very small.
+At small $x$, on the other hand, the latter contribution takes over, as $xP_{ps}$ does not vanish for $x\rightarrow0$, unlike $xP_{NS}^{+}$. 
+The gluon-quark and quark-gluon entries are given by
+%
+\begin{equation}
+P_{qg} = n_{f}P_{q_{i}g},
+\end{equation}
+%
+\begin{equation}
+P_{gq} = P_{gq_{i}}
+\end{equation}
+%
+in terms of the flavor-independent splitting functions $P_{q_{i}g}=P_{\bar{q}_{i}g}$ and $P_{gq_{i}}=P_{g\bar{q}_{i}}$.
+With the exception of the first order part of $P_{qg}$, neither of the quantities $xP_{qg}$, $xP_{gq}$ and $xP_{gg}$ vanish for $x\rightarrow0$.
+
+In the expansion in powers of $\alpha_{s}$ of the evolution equations, the flavor-diagonal (valence) quantity $P_{qq}^{V}$ is of order $\alpha_{s}$, while $P_{q\bar{q}}^{V}$ and the flavor-independent (sea) contributions $P_{qq}^{S}$ and $P_{q\bar{q}}^{S}$ are of order $\alpha_{s}^{2}$.
+A non-vanishing difference $P_{qq}^{S}-P_{q\bar{q}}^{S}$ is present at order $\alpha_s^3$.
+
+The next step is to choose a proper basis of non-singlet distributions that allows us to reconstruct, through linear combinations, the distribution of each parton.
+The singlet evolution gives us 2 distributions, $g$ and $q^{(+)}$, so we need to evolve $2n_{f}-1$ independent non-singlet distributions.
+At N$^3$LO and NNLO we choose
+%
+\begin{enumerate}
+\item $q^{(-)}$, evolving with $P_{NS}^{V}$;
+\item $q_{NS,1i}^{(-)}=q_{1}^{(-)}-q_{i}^{(-)}$ (for 
+$2\leq i\leq n_{f}$), evolving with $P_{NS}^{-}$;
+\item $q_{NS,1i}^{(+)}=q_{1}^{(+)}-q_{i}^{(+)}$ (for 
+$2\leq i\leq n_{f}$), evolving with $P_{NS}^{+}$,
+\end{enumerate}
+%
+and use simple relations such as
+%
+\begin{equation}
+q_{i}^{(\pm)}=\frac{1}{n_{f}}\left(q^{(\pm)}+\sum_{k=1,k\neq i}^{n_{f}}q_{NS,ik}^{(\pm)}\right)
+\label{eq:comb_linNS}
+\end{equation}
+%
+to perform the reconstructions of the various flavors.
+Choosing $i=1$ in (\ref{eq:comb_linNS}), we compute $q_{1}^{(-)}$ from the evolved non-singlets of type 1 and 2 and $q_{1}^{(+)}$ from the evolved singlet $q^{(+)}$ and non-singlet of type 3.
+Then from the non-singlets 2 and 3 we compute respectively $q_{i}^{(-)}$ and $q_{i}^{(+)}$ for each $i$ such that $2\leq i\leq n_{f}$, and finally $q_{i}$ and $\bar{q}_{i}$.
+
+Moving from NNLO to NLO things simplify, as we have $P_{qq}^{S,(1)}=P_{q\bar{q}}^{S,(1)}$.
+This implies (see Eq.~(\ref{eq:PNSv})) that $P_{NS}^{V,(1)}=P_{NS}^{-,(1)}$, i.e.~the non-singlets $q^{(-)}$ and $q_{NS,ik}^{(-)}$ evolve with the same kernel, and the same does each linear combination thereof, in particular $q_{i}^{(-)}$ for each flavor $i$.
+The basis of the $2n_{f}-1$ non-singlet distributions that we choose to evolve at NLO is
+%
+\begin{enumerate}
+\item $q_{i}^{(-)}$ (for each $i\leq n_{f}$), evolving with $P_{NS}^{-,(1)}$,
+\item $q_{NS,1i}^{(+)}=q_{1}^{(+)}-q_{i}^{(+)}$ (for each $i$ such that
+$2\leq i\leq n_{f}$), evolving with $P_{NS}^{+,(1)}$,
+\end{enumerate}
+%
+and the same we do at LO, where we have in addition $P_{NS}^{+,(0)}=P_{NS}^{-,(0)}$, being $P_{q\bar{q}}^{V,(0)}=0$.
+
+\subsection{Recursion Relations for the Exact Solution (Non-Singlet Sector)}
+\label{sec:recrels-exact}
+
+The proof of equivalence between the logarithmic expansions implemented in \textsc{Candia} and the alternative approach based on the use of Mellin moments, as used in reference \cite{Vogt:2004ns}, is easily established at leading order.
+For this we recall the definition of the Mellin transform of a given function $a(x)$,
+%
+\begin{equation}
+  a(N)=\int_{0}^{1}a(x)x^{N-1}{\dd x},
+\end{equation}
+%
+that maps convolution products into ordinary products
+%
+\begin{equation}
+  \left[a\otimes b\right](N)=a(N)b(N).
+\end{equation}
+%
+Traditional algorithms based on Mellin space solve the equations algebraically in $N$ and then perform a numerical inversion using  a saddle path evaluation of the complex contour.
+This technique is completely bypassed in our approach.
+One of the advantage of \texttt{Candia} is that a given initial condition for the PDFs, usually formulated in $x$-space, {\em does not} need to be fitted to a given functional form in moment space, which is instead typical of a given numerical implementation of the Mellin algorithm.
+In fact, the functional form in moment space in some cases may even not be general enough, and may not allow the evolution of quite singular distributions at small $x$. 
+From our experience, we have found that fitting special initial conditions in $x$-space forces the user, in codes based in Mellin space, to modify the evolution code by himself, with dubious results.
+\texttt{Candia}, by eliminating this unappealing feature of algorithms based in Mellin space, allows any initial condition to be considered and removes the initial numerical error due to the fit of the initial condition to the pre-assigned functional form
+in moment space.
+
+Having clarified this point, we introduce a single evolution scale $Q$,  leaving to the next sections the discussion of the separation between the factorization and renormalization scales.
+Switching to $\alpha_{s}$ as the independent variable, the DGLAP equation (\ref{eq:DGLAP}) is rewritten in the form
+%
+\begin{equation}
+  \frac{\ddp f(N,\alpha_{s})}{\ddp \alpha_{s}}
+  =\frac{P(N,\alpha_{s})}{\beta(\alpha_{s})}f(N,\alpha_{s}).
+  \label{eq:DGLAP_Mellin}
+\end{equation}
+
+\subsubsection{Leading Order}
+\label{sec:exact-lo}
+
+Inserting in Eq.~(\ref{eq:DGLAP_Mellin}) the perturbative expansions of $P(N,\alpha_{s})$ and $\beta(\alpha_{s})$ (Equations (\ref{eq:kernel_expansion}) and (\ref{eq:beta_exp})) arrested at LO, we get
+%
+\begin{equation}
+  \frac{\ddp f(N,\alpha_{s})}{\ddp \alpha_{s}}
+  = -\frac{\left(\frac{\alpha_{s}}{2\pi}\right)P^{(0)}(N)}{\frac{\beta_{0}}{4\pi}\alpha_{s}^{2}}f(N,\alpha_{s}),
+\end{equation}
+%
+which is solved by
+%
+\begin{equation}
+  f(N,\alpha_s)
+  = f(N,\alpha_{0})\left(\frac{\alpha_s}{\alpha_{0}}\right)^{-\frac{2P^{(0)}(N)}{\beta_{0}}}
+  = f(N,\alpha_{0})\exp\left(-\frac{2P^{(0)}(N)}{\beta_{0}}\ln\frac{\alpha_s}{\alpha_{0}}\right)
+\end{equation}
+%
+where we have set $\alpha_s\equiv\alpha_s(Q^{2})$ and $\alpha_{0}\equiv\alpha_s(Q_{0}^{2})$.
+Performing a Taylor expansion of the exponential we get
+%
+\begin{equation}
+  f(N,\alpha)
+  = f(N,\alpha_{0})\sum_{n=0}^{\infty}\left(\frac{1}{n!}\left(-\frac{2P^{(0)}(N)}{\beta_{0}}\right)^{n}\ln^{n}\frac{\alpha}{\alpha_{0}}\right).
+\end{equation}
+%
+The $x$-space logarithmic ansatz, that parallels this solution is
+%
+\begin{equation}
+f(x,Q^{2}) = \sum_{n=0}^{\infty}\frac{A_{n}(x)}{n!}\ln^{n}\frac{\alpha_s(Q^{2})}{\alpha_s(Q_{0}^{2})},
+\label{eq:LOansatz}
+\end{equation}
+%
+where the $A_{n}(x)$'s  are unknown functions. Setting $Q=Q_{0}$ in (\ref{eq:LOansatz}), we get the initial condition
+%
+\begin{equation}
+  f(x,Q_{0}^{2})=A_{0}(x).
+\end{equation}
+
+Inserting our ansatz (\ref{eq:LOansatz}) into the DGLAP equation (\ref{eq:DGLAP}) and using the expansion of the kernels and of the beta function (\ref{eq:kernel_expansion}, \ref{eq:beta_exp}) arrested at the first term, after some algebra we derive the recursion relation
+%
+\begin{equation}
+  A_{n+1}(x)=-\frac{2}{\beta_{0}}\left[ P^{(0)}\otimes A_{n}\right](x).
+\label{An_recurrence}
+\end{equation}
+
+\subsubsection{Next-to Leading Order (NLO) and Next-to-next-to Leading Order (NNLO)}
+\label{sec:exact-nlo}
+
+The same strategy applied to leading order will apply to next to leading order: we first model an $x$-space ansatz that mirrors the solution in Mellin space.
+We then insert the ansatz into the Eq.~\ref{eq:DGLAP} and compare like powers of $\alpha_s$ to determine a set of recursion relations.
+The exact process by which this is done was documented thoroughly in Refs.~\cite{DUMMY,DUMMY}, so we will only quote the results here.
+
+At NLO, we have the following ansatz:
+%
+\begin{equation}
+  f(x, Q^2) = \sum_{s=0}^{\infty} \sum_{n=0}^{s} \frac{B^s_n(x)}{n!(s-n)!}L^nM^{s-n},
+\end{equation}
+%
+where
+\begin{align}
+  L &= \ln \frac{\alpha_s}{\alpha_0}, \\
+  M &= \ln \frac{4\pi\beta_0 + \alpha_s\beta_1}{4\pi\beta_0 + \alpha_0\beta_1}.
+\end{align}
+%
+Here, we find two recursion relations:
+%
+\begin{align}
+  B^s_n(x) &= -\frac{2}{\beta_0} \left[ P^{(0)} \otimes B^{s-1}_{n-1} \right](x), \label{eq:nlo-resum-1}\tag{\theequation{a}} \\
+  B^s_n(x) &= -B^s_{n+1} - \frac{4}{\beta_1} \left[ P^{(1)} \otimes B^{s-1}_n \right](x). \label{eq:nlo-resum-2}\tag{\theequation{b}}
+\end{align}
+%
+For an arbitrary coefficient $B^s_n$, there now exist two possible relations one can use.
+However, while it may seem that either can be used, each relation requires that particular other coefficients are known beforehand, with the constraint that the initial condition $B^0_0(x)$ is the starting point for the evaluation.
+Therefore, there is only one procedure that can be followed for a given index $s$, which is:
+%
+\begin{enumerate}
+\item All $B^s_n(x)$ with $n\neq0$ are computed with Eq.~\eqref{eq:nlo-resum-1},
+\item $B^s_0(x)$ is computed with Eq.~\eqref{eq:nlo-resum-2}.
+\end{enumerate}
+
+At NNLO, we have the ansatz
+%
+\begin{equation}
+  f(x, Q^2) = \sum_{s=0}^{\infty}\sum_{t=0}^{s}\sum_{n=0}^{t} \frac{C^s_{t,n}(x)}{n!(t-n)!(s-t)!} L^{n}M^{t-n}T^{s-t}, \label{eq:NNLOansatz}
+\end{equation}
+%
+with
+%
+\begin{align}
+  L &= \ln\frac{\alpha_s}{\alpha_{0}}\label{eq:L_NNLO}\\
+  M &= \ln\frac{16\pi^{2}\beta_{0}+4\pi\alpha_s\beta_{1}+\alpha_s^{2}\beta_{2}}{16\pi^{2}\beta_{0}
+      +4\pi\alpha_{0}\beta_{1}+\alpha_{0}^{2}\beta_{2}}\label{eq:M_NNLO}\\
+  T &= \frac{1}{\sqrt{4\beta_{0}\beta_{2}-\beta_{1}^{2}}}\arctan\frac{2\pi(\alpha_s-\alpha_{0})\sqrt{
+      4\beta_{0}\beta_{2}-\beta_{1}^{2}}}{2\pi(8\pi\beta_{0}+(\alpha_s+\alpha_{0})\beta_{1}
+      )+\alpha_s\alpha_{0}\beta_{2}}\label{eq:T_NNLO}\\
+\end{align}
+%
+Notice that, however, if $\beta_0\beta_2 - \beta_1^2 < 0$, which occurs for $n_f=6$, we must analytically continue the arctangent:
+%
+\begin{equation}
+  T=\frac{1}{\sqrt{\beta_{1}^{2}-4\beta_{0}\beta_{2}}}\textrm{arctanh}\frac{2\pi(\alpha_s-\alpha_{0}
+    )\sqrt{\beta_{1}^{2}-4\beta_{0}\beta_{2}}}{2\pi(8\pi\beta_{0}+(\alpha_s+\alpha_{0})\beta_{1}
+    )+\alpha_s\alpha_{0}\beta_{2}}.
+\end{equation}
+
+We then find the recursion relations
+%
+\begin{align}
+  C_{t,n}^{s}(x) &= -\frac{2}{\beta_{0}}\left[P^{(0)}\otimes
+                   C_{t-1,n-1}^{s-1}\right](x)\label{eq:nnlo-resum-1}\tag{\theequation{a}}\\
+  C_{t,n}^{s}(x) &= -\frac{1}{2}C_{t,n+1}^{s}(x)-\frac{4}{\beta_{2}}\left[P^{(2)}\otimes
+                   C_{t-1,n}^{s-1}\right](x)\label{eq:nnlo-resum-2}\tag{\theequation{b}}\\
+  C_{t,n}^{s}(x) &= -2\beta_{1}\left(C_{t+1,n}^{s}(x)+C_{t+1,n+1}^{s}(x)\right)-8\left[P^{(1)}\otimes
+                   C_{t,n}^{s-1}\right](x),\label{eq:nnlo-resum-3}\tag{\theequation{c}}
+\end{align}
+%
+which are used in the following procedure to compute all of the coefficients at a given value of $s$:
+%
+\begin{enumerate}
+\item All $C^s_{t,n}(x)$ with $n\neq0$ are computed using Eq.~\eqref{eq:nnlo-resum-1},
+\item $C^s_{s,0}(x)$ is computed using Eq.~\eqref{eq:nnlo-resum-2},
+\item All $C^s_{t,0}(x)$ with $t \neq s$ are computed using Eq.~\eqref{eq:nnlo-resum-3}, in decreasing order of $t$.
+\end{enumerate}
+
+\subsubsection{Next-to-next-to-next-to Leading Order (\texorpdfstring{N$^3$LO}{N3LO})}
+\label{sec:n3lo}
+
+At N$^3$LO, the procedure is again the same, so we will omit the details.
+We note, however, that the previous orders all had relatively simple forms for the zeros of the QCD $\beta$-function.
+At N$^3$LO, the analytical form of the zeros is very complex; therefore, to aid in the factorization of the $\beta$-function which is part of the partial fraction decomposition, we will denote the zeros as $r_1$, $r_2$, and $r_3$, where $r_1$ is real, and $r_2$ and $r_3$ are complex conjugates of each other.
+These are computed numerically ahead of time, and hard-coded into the program.
+
+With this in mind, we find the following $x$-space ansatz:
+
+\begin{equation}
+  f^{\mathrm{N}^3\mathrm{LO}}(x,\mu^2) = \sum_{s=0}^\infty\sum_{t=0}^s\sum_{m=0}^t\sum_{n=0}^m \frac{D^s_{t,m,n}(x)}{n!(m-n)!(t-m)!(s-t)!}L^n M^{m-n}Q^{t-m}W^{s-t},
+\end{equation}
+%
+with
+%
+\begin{align}
+L &= \log \left(\frac{\alpha_s}{\alpha_0}\right), 
+\\
+M &= \log \left(\frac{\alpha_s^2 + \bar{b}\alpha_s + \bar{c}}{\alpha_0^2 + \bar{b}\alpha_0 + \bar{c}}\right), 
+\\
+Q &= \log \left(\frac{\alpha_s - r_1}{\alpha_0 - r_1}\right). 
+\\
+W &= \frac{1}{\sqrt{-\bar{b}^2+4\bar{c}}}\arctan\left( \frac{(\alpha_s - \alpha_0)\sqrt{-\bar{b}^2+4\bar{c}}}{2\alpha_s\alpha_0 + \bar{b}(\alpha_s+\alpha_0) + 2\bar{c}} \right),
+\end{align}
+%
+where we have defined $\bar{b} \equiv -2\mathrm{Re}[r_2] = -2\mathrm{Re}[r_3]$ and $\bar{c} = |r_2|^2 = |r_3|^3$. Following again the same procedure nets us the following set of four recursion relations:
+%
+\begin{align}
+  D^s_{t,m,n} &= Z_{11} \otimes D^{s-1}_{t-1,m-1,n-1}, \label{eq:n3lo-resum-1}\tag{\theequation{a}}\\
+  D^s_{t,m,n} &= Z_{21}\otimes D^s_{t,m,n+1} + Z_{22} \otimes D^{s-1}_{t-1,m-1,n}, 
+                \label{eq:n3lo-resum-2}\tag{\theequation{b}}\\
+  D^s_{t,m,n} &= Z_{31} \otimes D^s_{t,m+1,n+1} + Z_{32} \otimes D^{s-1}_{t-1,m,n}, 
+                \label{eq:n3lo-resum-3}\tag{\theequation{c}}\\
+  D^s_{t,m,n} &= Z_{41} \otimes D^s_{t+1,m+1,n+1} + Z_{42} \otimes D^s_{t+1,m+1,n} + Z_{43} \otimes D^{s-1}_{t,m,n},\label{eq:n3lo-resum-4}\tag{\theequation{d}}
+\end{align}
+%
+using
+\begin{align}
+  Z_{11}(x) &= R_0(x) = -\frac{2}{\beta_0} P^{(0)}(x),  
+              \nonumber\\
+  Z_{21} &= \frac{1}{2\beta_3\gamma}\left[ 16\pi^2\beta_1 + 4\pi r_1\beta_2 - (\bar{c} + \bar{b} r_1)\beta_3 \right], 
+           \nonumber\\
+  Z_{22}(x) &= \frac{1}{\beta_3\gamma}\left[32\pi^2P^{(1)}(x) + 16\pi r_1 P^{(2)}(x) - 8(\bar{c}+\bar{b}r_1)P^{(3)} (x)\right], 
+              \nonumber\\
+  Z_{31} &=\frac{1}{\beta_3\gamma} \left[(-16\pi^2\beta_1 - 4\pi r_1\beta_2 - r_1^2\beta_3)\right], 
+           \nonumber\\
+  Z_{32}(x) &= \frac{1}{\beta_3\gamma} \left[- 64\pi^2 P^{(1)}(x) - 32\pi r_1 P^{(2)}(x) - 16 r_1^2 P^{(3)}(x)\right], 
+              \nonumber\\
+  Z_{41} &= -2 \bar{b},  
+           \nonumber\\
+  Z_{42} &= \frac{1}{\beta_3\gamma}\left[ 32\pi^2(\bar{b}+r_1)\beta_1  -8\pi \bar{c}\beta_2 - 2\bar{c}r_1\beta_3 \right],  
+           \nonumber\\
+  Z_{43}(x)& = \frac{1}{\beta_3\gamma}\left[ 128\pi^2(\bar{b}+r_1) P^{(1)}(x) - 64\pi \bar{c} P^{(2)}(x) - 32 \bar{c} r_1 P^{(3)}(x) \right]\,.
+             \label{Zij-def}
+\end{align}
+
+Finally, we have the following procedure for determining all $D^s_{t,m,n}$ coefficients for a particular value of $s$:
+
+\begin{enumerate}
+\item All $D^s_{t,m,n}$ with $n\neq0$ are computed using Eq.~(\ref{eq:n3lo-resum-1}),
+\item All $D^s_{s,s,0}$ are computed using Eq.~(\ref{eq:n3lo-resum-2}),
+\item All $D^s_{s,m,0}$ are computed using Eq.~(\ref{eq:n3lo-resum-3}) where $m \neq s$, with decreasing $m$,
+\item All $D^s_{t,m,0}$ are computed using Eq.~(\ref{eq:n3lo-resum-4}) where $t \neq s$, with decreasing $t$ and $m$.
+\end{enumerate}
+
+
+\subsection{Recursion Relations for the Truncated Solution}
+\label{sec:recrels-singlet}
+
+In this section, we present recursion relations for the DGLAP truncated solutions expanded at arbitrary order in pQCD for both the singlet and NS sectors. The proof of existence of a valid logarithmic ansatz in $x$-space that reproduces such truncated solutions including the $P^{(1)}(x)$ and $P^{(2)}(x)$ splitting functions in NLO and NNLO DGLAP respectively, and proof of their equivalence to the solutions obtained with the $U$-matrix approach in Mellin space, has been given in Refs.~\cite{Cafarella:2005zj,Cafarella:2008du,Guzzi:2006wx}. Here we present the new recursion relations at arbitrary orders including $P^{(3)}(x)$. 
+
+An expansion of the ${\cal \hat P}(x,\alpha_s)/\beta(\alpha_s)$ ratio in the DGLAP singlet equation at order ${\cal O}(\alpha_s^k)$ gives 
+%
+\begin{eqnarray}
+\frac{\partial{{\bf f}(x,\alpha_s)}}{\partial\alpha_s}=
+\frac{1}{\alpha_s}\left[{\bf R}_0+\alpha_s {\bf R}_1 +\alpha_s^2
+{\bf R}_2+\alpha_s^3
+{\bf R}_3 + \dots + \alpha_s^k {\bf R}_k \right]\otimes {\bf f}(x,\alpha_s),
+\label{N3LOsinglet}
+\end{eqnarray}
+%
+where bold-face characters are used for the vector notation. The ${\bf R}_k$ matrix operators are defined order by order as
+%
+\begin{eqnarray}
+{\bf R}_0(x)&=-\frac{2}{\beta_0}{\bf P}^{(0)}(x),
+~~~~
+{\bf R}_1(x)=-\frac{1}{\pi}\left(\frac{\beta_1}{4\beta_0}{\bf R}_0(x) +
+\frac{{\bf P}^{(1)}(x)}{\beta_0}\right),
+\\
+{\bf R}_2(x)&=-\frac{1}{\pi}\left(\frac{{\bf P}^{(2)}(x)}{2\pi\beta_0}
++\frac{{\bf R}_1(x) \beta_1}{4\beta_0}+\frac{{\bf R}_0(x) \beta_2}{16\pi\beta_0}\right), 
+\nonumber\\
+{\bf R}_3(x) &= -\frac{1}{\pi}\left(\frac{{\bf P}^{(3)}(x)}{4\pi^2\beta_0} +\frac{{\bf R}^{(2)}(x)\beta_1}{4\beta_0} + \frac{{\bf R}^{(1)}(x)\beta_2}{16\pi\beta_0}+\frac{{\bf R}^{(0)}(x)\beta_3}{64\pi^2\beta_0}\right),
+\dots
+\end{eqnarray}
+%
+
+The logarithmic ansatz for the truncated solution in the $x$-space that matches the algebraic solution in Mellin space at the arbitrary order $\kappa$ in $\alpha_s$ is given by
+%
+\begin{equation}
+\vv{f}(x,\alpha_s) = \sum_{n=0}^\infty \left\{ \left[ \sum_{i=0}^\kappa \alpha_s^i \frac{\vv{S}^i_n(x)}{n!} \right] \ln^n \frac{\alpha_s}{\alpha_0} \right\},
+\label{log-ansatz}
+\end{equation}
+%
+where $\kappa\geq k$ represent the truncation index that defines the $\alpha_s$ accuracy of the singlet solution or the NS one, in the case of scalar equations. The $\vv{S}_n^i(x)$ coefficients  are determined by $x$-space recursion relations obtained by substituting Eq.~(\ref{log-ansatz}) in Eq.~(\ref{N3LOsinglet}) and equating each power of $\alpha_s$ on both sides of the equation. For consistency, here we report the recursion relations obtained at arbitrary order in $\alpha_s$ for the LO DGLAP case where only ${\bf P}^{(0)}$ appears, at NLO where ${\bf P}^{(0)}$ and ${\bf P}^{(1)}$ only appear, at NNLO with ${\bf P}^{(0)}$, ${\bf P}^{(1)}$ and ${\bf P}^{(2)}$ only, and finally at N$^3$LO with ${\bf P}^{(0)}$, ${\bf P}^{(1)}$, ${\bf P}^{(2)}$, and ${\bf P}^{(3)}$.
+
+At LO (first power in $\alpha_s$), the solution can be given in closed form through the recursion relation below
+%
+\begin{equation}
+\label{eq:lo-singlet-sol}
+\vv{S}^0_{n+1} = - \frac{2}{\beta_0} \left[ \mat{P}^{(0)} \otimes \vv{S}^0_n \right](x).
+\end{equation}
+
+At NLO, where the $\mat{P}^{(0)}$ and $\mat{P}^{(1)}$ kernels appear, the $\bf S$ coefficients relative to the $i$-th ($i = 1,\dots,\kappa$) truncated solution are obtained through the recursion relation below  
+
+\begin{align}
+\vv{S}^i_{n+1}(x) = &-\frac{\beta_1}{4\pi\beta_0}\vv{S}^{i-1}_{n+1}(x) - i\vv{S}^i_n(x) - (i-1)\frac{\beta_1}{4\pi\beta_0}\vv{S}^{i-1}_n(x) \nonumber\\
+&-\frac{2}{\beta_0}[\vv{P}^{(0)} \otimes \vv{S}^i_n](x) - \frac{1}{\pi\beta_0}[\vv{P}^{(1)} \otimes \vv{S}^{i-1}_n](x)\,,
+\label{eq:nlo-singlet-i-sol}
+\end{align}
+
+while at NNLO, with ${\bf P}^{(0)}$, ${\bf P}^{(1)}$ and ${\bf P}^{(2)}$ only, we have 
+
+\begin{align}
+\vv{S}_{n+1}^i(x) = & -\frac{\beta_1}{4\pi\beta_0}\vv{S}_{n+1}^{i-1}(x)-\frac{\beta_2}{16\pi^2\beta_0}\vv{S}_{n+1} ^{i-2}(x) \nonumber\\
+& -i\vv{S}_n^i(x)-(i-1)\frac{\beta_1}{4\pi\beta_0}\vv{S}_n^{i-1}(x)-(i-2)\frac{\beta_2}{ 16\pi^2\beta_0}\vv{S}_n^{i-2}(x) \nonumber\\
+& -\frac{2}{\beta_0}[\vv{P}^{(0)}\otimes\vv{S}_n^i](x)
+-\frac{1}{\pi\beta_0}[\vv{P}^{(1)}\otimes\vv{S}_n^{i-1}](x)
+-\frac{1}{2\pi^2\beta_0}[\vv{P}^{(2)}\otimes\vv{S}_n^{i-2}](x)
+\label{eq:nnlo-singlet-sol}\,.
+\end{align}
+
+At N$^3$LO, the recursion relation for the ${\bf S}$ coefficients is given by
+
+\begin{align}
+  \vv{S}_{n+1}^i(x) = &-\frac{\beta_1}{4\pi\beta_0}\vv{S}_{n+1}^{i-1}(x)
+-\frac{\beta_2}{16\pi^2\beta_0}\vv{S}_{n+1} ^{i-2}(x)
+-\frac{\beta_3}{64\pi^3\beta_0}\vv{S}^{i-3}_{n+1}(x) \nonumber\\
+&-i\vv{S}_n^i(x)-(i-1)\frac{\beta_1}{4\pi\beta_0}\vv{S}_n^{i-1}(x)
+-(i-2)\frac{\beta_2}{16\pi^2\beta_0}\vv{S}_n^{i-2}(x) 
+-(i-3)\frac{\beta_3}{64\pi^3\beta_0}\vv{S}_n^{i-3}(x) \nonumber\\
+&-\frac{2}{\beta_0}[\vv{P}^{(0)}\otimes\vv{S}_n^i](x)
+-\frac{1}{\pi\beta_0}[\vv{P}^{(1)}\otimes\vv{S}_n^{i-1}](x)
+-\frac{1}{2\pi^2\beta_0}[\vv{P}^{(2)}\otimes\vv{S}_n^{i-2}](x) \nonumber\\
+&-\frac{1}{4\pi^3\beta_0}[\vv{P}^{(3)}\otimes\vv{S}_n^{i-3}](x).
+\label{eq:singlet-n3lo}
+\end{align}
+%
+These recursion relations generate truncated solutions at arbitrary order $\kappa$ that are equivalent those obtained using the $U$-matrix method~\cite{Blumlein:1997em,Vogt:2004ns,Cafarella:2005zj}.  
+
 \section{Description of the Program}
 \label{sec:prog-desc}
 
@@ -225,13 +779,13 @@ There are some version requirements and dependencies one needs to install in ord
 %
 \comm{todo}{Provide references or links to all of these, except maybe the compiler suites}
 \begin{itemize}
-  \item \href{https://cmake.org/}{CMake} >= 3.20,
-  \item C++20 compatibility. Among the standard compilers, one would need GCC >= 13 or CLang >= 17. Other compilers like Apple CLang or Intel compilers haven't been tested; MSVC is incompatible and will not work,
+  \item CMake >= 3.20,
+  \item C++20 compatibility. Among the standard compilers, one would need GCC >= 13 or CLang >= 17. Apple CLang should compile correctly as well. MSVC will not work due to the incompatibility of LHAPDF and GSL with Windows. Other compilers (e.g. Intel) haven't been tested.
   \item A Fortran compiler such as GFortran,
-  \item GSL (GNU Scientific Library): Required as a dependency of the \texttt{libome} package,
+  \item GSL (GNU Scientific Library)
   \item (Optional) LaTeX utilities (PDFLatex/Biber): if one wants to build this manuscript and other relevant ones included in the repository,
-  \item (Optional) \href{https://www.doxygen.nl/}{Doxygen}: if one wants to build the code documentation.
-  \item (Optional) \href{https://lhapdf.hepforge.org/}{LHAPDF}: if one wants to interface with LHAPDF
+  \item (Optional) Doxygen: if one wants to build the code documentation.
+  \item (Optional) LHAPDF: if one wants to interface with LHAPDF
 \end{itemize}
 
 For the latter three optional dependencies, see Section~\ref{subsec:acq-and-build} for descriptions of the CMake flags needed to enable these features.
@@ -240,7 +794,7 @@ For the latter three optional dependencies, see Section~\ref{subsec:acq-and-buil
 \label{subsec:acq-and-build}
 
 The code is publically available on \href{GitHub}{https://github.com/champso1/candia-v2}.
-There are usually a number of active branches in which various new features are being added/tested, but by default the \mintinline{cfg}{main} branch contains the most stable version. While one can at any time build from this branch, it is preferrable to either download the source from the Releases page, or checkout the corresponding tag from the cloned repository via \mintinline{bash}{git checkout <tag>}.
+There are usually a number of active branches in which various new features and/or fixes are being added, but by default the \mintinline{cfg}{main} branch contains the most stable version. While one can at any time build from this branch, it is preferrable to either download the source from the Releases page, or checkout the corresponding tag from the cloned repository via \mintinline{bash}{git checkout <tag>}.
 After acquiring the source code, one follows the standard CMake building process:
 %
 \begin{minted}{bash}
@@ -255,26 +809,25 @@ cmake --build .
 cmake --install .
 \end{minted}
 %
-Note the commands related to git submodules, which will correctly initialize the \texttt{libome} repository. One may also, instead of running \mintinline{bash}{init} and \mintinline{bash}{update} one may also run \mintinline{bash}{update --init}, or run \mintinline{bash}{git clone} with the option \mintinline{bash}{--recurse-submodules}, which both will clone the submodules.
+Note the commands related to git submodules, which will correctly initialize the \texttt{libome} repository. One may also, instead of running \mintinline{bash}{init} and \mintinline{bash}{update}, run \mintinline{bash}{update --init}, or run \mintinline{bash}{git clone} with the option \mintinline{bash}{--recurse-submodules}, which both will clone the submodules.
 
-Among the optional \mintinline{bash}{<other options>} are the standard CMake options such as \mintinline{cfg}{CMAKE_CXX_COMPILER} or \mintinline{cfg}{CMAKE_BUILD_TYPE} if one wants to build in anything other than Release mode, which is the default.
-There are also a few additional options that are specific to this program. They are:
+Among the optional \mintinline{bash}{<other options>} are the standard CMake options such as \mintinline{cfg}{CMAKE_CXX_COMPILER} or \mintinline{cfg}{CMAKE_BUILD_TYPE} if one wants to build in anything other than Release mode, which is the default if nothing is specified.
+There are several additional options that are specific to this program. They are:
 %
 \begin{itemize}
-\item \textbf{\mintinline{cmake}{ENABLE_THREADING}}: Due to the nature of the algorithm, the non-singlet distributions are entirely independent, and in the singlet sector, the grid can be split up and evolved independently as well. This option enables building the code with the appropriate threading libraries, allowing the program to place these independent evolutions on separate threads such that they run concurrently.
-  This option is off by default for compatibility with older systems, but is recommended to be enabled if the computer has multiple CPU cores.
+\item \textbf{\mintinline{cmake}{ENABLE_THREADING}}: Enable multi-threading support. This will place parts of the evolution on separate threads to run concurrently, and will vastly speed up the program execution. This is off by default for support with older systems.
 \item \textbf{\mintinline{cmake}{BUILD_MANUSCRIPTS}}: Contained in the \mintinline{cfg}{manuscripts} directory in the root of the project is this manuscript as well as the manuscript submitted to Physical Review D, containing a higher level description of the algorithm. If this option is enabled, then a new target \mintinline{cfg}{manuscripts_pdf} is generated which will build both of these manuscripts.
   Requires LaTeX utilities (PdfLaTeX, Biber) and some standard packages.
   This option is off by default.
 \item \textbf{\mintinline{cmake}{BUILD_DOCS}}: Use Doxygen to build the API documentation for the code. This creates a target named \mintinline{cmake}{doxygen} which will build the API documentation. This option is off by default.
-\item \textbf{\mintinline{cmake}{WITH_LHAPDF} / \mintinline{cmake}{LHAPDF_ROOT_DIR}}: Enabling the former will compile in all the features relying on LHAPDF; the latter is optional unless if the user has installed LHAPDF into a nonstandard location, that being anywhere but \mintinline{bash}{/usr/local}, the default installation directory as shown on the installation instructions. These options are off/empty by default.
+\item \textbf{\mintinline{cmake}{WITH_LHAPDF} / \mintinline{cmake}{LHAPDF_ROOT_DIR}}: Enabling the former will compile in all the features relying on LHAPDF; the latter is optional unless the user has installed LHAPDF into a nonstandard location, that being anywhere but \mintinline{bash}{/usr/local}, the default installation directory. These options are off/empty by default.
 \end{itemize}
 
 \subsection{Usage: Example Program and Building/Linking}
 \label{subsec:ex-prog}
 
 In Listing~\ref{lst:ex-prog} is a full C++ program that will perform the DGLAP evolution at N$^3$LO starting from the standard benchmark initial conditions.
-The output is stored in an \mintinline{cpp}{std::vector<ArrayGrid>}, which the user can handle however they need; the \mintinline{cpp}{ArrayGrid} is a class that, for the purposes of accessing elements, behaves like an ordinary array; see Section~\ref{subsec:arraygrid} for more description on this class.
+The output is stored in an \mintinline{cpp}{std::vector<ArrayGrid>}, which the user can handle however they need; the \mintinline{cpp}{ArrayGrid} is a class that, for the purposes of accessing elements, behaves like an ordinary array.
 %
 \begin{listing}
   \inputminted[frame=lines,linenos]{cpp}{res/example.cpp}
@@ -282,119 +835,59 @@ The output is stored in an \mintinline{cpp}{std::vector<ArrayGrid>}, which the u
   \label{lst:ex-prog}
 \end{listing}
 %
-In the code, the user first includes the header \mintinline{cpp}{Candia-v2/Candia.hpp}. This is the main header to include, and all required utilities the user need interact with is included within that header.
+In the code, the user first includes the header \mintinline{cpp}{Candia-v2/Candia.hpp}. This header includes all other necessary headers, so the user need not include anything else.
 We also define the following variables:
 \begin{itemize}
-  \item \mintinline{cpp}{num_grid_points}: the number of points to place in each group on the grid. See Section\ref{sec:grid} for specifically what this entails.
-  \item \mintinline{cpp}{order}: the perturbative order of the solution. this number is the $m$ in N$^m$LO.
-  \item \mintinline{cpp}{Qf}: the final energy to evolve to.
-  \item \mintinline{cpp}{mur_muf}: the ratio $\mu_R/\mu_F$.
-  \item \mintinline{cpp}{iterations}: the number of total iterations to complete. this number corresponds to the $s$ index \comm{todo}{reference to section in first part}.
-  \item \mintinline{cpp}{trunc_idx}: the truncation index to use for the singlet solution. this number corresponds to the variable $\kappa$ \comm{todo}{reference to section in first part}.
+\item \mintinline{cpp}{order}: the perturbative order of the solution. this number is the $m$ in N$^m$LO.
+\item \mintinline{cpp}{iterations}: the number of total iterations to complete. this number corresponds to the $s$ index \comm{todo}{reference to section in first part}.
+\item \mintinline{cpp}{trunc_idx}: the truncation index to use for the singlet solution. this number corresponds to the variable $\kappa$ \comm{todo}{reference to section in first part}.
+\item \mintinline{cpp}{Qf}: the final energy to evolve to.
+\item \mintinline{cpp}{mur2_muf2}: the ratio $\mu_R^2/\mu_F^2$.
 \end{itemize}
 %
-We also define an \mintinline{cpp}{std::vector} called \mintinline{cpp}{xtab}, which specifies a set of points which are ensured to be directly placed on the grid and kept track of, for the purpose of easily accessing the values of the distributions at those points, which is useful for benchmarking or printing out tables. This avoids interpolating to get the value of the distributions at these points. Additionally, depending on the option passed to the \mintinline{cpp}{Grid} constructor, it will also guide the distribution of points on the grid.
-We then create the \mintinline{cpp}{Distribution} which contains the initial value of $\alpha_s$, the initial energy, as well as the functions defining the initial values for the distributions. The \mintinline{cpp}{LesHouchesDistribution} defines the set of initial conditions used in the standard benchmarking papers, see \comm{todo}{reference to benchmark paper}.
-We use these values to create an \mintinline{cpp}{AlphaS} object, containing the information to evolve/match $\alpha_s$.
-Lastly, we create a \mintinline{cpp}{DGLAPSolver} object, then call \mintinline{cpp}{.evolve()} to perform the evolution and grab the distributions.
+There are four main classes the user creates and interacts with: the \mintinline{cpp}{Grid} class, the \mintinline{cpp}{Distribution} class (and its derived classes), the \mintinline{cpp}{AlphaS} class, and the \mintinline{cpp}{DGLAPSolver} class. The \mintinline{cpp}{Grid} class handles convolutions and interpolations on a grid of points, the \mintinline{cpp}{Distribution} class handles the initial conditions, the \mintinline{cpp}{AlphaS} class handles the running of the QCD coupling, and the \mintinline{cpp}{DGLAPSolver} class uses these objects to evolve the initial distributions to a specified final energy.
+
+In the example code, we call \mintinline{cpp}{make_grid_filler<GridFillerLog>()} and pass it to the grid's constructor. There are several types of grid fillers; this one fills the grid logarithmically, which will pack more points at low-$x$, a highly sensitive region. We also choose to use the standard benchmark initial conditions, declared in \texttt{Candia-v2} via the \mintinline{cpp}{LesHouchesDistribution} class. We then setup the running coupling using info from the initial distribution (namely, these initial conditions provide $\alpha_0 = 0.35$ and require we start with $n_f=3$, right before the threshold of the charm mass), followed by the creation of the main solver object. Calling \mintinline{cpp}{.evolve()} will perform the full evolution and return the entire set of PDFs back to the user.
 
 \subsection{Program Structure}
 \label{subsec:prog-struct}
 
 We now describe the main implementation details of the source code itself. We will avoid describing the class methods and their parameters individually since this can be retrieved by accessing or building the API documentation built by Doxygen and provided on the Releases page on GitHub. Instead, we focus on a higher-level description of the classes and their role(s) in the program execution.
 
-\subsubsection{The \texorpdfstring{\mintinline{cpp}{ArrayGrid}}{ArrayGrid} Class}
-\label{subsec:arraygrid}
+\subsubsection{Options}
+\label{sec:options}
 
-The \mintinline{cpp}{ArrayGrid} class is simply a wrapper over an ordinary \mintinline{cpp}{std::vector} with a few convenience methods, though largely behaves identically. This means that one can do, for instance, list-initialization and access using the \mintinline{cpp}{operator[]} method (which returns lvalues and prvalues), like an ordinary \mintinline{cpp}{std::vector}. This is used as the datatype for the PDFs and it is what is returned to the user.
-
-\subsubsection{Splitting Functions and OMEs}
-\label{subsec:splitfuncs-and-omes}
-
-Structurally, the splitting functions and the operator matrix elements have the following structure:
+To allow flexibility in the evolution, many classes the user interacts with have an internal struct containing various options and flags, which can all be retrieved by calling the \mintinline{cpp}{.getOptions()} method. For instance, the various options for the \mintinline{cpp}{DGLAPSolver} struct are given in Listing~\ref{lst:options}
 %
-\begin{equation}
-  P_1(x) + \frac{P_2(x)}{(1-x)^+} + P_3\delta(1-x),
-\end{equation}
+\begin{listing}[ht]
+\begin{minted}{cpp}
+auto& dglap_options = solver.getOptions();
+dglap_options.use_truncated_nonsinglet_sol = true;
+dglap_options.disable_heavy_flavor_matching = false;
+dglap_options.use_nnlo_matching_conditions_at_n3lo = false;
+dglap_options.use_n3lo_heavyquark_asymmetry = true;
+dglap_options.use_fortran_nnlo_splitfuncs = false;
+dglap_options.use_fortran_n3lo_splitfuncs = false;
+dglap_options.cache_exprs = true;
+\end{minted}
+\caption{The various options provided by the \mintinline{cpp}{DGLAPSolver} class.}
+\label{lst:options}
+\end{listing}
 %
-i.e. a "regular" piece, given by the $P_1$ coefficient, a "plus-distribution" piece, given by the $P_2$ coefficient (\textit{not} including the plus-distribution itself), and a "delta function" piece, given by the $P_3$ coefficient (also \textit{not} including the delta function itself).
+The variable names are rather long, but we hope they are descriptive enough to avoid having to consult the source code to determine their meaning.
 
-For the purposes of convolutions with these objects, splitting functions and expressions behave identically. Therefore, we define a base class called \mintinline{cpp}{Expression} that provides methods to calculate each of the three pieces via \mintinline{cpp}{.calcX()} methods, where 'X' is ``Regular'', ``Plus'', or ``Delta,'' which are implemented by the classes \mintinline{cpp}{SplittingFunction} and \mintinline{cpp}{OpMatElem}.
-
-Importantly, since the convolutions proceed via a Gauss-Legendre quadrature, there are a set of fixed points at which these objects are evaluated which is known before the evolution begins. Therefore, these classes contain a cache (implemented as an \mintinline{cpp}{std::map}) of the expression evaluated at those points that is filled at the start of the evolution.
-This is especially helpful for higher orders where the expressions become very complex, and it saves a large amount of time.
-In order to access the cached values rather than use the ``calc'' methods that each expression must implement, there are the simple \mintinline{cpp}{.regular()}, \mintinline{cpp}{.plus()}, and \mintinline{cpp}{.delta()} methods.
-
-At $N^3LO$, we leverage the libOME library \comm{todo}{reference to libome paper}, \href{available on GitLab}{https://gitlab.com/libome/libome}, to calculate the operator matrix elements. This library provides a consistent interface, requiring only the creation of an \mintinline{cpp}{ome::rpd_distribution} which, provides a means to access the desired OME coefficients. Due to this, there is only one class, \mintinline{cpp}{OpMatElemN3LO} which accepts the corresponding OME object, at $N^3LO$.
-
-\subsubsection{Initial Distributions}
-\label{subsec:init-dists}
-
-Initial distributions supply the values of the parton distributions at some initial energy $Q_0$, as well as the initial value of $\alpha_s$. Since this behavior is independent of the evolution, it is abstracted out into a \mintinline{cpp}{Distribution} class.
-Obviously, there are many ways to provide initial conditions, so it is a virtual class that specifies a set of behavior that is supplied by the user's chosen conditions:
-the values of the quark masses, the initial value of $\alpha_s$, functions for $xf_p(x)$ where $p$ is the parton, the initial value of $n_f$, the number of massless flavors at $Q_0$, as well as $Q_0$ itself.
-%
-We have provided two derived classes, \mintinline{cpp}{LesHouchesDistribution} and \mintinline{cpp}{LHAPDFDistribution}.
-The former implements the conditions used in the benchmarks \textcolor{red}{REF}, while the latter provides an interface to supply initial conditions from an LHAPDF PDF. \footnote{Note that the latter option is only present in the compiled version of the code if the user enables the \mintinline{cmake}{WITH_LHAPDF} and, if necessary, the \mintinline{cmake}{LHAPDF_ROOT_DIR} CMake variables during configuration.}
-
-\subsubsection{The \texorpdfstring{\mintinline{cpp}{AlphaS}}{AlphaS} Class}
-\label{subsec:alphas}
-
-The behavior of the QCD running coupling $\alpha_s$ is stored within the \mintinline{cpp}{AlphaS} class, including the values of the various $\beta$-coefficients and a routine to evaluate the coupling at some other arbitrary scale given its value at an initial scale. This is done by solving the Cauchy problem
-%
-\begin{equation}
-  \frac{\dd \alpha_s(t)}{\dd t} = \beta(\alpha_s).
-\end{equation}
-%
-At LO, this has an exact solution, while at higher orders a fourth-order Runge Kutta method is used to determine the value of $\alpha_s$ from an initial condition.
-Additionally, this class also contains the necessary information and methods to perform the matching of the coupling at the quark thresholds at NNLO and above, assuming the on-shell scheme \textcolor{red}{refer to previous section in which we define these}.
-It keeps an internal set of arrays that contain the values of the coupling pre- and post-threshold for each relevant $n_f$; for this reason, its constructor requires the mass array which is suppied by the initial distribution.
-These values are calculated and setup only if the user calls the \mintinline{cpp}{.setVFNS()} method with the required arguments. The other option is to call the \mintinline{cpp}{.setFFNS()} with the singular value of $n_f$, which will only calculate the final value of $\alpha_s$ at $Q_f$ and do nothing else, since in the fixed-flavor number scheme, this is all that is required.
-
-\subsubsection{The Grid}
-\label{subsec:grid}
-
-The interpolation/convolution grid is arguably the most important part of the code, as convolutions and interpolations take up the vast majority of the program's runtime. At the highest level, the \mintinline{cpp}{Grid} class supplies an underlying array of points, along with methods to perform convolutions between arrays and expressions as well as interpolations of arrays on the grid.
-
-There are a few different prescriptions one can use to fill the grid in order to increase accuracy.
-The original version of \texttt{Candia} used logarithmically spaced intervals to define the grid, extending from the minimum value provided in the array of tabulated $x$-values to 1. While this works to reduce numerical error in the low-$x$ regime in which splitting functions are singular, it fails to sufficiently fill the large-$x$ region of the grid where splitting functions are also not well-behaved.
-Because of this, we also give the option (which is now the default) to fill the grid logarithmically up to only $x=0.1$, then fill it linearly from $x=0.1$ to $x=1.0$.
-
-\subsubsection{The Evolution}
-\label{subsec:evol}
-
-The part of the code responsible for the actual evolution of the parton distributions ties all of the above classes and methods together; this is all done within the \mintinline{cpp}{DGLAPSolver} class. The constructor accepts the following values:
-\begin{itemize}
-\item the perturbative order
-\item a \mintinline{cpp}{Grid} object
-\item a \mintinline{cpp}{AlphaS} object
-\item $Q_f$, the final evolution energy ($Q_0$ is encoded in the \mintinline{cpp}{AlphaS} object)
-\item the number iterations (corresponding to the $s$ index)
-\item the number of terms to keep in the singlet expansion, called the \textit{truncation index} (this is $\kappa$)
-\item a \mintinline{cpp}{Distribution} object
-\item the ratio $\mu_r/\mu_f$ (this defaults to 1 if the user doesn't provide an argument)
-\end{itemize}
-%
-Upon construction, it will store copies of the important arguments, then allocate memory for and fill the initial part of the distributions from the \mintinline{cpp}{Distribution} object. At N$^3$LO, it will also hard-code the $r_1$, $b$, and $c$ coefficients.
-Once the user calls the \mintinline{cpp}{.evolve()} method, the evolution proceeds. It will first form the special distributions the are evolved, e.g. $q_{NS}^{+}$ or $q^{(+)}$. It will then, using the initial value of $n_f$ from the distribution and the corresponding values of $\alpha_s$, perform the evolution to $Q_f$.
-
-If the user setup the $\alpha_s$ object with the FFNS, it will do only one full set of iterations, using the values of $\alpha_s$ at $Q_0$ and $Q_f$ only. If the VFNS was setup, the evolution will be performed in several steps depending on if a quark masses is reached between $Q_0$ and $Q_f$. At each mass, the evolution only proceeds to that mass, then performs any matching (if at a sufficient perturbative order and the user has not switched matching off), then proceeds to either the next quark mass if present before $Q_f$, or just to $Q_f$ otherwise.
-
-\subsection{Major Optimizations from \texorpdfstring{\texttt{Candia-v1}}{Candia-v1}}
+\subsection{Major Fixes and Optimizations from \texorpdfstring{\texttt{Candia-v1}}{Candia-v1}}
 \label{subsec:optims}
 
-We now, for completeness, describe the major optimizations and general enhancements that have been made with the advance to \texttt{Candia-v2}. The first one is the flexibility offered by C++ over C when it comes to type-generic functions and interfaces. While this can be achieved in C either directly or indirectly, it often leads to un-transparent code that is hard to read and debug. C++ provides a very natural way to express, say, ``Expressions'', as in Section~\ref{subsec:splitfuncs-and-omes} with neglible overhead. While this doesn't have any significant or direct performance impacts, it makes debugging and handling the corresponding code very straightforward, leading to a faster developing process.
+We now, for completeness, describe the major fixes, optimizations, and general enhancements that have been made with the advance to \texttt{Candia-v2}. The first one is the flexibility offered by C++ over C when it comes to type-generic functions and interfaces. While this can be achieved in C either directly or indirectly, it often leads to un-transparent code that is hard to read and debug. While this doesn't have any significant, direct performance impacts, it makes debugging and handling the corresponding code very straightforward, leading to a faster developing process and cleaner API.
 
-There are three major improvements that were made that significantly increased the performance of the code, those being the caching of the values of the splitting functions and operator matrix elements, the usage of multi-threading due to the independent nature of certain pieces of the evolution, and the memory reduction by only allocating for two iterations, as opposed to all $s$ requested ones.
+There were a few bugs in \texttt{Candia} that have been fixed in \texttt{Candia-v2}. First, the new NNLO coefficient introduced with the exact solution was missing the factor of $\beta_1$ in the arctangent. This ended up being a minor factor that only significantly affected the heavy flavors (and only in the non-singlet sector), so the comparisons with $g$ and $q^{(-)}$ which received minimal heavy flavor contributions weren't impacted, letting this go unnoticed. The second bug was an incorrect initialization of the $\ln \frac{\mu_R^2}{\mu_F^2}$ when performing the matching of the coupling, leaving this term equal to zero no matter what the user specified. Further, the initial conditions for the coupling were set incorrectly. The intention is to start the evolution just before the mass of the charm, such that matching for the coupling and PDFs occurs right away. However, the initial value of $\alpha_0=0.35$ was specified for \textit{after} the threshold of the charm, leading to incorrect values of $\alpha_s$ throughout the rest of the evolution. This went unnoticed, because the differences were present only at NNLO, and they were small. Lastly, there was a small typo in the definition of $A_{gg}^{(2)}$, the numerical impacts of which were virtually insignificant.
 
-In regards to the first improvement, the choice of Gauss-Legendre quadrature leaves a fairly manageable memory footprint if we simply cache the values of the splitting functions evaluated at the Gauss-Legendre abscissae.
-Additionally, it seemed quite wasteful to perform these calculates hundreds if not thousands of times during the course of the program's execution.
-This reduces all of the piece of a calculation of a splitting function or OME to a few conditional statements to retrieve the value from the cache, and drastically speeds up the calculation of the convolutions at higher orders.
+Apart from the bug fixes, there are several major improvements in \texttt{Candia-v2}. The first, and most significant, is the support for multi-threading. As mentioned previously, the fact that the non-singlet PDFs are decoupled allows them to evolve concurrently. Further, despite the fact that the singlet PDFs are coupled, each iteration (given by the $n$ index) requires information only from the previous iteration, not the current one. This allows the convolutions to be split up and performed concurrently. Minus the overhead with creating and managing threads, this in principle leads to an approximately $N$-fold speedup of the evolution, given $N$ threads.
 
-In regards to the second improvement, the non-singlet distributions that are evolved are completely decoupled, meaning they can all proceed concurrently. Assuming the user enables the \mintinline{cmake}{ENABLE_THREADING} CMake option, the code is then able to place each individual non-singlet evolution on a separate thread. The singlet sector, unfortunately, doesn't have this freedom. However, each iteration requires information only from the previous iteration, not from its own, when it comes to performing the convolutionsx. Therefore, we can split the grid up into several sections and have the convolutions performed independently on these parts, reducing the time spent on the convolutions by a considerable amount. Since essentially all remotely recent CPUs have multiple cores/threads, this is very much a viable option for performance.
+The second major optimization is that, in both the singlet and non-singlet sectors, the ``outer'' iteration corresponding to $n$ and $s$ respectively, require information only from the previous iteration. This means we need only allocate enough memory for two such iterations, whereas \texttt{Candia} allocated memory for all iterations. This becomes especially valuable for higher orders in the exact solution as it leads to exponentially less memory usage.
 
-In regards to the third and final optimization, the realization about the singlet sector above is also present in the non-singlet sector, though only for the outermost index, denoted $s$. Previously, in \texttt{Candia-v1}, this was ignored, and memory was allocated for all iterations, meaning, for instance, at NNLO, if the user requested 10 iterations and 500 grid points, we would request $8*37*10^3*500 = 148000000$ bytes of memory (8 being the size of a double-precision floating point on most systems and 37 being the total number of distributions used throughout the evolution), which is approximately \qty{148}{\mega\byte}. With this optimization, we drop the memory usage by a factor of $s/2$, which is very impactful for large grids and large numbers of iterations.
-
+Lastly, at higher orders, the splitting functions and operator matrix elements are fairly complex. Since we are performing our convolutions via a Gauss-Legendre quadrature, there hence exists a set of fixes Gaussian points at which these expressions are evaluated which is known before the evolution begins. Thus, we have implemented the option to cache the values of these splitting functions and have them retrieved during the evolution as opposed to repeatedly re-calculating them thousands of times. Of course, the effect is minimal and even detrimental at lower orders where the cost of multiple conditional evaluations costs more than the computation of simple expression. However, during testing we found that for $>$NNLO, there were non-negligible speedups.
 
 \bibliographystyle{elsarticle-num}
 \bibliography{sources}

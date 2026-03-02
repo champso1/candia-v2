@@ -517,9 +517,7 @@ namespace Candia2
 	}
 
 
-
-
-	
+	/*
 	SplittingFunction::value_type P3nsp::calcRegular(value_type x) const
 	{	
 		double x1  = 1.0-x;
@@ -668,6 +666,84 @@ namespace Candia2
 			res = P3NSPAI
 				+ 0.5*((P3NPA01 + P3NPA02)
 					+ nf*(P3NPA11 + P3NPA12));
+		return res/16.0;
+	}
+	*/
+    double P3nsp::calcRegular(double y) const
+	{
+		double y1 = 1.0 - y;
+		double dm = 1.0 / y1;
+		double dl = std::log(y);
+		double dl1 = std::log(1.0 - y);
+
+		double nf = static_cast<double>(_nf);
+		double nf2 = nf*nf;
+		double nf3 = nf*nf2;
+
+		// Leading large-n_c, nf^0 and nf^1, parametrized
+		double p3nsa0 = 2.5e4 * (y1 * (3.5254 + 8.6935 * y - 1.5051 * std::pow(y, 2)
+				+ 1.8300 * std::pow(y, 3)) + 11.883 * y * dl - 0.09066 * y * std::pow(dl, 2)
+			+ 11.410 * y1 * dl1 + 13.376 * dl * dl1)
+			+ 5.167133e4 * dl + 1.712095e4 * std::pow(dl, 2) + 2.863226e3 * std::pow(dl, 3)
+			+ 2.978255e2 * std::pow(dl, 4) + 1.6e1 * std::pow(dl, 5) + 5.e-1 * std::pow(dl, 6)
+			- 2.973385e4 + 1.906980e4 * dl1;
+
+		double p3nsa1 = 2.5e4 * (y1 * (-0.74077 + 1.4860 * y - 0.23631 * std::pow(y, 2)
+				+ 0.31584 * std::pow(y, 3)) + 2.5251 * y1 * dl1 + 2.5203 * dl * dl1
+			+ 2.2242 * y * dl - 0.02460 * y * std::pow(dl, 2) + 0.00310 * y * std::pow(dl, 3))
+			- 9.239374e3 * dl - 2.917312e3 * std::pow(dl, 2)
+			- 4.305308e2 * std::pow(dl, 3) - 3.6e1 * std::pow(dl, 4) - (4.0/3.0) * std::pow(dl, 5)
+			+ 8.115605e3 - 3.079761e3 * dl1;
+
+		// Nonleading large-n_c, nf^0 and nf^1: two approximations
+		double p3npa01 = 3948.16 * y1 - 2464.61 * (2.0 * y - y * y) * y1
+			- 1839.44 * std::pow(dl, 2) - 402.156 * std::pow(dl, 3)
+			- 1777.27 * std::pow(dl1, 2) * y1 - 204.183 * std::pow(dl1, 3) * y1 + 507.152
+			- 5.587553e1 * std::pow(dl, 4) - 2.831276 * std::pow(dl, 5)
+			- 1.488340e-1 * std::pow(dl, 6) - 2.601749e3 - 2.118867e3 * dl1;
+
+		double p3npa02 = (8698.39 - 10490.47 * y) * y * y1
+			+ 1389.73 * dl + 189.576 * std::pow(dl, 2)
+			- 173.936 * std::pow(dl1, 2) * y1 + 223.078 * std::pow(dl1, 3) * y1 + 505.209
+			- 5.587553e1 * std::pow(dl, 4) - 2.831276 * std::pow(dl, 5)
+			- 1.488340e-1 * std::pow(dl, 6) - 2.601749e3 - 2.118867e3 * dl1;
+
+		double p3npa11 = (-1116.34 + 1071.24 * y) * y * y1
+			- 59.3041 * std::pow(dl, 2) - 8.4620 * std::pow(dl, 3)
+			- 143.813 * dl1 * y1 - 18.8803 * std::pow(dl1, 3) * y1 - 7.33927
+			+ 4.658436 * std::pow(dl, 4) + 2.798354e-1 * std::pow(dl, 5)
+			+ 3.121643e2 + 3.379310e2 * dl1;
+
+		double p3npa12 = (-690.151 - 656.386 * y * y) * y1
+			+ 133.702 * std::pow(dl, 2) + 34.0569 * std::pow(dl, 3)
+			- 745.573 * dl1 * y1 + 8.61438 * std::pow(dl1, 3) * y1 - 7.53662
+			+ 4.658437 * std::pow(dl, 4) + 2.798354e-1 * std::pow(dl, 5)
+			+ 3.121643e2 + 3.379310e2 * dl1;
+
+		// nf^2 (parametrized) and nf^3 (exact)
+		double p3nspa2 = 2.5e2 * (y1 * (3.0008 + 0.8619 * y - 0.12411 * std::pow(y, 2)
+				+ 0.31595 * std::pow(y, 3)) - 0.37529 * y * dl - 0.21684 * y * std::pow(dl, 2)
+			- 0.02295 * y * std::pow(dl, 3) + 0.03394 * y1 * dl1 + 0.40431 * dl * dl1)
+			+ 3.930056e2 * dl + 1.125705e2 * std::pow(dl, 2) + 1.652675e1 * std::pow(dl, 3)
+			+ 7.901235e-1 * std::pow(dl, 4) - 3.760092e2 + 2.668861e1 * dl1;
+
+		double p3nsa3 = - 2.426296 - 8.460488e-1 * y
+			+ (5.267490e-1 * dm - 3.687243 + 3.160494 * y) * dl
+			- (1.316872 * (dm + 0.1) - 1.448560 * y) * std::pow(dl, 2)
+			- (2.633745e-1 * dm - 1.31687e-1 * (1.0 + y)) * std::pow(dl, 3);
+
+		// Assembly
+		double p3nspai = p3nsa0 + nf*p3nsa1 + nf2 * p3nspa2 + nf3 * p3nsa3;
+
+
+		double res{};
+		if (_imod == 1) {
+			res = (p3nspai + p3npa01 + nf * p3npa11);
+		} else if (_imod == 2) {
+			res = (p3nspai + p3npa02 + nf * p3npa12);
+		} else {
+			res = (p3nspai + 0.5 * ((p3npa01 + p3npa02) + nf * (p3npa11 + p3npa12)));
+		}
 		return res/16.0;
 	}
 	SplittingFunction::value_type P3nsp::calcPlus(value_type x) const
@@ -1172,196 +1248,229 @@ namespace Candia2
 
 		// P3nsp
 		{
-			const value_type x2   = x * x;
-			const value_type x3   = x2 * x;
-			const value_type omx  = 1.0 - x;
-			const value_type dm   = 1.0 / omx;
-			const value_type dl   = std::log(x);
-			const value_type dl2  = dl * dl;
-			const value_type dl3  = dl2 * dl;
-			const value_type dl4  = dl3 * dl;
-			const value_type dl5  = dl4 * dl;
-			const value_type dl6  = dl5 * dl;
-			const value_type dlm  = std::log1p(-x);
-			const value_type dlm2 = dlm * dlm;
-			const value_type dlm3 = dlm2 * dlm;
+			const double y = x;
+			double y1 = 1.0 - y;
+			double dm = 1.0 / y1;
+			double dl = std::log(y);
+			double dl1 = std::log1p(-y);
+
+			double nf = static_cast<double>(_nf);
+			double nf2 = nf*nf;
+			double nf3 = nf*nf2;
 
 			// Leading large-n_c, nf^0 and nf^1, parametrized
-			const value_type p3nsa0  =
-				2.5e+4 * ( omx * ( 3.5254 + 8.6935 * x - 1.5051 * x2 + 1.8300 * x3 )
-						   + 11.883 * x * dl - 0.09066 * x * dl2 + 11.410 * omx * dlm + 13.376  * dl * dlm )
-				+ 5.167133e+4 * dl + 1.712095e+4 * dl2 + 2.863226e+3 * dl3 + 2.978255e+2 * dl4
-				+ 1.6e+1 * dl5 + 5.e-1 * dl6 - 2.973385e+4 + 1.906980e+4 * dlm;
-			const value_type p3nsa1  =
-				2.5e+4 * ( omx * ( - 0.74077 + 1.4860 * x - 0.23631 * x2 + 0.31584 * x3 )
-						   + 2.5251 * omx * dlm + 2.5203 * dl * dlm + 2.2242 * x * dl
-						   - 0.02460 * x * dl2 + 0.00310 * x * dl3 )
-				- 9.239374e+3 * dl - 2.917312e+3 * dl2 - 4.305308e+2 *dl3 - 3.6e+1 * dl4
-				- 4.0/3.0 * dl5 + 8.115605e+3 - 3.079761e+3 * dlm;
+			double p3nsa0 = 2.5e4 * (y1 * (3.5254 + 8.6935 * y - 1.5051 * std::pow(y, 2)
+					+ 1.8300 * std::pow(y, 3)) + 11.883 * y * dl - 0.09066 * y * std::pow(dl, 2)
+				+ 11.410 * y1 * dl1 + 13.376 * dl * dl1)
+				+ 5.167133e4 * dl + 1.712095e4 * std::pow(dl, 2) + 2.863226e3 * std::pow(dl, 3)
+				+ 2.978255e2 * std::pow(dl, 4) + 1.6e1 * std::pow(dl, 5) + 5.e-1 * std::pow(dl, 6)
+				- 2.973385e4 + 1.906980e4 * dl1;
+
+			double p3nsa1 = 2.5e4 * (y1 * (-0.74077 + 1.4860 * y - 0.23631 * std::pow(y, 2)
+					+ 0.31584 * std::pow(y, 3)) + 2.5251 * y1 * dl1 + 2.5203 * dl * dl1
+				+ 2.2242 * y * dl - 0.02460 * y * std::pow(dl, 2) + 0.00310 * y * std::pow(dl, 3))
+				- 9.239374e3 * dl - 2.917312e3 * std::pow(dl, 2)
+				- 4.305308e2 * std::pow(dl, 3) - 3.6e1 * std::pow(dl, 4) - (4.0/3.0) * std::pow(dl, 5)
+				+ 8.115605e3 - 3.079761e3 * dl1;
 
 			// Nonleading large-n_c, nf^0 and nf^1: two approximations
-			const value_type p3npa01 =
-				3948.16 * omx - 2464.61 * ( 2.0*x - x2 ) * omx - 1839.44 * dl2 - 402.156 * dl3
-				- 1777.27 * dlm2 * omx - 204.183 * dlm3 * omx + 507.152 - 5.587553e1 * dl4 - 2.831276e0 * dl5
-				- 1.488340e-1 * dl6 - 2.601749e3 - 2.118867e3 * dlm;
-			const value_type p3npa02 =
-				( 8698.39 - 10490.47 * x ) * x * omx + 1389.73 * dl + 189.576 * dl2
-				- 173.936 * dlm2 * omx + 223.078 * dlm3 * omx + 505.209 - 5.587553e1 * dl4 - 2.831276e0 * dl5
-				- 1.488340e-1 * dl6 - 2.601749e3 - 2.118867e3 * dlm;
+			double p3npa01 = 3948.16 * y1 - 2464.61 * (2.0 * y - y * y) * y1
+				- 1839.44 * std::pow(dl, 2) - 402.156 * std::pow(dl, 3)
+				- 1777.27 * std::pow(dl1, 2) * y1 - 204.183 * std::pow(dl1, 3) * y1 + 507.152
+				- 5.587553e1 * std::pow(dl, 4) - 2.831276 * std::pow(dl, 5)
+				- 1.488340e-1 * std::pow(dl, 6) - 2.601749e3 - 2.118867e3 * dl1;
 
-			const value_type p3npa11 =
-				( - 1116.34 + 1071.24 * x ) * x * omx - 59.3041 * dl2 - 8.4620 * dl3
-				- 143.813 * dlm * omx - 18.8803 * dlm3 * omx - 7.33927 + 4.658436e0*dl4 + 2.798354e-1 * dl5
-				+ 3.121643e2 + 3.379310e2 * dlm;
-			const value_type p3npa12 =
-				( - 690.151 - 656.386 * x2 ) * omx + 133.702 * dl2 + 34.0569 * dl3
-				- 745.573 * dlm * omx + 8.61438 * dlm3 * omx - 7.53662 + 4.658437e0 * dl4 + 2.798354e-1 * dl5
-				+ 3.121643e2 + 3.379310e2 * dlm;
+			double p3npa02 = (8698.39 - 10490.47 * y) * y * y1
+				+ 1389.73 * dl + 189.576 * std::pow(dl, 2)
+				- 173.936 * std::pow(dl1, 2) * y1 + 223.078 * std::pow(dl1, 3) * y1 + 505.209
+				- 5.587553e1 * std::pow(dl, 4) - 2.831276 * std::pow(dl, 5)
+				- 1.488340e-1 * std::pow(dl, 6) - 2.601749e3 - 2.118867e3 * dl1;
+
+			double p3npa11 = (-1116.34 + 1071.24 * y) * y * y1
+				- 59.3041 * std::pow(dl, 2) - 8.4620 * std::pow(dl, 3)
+				- 143.813 * dl1 * y1 - 18.8803 * std::pow(dl1, 3) * y1 - 7.33927
+				+ 4.658436 * std::pow(dl, 4) + 2.798354e-1 * std::pow(dl, 5)
+				+ 3.121643e2 + 3.379310e2 * dl1;
+
+			double p3npa12 = (-690.151 - 656.386 * y * y) * y1
+				+ 133.702 * std::pow(dl, 2) + 34.0569 * std::pow(dl, 3)
+				- 745.573 * dl1 * y1 + 8.61438 * std::pow(dl1, 3) * y1 - 7.53662
+				+ 4.658437 * std::pow(dl, 4) + 2.798354e-1 * std::pow(dl, 5)
+				+ 3.121643e2 + 3.379310e2 * dl1;
 
 			// nf^2 (parametrized) and nf^3 (exact)
-			const value_type p3nspa2 =
-				2.5e+2 * ( omx * ( 3.0008 + 0.8619 * x - 0.12411 * x2 + 0.31595* x3 )
-						   - 0.37529 * x * dl - 0.21684 * x * dl2 - 0.02295 * x * dl3
-						   + 0.03394 * omx * dlm + 0.40431 * dl * dlm )
-				+ 3.930056e+2 * dl + 1.125705e+2 * dl2 + 1.652675e+1 * dl3
-				+ 7.901235e-1 * dl4 - 3.760092e+2 + 2.668861e+1 * dlm;
-			const value_type p3nsa3  =
-				- 2.426296 - 8.460488e-1 * x + ( 5.267490e-1 * dm - 3.687243 + 3.160494 * x ) * dl
-				- ( 1.316872 * ( dm + 1.e-1) - 1.448560 * x ) * dl2
-				- ( 2.633745e-1 * dm - 1.31687e-1 * ( 1. + x ) ) * dl3;
+			double p3nspa2 = 2.5e2 * (y1 * (3.0008 + 0.8619 * y - 0.12411 * std::pow(y, 2)
+					+ 0.31595 * std::pow(y, 3)) - 0.37529 * y * dl - 0.21684 * y * std::pow(dl, 2)
+				- 0.02295 * y * std::pow(dl, 3) + 0.03394 * y1 * dl1 + 0.40431 * dl * dl1)
+				+ 3.930056e2 * dl + 1.125705e2 * std::pow(dl, 2) + 1.652675e1 * std::pow(dl, 3)
+				+ 7.901235e-1 * std::pow(dl, 4) - 3.760092e2 + 2.668861e1 * dl1;
+
+			double p3nsa3 = - 2.426296 - 8.460488e-1 * y
+				+ (5.267490e-1 * dm - 3.687243 + 3.160494 * y) * dl
+				- (1.316872 * (dm + 0.1) - 1.448560 * y) * std::pow(dl, 2)
+				- (2.633745e-1 * dm - 1.31687e-1 * (1.0 + y)) * std::pow(dl, 3);
 
 			// Assembly
-			const value_type p3nspai = p3nsa0 + Nf * p3nsa1 + Nf * Nf * p3nspa2 + Nf * Nf * Nf * p3nsa3;
-			if (_imod == 1)
-				res1 = p3nspai + p3npa01 + Nf * p3npa11;
-			else if (_imod == 2)
-				res1 = p3nspai + p3npa02 + Nf * p3npa12;
-			else
-				res1 = p3nspai + 0.5 * ( ( p3npa01 + p3npa02 ) + Nf * ( p3npa11 + p3npa12 ) );
+			double p3nspai = p3nsa0 + nf*p3nsa1 + nf2 * p3nspa2 + nf3 * p3nsa3;
+
+			if (_imod == 1) {
+				res1 = (p3nspai + p3npa01 + nf * p3npa11);
+			} else if (_imod == 2) {
+				res1 = (p3nspai + p3npa02 + nf * p3npa12);
+			} else {
+				res1 = (p3nspai + 0.5 * ((p3npa01 + p3npa02) + nf * (p3npa11 + p3npa12)));
+			}
 		}
 
 		// P3ps
 		{
-			const value_type Nf2     = Nf*Nf;
-			const value_type Nf3     = Nf*Nf2;
-			const value_type xm   = 1.0 / x;
-			const value_type x1   = 1.0 - x;
-			const value_type dl   = std::log(x);
-			const value_type dl2  = dl * dl;
-			const value_type dl3  = dl * dl2;
-			const value_type dl4  = dl * dl3;
-			const value_type dl5  = dl * dl4;
-			const value_type dl6  = dl * dl5;
-			const value_type dlm  = std::log1p(-x);
-			const value_type dlm2 = dlm * dlm;
-			const value_type dlm3 = dlm * dlm2;
-			const value_type dlm4 = dlm * dlm3;
+			const double y = x;
+			double ym = 1.0 / y;
+			double y1 = 1.0 - y;
+			double dl = std::log(y);
+			double dl1 = std::log1p(-y);
+
+			double nf = static_cast<double>(_nf);
+			double nf2 = nf * nf;
+			double nf3 = nf * nf2;
 
 			// Known large-x coefficients
-			const value_type x1L4cff = - 5.6460905e1 * Nf + 3.6213992   * Nf2;
-			const value_type x1L3cff = - 2.4755054e2 * Nf + 4.0559671e1 * Nf2 - 1.5802469 * Nf3;
-			const value_type y1L4cff = - 1.3168724e1 * Nf;
-			const value_type y1L3cff = - 1.9911111e2 * Nf + 1.3695473e1 * Nf2;
+			double x1l4cff = -5.6460905e1 * nf + 3.6213992 * nf2;
+			double x1l3cff = -2.4755054e2 * nf + 4.0559671e1 * nf2 - 1.5802469 * nf3;
+			double y1l4cff = -1.3168724e1 * nf;
+			double y1l3cff = -1.9911111e2 * nf + 1.3695473e1 * nf2;
 
 			// Known small-x coefficients
-			const value_type bfkl1   =   1.7492273e3 * Nf;
-			const value_type x0L6cff = - 7.5061728   * Nf + 7.9012346e-1 * Nf2;
-			const value_type x0L5cff =   2.8549794e1 * Nf + 3.7925926    * Nf2;
-			const value_type x0L4cff = - 8.5480010e2 * Nf + 7.7366255e1  * Nf2 - 1.9753086e-1 * Nf3;
+			double bfkl1 = 1.7492273e3 * nf;
+			double x0l6cff = -7.5061728 * nf + 7.9012346e-1 * nf2;
+			double x0l5cff =  2.8549794e1 * nf + 3.7925926 * nf2;
+			double x0l4cff = -8.5480010e2 * nf + 7.7366255e1 * nf2 - 1.9753086e-1 * nf3;
 
 			// The resulting part of the function
-			const value_type P3ps01 =
-				+ bfkl1 * dl2 * xm
-				+ x0L6cff * dl6
-				+ x0L5cff * dl5
-				+ x0L4cff * dl4
-				+ x1L3cff * x1 * dlm3
-				+ x1L4cff * x1 * dlm4
-				+ y1L3cff * x1 * x1 * dlm3
-				+ y1L4cff * x1 * x1 * dlm4;
+			double p3ps01 = bfkl1 * std::pow(dl, 2) * ym
+				+ x0l6cff * std::pow(dl, 6)
+				+ x0l5cff * std::pow(dl, 5)
+				+ x0l4cff * std::pow(dl, 4)
+				+ x1l3cff * y1 * std::pow(dl1, 3)
+				+ x1l4cff * y1 * std::pow(dl1, 4)
+				+ y1l3cff * (y1 * y1) * std::pow(dl1, 3)
+				+ y1l4cff * (y1 * y1) * std::pow(dl1, 4);
 
-			// The selected approximations for nf = 3, 4, 5
-			value_type P3psApp1 = P3ps01;
-			value_type P3psApp2 = P3ps01;
-			if (_nf <= 3) {
-				P3psApp1 +=
-					+ 67731.  * x1 * dl * xm
-					+ 274100. * x1 * xm
-					- 104493. * x1 * ( 1. + 2. * x )
-					+ 34403.  * x1 * x * x
-					+ 353656. * x1 * dl
-					+ 10620.  * dl2
-					+ 40006.  * dl3
-					- 7412.1  * x1 * dlm
-					- 2365.1  * x1 * dlm2
-					+ 1533.0  * x1 * x1 * dlm2;
-				P3psApp2 +=
-					+ 54593.  * x1 * dl * xm
-					+ 179748. * x1 * xm
-					- 195263. * x1
-					+ 12789.  * x1 * x * ( 1. + x )
-					+ 4700.0  * x1 * dl
-					- 103604. * dl2
-					- 2758.3  * dl3
-					- 2801.2  * x1 * dlm
-					- 1986.9  * x1 * dlm2
-					- 6005.9  * x1 * x1 * dlm2;
+			double p3psapp1 = 0.0;
+			double p3psapp2 = 0.0;
+
+			if (_nf == 3) {
+				p3psapp1 = p3ps01
+					+ 67731.0   * y1 * dl * ym
+					+ 274100.0  * y1 * ym
+					- 104493.0  * y1 * (1.0 + 2.0 * y)
+					+ 34403.0   * y1 * (y * y)
+					+ 353656.0  * y1 * dl
+					+ 10620.0   * std::pow(dl, 2)
+					+ 40006.0   * std::pow(dl, 3)
+					- 7412.1    * y1 * dl1
+					- 2365.1    * y1 * std::pow(dl1, 2)
+					+ 1533.0    * (y1 * y1) * std::pow(dl1, 2);
+
+				p3psapp2 = p3ps01
+					+ 54593.0   * y1 * dl * ym
+					+ 179748.0  * y1 * ym
+					- 195263.0  * y1
+					+ 12789.0   * y1 * y * (1.0 + y)
+					+ 4700.0    * y1 * dl
+					- 103604.0  * std::pow(dl, 2)
+					- 2758.3    * std::pow(dl, 3)
+					- 2801.2    * y1 * dl1
+					- 1986.9    * y1 * std::pow(dl1, 2)
+					- 6005.9    * (y1 * y1) * std::pow(dl1, 2);
+
 			} else if (_nf == 4) {
-				P3psApp1 +=
-					+ 90154.  * x1 * dl *xm
-					+ 359084. * x1 * xm
-					- 136319. * x1 * ( 1. + 2. * x )
-					+ 45379.  * x1 * x * x
-					+ 461167. * x1 * dl
-					+ 13869.  * dl2
-					+ 52525.  * dl3
-					- 7498.2  * x1 * dlm
-					- 2491.5  * x1 * dlm2
-					+ 1727.2  * x1 * x1 * dlm2;
-				P3psApp2 +=
-					+ 72987.  * x1 * dl * xm
-					+ 235802. * x1 * xm
-					- 254921. * x1
-					+ 17138.  * x1 * x * ( 1. + x )
-					+ 5212.9  * x1 * dl
-					- 135378. * dl2
-					- 3350.9  * dl3
-					- 1472.7  * x1 * dlm
-					- 1997.2  * x1 * dlm2
-					- 8123.3  * x1 * x1 * dlm2;
-			} else if (_nf >= 5) {
-				P3psApp1 +=
-					+ 112481. * x1 * dl * xm
-					+ 440555. * x1 * xm
-					- 166581. * x1 * ( 1. + 2. * x )
-					+ 56087.  * x1 * x * x
-					+ 562992. * x1 * dl
-					+ 16882.  * dl2
-					+ 64577.  * dl3
-					- 6570.1  * x1 * dlm
-					- 2365.7  * x1 * dlm2
-					+ 1761.7  * x1 * x1 * dlm2;
-				P3psApp2 +=
-					+ 91468.  * x1 * dl * xm
-					+ 289658. * x1 * xm
-					- 311749. * x1
-					+ 21521.  * x1 * x * ( 1. + x )
-					+ 4908.9 * x1 * dl
-					- 165795. * dl2
-					- 3814.9 * dl3
-					+ 804.5 * x1 * dlm
-					- 1760.8 * x1 * dlm2
-					- 10295.  * x1 * x1 * dlm2;
+				p3psapp1 = p3ps01
+					+ 90154.0   * y1 * dl * ym
+					+ 359084.0  * y1 * ym
+					- 136319.0  * y1 * (1.0 + 2.0 * y)
+					+ 45379.0   * y1 * (y * y)
+					+ 461167.0  * y1 * dl
+					+ 13869.0   * std::pow(dl, 2)
+					+ 52525.0   * std::pow(dl, 3)
+					- 7498.2    * y1 * dl1
+					- 2491.5    * y1 * std::pow(dl1, 2)
+					+ 1727.2    * (y1 * y1) * std::pow(dl1, 2);
+
+				p3psapp2 = p3ps01
+					+ 72987.0   * y1 * dl * ym
+					+ 235802.0  * y1 * ym
+					- 254921.0  * y1
+					+ 17138.0   * y1 * y * (1.0 + y)
+					+ 5212.9    * y1 * dl
+					- 135378.0  * std::pow(dl, 2)
+					- 3350.9    * std::pow(dl, 3)
+					- 1472.7    * y1 * dl1
+					- 1997.2    * y1 * std::pow(dl1, 2)
+					- 8123.3    * (y1 * y1) * std::pow(dl1, 2);
+
+			} else if (_nf == 5) {
+				p3psapp1 = p3ps01
+					+ 112481.0  * y1 * dl * ym
+					+ 440555.0  * y1 * ym
+					- 166581.0  * y1 * (1.0 + 2.0 * y)
+					+ 56087.0   * y1 * (y * y)
+					+ 562992.0  * y1 * dl
+					+ 16882.0   * std::pow(dl, 2)
+					+ 64577.0   * std::pow(dl, 3)
+					- 6570.1    * y1 * dl1
+					- 2365.7    * y1 * std::pow(dl1, 2)
+					+ 1761.7    * (y1 * y1) * std::pow(dl1, 2);
+
+				p3psapp2 = p3ps01
+					+ 91468.0   * y1 * dl * ym
+					+ 289658.0  * y1 * ym
+					- 311749.0  * y1
+					+ 21521.0   * y1 * y * (1.0 + y)
+					+ 4908.9    * y1 * dl
+					- 165795.0  * std::pow(dl, 2)
+					- 3814.9    * std::pow(dl, 3)
+					+ 804.5     * y1 * dl1
+					- 1760.8    * y1 * std::pow(dl1, 2)
+					- 10295.0   * (y1 * y1) * std::pow(dl1, 2);
+
+			} else if (_nf == 6) {
+				p3psapp1 = p3ps01
+					+ 134701.0  * y1 * dl * ym
+					+ 518318.0  * y1 * ym
+					- 195241.0  * y1 * (1.0 + 2.0 * y)
+					+ 66517.0   * y1 * (y * y)
+					+ 658832.0  * y1 * dl
+					+ 19605.0   * std::pow(dl, 2)
+					+ 76125.0   * std::pow(dl, 3)
+					- 4734.5    * y1 * dl1
+					- 2035.2    * y1 * std::pow(dl1, 2)
+					+ 1633.1    * (y1 * y1) * std::pow(dl1, 2);
+
+				p3psapp2 = p3ps01
+					+ 110032.0  * y1 * dl * ym
+					+ 341158.0  * y1 * ym
+					- 365676.0  * y1
+					+ 25934.0   * y1 * y * (1.0 + y)
+					+ 3614.4    * y1 * dl
+					- 194868.0  * std::pow(dl, 2)
+					- 4172.2    * std::pow(dl, 3)
+					+ 3924.3    * y1 * dl1
+					- 1324.9    * y1 * std::pow(dl1, 2)
+					- 12520.0   * (y1 * y1) * std::pow(dl1, 2);
+
+			} else {
+				std::cerr << " Error in function p3psa: choice of nf " << std::endl;
+				return 0.0;
 			}
 
-			// We return (for now) one of the two error-band boundaries or the
-			// present best estimate, their average
-			if (_imod == 1)
-				res2 = P3psApp1/16.0;
-			else if (_imod == 2)
-				res2 = P3psApp2;
-			else
-				res2 = 0.5 * ( P3psApp1 + P3psApp2 );
+			if (_imod == 1) {
+				res2 = p3psapp1;
+			} else if (_imod == 2) {
+				res2 = p3psapp2;
+			} else {
+				res2 = 0.5 * (p3psapp1 + p3psapp2);
+			}
 		}
 
 		return (res1+res2)/16.0;
@@ -1788,6 +1897,7 @@ namespace Candia2
 		return res/16.0;
 	}
 
+	/*
 	SplittingFunction::value_type P3gg::calcRegular(value_type x) const
 	{
 		value_type nf = static_cast<value_type>(_nf);
@@ -1887,7 +1997,158 @@ namespace Candia2
 			res = 0.5 * (P3ggApp1 + P3ggApp2);
 		return res/16.0;
 	}
+	*/
 
+	SplittingFunction::value_type P3gg::calcRegular(value_type x) const
+	{
+		double ym = 1.0 / x;
+		double y1 = 1.0 - x;
+		double dl = std::log(x);
+		double dl1 = std::log1p(-x);
+
+		double nf = static_cast<double>(_nf);
+		double nf2 = nf*nf;
+		double nf3 = nf*nf2;
+
+		// Large-x coefficients
+		double a4gluon = 40880.330 - 11714.246 * nf + 440.04876 * nf2 + 7.3627750 * nf3;
+		double ccoeff  = 8.5814120e4 - 1.3880515e4 * nf + 1.3511111e2 * nf2;
+		double dcoeff  = 5.4482808e4 - 4.3411337e3 * nf - 2.1333333e1 * nf2;
+
+		double x1l4cff = 5.6460905e1 * nf - 3.6213992 * nf2;
+		double x1l3cff = 2.4755054e2 * nf - 4.0559671e1 * nf2 + 1.5802469 * nf3;
+
+		// Small-x coefficients
+		double bfkl0 = -8.3086173e3;
+		double bfkl1 = -1.0691199e5 - 9.9638304e2 * nf;
+
+		double x0l6cff =  1.44e2 - 2.7786008e1 * nf + 7.9012346e-1 * nf2;
+		double x0l5cff = -1.44e2 - 1.6208066e2 * nf + 1.4380247e1 * nf2;
+		double x0l4cff =  2.6165784e4 - 3.3447551e3 * nf + 9.1522635e1 * nf2 - 1.9753086e-1 * nf3;
+
+		// Resulting part
+		double p3gg01 = bfkl0 * std::pow(dl, 3) * ym
+			+ bfkl1 * std::pow(dl, 2) * ym
+			+ x0l6cff * std::pow(dl, 6)
+			+ x0l5cff * std::pow(dl, 5)
+			+ x0l4cff * std::pow(dl, 4)
+			+ ccoeff * dl1
+			+ dcoeff - a4gluon
+			+ x1l4cff * y1 * std::pow(dl1, 4)
+			+ x1l3cff * y1 * std::pow(dl1, 3);
+
+		double p3ggapp1 = 0.0;
+		double p3ggapp2 = 0.0;
+
+		if (nf == 3) {
+			p3ggapp1 = p3gg01
+				- 421311.0  * y1 * dl * ym
+				- 325557.0  * y1 * ym
+				+ 1679790.0 * y1
+				- 1456863.0 * y1 * x
+				+ 3246307.0 * y1 * dl
+				+ 2026324.0 * std::pow(dl, 2)
+				+ 549188.0  * std::pow(dl, 3)
+				+ 8337.0    * y1 * dl1
+				+ 26718.0   * y1 * std::pow(dl1, 2)
+				- 27049.0   * (y1 * y1) * std::pow(dl1, 3);
+
+			p3ggapp2 = p3gg01
+				- 700113.0  * y1 * dl * ym
+				- 2300581.0 * y1 * ym
+				+ 896407.0  * y1 * (1.0 + 2.0 * x)
+				- 162733.0  * y1 * (x * x)
+				- 2661862.0 * y1 * dl
+				+ 196759.0  * std::pow(dl, 2)
+				- 260607.0  * std::pow(dl, 3)
+				+ 84068.0   * y1 * dl1
+				+ 346318.0  * y1 * std::pow(dl1, 2)
+				+ 315725.0  * dl * std::pow(dl1, 2);
+
+		} else if (nf == 4) {
+			p3ggapp1 = p3gg01
+				- 437084.0  * y1 * dl * ym
+				- 361570.0  * y1 * ym
+				+ 1696070.0 * y1
+				- 1457385.0 * y1 * x
+				+ 3195104.0 * y1 * dl
+				+ 2009021.0 * std::pow(dl, 2)
+				+ 544380.0  * std::pow(dl, 3)
+				+ 9938.0    * y1 * dl1
+				+ 24376.0   * y1 * std::pow(dl1, 2)
+				- 22143.0   * (y1 * y1) * std::pow(dl1, 3);
+
+			p3ggapp2 = p3gg01
+				- 706649.0  * y1 * dl * ym
+				- 2274637.0 * y1 * ym
+				+ 836544.0  * y1 * (1.0 + 2.0 * x)
+				- 199929.0  * y1 * (x * x)
+				- 2683760.0 * y1 * dl
+				+ 168802.0  * std::pow(dl, 2)
+				- 250799.0  * std::pow(dl, 3)
+				+ 36967.0   * y1 * dl1
+				+ 24530.0   * y1 * std::pow(dl1, 2)
+				- 71470.0   * (y1 * y1) * std::pow(dl1, 2);
+
+		} else if (nf == 5) {
+			p3ggapp1 = p3gg01
+				- 439426.0  * y1 * dl * ym
+				- 293679.0  * y1 * ym
+				+ 1916281.0 * y1
+				- 1615883.0 * y1 * x
+				+ 3648786.0 * y1 * dl
+				+ 2166231.0 * std::pow(dl, 2)
+				+ 594588.0  * std::pow(dl, 3)
+				+ 50406.0   * y1 * dl1
+				+ 24692.0   * y1 * std::pow(dl1, 2)
+				+ 174067.0  * (y1 * y1) * dl1;
+
+			p3ggapp2 = p3gg01
+				- 705978.0  * y1 * dl * ym
+				- 2192234.0 * y1 * ym
+				+ 1730508.0 * y1 * x
+				+ 353143.0  * y1 * (2.0 - x * x)
+				- 2602682.0 * y1 * dl
+				+ 178960.0  * std::pow(dl, 2)
+				- 218133.0  * std::pow(dl, 3)
+				+ 2285.0    * y1 * dl1
+				+ 19295.0   * y1 * std::pow(dl1, 2)
+				- 13719.0   * (y1 * y1) * std::pow(dl1, 2);
+
+		} else if (nf == 6) {
+			p3ggapp1 = p3gg01
+				- 476018.0  * y1 * dl * ym
+				- 469289.0  * y1 * ym
+				+ 2049351.0 * y1
+				- 1589000.0 * y1 * x
+				+ 3185549.0 * y1 * dl
+				+ 1994521.0 * std::pow(dl, 2)
+				+ 527723.0  * std::pow(dl, 3)
+				- 340674.0  * y1 * dl1
+				+ 22460.0   * y1 * std::pow(dl1, 2)
+				- 394556.0  * dl * dl1;
+
+			p3ggapp2 = p3gg01
+				- 709863.0  * y1 * dl * ym
+				- 2134347.0 * y1 * ym
+				+ 1605315.0 * y1 * x
+				+ 360743.0  * y1 * (2.0 - x * x)
+				- 2426250.0 * y1 * dl
+				+ 230631.0  * std::pow(dl, 2)
+				- 185804.0  * std::pow(dl, 3)
+				- 7992.9    * y1 * dl1
+				+ 15918.0   * y1 * std::pow(dl1, 2)
+				- 32771.0   * (y1 * y1) * dl1;
+		} else {
+			std::cerr << " Error in function p3gga: choice of nf " << std::endl;
+			std::abort();
+		}
+
+		if (_imod == 1) return p3ggapp1;
+		if (_imod == 2) return p3ggapp2;
+		return (0.5 * (p3ggapp1 + p3ggapp2))/16.0;
+	}
+	
 	SplittingFunction::value_type P3gg::calcPlus(value_type x) const
 	{
 		UNUSED(x);
@@ -1896,12 +2157,19 @@ namespace Candia2
 		const value_type res = 40880.330 - 11714.246 * Nf + 440.04876 * std::pow(Nf, 2) + 7.3627750 * std::pow(Nf, 3);
 		return res/16.0;
 	}
-	SplittingFunction::value_type P3gg::calcDelta(value_type x) const
+	double P3gg::calcDelta(double x) const
 	{
 		UNUSED(x);
-		const value_type Nf = static_cast<value_type>(_nf);
+		const double nf = static_cast<double>(_nf);
+		auto nf2 = nf*nf;
+		auto nf3 = nf2*nf;
 		
-		const value_type res = 68587.64 - 18143.983e0 * Nf + 423.81135e0 * std::pow(Nf, 2) + 9.0672154e-1 * std::pow(Nf, 3);
+		double piece1 = 68587.64;
+		double piece2 = -18143.983*nf;
+		double piece3 = 423.81135*nf2;
+		double piece4 = 9.0672154e-1 * nf3;
+		
+		const double res = 68587.64 - 18143.983*nf + 423.81135*nf2 + 9.0672154e-1 * nf3;
 		return res/16.0;
 	}
 } // namespace Candia2

@@ -117,6 +117,156 @@ double P3GGA(double Y, int nf, int IMOD)
 	return res/16.0;
 }
 
+double P3GGA_2410(double y, int nf, int imod)
+{
+    double ym = 1.0 / y;
+    double y1 = 1.0 - y;
+    double dl = std::log(y);
+    double dl1 = std::log(1.0 - y);
+
+    double nf_d = static_cast<double>(nf);
+    double nf2 = nf_d * nf_d;
+    double nf3 = nf_d * nf2;
+
+    // Large-x coefficients
+    double a4gluon = 40880.330 - 11714.246 * nf_d + 440.04876 * nf2 + 7.3627750 * nf3;
+    double ccoeff  = 8.5814120e4 - 1.3880515e4 * nf_d + 1.3511111e2 * nf2;
+    double dcoeff  = 5.4482808e4 - 4.3411337e3 * nf_d - 2.1333333e1 * nf2;
+
+    double x1l4cff = 5.6460905e1 * nf_d - 3.6213992 * nf2;
+    double x1l3cff = 2.4755054e2 * nf_d - 4.0559671e1 * nf2 + 1.5802469 * nf3;
+
+    // Small-x coefficients
+    double bfkl0 = -8.3086173e3;
+    double bfkl1 = -1.0691199e5 - 9.9638304e2 * nf_d;
+
+    double x0l6cff =  1.44e2 - 2.7786008e1 * nf_d + 7.9012346e-1 * nf2;
+    double x0l5cff = -1.44e2 - 1.6208066e2 * nf_d + 1.4380247e1 * nf2;
+    double x0l4cff =  2.6165784e4 - 3.3447551e3 * nf_d + 9.1522635e1 * nf2 - 1.9753086e-1 * nf3;
+
+    // Resulting part
+    double p3gg01 = bfkl0 * std::pow(dl, 3) * ym
+                  + bfkl1 * std::pow(dl, 2) * ym
+                  + x0l6cff * std::pow(dl, 6)
+                  + x0l5cff * std::pow(dl, 5)
+                  + x0l4cff * std::pow(dl, 4)
+                  + ccoeff * dl1
+                  + dcoeff - a4gluon
+                  + x1l4cff * y1 * std::pow(dl1, 4)
+                  + x1l3cff * y1 * std::pow(dl1, 3);
+
+    double p3ggapp1 = 0.0;
+    double p3ggapp2 = 0.0;
+
+    if (nf == 3) {
+        p3ggapp1 = p3gg01
+                 - 421311.0  * y1 * dl * ym
+                 - 325557.0  * y1 * ym
+                 + 1679790.0 * y1
+                 - 1456863.0 * y1 * y
+                 + 3246307.0 * y1 * dl
+                 + 2026324.0 * std::pow(dl, 2)
+                 + 549188.0  * std::pow(dl, 3)
+                 + 8337.0    * y1 * dl1
+                 + 26718.0   * y1 * std::pow(dl1, 2)
+                 - 27049.0   * (y1 * y1) * std::pow(dl1, 3);
+
+        p3ggapp2 = p3gg01
+                 - 700113.0  * y1 * dl * ym
+                 - 2300581.0 * y1 * ym
+                 + 896407.0  * y1 * (1.0 + 2.0 * y)
+                 - 162733.0  * y1 * (y * y)
+                 - 2661862.0 * y1 * dl
+                 + 196759.0  * std::pow(dl, 2)
+                 - 260607.0  * std::pow(dl, 3)
+                 + 84068.0   * y1 * dl1
+                 + 346318.0  * y1 * std::pow(dl1, 2)
+                 + 315725.0  * dl * std::pow(dl1, 2);
+
+    } else if (nf == 4) {
+        p3ggapp1 = p3gg01
+                 - 437084.0  * y1 * dl * ym
+                 - 361570.0  * y1 * ym
+                 + 1696070.0 * y1
+                 - 1457385.0 * y1 * y
+                 + 3195104.0 * y1 * dl
+                 + 2009021.0 * std::pow(dl, 2)
+                 + 544380.0  * std::pow(dl, 3)
+                 + 9938.0    * y1 * dl1
+                 + 24376.0   * y1 * std::pow(dl1, 2)
+                 - 22143.0   * (y1 * y1) * std::pow(dl1, 3);
+
+        p3ggapp2 = p3gg01
+                 - 706649.0  * y1 * dl * ym
+                 - 2274637.0 * y1 * ym
+                 + 836544.0  * y1 * (1.0 + 2.0 * y)
+                 - 199929.0  * y1 * (y * y)
+                 - 2683760.0 * y1 * dl
+                 + 168802.0  * std::pow(dl, 2)
+                 - 250799.0  * std::pow(dl, 3)
+                 + 36967.0   * y1 * dl1
+                 + 24530.0   * y1 * std::pow(dl1, 2)
+                 - 71470.0   * (y1 * y1) * std::pow(dl1, 2);
+
+    } else if (nf == 5) {
+        p3ggapp1 = p3gg01
+                 - 439426.0  * y1 * dl * ym
+                 - 293679.0  * y1 * ym
+                 + 1916281.0 * y1
+                 - 1615883.0 * y1 * y
+                 + 3648786.0 * y1 * dl
+                 + 2166231.0 * std::pow(dl, 2)
+                 + 594588.0  * std::pow(dl, 3)
+                 + 50406.0   * y1 * dl1
+                 + 24692.0   * y1 * std::pow(dl1, 2)
+                 + 174067.0  * (y1 * y1) * dl1;
+
+        p3ggapp2 = p3gg01
+                 - 705978.0  * y1 * dl * ym
+                 - 2192234.0 * y1 * ym
+                 + 1730508.0 * y1 * y
+                 + 353143.0  * y1 * (2.0 - y * y)
+                 - 2602682.0 * y1 * dl
+                 + 178960.0  * std::pow(dl, 2)
+                 - 218133.0  * std::pow(dl, 3)
+                 + 2285.0    * y1 * dl1
+                 + 19295.0   * y1 * std::pow(dl1, 2)
+                 - 13719.0   * (y1 * y1) * std::pow(dl1, 2);
+
+    } else if (nf == 6) {
+        p3ggapp1 = p3gg01
+                 - 476018.0  * y1 * dl * ym
+                 - 469289.0  * y1 * ym
+                 + 2049351.0 * y1
+                 - 1589000.0 * y1 * y
+                 + 3185549.0 * y1 * dl
+                 + 1994521.0 * std::pow(dl, 2)
+                 + 527723.0  * std::pow(dl, 3)
+                 - 340674.0  * y1 * dl1
+                 + 22460.0   * y1 * std::pow(dl1, 2)
+                 - 394556.0  * dl * dl1;
+
+        p3ggapp2 = p3gg01
+                 - 709863.0  * y1 * dl * ym
+                 - 2134347.0 * y1 * ym
+                 + 1605315.0 * y1 * y
+                 + 360743.0  * y1 * (2.0 - y * y)
+                 - 2426250.0 * y1 * dl
+                 + 230631.0  * std::pow(dl, 2)
+                 - 185804.0  * std::pow(dl, 3)
+                 - 7992.9    * y1 * dl1
+                 + 15918.0   * y1 * std::pow(dl1, 2)
+                 - 32771.0   * (y1 * y1) * dl1;
+    } else {
+        std::cerr << " Error in function p3gga: choice of nf " << std::endl;
+        std::abort();
+    }
+
+    if (imod == 1) return p3ggapp1;
+    if (imod == 2) return p3ggapp2;
+    return (0.5 * (p3ggapp1 + p3ggapp2))/16.0;
+}
+
 // -------------------------------------------------------------
 // P3GGB
 // -------------------------------------------------------------
@@ -1277,6 +1427,158 @@ double P3NSSA(double Y, int nf, int IMOD)
              + std::pow(nf, 2) * P3NSSA2;
 	return res/16.0;
 }
+
+double p3psa(double y, int nf, int imod) {
+	double ym = 1.0 / y;
+	double y1 = 1.0 - y;
+	double dl = std::log(y);
+	double dl1 = std::log(1.0 - y);
+
+	double nf_d = static_cast<double>(nf);
+	double nf2 = nf_d * nf_d;
+	double nf3 = nf_d * nf2;
+
+	// Known large-x coefficients
+	double x1l4cff = -5.6460905e1 * nf_d + 3.6213992 * nf2;
+	double x1l3cff = -2.4755054e2 * nf_d + 4.0559671e1 * nf2 - 1.5802469 * nf3;
+	double y1l4cff = -1.3168724e1 * nf_d;
+	double y1l3cff = -1.9911111e2 * nf_d + 1.3695473e1 * nf2;
+
+	// Known small-x coefficients
+	double bfkl1 = 1.7492273e3 * nf_d;
+	double x0l6cff = -7.5061728 * nf_d + 7.9012346e-1 * nf2;
+	double x0l5cff =  2.8549794e1 * nf_d + 3.7925926 * nf2;
+	double x0l4cff = -8.5480010e2 * nf_d + 7.7366255e1 * nf2 - 1.9753086e-1 * nf3;
+
+	// The resulting part of the function
+	double p3ps01 = bfkl1 * std::pow(dl, 2) * ym
+		+ x0l6cff * std::pow(dl, 6)
+		+ x0l5cff * std::pow(dl, 5)
+		+ x0l4cff * std::pow(dl, 4)
+		+ x1l3cff * y1 * std::pow(dl1, 3)
+		+ x1l4cff * y1 * std::pow(dl1, 4)
+		+ y1l3cff * (y1 * y1) * std::pow(dl1, 3)
+		+ y1l4cff * (y1 * y1) * std::pow(dl1, 4);
+
+	double p3psapp1 = 0.0;
+	double p3psapp2 = 0.0;
+
+	if (nf == 3) {
+		p3psapp1 = p3ps01
+			+ 67731.0   * y1 * dl * ym
+			+ 274100.0  * y1 * ym
+			- 104493.0  * y1 * (1.0 + 2.0 * y)
+			+ 34403.0   * y1 * (y * y)
+			+ 353656.0  * y1 * dl
+			+ 10620.0   * std::pow(dl, 2)
+			+ 40006.0   * std::pow(dl, 3)
+			- 7412.1    * y1 * dl1
+			- 2365.1    * y1 * std::pow(dl1, 2)
+			+ 1533.0    * (y1 * y1) * std::pow(dl1, 2);
+
+		p3psapp2 = p3ps01
+			+ 54593.0   * y1 * dl * ym
+			+ 179748.0  * y1 * ym
+			- 195263.0  * y1
+			+ 12789.0   * y1 * y * (1.0 + y)
+			+ 4700.0    * y1 * dl
+			- 103604.0  * std::pow(dl, 2)
+			- 2758.3    * std::pow(dl, 3)
+			- 2801.2    * y1 * dl1
+			- 1986.9    * y1 * std::pow(dl1, 2)
+			- 6005.9    * (y1 * y1) * std::pow(dl1, 2);
+
+	} else if (nf == 4) {
+		p3psapp1 = p3ps01
+			+ 90154.0   * y1 * dl * ym
+			+ 359084.0  * y1 * ym
+			- 136319.0  * y1 * (1.0 + 2.0 * y)
+			+ 45379.0   * y1 * (y * y)
+			+ 461167.0  * y1 * dl
+			+ 13869.0   * std::pow(dl, 2)
+			+ 52525.0   * std::pow(dl, 3)
+			- 7498.2    * y1 * dl1
+			- 2491.5    * y1 * std::pow(dl1, 2)
+			+ 1727.2    * (y1 * y1) * std::pow(dl1, 2);
+
+		p3psapp2 = p3ps01
+			+ 72987.0   * y1 * dl * ym
+			+ 235802.0  * y1 * ym
+			- 254921.0  * y1
+			+ 17138.0   * y1 * y * (1.0 + y)
+			+ 5212.9    * y1 * dl
+			- 135378.0  * std::pow(dl, 2)
+			- 3350.9    * std::pow(dl, 3)
+			- 1472.7    * y1 * dl1
+			- 1997.2    * y1 * std::pow(dl1, 2)
+			- 8123.3    * (y1 * y1) * std::pow(dl1, 2);
+
+	} else if (nf == 5) {
+		p3psapp1 = p3ps01
+			+ 112481.0  * y1 * dl * ym
+			+ 440555.0  * y1 * ym
+			- 166581.0  * y1 * (1.0 + 2.0 * y)
+			+ 56087.0   * y1 * (y * y)
+			+ 562992.0  * y1 * dl
+			+ 16882.0   * std::pow(dl, 2)
+			+ 64577.0   * std::pow(dl, 3)
+			- 6570.1    * y1 * dl1
+			- 2365.7    * y1 * std::pow(dl1, 2)
+			+ 1761.7    * (y1 * y1) * std::pow(dl1, 2);
+
+		p3psapp2 = p3ps01
+			+ 91468.0   * y1 * dl * ym
+			+ 289658.0  * y1 * ym
+			- 311749.0  * y1
+			+ 21521.0   * y1 * y * (1.0 + y)
+			+ 4908.9    * y1 * dl
+			- 165795.0  * std::pow(dl, 2)
+			- 3814.9    * std::pow(dl, 3)
+			+ 804.5     * y1 * dl1
+			- 1760.8    * y1 * std::pow(dl1, 2)
+			- 10295.0   * (y1 * y1) * std::pow(dl1, 2);
+
+	} else if (nf == 6) {
+		p3psapp1 = p3ps01
+			+ 134701.0  * y1 * dl * ym
+			+ 518318.0  * y1 * ym
+			- 195241.0  * y1 * (1.0 + 2.0 * y)
+			+ 66517.0   * y1 * (y * y)
+			+ 658832.0  * y1 * dl
+			+ 19605.0   * std::pow(dl, 2)
+			+ 76125.0   * std::pow(dl, 3)
+			- 4734.5    * y1 * dl1
+			- 2035.2    * y1 * std::pow(dl1, 2)
+			+ 1633.1    * (y1 * y1) * std::pow(dl1, 2);
+
+		p3psapp2 = p3ps01
+			+ 110032.0  * y1 * dl * ym
+			+ 341158.0  * y1 * ym
+			- 365676.0  * y1
+			+ 25934.0   * y1 * y * (1.0 + y)
+			+ 3614.4    * y1 * dl
+			- 194868.0  * std::pow(dl, 2)
+			- 4172.2    * std::pow(dl, 3)
+			+ 3924.3    * y1 * dl1
+			- 1324.9    * y1 * std::pow(dl1, 2)
+			- 12520.0   * (y1 * y1) * std::pow(dl1, 2);
+
+	} else {
+		std::cerr << " Error in function p3psa: choice of nf " << std::endl;
+		return 0.0;
+	}
+
+	double result;
+	if (imod == 1) {
+		result = p3psapp1;
+	} else if (imod == 2) {
+		result = p3psapp2;
+	} else {
+		result = 0.5 * (p3psapp1 + p3psapp2);
+	}
+
+	return result / 16.0;
+}
 }
 
 
@@ -1284,7 +1586,7 @@ int main()
 {
 	auto compute_diff = [](double x, double y){ return std::abs((x-y)/((x+y)/2.0));};
 	SplittingFunction::setN3LOApproxType(3);
-	SplittingFunction::update(5, 0, 0.0);
+	SplittingFunction::update(4, 0, 0.0);
 	
 	std::unique_ptr<SplittingFunction> p3gg = std::make_unique<P3gg>();
 	std::unique_ptr<SplittingFunction> p3gq = std::make_unique<P3gq>();
@@ -1294,13 +1596,24 @@ int main()
 	std::unique_ptr<SplittingFunction> p3nsp = std::make_unique<P3nsp>();
 	std::unique_ptr<SplittingFunction> p3nsv = std::make_unique<P3nsv>();
 
+	std::unique_ptr<SplittingFunction> mvv_p3gg = std::make_unique<mvv_p3::P3gg>();
+	std::unique_ptr<SplittingFunction> mvv_p3gq = std::make_unique<mvv_p3::P3gq>();
+	std::unique_ptr<SplittingFunction> mvv_p3qg = std::make_unique<mvv_p3::P3qg>();
+	std::unique_ptr<SplittingFunction> mvv_p3qq = std::make_unique<mvv_p3::P3qq>();
+	std::unique_ptr<SplittingFunction> mvv_p3nsm = std::make_unique<mvv_p3::P3nsm>();
+	std::unique_ptr<SplittingFunction> mvv_p3nsp = std::make_unique<mvv_p3::P3nsp>();
+	std::unique_ptr<SplittingFunction> mvv_p3nsv = std::make_unique<mvv_p3::P3nsv>();
+
 	int four = 4;
 	int five = 5;
 	int three = 3;
 	std::cout << std::setprecision(std::numeric_limits<double>::max_digits10);
 	for (double x = 1e-5; x<1.0; x+= (1.0-1e-5)/200.0) {
-		double diff = compute_diff(p3nsp->calcRegular(x), p3nspa(&x, &five, &three)/16.0);
+		double diff = compute_diff(p3gg->calcDelta(x), mvv_p3gg->calcDelta(x));
 		std::cout << "x=" << x << "  ->  " << diff << '\n';
 	}
 }
+
+// p3nsp->regular
+//
 

@@ -161,11 +161,11 @@ contains
 ! We return (for now) one of the two error-band boundaries
 ! or the present best estimate, their average
        IF ( IMOD .EQ. 1 ) THEN
-         P3psA = P3psApp1/16.0
+         P3psA = P3psApp1
        ELSE IF ( IMOD .EQ. 2 ) THEN
-         P3psA = P3psApp2/16.0
+         P3psA = P3psApp2
        ELSE
-         P3psA = 0.5D0* ( P3psApp1 + P3psApp2 )/16.0
+         P3psA = 0.5D0* ( P3psApp1 + P3psApp2 )
        END IF
 !
        RETURN

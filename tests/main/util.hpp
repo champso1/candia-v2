@@ -77,7 +77,7 @@ enum CompareType
 	SPECIAL_COMBOES_NS_AND_S = 3,
 	SPECIAL_COMBOES_FFNS = 4,
 };
-static std::vector<std::string> cols_all_flavors{"g", "xu", "xs", "xc", "xb", "x\\bar{u}", "x\\bar{s}", "x\\bar{c}", "x\\bar{b}"};
+static std::vector<std::string> cols_all_flavors{"g", "xu", "xd", "xs", "xc", "xb", "x\\bar{u}", "x\\bar{d}", "x\\bar{s}", "x\\bar{c}", "x\\bar{b}"};
 static std::vector<std::string> cols_special_combos{"xuv", "xdv", "xL_-", "xL_+", "xs_+", "xc_+", "xb_+", "xg"};
 static std::vector<std::string> cols_special_combos_qm{"xu_v", "xd_v", "x\\bar{u}", "x\\bar{d}", "xL_+", "xs_+", "xc_+", "xb_+", "xg"};
 static std::vector<std::string> cols_special_combos_ns_and_s{"xu_+", "xc_+", "xb_+", "xq_{NS,1d}^{(+)}", "xq_{NS,1c}^{(+)}", "xq_{NS,1b}^{(+)}", "xq^{(-)}", "xq^{(+)}", "xg"};
@@ -154,7 +154,7 @@ static dist_type<T> fix_dists(dist_type<T> const& dists, int type)
 		case 0: {
 			dist_type<T> dists_fixed(ncols, std::vector<T>(dists.at(0).size(), 0.0));
 
-			std::vector<int> js{0, 1, 3, 4, 5, 7, 9, 10, 11};
+			std::vector<int> js{0, 1, 2, 3, 4, 5, 7, 8, 9, 10, 11};
 			auto tie =
 				std::views::iota(0)
 				| std::views::take(js.size())

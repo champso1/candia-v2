@@ -59,7 +59,7 @@ contains
                + 0.31584D0* Y**3 ) + 2.5251D0* Y1*DL1 + 2.5203D0* DL*DL1&
                + 2.2242D0* Y*DL - 0.02460D0* Y*DL**2 + 0.00310D0* Y*DL**3 )&
                - 9.239374D+3*DL - 2.917312D+3*DL**2 &
-               - 4.305308D+2*DL**3 - 3.6D+1*DL**4 - 4./3.D+0*DL**5&
+               - 4.305308D+2*DL**3 - 3.6D+1*DL**4 - 4.D0/3.D+0*DL**5&
                + 8.115605D+3 - 3.079761D+3*DL1
 !
 ! Nonleading large-n_c, nf^0 and nf^1: two approximations

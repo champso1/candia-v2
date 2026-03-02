@@ -1,5 +1,3 @@
 add_subdirectory(main)
 add_subdirectory(plot-generation)
-if (WITH_LHAPDF)
-  add_subdirectory(testing)
-endif()
+add_subdirectory(testing)
