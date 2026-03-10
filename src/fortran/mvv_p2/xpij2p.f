@@ -33,7 +33,8 @@
 *    P_qq^(2) is obtained by adding the non-singlet quantity P_NS^(2)+.
 *    A parametrization of the latter is provided in the file  xpns2p.f.
 
-       FUNCTION P2PSA (Y, NF)
+      FUNCTION P2PSA (Y, NF) bind(c, name="p2psa")
+      use iso_c_binding
 *
        IMPLICIT REAL*8 (A-Z)
        INTEGER NF
@@ -60,7 +61,8 @@
 *
 * ..The gluon->quark splitting functions P_qg^(2).
 *
-       FUNCTION P2QGA (Y, NF)
+      FUNCTION P2QGA (Y, NF) bind(c, name="p2qga")
+      use iso_c_binding
 *
        IMPLICIT REAL*8 (A-Z)
        INTEGER  NF
@@ -91,7 +93,8 @@
 *
 * ..The quark->gluon splitting functions P_gq^(2).  P2GQ2 is exact.
 *
-       FUNCTION P2GQA (Y, NF)
+       FUNCTION P2GQA (Y, NF) bind(c, name="p2gqa")
+       use iso_c_binding
 *
        IMPLICIT REAL*8 (A-Z)
        INTEGER NF
@@ -124,7 +127,8 @@
 *
 * ..The regular piece of the gluon-gluon splitting function P_gg^(2).
 *
-       FUNCTION P2GGA (Y, NF)
+       FUNCTION P2GGA (Y, NF) bind(c, name="p2gga")
+       use iso_c_binding
 *
        IMPLICIT REAL*8 (A-Z)
        INTEGER NF
@@ -154,7 +158,8 @@
 *
 * ..The singular piece of the gluon-gluon splitting function P_gg^(2).
 *
-       FUNCTION P2GGB (Y, NF)
+       FUNCTION P2GGB (Y, NF) bind(c, name="p2ggb")
+      use iso_c_binding
 *
        IMPLICIT REAL*8 (A-Z)
        INTEGER NF
@@ -171,7 +176,9 @@ c       My modification
 *
 * ..The 'local' piece of the gluon-gluon splitting function P_gg^(2).  
 *
-       FUNCTION P2GGC (Y, NF)
+      FUNCTION P2GGC (Y, NF) bind(c, name="p2ggc")
+      use iso_c_binding
+      
 *
        IMPLICIT REAL*8 (A-Z)
        INTEGER NF

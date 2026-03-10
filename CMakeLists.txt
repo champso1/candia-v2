@@ -51,13 +51,11 @@ set(headers
 
 enable_language(Fortran)
 add_library(hplog STATIC src/fortran/hplog5.f)
-target_link_libraries(hplog PUBLIC gfortran)
 
 set(nnlo_splitfuncs_fortran_src
   src/fortran/mvv_p2/xpij2p.f
   src/fortran/mvv_p2/xpns2p.f)
 add_library(nnlo_splitfuncs_fortran STATIC ${nnlo_splitfuncs_fortran_src})
-target_link_libraries(nnlo_splitfuncs_fortran PUBLIC gfortran)
 
 set(n3lo_splitfuncs_fortran_src
   src/fortran/mvv_p3/xpgg3a.f90
@@ -71,7 +69,6 @@ set(n3lo_splitfuncs_fortran_src
   src/fortran/mvv_p3/xpps3a.f90
   src/fortran/mvv_p3/xpqg3a.f90)
 add_library(n3lo_splitfuncs_fortran STATIC ${n3lo_splitfuncs_fortran_src})
-target_link_libraries(n3lo_splitfuncs_fortran PUBLIC gfortran)
 
 find_package(GSL REQUIRED)
 

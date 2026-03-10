@@ -14,7 +14,8 @@
 ******************************************************************************
       subroutine hplog5(x,nw,Hc1,Hc2,Hc3,Hc4,Hc5, 
      $                       Hr1,Hr2,Hr3,Hr4,Hr5,
-     $                       Hi1,Hi2,Hi3,Hi4,Hi5,n1,n2) 
+     $     Hi1,Hi2,Hi3,Hi4,Hi5,n1,n2) bind(c, name="hplog5")
+      use iso_c_binding
 ****** 
 ** x is the argument of the 1dHPL's (1 dimensional Harmonic PolyLogarithms) 
 **   to be evaluated; 

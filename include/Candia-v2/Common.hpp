@@ -17,6 +17,8 @@
 #include <iterator>
 #include <ranges>
 #include <mutex>
+#include <string_view>
+#include <array>
 
 using uint = unsigned;
 
@@ -63,7 +65,7 @@ namespace Candia2
 	inline constexpr char const* ANSI_LINEFEED_CLEAR =    "\033[2K";
 	inline constexpr auto ANSI_LINEFEED_UP   = [](uint count){ return std::format("\033[{}F", count); };
 	inline constexpr auto ANSI_LINEFEED_DOWN = [](uint count){ return std::format("\033[{}E", count); };
-	inline constexpr std::string loading_block("█");
+	inline constexpr std::string_view loading_block("█");
 
 	
 	/** Enum for defining a set of standard logging types. */
@@ -188,7 +190,7 @@ namespace Candia2
 		int num_blocks = static_cast<int>(ratio*50.0);
 		std::string blocks{};
 		for (int i=0; i<num_blocks; ++i)
-			blocks += loading_block;
+			blocks += std::string(loading_block);
 
 		std::string all_text = std::format("{}[{}] {}: [{}] Iteration {:0>2}/{} ({: >3}%) [{: <50}]",
 			log_string_colors[log_type],

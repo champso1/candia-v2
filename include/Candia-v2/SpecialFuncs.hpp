@@ -40,25 +40,25 @@ namespace Candia2
 		 *  @param n1,n2 The required range of inidices.
 		 *         The allowed ranges are (0,1), (-1,0), (-1,1)
 		 */
-		double hplog5_(
+		double hplog5(
 			double* x, int* nw,
 			dcomplex* Hc1, dcomplex* Hc2, dcomplex* Hc3, dcomplex* Hc4, dcomplex* Hc5,
 			double* Hr1, double* Hr2, double* Hr3, double* Hr4, double* Hr5,
 			double* Hi1, double* Hi2, double* Hi3, double* Hi4, double* Hi5,
 			int* n1, int* n2);
 
-		double p2nspa_(double* y, int* nf);
-		double p2nsma_(double* y, int* nf);
-		double p2nsb_(double* y, int* nf);
-		double p2nspc_(double* y, int* nf);
-		double p2nsmc_(double* y, int* nf);
-		double p2nssa_(double* y, int* nf);
-		double p2psa_(double* y, int* nf);
-		double p2qga_(double* y, int* nf);
-		double p2gqa_(double* y, int* nf);
-		double p2gga_(double* y, int* nf);
-		double p2ggb_(double* y, int* nf);
-		double p2ggc_(double* y, int* nf);
+		double p2nspa(double* y, int* nf);
+		double p2nsma(double* y, int* nf);
+		double p2nsb(double* y, int* nf);
+		double p2nspc(double* y, int* nf);
+		double p2nsmc(double* y, int* nf);
+		double p2nssa(double* y, int* nf);
+		double p2psa(double* y, int* nf);
+		double p2qga(double* y, int* nf);
+		double p2gqa(double* y, int* nf);
+		double p2gga(double* y, int* nf);
+		double p2ggb(double* y, int* nf);
+		double p2ggc(double* y, int* nf);
 		
 		double p3gga(double* y, int* nf, int* imod);
 		double p3ggb(double* y, int* nf, int* imod);

@@ -426,17 +426,17 @@ namespace Candia2
 			inline value_type calcRegular(value_type x) const override
 			{
 				int nf = static_cast<int>(_nf);
-				return p2nspa_(&x, &nf)/8.0;
+				return p2nspa(&x, &nf)/8.0;
 			}
 			inline value_type calcPlus(value_type x) const override
 			{
 				int nf = static_cast<int>(_nf);
-				return p2nsb_(&x, &nf)/8.0;
+				return p2nsb(&x, &nf)/8.0;
 			}
 			inline value_type calcDelta(value_type x) const override
 			{
 				int nf = static_cast<int>(_nf);
-				return p2nspc_(&x, &nf)/8.0;
+				return p2nspc(&x, &nf)/8.0;
 			}
 		};
 
@@ -451,17 +451,17 @@ namespace Candia2
 			inline value_type calcRegular(value_type x) const override
 			{
 				int nf = static_cast<int>(_nf);
-				return p2nsma_(&x, &nf)/8.0;
+				return p2nsma(&x, &nf)/8.0;
 			}
 			inline value_type calcPlus(value_type x) const override
 			{
 				int nf = static_cast<int>(_nf);
-				return p2nsb_(&x, &nf)/8.0;
+				return p2nsb(&x, &nf)/8.0;
 			}
 			inline value_type calcDelta(value_type x) const override
 			{
 				int nf = static_cast<int>(_nf);
-				return p2nsmc_(&x, &nf)/8.0;
+				return p2nsmc(&x, &nf)/8.0;
 			}
 		};
 
@@ -476,17 +476,17 @@ namespace Candia2
 			inline value_type calcRegular(value_type x) const override
 			{
 				int nf = static_cast<int>(_nf);
-				return (p2nsma_(&x, &nf) + p2nssa_(&x, &nf))/8.0;
+				return (p2nsma(&x, &nf) + p2nssa(&x, &nf))/8.0;
 			}
 			inline value_type calcPlus(value_type x) const override
 			{
 				int nf = static_cast<int>(_nf);
-				return p2nsb_(&x, &nf)/8.0;
+				return p2nsb(&x, &nf)/8.0;
 			}
 			inline value_type calcDelta(value_type x) const override
 			{
 				int nf = static_cast<int>(_nf);
-				return p2nsmc_(&x, &nf)/8.0;
+				return p2nsmc(&x, &nf)/8.0;
 			}
 		};
 
@@ -501,17 +501,17 @@ namespace Candia2
 			inline value_type calcRegular(value_type x) const override
 			{
 				int nf = static_cast<int>(_nf);
-				return (p2nspa_(&x, &nf) + p2psa_(&x, &nf))/8.0;
+				return (p2nspa(&x, &nf) + p2psa(&x, &nf))/8.0;
 			}
 			inline value_type calcPlus(value_type x) const override
 			{
 				int nf = static_cast<int>(_nf);
-				return p2nsb_(&x, &nf)/8.0;
+				return p2nsb(&x, &nf)/8.0;
 			}
 			inline value_type calcDelta(value_type x) const override
 			{
 				int nf = static_cast<int>(_nf);
-				return p2nspc_(&x, &nf)/8.0;
+				return p2nspc(&x, &nf)/8.0;
 			}
 		};
 
@@ -526,7 +526,7 @@ namespace Candia2
 			inline value_type calcRegular(value_type x) const override
 			{
 				int nf = static_cast<int>(_nf);
-				return p2qga_(&x, &nf)/8.0;
+				return p2qga(&x, &nf)/8.0;
 			}
 		};
 
@@ -541,7 +541,7 @@ namespace Candia2
 			inline value_type calcRegular(value_type x) const override
 			{
 				int nf = static_cast<int>(_nf);
-				return p2gqa_(&x, &nf)/8.0;
+				return p2gqa(&x, &nf)/8.0;
 			}
 		};
 
@@ -556,17 +556,17 @@ namespace Candia2
 			inline value_type calcRegular(value_type x) const override
 			{
 				int nf = static_cast<int>(_nf);
-				return p2gga_(&x, &nf)/8.0;
+				return p2gga(&x, &nf)/8.0;
 			}
 			inline value_type calcPlus(value_type x) const override
 			{
 				int nf = static_cast<int>(_nf);
-				return p2ggb_(&x, &nf)/8.0;
+				return p2ggb(&x, &nf)/8.0;
 			}
 			inline value_type calcDelta(value_type x) const override
 			{
 				int nf = static_cast<int>(_nf);
-				return p2ggc_(&x, &nf)/8.0;
+				return p2ggc(&x, &nf)/8.0;
 			}
 		};
 	}
