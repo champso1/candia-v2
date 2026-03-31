@@ -6,7 +6,8 @@
 #include <filesystem>
 #include <sstream>
 #include <iterator>
-using value_type = long double;
+
+using value_type = double;
 
 #include "util.hpp"
 
@@ -42,6 +43,7 @@ int main(int argc, char *argv[])
 	file_exists(candia_filepath);
 	file_exists(other_filepath);
 
+<<<<<<< Updated upstream
 	int type{}, format{}, diff_type{};
 	if (argc != 3) {
 		std::from_chars(argv[3], argv[3] + 1, format);
@@ -51,6 +53,17 @@ int main(int argc, char *argv[])
 		format = 1;
 		type = 2;
 		diff_type = 1;
+=======
+	int format{}, type{}, diff_type{};
+	if (argc == 3) {
+		format = 1;
+		type = 2;
+		diff_type = 1;
+	} else {
+		std::from_chars(argv[3], argv[3] + 1, format);
+		std::from_chars(argv[4], argv[4] + 1, type);
+		std::from_chars(argv[5], argv[5] + 1, diff_type);
+>>>>>>> Stashed changes
 	}
 
 	int ncols = cols[type].get().size();
