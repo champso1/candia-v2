@@ -23,26 +23,32 @@ add_subdirectory(vendor)
 
 set(sources
   src/AlphaS.cpp
+  src/ArrayGrid.cpp
   src/Candia.cpp
   src/Distribution.cpp
   src/Evolution.cpp
+  src/EvolutionThread.cpp
   src/Expression.cpp
-  src/ArrayGrid.cpp
   src/Grid.cpp
   src/HFT.cpp
+  src/LHAPDFDataFile.cpp
+#  src/LHAPDFDistribution.cpp
   src/Math.cpp
   src/OperatorMatrixElements.cpp
   src/RecRel.cpp
   src/SpecialFuncs.cpp
   src/SplittingFns.cpp)
+
 set(headers
   include/Candia-v2/AlphaS.hpp
+  include/Candia-v2/ArrayGrid.hpp
   include/Candia-v2/Candia.hpp
   include/Candia-v2/Common.hpp
   include/Candia-v2/Distribution.hpp
   include/Candia-v2/Expression.hpp
-  include/Candia-v2/ArrayGrid.hpp
   include/Candia-v2/Grid.hpp
+  include/Candia-v2/LHAPDFDataFile.hpp
+#  include/Candia-v2/LHAPDFDistribution.hpp
   include/Candia-v2/Math.hpp
   include/Candia-v2/OperatorMatrixElements.hpp
   include/Candia-v2/Options.hpp

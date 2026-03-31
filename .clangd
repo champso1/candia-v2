@@ -1,11 +1,14 @@
 CompileFlags:
-  CompilationDatabase: ./build
+  Add: [--driver-mode=cl, /std:c++latest, /IC:\Users\Casey\Documents\programs\candia-v2\include, /IC:\Users\Casey\Documents\programs\candia-v2\vendor\libome\src, /IC:\Users\Casey\Documents\programs\gsl\out\include]
+  CompilationDatabase: None
+  Compiler: icx.exe
+  BuiltinHeaders: QueryDriver
 
 InlayHints:
+  BlockEnd: false
+  Designators: false
   Enabled: true
   ParameterNames: false
   DeducedTypes: false
-  Designators: false
-  BlockEnd: false
   DefaultArguments: false
   TypeNameLimit: 24

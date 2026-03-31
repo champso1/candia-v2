@@ -3,6 +3,7 @@
 #include "Candia-v2/Distribution.hpp"
 #include "Candia-v2/ArrayGrid.hpp"
 #include "Candia-v2/Grid.hpp"
+#include "Candia-v2/LHAPDFDataFile.hpp"
 #include "Candia-v2/SplittingFn.hpp"
 #include "Candia-v2/OperatorMatrixElements.hpp"
 
@@ -587,6 +588,24 @@ namespace Candia2
 		log(LOG_INFO, "DGLAP", "Done!");
 		return _F;
 	} // evolve()
+
+    void DGLAPSolver::evolve2(
+			AlphaS const& alphas,
+			uint order, uint iterations, uint trunc_idx,
+			Distribution const& dist)
+	{
+		UNUSED(alphas);
+		UNUSED(order);
+		UNUSED(iterations);
+		UNUSED(trunc_idx);
+		UNUSED(dist);
+	}
+
+	void DGLAPSolver::generateLHAPDFGrid(std::string const& name, std::filesystem::path const& infofile_in_path)
+	{
+	    LHAPDFDataFile lhapdf_file(name, infofile_in_path);
+		lhapdf_file.write();
+	}
 
 	
 } // namespace Candia2

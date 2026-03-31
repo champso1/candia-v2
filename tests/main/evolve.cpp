@@ -130,7 +130,7 @@ int main(int argc, char *argv[]) {
 	auto& dglap_options = solver.getOptions();
 	dglap_options.use_truncated_nonsinglet_sol = true;
 	dglap_options.disable_heavy_flavor_matching = false;
-	dglap_options.use_nnlo_matching_conditions_at_n3lo = true;
+	dglap_options.use_nnlo_matching_conditions_at_n3lo = false;
 	dglap_options.use_n3lo_heavyquark_asymmetry = true;
 	dglap_options.use_fortran_nnlo_splitfuncs = false;
 	dglap_options.use_fortran_n3lo_splitfuncs = true;

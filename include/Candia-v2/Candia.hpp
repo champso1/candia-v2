@@ -19,6 +19,7 @@
 #include "Candia-v2/Distribution.hpp"
 #include "Candia-v2/ArrayGrid.hpp"
 #include "Candia-v2/Options.hpp"
+#include "Candia-v2/LHAPDFDataFile.hpp"
 
 namespace Candia2
 {
@@ -132,6 +133,19 @@ namespace Candia2
 		 *  @brief Performs the full evolution.
 		 */
 		std::vector<ArrayGrid> const& evolve();
+
+		/**
+		 *  @brief performs a more custom evolution, overwriting the variables provided in the constructor
+		 */
+	    void evolve2(
+			AlphaS const& alphas,
+			uint order, uint iterations, uint trunc_idx,
+			Distribution const& dist);
+
+		/**
+		 *  @brief generates an LHAPDF-compatible datafile
+		 */
+		void generateLHAPDFGrid(std::string const& name, std::filesystem::path const& infofile_in_path);
 
 	private:
 		/**
