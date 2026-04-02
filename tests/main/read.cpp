@@ -30,7 +30,6 @@ int main(int argc, char *argv[])
 	fs::path datafile_path(argv[1]);
 	file_exists(datafile_path);
 
-<<<<<<< Updated upstream
 	int origin{}, type{}, format{};
 	if (argc != 2) {
 		std::from_chars(argv[2], argv[2] + 1, origin);
@@ -40,17 +39,6 @@ int main(int argc, char *argv[])
 		origin = 0;
 		format = 1;
 		type = 2;
-=======
-	int origin{}, format{}, type{};
-	if (argc == 2) {
-		origin = 0;
-		format = 1;
-		type = 2;
-	} else {
-		std::from_chars(argv[2], argv[2] + 1, origin);
-		std::from_chars(argv[3], argv[3] + 1, format);
-		std::from_chars(argv[4], argv[4] + 1, type);
->>>>>>> Stashed changes
 	}
 
 	auto [xtab, dists_raw] =

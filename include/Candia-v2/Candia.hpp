@@ -628,6 +628,35 @@ namespace Candia2
 			Expression& P0, Expression& P1, Expression& P2, Expression& P3);
 		/** @} */
 	};
+
+	/**
+	 *  @brief performs the evolution enough times to fill an lhapdf grid
+	 *  the output is a pdf "set", consisting of one file only,
+	 *  that is compatible with LHAPDF and able to be loaded via its API
+	 */
+	class DGLAPSolverLHAPDF final
+	{
+		std::string _name;
+		std::filesystem::path _infofile_in_path;
+
+	    uint _order{3};
+	    uint _iterations{10};
+	    uint _trunc_idx{10};
+	    double _mur2_muf2{1.0};
+
+		std::unique_ptr<Distribution> _dist;
+
+	public:
+		DGLAPSolverLHAPDF(
+			std::string const& name, std::filesystem::path const& infofile_in_path,
+			std::unique_ptr<Distribution> dist,
+		    uint order, uint iterations, uint trunc_idx, double mur2_muf2)
+			: _name{name}, _infofile_in_path{infofile_in_path},
+			  _dist{std::move(dist)},
+			  _order{order}, _iterations{iterations}, _trunc_idx{trunc_idx}, _mur2_muf2{mur2_muf2}
+		{}
+		void evolve(double q0, double qf, double dq);
+	};
 }
 
 

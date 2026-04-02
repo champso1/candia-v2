@@ -26,8 +26,8 @@ set(sources
   src/ArrayGrid.cpp
   src/Candia.cpp
   src/Distribution.cpp
-  src/Evolution.cpp
-  src/EvolutionThread.cpp
+#  src/Evolution.cpp
+#  src/EvolutionThread.cpp
   src/Expression.cpp
   src/Grid.cpp
   src/HFT.cpp
@@ -111,6 +111,7 @@ if(ENABLE_THREADING)
   target_link_libraries(candia PRIVATE Threads::Threads)
   target_compile_definitions(candia PRIVATE ENABLE_THREADING=1)
 else()
+  target_sources(candia PRIVATE src/Evolution.cpp)
   target_compile_definitions(candia PRIVATE ENABLE_THREADING=0)
 endif()
 

@@ -12,35 +12,12 @@
 
 namespace Candia2
 {
+	/**
+	 *  @brief set of some params put into the info file
+	 */
 	struct InfoFileInParams final
 	{
-		std::string desc{"Evolution from Candia-v2"};
-		std::string authors{"C. Hampson"};
-		std::string reference{"arXiv:2512.22667"};
-		std::string format{"lhagrid1"};
-		int data_version{1};
-		int num_members{1};
-		int setidx{-1};
-		std::vector<int> flavors{-5, -4, -3, -2, -1, 1, 2, 3, 4, 5, 21};
-		int order_qcd{2};
-		std::string flavor_scheme{"variable"};
-		int num_flavors{5};
-		std::string error_type{"hessian"};
-		int error_conf_level{90};
-		double xmin{1e-5};
-		double xmax{1.0};
-		double qmin{std::numbers::sqrt2};
-		double qmax{100.0};
-		double mz{MZ};
-		double mup{0.0};
-		double mdown{0.0};
-		double mstrange{std::numbers::sqrt2};
-		double mcharm{std::numbers::sqrt2};
-	    double mbottom{4.5};
-		double mtop{175.0};
-		double as_mz{0.118};
-		int as_order_qcd{2};
-		std::string as_type{"ipol"};
+		int order{};
 		std::vector<double> as_qs{};
 		std::vector<double> as_vals{};
 	};
@@ -51,12 +28,16 @@ namespace Candia2
 	class LHAPDFDataFile final
 	{
 		std::string _name;
-		std::filesystem::path _infofile_in_path;
+		std::filesystem::path _infofile_path;
+		InfoFileInParams _params;
+		
 	public:
-		LHAPDFDataFile(std::string const& name, std::filesystem::path const& infofile_in_path)
-			: _name{name}, _infofile_in_path{infofile_in_path} {}
+		LHAPDFDataFile(
+			std::string const& name,
+			std::filesystem::path const& infofile_path,
+			InfoFileInParams&& params)
+			: _name{name}, _infofile_path{infofile_path}, _params{params} {}
 
-		void setParams(InfoFileInParams const& params);
 		void write();
 	};
 }

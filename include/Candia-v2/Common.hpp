@@ -19,6 +19,8 @@
 #include <mutex>
 #include <string_view>
 #include <array>
+#include <filesystem>
+#include <fstream>
 
 using uint = unsigned;
 
@@ -97,6 +99,7 @@ namespace Candia2
 	/** @brief struct to store flags/options for logging */
 	struct LogOptions final
 	{
+		bool silent{false}; //!< suppresses all messages
 		bool show_debug_messages{false}; //!< switch for showing debug messages. only useful for debugging, default off
 		bool show_thread_output{false};  //!< switch for showing the output from threads. often floods the console, default off
 
@@ -125,9 +128,10 @@ namespace Candia2
 	template <typename... TArgs>
 	void log(uint log_type, std::string_view prefix, std::format_string<TArgs...> fmt_string, TArgs&& ...args)
 	{
+		if (getLogOptions().silent)
+			return;
 		if (log_type == LOG_DEBUG && !getLogOptions().show_debug_messages)
 			return;
-
 		if (log_type == LOG_THREAD && !getLogOptions().show_thread_output)
 			return;
 			
@@ -269,8 +273,23 @@ namespace Candia2
 	}
 
 	extern thread_local int thread_index;
-	inline void initializeThreadIndex(int index) {
+	inline void initializeThreadIndex(int index)
+	{
 		thread_index = index;
+	}
+
+	/**
+	 *  @brief returns a string of the file contents
+	 */
+	inline std::string read_file(std::filesystem::path const& filepath)
+	{
+		if (!std::filesystem::exists(filepath))
+			log(LOG_ERROR, "read_file()", "Failed to open file '{}'", filepath.string());
+
+		std::ifstream infile(filepath);
+		return std::string(
+			std::istreambuf_iterator<char>(infile),
+			std::istreambuf_iterator<char>{});
 	}
 }; // namespace Candia2
 

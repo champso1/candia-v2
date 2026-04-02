@@ -81,6 +81,8 @@ namespace Candia2
 		 */
 		void setVFNS(std::array<double, 8> const& masses, uint nfi);
 
+		double Q0() const { return _Q0; }
+		double Qf() const { return _Qf; }
 		double masses(uint nf) const; //!< getter for the mass corresponding to @a nf
 		inline uint nfi() const { return _nfi; } //!< getter for the starting value of \f$n_f\f$
 		inline uint nff() const { return _nff; } //!< getter for final value of \f$n_f\f$, determined by final evolution energy
@@ -120,6 +122,9 @@ namespace Candia2
 		inline bool resumTabulated() const { return (_nf == _nff); }
 		/** @brief Returns true if we are resumming to a threshold energy, false otherwise */
 		inline bool resumThreshold() const { return !resumTabulated(); }
+
+		/** @brief returns a vector of (q,alpha_s) pairs evaluated at the provided list of energies */
+		std::vector<std::pair<double,double>> getValues(std::vector<double> const& qvals);
 
 	private:
 		void assertNf() const; //!< asserts whether the current value of @a nf is valid

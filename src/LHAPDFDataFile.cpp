@@ -1,8 +1,11 @@
 #include "Candia-v2/LHAPDFDataFile.hpp"
+#include "Candia-v2/Common.hpp"
 
+#include <algorithm>
 #include <filesystem>
 #include <fstream>
 #include <format>
+#include <iterator>
 
 namespace Candia2
 {
@@ -16,23 +19,24 @@ namespace Candia2
 		if (!fs::create_directory(dir))
 			log(LOG_ERROR, "LHAPDFDataFile", "Failed to create directory '{}'.", dir.string());
 
-		fs::path info_file(dir);
-		info_file /= _name;
-		info_file.replace_extension(".info");
-		log(LOG_DEBUG, "LHAPDFDataFile", "Trying to open file '{}'", info_file.string());
-		std::ofstream info_file_stream(info_file);
+		fs::path infofile(dir);
+		infofile /= _name;
+		infofile.replace_extension(".info");
+		log(LOG_DEBUG, "LHAPDFDataFile", "Trying to open file '{}'", infofile.string());
+		std::ofstream info_file_stream(infofile);
 		if (!info_file_stream)
-			log(LOG_ERROR, "LHAPDFDataFile", "Failed to create the datafile with path: '{}'", info_file.string());
-		info_file_stream << "test";
+			log(LOG_ERROR, "LHAPDFDataFile", "Failed to create the datafile with path: '{}'", infofile.string());
 
-		fs::path data_file(dir);
-		std::string data_file_name = std::format("{}_0000.dat", _name);
-		data_file /= data_file_name;
-	    log(LOG_DEBUG, "LHAPDFDataFile", "Trying to open file '{}'", data_file.string());
-		std::ofstream data_file_stream(data_file);
-		if (!data_file_stream)
-			log(LOG_ERROR, "LHAPDFDataFile", "Failed to create the datafile with path: '{}'", info_file.string());
-		data_file_stream << "test";
-		
+		std::string infofile_in_contents = read_file(_infofile_path);
+		std::copy(infofile_in_contents.begin(), infofile_in_contents.end(), std::ostreambuf_iterator<char>(info_file_stream));
+
+		fs::path datafile(dir);
+		std::string datafile_name = std::format("{}_0000.dat", _name);
+		datafile /= datafile_name;
+	    log(LOG_DEBUG, "LHAPDFDataFile", "Trying to open file '{}'", datafile.string());
+		std::ofstream datafile_stream(datafile);
+		if (!datafile_stream)
+			log(LOG_ERROR, "LHAPDFDataFile", "Failed to create the datafile with path: '{}'", infofile.string());
+		datafile_stream << "test";
 	}
 }

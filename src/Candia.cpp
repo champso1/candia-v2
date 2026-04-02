@@ -7,6 +7,7 @@
 #include "Candia-v2/SplittingFn.hpp"
 #include "Candia-v2/OperatorMatrixElements.hpp"
 
+#include <algorithm>
 #include <functional>
 #include <memory>
 #include <ranges>
@@ -601,11 +602,46 @@ namespace Candia2
 		UNUSED(dist);
 	}
 
-	void DGLAPSolver::generateLHAPDFGrid(std::string const& name, std::filesystem::path const& infofile_in_path)
+	void DGLAPSolverLHAPDF::evolve(double q0, double qf, double dq)
 	{
-	    LHAPDFDataFile lhapdf_file(name, infofile_in_path);
-		lhapdf_file.write();
-	}
+		auto& log_options = getLogOptions();
+		log_options.show_debug_messages = false;
+		log_options.show_thread_output = true;
+		log_options.use_log_output_stream = false;
+	
+		std::vector<double> xtab{1e-5, 1e-4, 1e-3, 1e-2, 0.1, 0.3, 0.5, 0.7, 0.9, 1.0};
+		Grid grid(xtab,
+			make_grid_filler<GridFillerLogLinQuad>(1e-5, 101, 51, 26),
+			{ .default_gauss_points=70, .split_interval = true});
+		auto& grid_options = grid.getOptions();
+		grid_options.use_alt_mapping = true;
+		grid_options.use_gsl_conv_routine = false;
+		grid_options.use_gsl_interp_routine = true;
 
+		std::vector<std::pair<double, std::map<int,ArrayGrid>>> all_dists{};
+		for (double q=q0; q<qf; q+=dq)
+		{
+			AlphaS alphas(_order, q0, q, _dist->alpha0(), _mur2_muf2);
+			alphas.setVFNS(_dist->masses(), _dist->nfi());
+			// alphas.setFFNS(4);
+
+			DGLAPSolver solver(_order, grid, alphas, q, _iterations, _trunc_idx, *_dist, _mur2_muf2);
+			auto& dglap_options = solver.getOptions();
+			dglap_options.use_truncated_nonsinglet_sol = true;
+			dglap_options.disable_heavy_flavor_matching = false;
+			dglap_options.use_nnlo_matching_conditions_at_n3lo = false;
+			dglap_options.use_n3lo_heavyquark_asymmetry = true;
+			dglap_options.use_fortran_n3lo_splitfuncs = false;
+			dglap_options.cache_exprs = false;
+			std::vector<ArrayGrid> F = solver.evolve();
+
+		    all_dists.emplace_back(std::make_pair(q, std::map<int,ArrayGrid>{
+						{-5, F[7]},
+						{-4, F[8]}
+					}));
+		}
+
+		log(LOG_INFO, "DGLAPSolverLHAPDF", "Finished.");
+	}
 	
 } // namespace Candia2

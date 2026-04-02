@@ -1,6 +1,7 @@
 #include "Candia-v2/AlphaS.hpp"
 
 #include <cmath>
+#include <algorithm>
 
 namespace Candia2
 {
@@ -341,6 +342,34 @@ namespace Candia2
 	}
 
 	
+	std::vector<std::pair<double,double>> AlphaS::getValues(std::vector<double> const& qvals)
+	{
+		std::vector<double> qvals_sorted{qvals};
+		std::ranges::sort(qvals_sorted);
 
+		if (qvals.front() < _Q0 || qvals.back() > _Qf)
+			log(LOG_ERROR, "AlphaS", "Provided array of values to evaluate alpha_s at extends beyond previously provided range [{}, {}].", _Q0, _Qf);
+
+		std::vector<std::pair<double,double>> vals{};
+		log(LOG_DEBUG, "AlphaS", "nfi={}, nff={}", _nfi, _nff);
+	    for (int i=_nfi; i<=_nff; ++i) {
+			double q0 = _masses[i];
+			double qf = _masses[i+1];
+		    double a0 = _post[i];
+			log(LOG_DEBUG, "AlphaS", "(i={}) q0={}, qf={}, a0={}", i, q0, qf, a0);
+
+			for (double q : qvals_sorted) {
+				bool found = false;
+				if (q >= q0 && q < qf) {
+					vals.emplace_back(std::make_pair(q, evaluate(q0, q, a0)));
+					found = true;
+				}
+				log(LOG_DEBUG, "AlphaS", "  q={}, found? '{}'", q, found == true ? "yes" : "no");
+			}
+		}
+		if (vals.empty())
+			log(LOG_WARNING, "AlphaS", "returning empty array of alpha_s values.");
+		return vals;
+	}
 
 } // namespace Candia2

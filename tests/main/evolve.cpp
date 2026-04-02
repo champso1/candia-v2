@@ -112,28 +112,17 @@ int main(int argc, char *argv[]) {
 	log_options.use_log_output_stream = true;
 	log_options.log_output_stream = log_output_file;
 	
-<<<<<<< Updated upstream
 	vector<double> xtab{1e-5, 1e-4, 1e-3, 1e-2, 0.1, 0.3, 0.5, 0.7, 0.9, 1.0};
 	Grid grid(xtab,
 		make_grid_filler<GridFillerLogLinQuad>(1e-5, 101, 51, 26),
 		{ .default_gauss_points=70, .split_interval = true});
-=======
-	vector<double> xtab{1e-7, 1e-6, 1e-5, 1e-4, 1e-3, 1e-2, 0.1, 0.3, 0.5, 0.7, 0.9, 1.0};
-	Grid grid(xtab, make_grid_filler<GridFillerLogLinQuad>(1e-7, 351, 101, 51), { .default_gauss_points = 100, .split_interval = true});
->>>>>>> Stashed changes
 	auto& grid_options = grid.getOptions();
 	grid_options.use_alt_mapping = true;
 	grid_options.use_gsl_conv_routine = false;
 	grid_options.use_gsl_interp_routine = true;
 	
 	LesHouchesDistribution dist{};
-<<<<<<< Updated upstream
 	AlphaS alphas(order, dist.Q0(), Qf, dist.alpha0(), mur2_muf2);
-=======
-	AlphaS alphas(order, dist.Q0(), Qf, dist.alpha0(), kr);
-	auto& alphas_options = alphas.getOptions();
-	alphas_options.use_broken_log_value = true;
->>>>>>> Stashed changes
 	alphas.setVFNS(dist.masses(), dist.nfi());
 	// alphas.setFFNS(4);
 
@@ -143,14 +132,8 @@ int main(int argc, char *argv[]) {
 	dglap_options.disable_heavy_flavor_matching = false;
 	dglap_options.use_nnlo_matching_conditions_at_n3lo = false;
 	dglap_options.use_n3lo_heavyquark_asymmetry = true;
-<<<<<<< Updated upstream
-	dglap_options.use_fortran_nnlo_splitfuncs = false;
-	dglap_options.use_fortran_n3lo_splitfuncs = true;
-	dglap_options.cache_exprs = true;
-=======
 	dglap_options.use_fortran_n3lo_splitfuncs = false;
 	dglap_options.cache_exprs = false;
->>>>>>> Stashed changes
 
 	auto t0 = chrono::high_resolution_clock::now();
 	auto F = solver.evolve();
