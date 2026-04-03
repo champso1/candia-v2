@@ -115,7 +115,7 @@ namespace Candia2
 	private:
 		/** array of mass points for this distribution */
 		static constexpr std::array<value_type,8> _leshouche_masses = {	
-		  // x    u    d            s                    c            b     t     x                    
+		//   x    u    d            s                    c            b     t     x
 			0.0, 0.0, 0.0, std::numbers::sqrt2, std::numbers::sqrt2, 4.5, 175.0, 0.0 };
 		// 'x' is a placeholder in the above array, not Bjorken-x
 	public:

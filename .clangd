@@ -1,8 +1,0 @@
-InlayHints:
-  BlockEnd: false
-  Designators: false
-  Enabled: true
-  ParameterNames: false
-  DeducedTypes: false
-  DefaultArguments: false
-  TypeNameLimit: 24

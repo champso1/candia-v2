@@ -1,7 +1,6 @@
 .*
 !/.gitignore
-!/.clangd
-.clang-format
+!/.clang-format
 
 GPATH
 GTAGS
@@ -12,4 +11,4 @@ docs
 install
 bin
 /res
-build
+build*

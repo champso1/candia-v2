@@ -27,6 +27,8 @@ namespace Candia2
 		uint i{};
 		
 		for (_nff=6; aux<=_masses[_nff]; _nff--);
+		if (_nff < _nfi)
+			_nff = _nfi;
 
 		if (aux>_masses[6])
 			i=7;
@@ -347,8 +349,12 @@ namespace Candia2
 		std::vector<double> qvals_sorted{qvals};
 		std::ranges::sort(qvals_sorted);
 
-		if (qvals.front() < _Q0 || qvals.back() > _Qf)
-			log(LOG_ERROR, "AlphaS", "Provided array of values to evaluate alpha_s at extends beyond previously provided range [{}, {}].", _Q0, _Qf);
+		if (qvals_sorted.front() < _Q0 || qvals_sorted.back() > _Qf) {
+			log(LOG_ERROR_NOQUIT, "AlphaS", "Provided array of values to evaluate alpha_s at extends beyond previously provided range.");
+			log(LOG_ERROR, "AlphaS", "Expected values in the range [{},{}], found [{},{}]",
+				_Q0, _Qf, qvals_sorted.front(), qvals_sorted.back());
+		}
+		
 
 		std::vector<std::pair<double,double>> vals{};
 		log(LOG_DEBUG, "AlphaS", "nfi={}, nff={}", _nfi, _nff);

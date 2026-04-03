@@ -3,13 +3,14 @@
 #include "Candia-v2/Distribution.hpp"
 #include "Candia-v2/ArrayGrid.hpp"
 #include "Candia-v2/Grid.hpp"
-#include "Candia-v2/LHAPDFDataFile.hpp"
 #include "Candia-v2/SplittingFn.hpp"
 #include "Candia-v2/OperatorMatrixElements.hpp"
 
-#include <algorithm>
+#include <filesystem>
 #include <functional>
+#include <iterator>
 #include <memory>
+#include <numeric>
 #include <ranges>
 
 
@@ -395,6 +396,82 @@ namespace Candia2
 		}
     }
 
+	void DGLAPSolver::fixDistributions2(std::vector<ArrayGrid>& resum)
+	{
+		auto get_singlet_dist = [&](uint j) -> ArrayGrid& {
+			if (!options.use_truncated_nonsinglet_sol)
+				return _S[0][j][0];
+			else
+				return _S_NS[0][j][0];
+		};
+		auto get_nonsinglet_dist = [&](uint j) -> ArrayGrid& {
+			if (options.use_truncated_nonsinglet_sol)
+				return _S_NS[0][j][0];
+			switch (_order) {
+				case 0: return _A[j][0]; break;
+				case 1: return _B[j][0][0]; break;
+				case 2: return _C[j][0][0][0]; break;
+				case 3: return _D[j][0][0][0][0]; break;
+				default: throw "unreachable";
+			}
+		};
+
+
+		for (uint j=0; j<=1; ++j)
+			resum[j*31] = get_singlet_dist(j);
+		switch (_order) {
+			case 0:
+			case 1: {
+				for (uint j=13; j<=12+_nf; j++)
+					resum[j] = get_nonsinglet_dist(j);
+				for (uint j=32; j<=30+_nf; j++)
+					resum[j] = get_nonsinglet_dist(j);
+			} break;
+			case 2:
+			case 3: {
+				for (uint j=26; j<=24+_nf; ++j)
+					resum[j] = get_nonsinglet_dist(j);
+				for (uint j=32; j<=30+_nf; ++j)
+					resum[j] = get_nonsinglet_dist(j);
+				resum[25] = get_nonsinglet_dist(25);
+			} break;
+		}
+
+        double Nf = static_cast<double>(_nf);
+		for (uint k=0; k<_grid.size()-1;k++) {
+			if (_order>=2) {
+				resum[13][k]=resum[25][k];
+				for (uint j=26; j<=24+_nf; j++)
+					resum[13][k] += resum[j][k];
+				resum[13][k] /= Nf;
+				for (uint j=14; j<=12+_nf; j++)
+					resum[j][k] = resum[13][k] - resum[j+12][k];
+			}
+
+			resum[19][k] = resum[31][k];
+			for (uint j=32; j<=30+_nf; j++)
+				resum[19][k] += resum[j][k];
+			resum[19][k] /= Nf;
+
+			for (uint j=20; j<=18+_nf; j++)
+				resum[j][k] = resum[19][k] - resum[j+12][k];
+
+			for (uint j=1; j<=_nf; j++) {
+				resum[j][k]   =0.5*(resum[j+18][k] + resum[j+12][k]);
+				resum[j+6][k] =0.5*(resum[j+18][k] - resum[j+12][k]);
+			}
+
+			if (_order<2) {
+				resum[25][k]=0.0;
+				for (uint j=13; j<=12+_nf; j++)
+					resum[25][k] += resum[j][k];
+
+				for (uint j=26; j<=24+_nf; j++)
+					resum[j][k] = resum[13][k] - resum[j-12][k];
+			}
+		}
+	}
+
 	void DGLAPSolver::setupTruncatedDistributions()
 	{
 		log(LOG_INFO, "Grid", "Using truncated ansatz for non-singlet sector.");
@@ -427,7 +504,7 @@ namespace Candia2
 
 	std::vector<ArrayGrid> const& DGLAPSolver::evolve()
 	{
-		log(LOG_INFO, "DGLAP", "Evolving to {} flavors.", _alpha_s.nff());
+	    log(LOG_INFO, "DGLAP", "Evolving to {} flavors.", _alpha_s.nff());
 		using out_type = decltype(_F);
 		loadAllExpressions();
 		_grid.setupMappings();
@@ -445,9 +522,11 @@ namespace Candia2
 		std::vector<ArrayGrid> resum_ns(DISTS, ArrayGrid(_grid.size()));
 		std::vector<ArrayGrid> resum_singlet(DISTS, ArrayGrid(_grid.size()));
 		std::vector<ArrayGrid> resum(DISTS, ArrayGrid(_grid.size()));
-			
+
+		bool performed_evolution = false;
 		for (_nf=_alpha_s.nfi(); _nf<=_alpha_s.nff(); _nf++) {
 			log(LOG_INFO, "DGLAP", "Setting nf={}", _nf);
+			bool last_loop = _nf == _alpha_s.nff();
 
 			log(LOG_INFO, "DGLAP", "Setting up distributions for evolution.");
 			setupCoefficients();
@@ -525,6 +604,7 @@ namespace Candia2
 			// only do evolution if alphas are different
 			// (i.e. energy scales are different)
 			if (_alpha0 != _alpha1) {
+				performed_evolution = true;
 				log(LOG_INFO, "DGLAP", "Starting singlet evolution and resummation...");
 #if ENABLE_THREADING
 				evolveSingletThreaded(resum_singlet, L1);
@@ -576,7 +656,16 @@ namespace Candia2
 					for (uint j=0; j<=1; ++j)
 						_S[0][j][0] = resum[j*31];
 				}
-			} // if (alpha0 != alpha1)
+			} else { // if (alpha0 != alpha1)
+				// if we've done no evolutions or anything,
+				// we want to make sure we return correctly
+				// the initial distributions
+				if (last_loop && !performed_evolution) {
+					fixDistributions2(resum);
+					_F = std::move(resum);
+					break;
+				}
+			}
 
 			// +1 is the mass at the end of the current threshold,
 			// so if +2 is zero then there is no next threshold,
@@ -604,12 +693,7 @@ namespace Candia2
 
 	void DGLAPSolverLHAPDF::evolve(double q0, double qf, double dq)
 	{
-		auto& log_options = getLogOptions();
-		log_options.show_debug_messages = false;
-		log_options.show_thread_output = true;
-		log_options.use_log_output_stream = false;
-	
-		std::vector<double> xtab{1e-5, 1e-4, 1e-3, 1e-2, 0.1, 0.3, 0.5, 0.7, 0.9, 1.0};
+	    std::vector<double> xtab{1e-5, 1e-4, 1e-3, 1e-2, 0.1, 0.3, 0.5, 0.7, 0.9, 1.0};
 		Grid grid(xtab,
 			make_grid_filler<GridFillerLogLinQuad>(1e-5, 101, 51, 26),
 			{ .default_gauss_points=70, .split_interval = true});
@@ -618,16 +702,38 @@ namespace Candia2
 		grid_options.use_gsl_conv_routine = false;
 		grid_options.use_gsl_interp_routine = true;
 
-		std::vector<std::pair<double, std::map<int,ArrayGrid>>> all_dists{};
-		for (double q=q0; q<qf; q+=dq)
-		{
+		double nsize = (qf-q0)/dq;
+		uint size = std::trunc(nsize) + 1;
+		std::vector<double> as_qs(size);
+		std::iota(as_qs.begin(), as_qs.end(), double{0.0});
+		std::transform(
+			as_qs.begin(), as_qs.end(),
+			as_qs.begin(),
+			[q0,dq](double x) -> double { return q0 + dq*x; });
+
+		AlphaS alphas_all(_order, q0, qf, _dist->alpha0(), _mur2_muf2);
+		alphas_all.setVFNS(_dist->masses(), _dist->nfi());
+		std::vector<std::pair<double,double>> as_qvals = alphas_all.getValues(as_qs);
+		std::vector<double> as_vals(as_qvals.size());
+		std::transform(
+			as_qvals.begin(), as_qvals.end(),
+			as_vals.begin(),
+			[](std::pair<double,double> const& p) -> double { return p.second; });
+		_as_qs = std::move(as_qs);
+		_as_vals = std::move(as_vals);
+		_xvals = grid.points();
+
+		log(LOG_INFO, "DGLAPSolverLHAPDF", "Energy values: {}", vec_to_str(_as_qs));
+		for (double q : _as_qs) {
+			log(LOG_INFO, "DGLAPSolverLHAPDF", "Performing the evolution from {} to {}", q0, q);
+			
 			AlphaS alphas(_order, q0, q, _dist->alpha0(), _mur2_muf2);
 			alphas.setVFNS(_dist->masses(), _dist->nfi());
 			// alphas.setFFNS(4);
 
 			DGLAPSolver solver(_order, grid, alphas, q, _iterations, _trunc_idx, *_dist, _mur2_muf2);
 			auto& dglap_options = solver.getOptions();
-			dglap_options.use_truncated_nonsinglet_sol = true;
+			dglap_options.use_truncated_nonsinglet_sol = false;
 			dglap_options.disable_heavy_flavor_matching = false;
 			dglap_options.use_nnlo_matching_conditions_at_n3lo = false;
 			dglap_options.use_n3lo_heavyquark_asymmetry = true;
@@ -635,13 +741,85 @@ namespace Candia2
 			dglap_options.cache_exprs = false;
 			std::vector<ArrayGrid> F = solver.evolve();
 
-		    all_dists.emplace_back(std::make_pair(q, std::map<int,ArrayGrid>{
-						{-5, F[7]},
-						{-4, F[8]}
-					}));
-		}
+			std::map<int, ArrayGrid> map{};
+			map[-5] = F[11];
+			map[-4] = F[10];
+			map[-3] = F[9];
+			map[-2] = F[8];
+			map[-1] = F[7];
+			map[1] = F[1];
+			map[2] = F[2];
+			map[3] = F[3];
+			map[4] = F[4];
+			map[5] = F[5];
+			map[21] = F[0];
+		    _all_pdfs.emplace_back(std::make_pair(q, map));
 
-		log(LOG_INFO, "DGLAPSolverLHAPDF", "Finished.");
+			log(LOG_DEBUG, "DGLAPSolverLHAPDF", "Some random points: {}, {}, {}", F[1][100], F[7][100], F[0][100]);
+		}
+		
+		log(LOG_INFO, "DGLAPSolverLHAPDF", "Finished running.");
+	}
+
+	void DGLAPSolverLHAPDF::write()
+	{
+		log(LOG_INFO, "DGLAPSolverLHAPDF", "Spitting out the stuff...");
+		fs::path pdfdir_path = fs::current_path()/_name;
+		if (!fs::exists(pdfdir_path)) {
+			if (!fs::create_directory(pdfdir_path))
+				log(LOG_ERROR, "DGLAPSolverLHAPDF", "Failed to create the pdf outpout directory: '{}'", pdfdir_path.string());
+		}
+		
+		std::string infofile_name = std::format("{}.info", _name);
+		std::ifstream infofile_in(_infofile_in_path);
+		std::string infofile_in_contents(
+			std::istreambuf_iterator<char>(infofile_in),
+			std::istreambuf_iterator<char>{});
+		std::string order_replace_str = "%ORDER%";
+		std::string as_qs_replace_str = "%AS_QS%";
+		std::string as_vals_replace_str = "%AS_VALS%";
+
+		auto perform_replace = [](
+			std::string& str,
+			std::string const& what_to_replace,
+			std::string const& replace_with)
+		{
+			std::string::size_type ipos;
+			while ((ipos = str.find(what_to_replace)) != std::string::npos)
+				str.replace(ipos, what_to_replace.size(), replace_with);
+		};
+
+		perform_replace(infofile_in_contents, order_replace_str, std::to_string(_order));
+		perform_replace(infofile_in_contents, as_qs_replace_str, vec_to_str2(_as_qs));
+		perform_replace(infofile_in_contents, as_vals_replace_str, vec_to_str2(_as_vals));
+
+		fs::path infofile_path = pdfdir_path/infofile_name;
+		std::ofstream infofile(infofile_path);
+		std::copy(infofile_in_contents.begin(), infofile_in_contents.end(), std::ostreambuf_iterator<char>(infofile));
+		
+		std::string datafile_name = std::format("{}_0000.dat", _name);
+		fs::path datafile_path = pdfdir_path/datafile_name;
+		std::ofstream datafile(datafile_path);
+		datafile << "PdfType: central\n";
+		datafile << "Format: lhagrid1\n";
+		datafile << "---\n";
+		datafile << "   " << vec_to_str2(_xvals, " ") << '\n';
+		datafile << "   " << vec_to_str2(_as_qs, " ") << '\n';
+		datafile << " -5 -4 -3 -2 -1 1 2 3 4 5 21\n";
+
+		// the type is
+	    // std::vector<std::pair<double, std::map<int,ArrayGrid>>>
+		datafile << std::setprecision(10) << std::scientific;
+		std::vector<int> pids{-5, -4, -3, -2, -1, 1, 2, 3, 4, 5, 21};
+		for (uint ix=0; ix<_xvals.size(); ++ix) {
+			for (uint iq=0; iq<_as_qs.size(); ++iq) {
+				datafile << "   ";
+				for (int pid : pids)
+					datafile << std::setw(17) << _all_pdfs[iq].second[pid][ix] << ' ';
+				datafile << '\n';
+			}
+		}
+		datafile << "---\n";
 	}
 	
 } // namespace Candia2

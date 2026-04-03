@@ -168,6 +168,8 @@ namespace Candia2
 			std::vector<ArrayGrid>& resum_singlet,
 			std::vector<ArrayGrid>& resum);
 
+		void fixDistributions2(std::vector<ArrayGrid>&);
+
 		/** @brief takes the default exact coefficients (A, B, ...) and sets up S to contain all necessary info */
 		void setupTruncatedDistributions();
 
@@ -646,6 +648,9 @@ namespace Candia2
 
 		std::unique_ptr<Distribution> _dist;
 
+	    std::vector<std::pair<double, std::map<int,ArrayGrid>>> _all_pdfs{};
+		std::vector<double> _as_qs, _as_vals, _xvals;
+
 	public:
 		DGLAPSolverLHAPDF(
 			std::string const& name, std::filesystem::path const& infofile_in_path,
@@ -654,8 +659,13 @@ namespace Candia2
 			: _name{name}, _infofile_in_path{infofile_in_path},
 			  _dist{std::move(dist)},
 			  _order{order}, _iterations{iterations}, _trunc_idx{trunc_idx}, _mur2_muf2{mur2_muf2}
-		{}
+		{
+			if (!fs::exists(infofile_in_path))
+				log(LOG_ERROR, "DGLAPSolverLHAPDF", "infofile_in_path is invalid ({})", infofile_in_path.string());
+		}
+		
 		void evolve(double q0, double qf, double dq);
+		void write();
 	};
 }
 

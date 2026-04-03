@@ -45,6 +45,24 @@
                 "BUILD_MANUSCRIPTS": "NO",
                 "WITH_LHAPDF": "NO"
             }
+        },
+		{
+            "name": "clang-testing-win",
+            "displayName": "icx-testing",
+            "description": "Using compilers: C = icx, CXX = icx",
+            "generator": "Ninja Multi-Config",
+            "binaryDir": "${sourceDir}/build",
+            "cacheVariables": {
+                "CMAKE_INSTALL_PREFIX": "${sourceDir}/install/${presetName}",
+                "CMAKE_C_COMPILER": "C:\\Program Files (x86)\\Intel\\oneAPI\\2025.3\\bin\\icx.exe",
+                "CMAKE_CXX_COMPILER": "C:\\Program Files (x86)\\Intel\\oneAPI\\2025.3\\bin\\icx.exe",
+                "CMAKE_CONFIGURATION_TYPES": "Release;Debug;RelWithDebInfo",
+                "ENABLE_THREADING": "YES",
+				"BUILD_TESTS": "YES",
+                "BUILD_DOCS": "NO",
+                "BUILD_MANUSCRIPTS": "NO",
+                "WITH_LHAPDF": "NO"
+            }
         }
     ],
     "buildPresets": [

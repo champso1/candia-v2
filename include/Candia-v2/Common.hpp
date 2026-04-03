@@ -23,6 +23,7 @@
 #include <fstream>
 
 using uint = unsigned;
+namespace fs = std::filesystem;
 
 #define UNUSED(x) (void)(x)
 #define EPS 1e-8
@@ -264,12 +265,36 @@ namespace Candia2
 	 *  @param vec The vector to turn into a string
 	 */
 	template <RangeContainer TContainer>
-	std::string vec_to_str(TContainer const& vec)
+	std::string vec_to_str(TContainer const& vec, std::string const& delim=", ")
 	{
 		using value_type = decltype(*std::ranges::begin(vec));
 		std::ostringstream ss{};
-		std::ranges::copy(vec, std::ostream_iterator<value_type>(ss, ", "));
-		return std::move(ss.str());
+		std::ranges::copy(vec, std::ostream_iterator<value_type>(ss, delim.c_str()));
+		return ss.str();
+	}
+
+	/**
+	 *  @brief Returns a string with the values of the container separated by a comma and a space
+	 *  @param vec The vector to turn into a string
+	 *  this version, opposed to the @a vec_to_str, will not leave a trailing delimiter
+	 */
+	template <RangeContainer TContainer>
+	std::string vec_to_str2(TContainer const& vec, std::string const& delim=", ")
+	{
+	    std::ostringstream ss{};
+		auto it = std::ranges::begin(vec);
+		auto end = std::ranges::end(vec);
+
+		ss << std::setprecision(10) << std::scientific;
+		if (it != end) {
+			ss << std::setw(17) << *it;
+			++it;
+		}
+
+		for (; it != end; ++it)
+			ss << delim << std::setw(17) << *it;
+
+		return ss.str();
 	}
 
 	extern thread_local int thread_index;
