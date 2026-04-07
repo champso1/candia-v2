@@ -164,8 +164,6 @@ static dist_type<T> fix_dists(dist_type<T> const& dists, int type)
 				for (auto [i, j] : tie) {
 					dists_fixed.at(i).at(k) = dists[j][k];
 				}
-
-				log(LOG_INFO, "util.hpp (fix_dists)", "b-bb = {}-{} = {}", dists[5][k], dists[6+5][k], dists[5][k]-dists[6+5][k]);
 			}
 			return dists_fixed;
 		} break;

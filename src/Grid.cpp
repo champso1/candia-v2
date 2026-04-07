@@ -249,7 +249,8 @@ namespace Candia2
 		: OptionsBase<GridOptions>{other},
 		_points{other._points}, _ntab{other._ntab}, _xtab{other._xtab},
 		_gauleg_args{other._gauleg_args},
-		_Xi{other._Xi}, _Wi{other._Wi}
+		_Xi{other._Xi}, _Wi{other._Wi},
+		_mappings{other._mappings}
 	{
 		_workspaces.reserve(DISTS);
 		_interps.reserve(DISTS);
@@ -282,6 +283,8 @@ namespace Candia2
 			_interps.emplace_back(gsl::make_interp(other._interps[i]->size));
 			_interp_accels.emplace_back(gsl::make_interp_accel());
 		}
+
+		_mappings = other._mappings;
 	}
 
 

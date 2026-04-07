@@ -96,12 +96,14 @@ namespace Candia2
 			_expressions.emplace(std::make_pair(name, std::move(ptr)));
 		}
 
+	public:
 		/**
 		 *  @brief returns the expression object with the given name
 		 *  @param name The name associated with the expression object
 		 */
 		Expression& getExpression(std::string_view name);
 
+	private:
 		/** 
 		 *  @brief Helper function to create/load all expression objects for the provided order.
 		 */
@@ -129,7 +131,7 @@ namespace Candia2
 		/** getter for the @a AlphaS object */
 		inline AlphaS const& getAlphaS() const { return _alpha_s; }
 		/** getter for the @a Grid object */
-		inline Grid const& getGrid() const { return _grid; }
+		inline Grid& getGrid() { return _grid; }
 
 		/**
 		 *  @brief Performs the full evolution.
@@ -654,6 +656,27 @@ namespace Candia2
 		std::vector<double> _as_qs, _as_vals, _xvals;
 
 	public:
+		enum AdditionalSubtractionPDFs : int
+		{
+		    FTILDE1 = 1 << 0,
+			FTILDE2 = 1 << 1
+		};
+
+	private:
+		static std::map<int, int> _subtraction_pdf_pids;
+		int _added_subtraction_pdfs{0};
+
+		// grid info -----
+		// the grid for some reason has some arguments that aren't correctly initialized
+		// when copy constructing, so we save this on creation
+		// of a DGLAPSolverLHAPDF object, and just create a new grid each time
+		// rather than accepting one
+		std::vector<double> _xtab;
+		std::unique_ptr<GridFillerBase> _grid_filler;
+		GaussLegendreArgs _gauleg_args;
+		GridOptions _grid_options;
+
+	public:
 		DGLAPSolverLHAPDF(
 			std::string const& name, std::filesystem::path const& infofile_in_path,
 			std::unique_ptr<Distribution> dist,
@@ -665,10 +688,22 @@ namespace Candia2
 			if (!fs::exists(infofile_in_path))
 				log(LOG_ERROR, "DGLAPSolverLHAPDF", "infofile_in_path is invalid ({})", infofile_in_path.string());
 		}
+
+		inline void addSubtractionPDFs(int subtraction_pdfs=(FTILDE1 | FTILDE2)) { _added_subtraction_pdfs = subtraction_pdfs; }
+		inline void setGridInfo(
+			std::vector<double> const& xtab,
+			std::unique_ptr<GridFillerBase> grid_filler,
+			GaussLegendreArgs const& gauleg_args,
+			GridOptions const& grid_options)
+		{
+			_xtab = xtab;
+			_grid_filler = std::move(grid_filler);
+			_gauleg_args = gauleg_args;
+			_grid_options = grid_options;
+		}
 		
 		void evolve(
 			double q0, double qf, double dq,
-			Grid::options_type const& grid_options,
 			DGLAPSolver::options_type const& dglap_options);
 		void write();
 	};

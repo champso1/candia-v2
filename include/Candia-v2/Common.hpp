@@ -287,12 +287,12 @@ namespace Candia2
 
 		ss << std::setprecision(10) << std::scientific;
 		if (it != end) {
-			ss << std::setw(17) << *it;
+			ss << *it;
 			++it;
 		}
 
 		for (; it != end; ++it)
-			ss << delim << std::setw(17) << *it;
+			ss << delim << *it;
 
 		return ss.str();
 	}

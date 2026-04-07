@@ -89,7 +89,7 @@ int main(int argc, char *argv[]) {
 	const uint iterations = stoi(argv[2]);
 	const uint trunc_idx = stoi(argv[3]);
 	const double mur2_muf2 = stold(argv[4]);
-	const double Qf = 62.3;
+	const double Qf = 54.5;
 
 	std::string datafile_name{};
 	if (argc == 6)
@@ -128,7 +128,7 @@ int main(int argc, char *argv[]) {
 
 	DGLAPSolver solver(order, grid, alphas, Qf, iterations, trunc_idx, dist, mur2_muf2);
 	auto& dglap_options = solver.getOptions();
-	dglap_options.use_truncated_nonsinglet_sol = true;
+	dglap_options.use_truncated_nonsinglet_sol = false;
 	dglap_options.disable_heavy_flavor_matching = false;
 	dglap_options.use_nnlo_matching_conditions_at_n3lo = false;
 	dglap_options.use_n3lo_heavyquark_asymmetry = true;
@@ -139,8 +139,15 @@ int main(int argc, char *argv[]) {
 	auto F = solver.evolve();
 
 	uint idx = grid.ntab()[4];
-	double gluon = F[0][idx];
-	log(LOG_INFO, "evolve.cpp", "gluon at x=0.1 at q={}, is: {}", Qf, gluon);
+	ArrayGrid ftilde1(grid.size()), ftilde2(grid.size());
+	for (auto [k, x] : solver.getGrid().enumerate()) {
+		ftilde1[k] = solver.getGrid().convolution(F[0], solver.getExpression("A2hg"), k);
+		ftilde2[k] =
+			solver.getGrid().convolution(F[0], solver.getExpression("A2hg"), k)
+			+ solver.getGrid().convolution(F[31], solver.getExpression("A2hq"), k);
+	}
+	log(LOG_INFO, "evolve.cpp", "ftilde1 at x=0.1 at q={}, is: {}", Qf, ftilde1[idx]);
+	log(LOG_INFO, "evolve.cpp", "ftilde2 at x=0.1 at q={}, is: {}", Qf, ftilde2[idx]);
 	
 	auto tf = chrono::high_resolution_clock::now();
 	chrono::duration<double, ratio<1>> secs = tf-t0;

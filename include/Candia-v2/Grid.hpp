@@ -198,11 +198,38 @@ namespace Candia2
 		std::vector<gsl::workspace_type> _workspaces; //!< gsl workspaces for calling gsl integration routines
 		std::vector<gsl::interp_type> _interps; //!< gsl interp objects for interpolation
 		std::vector<gsl::interp_accel_type> _interp_accels; //!< interp interpolation acceleration objects
-		gsl_conv_errors _gsl_conv_errors{}; //!< stored values of GSL fails (if any), for debugging purposes
+		gsl_conv_errors _gsl_conv_errors{}; //!< stored values of GSL fails (if any); for debugging purposes
 
 		std::vector<std::function<std::pair<double,double>(double,double)>> _mappings{}; //!< mapping functions
 
 		bool _use_cached_expressions{false}; //!< whether to use cached expressions. set via DGLAPSolver based on its options
+
+	public:
+		struct EnumerateIterator final
+		{
+			grid_type const& data;
+
+			struct Iterator final
+			{
+				grid_type const& v;
+				grid_type::size_type idx;
+
+				inline auto operator*() const {
+					return std::pair<grid_type::size_type, grid_type::value_type>{idx, v[idx]};
+				}
+
+				inline Iterator& operator++() { ++idx; return *this; }
+				inline bool operator!=(Iterator const& other) { return idx != other.idx; }
+			};
+
+			inline auto begin() { return Iterator{data, 0}; }
+			inline auto end() { return Iterator{data, data.size()}; }
+		};
+
+		inline auto enumerate() const {
+			return EnumerateIterator{_points};
+		}
+		
 	public:
 		Grid() = delete; //!< default constructor deleted; must provide information to fill the grid
 		/**
