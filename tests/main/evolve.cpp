@@ -89,7 +89,7 @@ int main(int argc, char *argv[]) {
 	const uint iterations = stoi(argv[2]);
 	const uint trunc_idx = stoi(argv[3]);
 	const double mur2_muf2 = stold(argv[4]);
-	const double Qf = 100.0;
+	const double Qf = 62.3;
 
 	std::string datafile_name{};
 	if (argc == 6)
@@ -137,6 +137,11 @@ int main(int argc, char *argv[]) {
 
 	auto t0 = chrono::high_resolution_clock::now();
 	auto F = solver.evolve();
+
+	uint idx = grid.ntab()[4];
+	double gluon = F[0][idx];
+	log(LOG_INFO, "evolve.cpp", "gluon at x=0.1 at q={}, is: {}", Qf, gluon);
+	
 	auto tf = chrono::high_resolution_clock::now();
 	chrono::duration<double, ratio<1>> secs = tf-t0;
 	log(LOG_INFO, "evolve.cpp", "Evolution took {}.", secs);

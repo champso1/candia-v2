@@ -31,7 +31,6 @@ set(sources
   src/Expression.cpp
   src/Grid.cpp
   src/HFT.cpp
-  src/LHAPDFDataFile.cpp
 #  src/LHAPDFDistribution.cpp
   src/Math.cpp
   src/OperatorMatrixElements.cpp
@@ -47,7 +46,6 @@ set(headers
   include/Candia-v2/Distribution.hpp
   include/Candia-v2/Expression.hpp
   include/Candia-v2/Grid.hpp
-  include/Candia-v2/LHAPDFDataFile.hpp
 #  include/Candia-v2/LHAPDFDistribution.hpp
   include/Candia-v2/Math.hpp
   include/Candia-v2/OperatorMatrixElements.hpp
@@ -164,5 +162,3 @@ configure_package_config_file(
 install(
   FILES ${CMAKE_CURRENT_BINARY_DIR}/candiaConfig.cmake
   DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/candia)
-
-include(CPack)

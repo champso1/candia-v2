@@ -691,33 +691,31 @@ namespace Candia2
 		UNUSED(dist);
 	}
 
-	void DGLAPSolverLHAPDF::evolve(double q0, double qf, double dq)
+	void DGLAPSolverLHAPDF::evolve(
+		double q0, double qf, double dq,
+		Grid::options_type const& grid_options,
+		DGLAPSolver::options_type const& dglap_options)
 	{
 	    std::vector<double> xtab{1e-5, 1e-4, 1e-3, 1e-2, 0.1, 0.3, 0.5, 0.7, 0.9, 1.0};
 		Grid grid(xtab,
 			make_grid_filler<GridFillerLogLinQuad>(1e-5, 101, 51, 26),
 			{ .default_gauss_points=70, .split_interval = true});
-		auto& grid_options = grid.getOptions();
-		grid_options.use_alt_mapping = true;
-		grid_options.use_gsl_conv_routine = false;
-		grid_options.use_gsl_interp_routine = true;
+	    grid.getOptions() = grid_options;
 
 		double nsize = (qf-q0)/dq;
 		uint size = std::trunc(nsize) + 1;
 		std::vector<double> as_qs(size);
 		std::iota(as_qs.begin(), as_qs.end(), double{0.0});
-		std::transform(
-			as_qs.begin(), as_qs.end(),
-			as_qs.begin(),
+		std::ranges::transform(
+			as_qs,std::ranges::begin(as_qs),
 			[q0,dq](double x) -> double { return q0 + dq*x; });
 
 		AlphaS alphas_all(_order, q0, qf, _dist->alpha0(), _mur2_muf2);
 		alphas_all.setVFNS(_dist->masses(), _dist->nfi());
 		std::vector<std::pair<double,double>> as_qvals = alphas_all.getValues(as_qs);
 		std::vector<double> as_vals(as_qvals.size());
-		std::transform(
-			as_qvals.begin(), as_qvals.end(),
-			as_vals.begin(),
+		std::ranges::transform(
+			as_qvals, std::ranges::begin(as_vals),
 			[](std::pair<double,double> const& p) -> double { return p.second; });
 		_as_qs = std::move(as_qs);
 		_as_vals = std::move(as_vals);
@@ -732,13 +730,7 @@ namespace Candia2
 			// alphas.setFFNS(4);
 
 			DGLAPSolver solver(_order, grid, alphas, q, _iterations, _trunc_idx, *_dist, _mur2_muf2);
-			auto& dglap_options = solver.getOptions();
-			dglap_options.use_truncated_nonsinglet_sol = false;
-			dglap_options.disable_heavy_flavor_matching = false;
-			dglap_options.use_nnlo_matching_conditions_at_n3lo = false;
-			dglap_options.use_n3lo_heavyquark_asymmetry = true;
-			dglap_options.use_fortran_n3lo_splitfuncs = false;
-			dglap_options.cache_exprs = false;
+			solver.getOptions() = dglap_options;
 			std::vector<ArrayGrid> F = solver.evolve();
 
 			std::map<int, ArrayGrid> map{};

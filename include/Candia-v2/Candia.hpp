@@ -47,6 +47,8 @@ namespace Candia2
 	 */
 	class DGLAPSolver : public OptionsBase<DGLAPOptions>
 	{
+	public:
+		using options_type = DGLAPOptions;
 	private:
 		uint _order{}; //!< perturbative order
 		Grid _grid; //!< main @a Grid object
@@ -664,7 +666,10 @@ namespace Candia2
 				log(LOG_ERROR, "DGLAPSolverLHAPDF", "infofile_in_path is invalid ({})", infofile_in_path.string());
 		}
 		
-		void evolve(double q0, double qf, double dq);
+		void evolve(
+			double q0, double qf, double dq,
+			Grid::options_type const& grid_options,
+			DGLAPSolver::options_type const& dglap_options);
 		void write();
 	};
 }
