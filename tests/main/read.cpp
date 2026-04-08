@@ -45,7 +45,7 @@ int main(int argc, char *argv[])
 		(origin == 0) ?
 		read_candia_file<value_type>(datafile_path, 37)
 		: read_other_file<value_type>(datafile_path, 37);
-	dist_type dists = fix_dists(dists_raw, type);
+    auto dists = fix_dists(dists_raw, type);
 
 	std::string basename = datafile_path.filename().string().substr(0, datafile_path.filename().string().rfind('.'));	
 	outputLatexTable(xtab, dists, basename, cols[type].get(), 1, format == 0);

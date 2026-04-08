@@ -69,8 +69,8 @@ int main(int argc, char *argv[])
 		log(LOG_INFO, "compare.cpp", "Other xtab: {}", ss.str());
 		exit(EXIT_FAILURE);
 	}
-	dist_type candia_dists = fix_dists(candia_dists_raw, type);
-	dist_type other_dists = fix_dists(other_dists_raw, type);
+	auto candia_dists = fix_dists(candia_dists_raw, type);
+	auto other_dists = fix_dists(other_dists_raw, type);
 	
 	if (candia_dists_raw.at(0).size() != other_dists_raw.at(0).size()) {
 		log(LOG_ERROR, "compare.cpp", "Data size mismatch. Candia size: {}, other size: {}",
