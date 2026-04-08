@@ -113,9 +113,7 @@ int main(int argc, char *argv[]) {
 	log_options.log_output_stream = log_output_file;
 	
 	vector<double> xtab{1e-5, 1e-4, 1e-3, 1e-2, 0.1, 0.3, 0.5, 0.7, 0.9, 1.0};
-	Grid grid(xtab,
-		make_grid_filler<GridFillerLogLinQuad>(1e-5, 101, 51, 26),
-		{ .default_gauss_points=70, .split_interval = true});
+	Grid grid(xtab, make_grid_filler<GridFillerLogLinQuad>(1e-5, 101, 51, 26), { .default_gauss_points = 50, .split_interval = true});
 	auto& grid_options = grid.getOptions();
 	grid_options.use_alt_mapping = true;
 	grid_options.use_gsl_conv_routine = false;
