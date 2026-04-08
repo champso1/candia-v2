@@ -47,6 +47,24 @@
             }
         },
 		{
+            "name": "gcc-testing",
+            "displayName": "gcc-testing",
+            "description": "Using compilers: C = gcc, CXX = g++",
+            "generator": "Ninja Multi-Config",
+            "binaryDir": "${sourceDir}/bin/${presetName}",
+            "cacheVariables": {
+                "CMAKE_INSTALL_PREFIX": "${sourceDir}/install/${presetName}",
+                "CMAKE_C_COMPILER": "gcc",
+                "CMAKE_CXX_COMPILER": "g++",
+                "CMAKE_CONFIGURATION_TYPES": "Release;Debug;RelWithDebInfo",
+                "ENABLE_THREADING": "YES",
+				"BUILD_TESTS": "YES",
+                "BUILD_DOCS": "NO",
+                "BUILD_MANUSCRIPTS": "NO",
+                "WITH_LHAPDF": "NO"
+            }
+        },
+		{
             "name": "clang-testing-win",
             "displayName": "icx-testing",
             "description": "Using compilers: C = icx, CXX = icx",
