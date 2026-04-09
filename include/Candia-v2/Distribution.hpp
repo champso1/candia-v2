@@ -14,6 +14,19 @@
 
 namespace Candia2
 {
+	enum DistributionPDFIndices : uint
+	{
+		DIST_UNUSED1,
+		DIST_U,
+		DIST_D,
+		DIST_S,
+		DIST_C,
+		DIST_B,
+		DIST_T,
+		DIST_UNUSED2,
+		DIST_SIZE
+	};
+	
 	/**
 	 *  @brief Base class for handling initial evolution conditions
 	 */

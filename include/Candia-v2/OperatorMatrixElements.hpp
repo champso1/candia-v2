@@ -143,6 +143,29 @@ namespace Candia2
 			return delta[3](_lm, _nf);
 		}
 	};
+
+	
+	/**
+	 *  @brief class to provide custom, ome-like expression using custom function objects
+	 */
+	class OpMatElemCustom final : public OpMatElem
+	{
+	public:
+		using function_type = std::function<double(double,double,double)>;
+		static function_type ZERO_FUNC;
+	private:
+		function_type _reg_func{ZERO_FUNC};
+		function_type _plus_func{ZERO_FUNC};
+		function_type _delta_func{ZERO_FUNC};
+	public:
+		OpMatElemCustom(function_type reg_func, function_type plus_func, function_type delta_func)
+			: _reg_func{reg_func}, _plus_func{plus_func}, _delta_func{delta_func}
+		{}
+
+		inline double calcRegular(double x) const override { return _reg_func(_lm, _nf, x); }
+		inline double calcPlus(double x)    const override { return _plus_func(_lm, _nf, x); }
+		inline double calcDelta(double x)   const override { return _delta_func(_lm, _nf, x); }
+	};
 };
 
 

@@ -19,7 +19,6 @@
 #include "Candia-v2/Distribution.hpp"
 #include "Candia-v2/ArrayGrid.hpp"
 #include "Candia-v2/Options.hpp"
-#include "Candia-v2/LHAPDFDataFile.hpp"
 
 namespace Candia2
 {
@@ -38,7 +37,7 @@ namespace Candia2
 			APPROX_A = 1,
 			APPROX_B = 2,
 			APPROX_AVG = 3
-		} n3lo_splitfunc_imod{APPROX_AVG};
+		} n3lo_splitfunc_imod{APPROX_AVG}; //!< approximation to use for the N3LO splitting functions
 		bool cache_exprs{false}; //!< whether to cache the splitting functions/OMEs rather than evaluating them every time
 	};
 
@@ -66,6 +65,8 @@ namespace Candia2
 		uint _nff{}; //!< final based on final evolution and provided quark masses
 		double _alpha0{}; //!< initial alpha_s in an interval
 		double _alpha1{}; //!< final alpha_s in an interval
+
+		Distribution const& _initial_dist; //!< reference to initial distribution
 
 		uint _iterations{}; //!< number of singlet/non-singlet iterations
 		uint _trunc_idx{}; //!< number of additional singlet truncated iterations
@@ -139,18 +140,10 @@ namespace Candia2
 		std::vector<ArrayGrid> const& evolve();
 
 		/**
-		 *  @brief performs a more custom evolution, overwriting the variables provided in the constructor
+		 *  @brief returns a vector of some subtraction PDFs as in EQ.27, Eq.38 in arXiv:2410.03876 [hep-ph]
+		 *  returns 3 total, for the b-quark, that being f(tilde)1, f(tilde)2, and f(tilde)NLO
 		 */
-	    void evolve2(
-			AlphaS const& alphas,
-			uint order, uint iterations, uint trunc_idx,
-			Distribution const& dist);
-
-		/**
-		 *  @brief generates an LHAPDF-compatible datafile
-		 */
-		void generateLHAPDFGrid(std::string const& name, std::filesystem::path const& infofile_in_path);
-
+		std::vector<ArrayGrid> calculateSubtractionPDFs();
 	private:
 		/**
 		 *  @brief Sets the initial values of the coefficients using the distribution
@@ -634,7 +627,7 @@ namespace Candia2
 			Expression& P0, Expression& P1, Expression& P2, Expression& P3);
 		/** @} */
 	};
-
+	
 	/**
 	 *  @brief performs the evolution enough times to fill an lhapdf grid
 	 *  the output is a pdf "set", consisting of one file only,
@@ -650,7 +643,7 @@ namespace Candia2
 	    uint _trunc_idx{10};
 	    double _mur2_muf2{1.0};
 
-		std::unique_ptr<Distribution> _dist;
+		Distribution const& _dist;
 
 	    std::vector<std::pair<double, std::map<int,ArrayGrid>>> _all_pdfs{};
 		std::vector<double> _as_qs, _as_vals, _xvals;
@@ -658,14 +651,13 @@ namespace Candia2
 	public:
 		enum AdditionalSubtractionPDFs : int
 		{
-		    FTILDE1 = 1 << 0,
-			FTILDE2 = 1 << 1
+		    FTILDE1 = 9001,
+			FTILDENLO = 9002,
+			DELTAF1 = 9003,
+			DELTAFNLO = 9004,
 		};
 
 	private:
-		static std::map<int, int> _subtraction_pdf_pids;
-		int _added_subtraction_pdfs{0};
-
 		// grid info -----
 		// the grid for some reason has some arguments that aren't correctly initialized
 		// when copy constructing, so we save this on creation
@@ -679,17 +671,16 @@ namespace Candia2
 	public:
 		DGLAPSolverLHAPDF(
 			std::string const& name, std::filesystem::path const& infofile_in_path,
-			std::unique_ptr<Distribution> dist,
+			Distribution const& dist,
 		    uint order, uint iterations, uint trunc_idx, double mur2_muf2)
 			: _name{name}, _infofile_in_path{infofile_in_path},
-			  _dist{std::move(dist)},
+			  _dist{dist},
 			  _order{order}, _iterations{iterations}, _trunc_idx{trunc_idx}, _mur2_muf2{mur2_muf2}
 		{
 			if (!fs::exists(infofile_in_path))
 				log(LOG_ERROR, "DGLAPSolverLHAPDF", "infofile_in_path is invalid ({})", infofile_in_path.string());
 		}
 
-		inline void addSubtractionPDFs(int subtraction_pdfs=(FTILDE1 | FTILDE2)) { _added_subtraction_pdfs = subtraction_pdfs; }
 		inline void setGridInfo(
 			std::vector<double> const& xtab,
 			std::unique_ptr<GridFillerBase> grid_filler,

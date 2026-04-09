@@ -5,26 +5,28 @@
 #include "Candia-v2/Grid.hpp"
 #include "Candia-v2/SplittingFn.hpp"
 #include "Candia-v2/OperatorMatrixElements.hpp"
+#include "ome/AQg.h"
+#include "ome/AQqPS.h"
 
 #include <filesystem>
 #include <functional>
 #include <iterator>
 #include <memory>
-#include <numeric>
 #include <ranges>
 
 
 // PDF indices
 // 
-// 0      gluons         g
-// 1-6    quarks         u,d,s,c,b,t
-// 7-12   antiquarks     au,ad,as,ac,ab,at
-// 13-18  q_i^-          um,dm,sm,cm,bm,tm
-// 19-24  q_i^+          up,dp,sp,cp,bp,tp
+// 0      gluons
+// 1-6    quarks
+// 7-12   antiquarks
+// 13-18  q_i^-
+// 19-24  q_i^+
 // 25     q^(-)
-// 26-30  q_{NS,1i}^(-)  dd,sd,cd,bd,td
+// 26-30  q_{NS,1i}^(-)
 // 31     q^(+)
-// 32-36  q_{NS,1i}^(+)  ds,ss,cs,bs,ts
+// 32-36  q_{NS,1i}^(+)
+// 37-39  
 
 namespace
 {
@@ -59,6 +61,7 @@ namespace Candia2
 		  _alpha_s{alpha_s},
 		  _mur2_muf2{mur2_muf2}, _log_mur2_muf2{std::log(mur2_muf2)}, _log_muf2_mur2{-_log_mur2_muf2},
 		  _is_scale_difference{mur2_muf2 != 1.0},
+		  _initial_dist{initial_dist},
 		  _iterations{iterations}, _trunc_idx{trunc_idx}
 	{
 		log(::CANDIA_OPENING_TEXT);
@@ -74,7 +77,7 @@ namespace Candia2
 
 				_A = std::vector<std::vector<ArrayGrid>>{
 					DISTS, std::vector<ArrayGrid>{
-						2, ArrayGrid(grid.size())
+						2, ArrayGrid(_grid.size())
 					}
 				};
 			} break;
@@ -82,7 +85,7 @@ namespace Candia2
 				_B = MultiDimArrayGrid_t<3>{
 					DISTS, MultiDimArrayGrid_t<2>{
 						2, MultiDimArrayGrid_t<1>{
-							_iterations, ArrayGrid(grid.size())
+							_iterations, ArrayGrid(_grid.size())
 						}
 					}
 				};
@@ -93,7 +96,7 @@ namespace Candia2
 					DISTS, MultiDimArrayGrid_t<3>{
 						2, MultiDimArrayGrid_t<2>{
 							_iterations, MultiDimArrayGrid_t<1>{
-								_iterations, ArrayGrid(grid.size())
+								_iterations, ArrayGrid(_grid.size())
 							}
 						}
 					}
@@ -105,7 +108,7 @@ namespace Candia2
 						2, MultiDimArrayGrid_t<3>{
 							_iterations, MultiDimArrayGrid_t<2>{
 								_iterations, MultiDimArrayGrid_t<1>{
-									_iterations, ArrayGrid(grid.size())
+									_iterations, ArrayGrid(_grid.size())
 								}
 							}
 						}
@@ -147,11 +150,11 @@ namespace Candia2
 				log(LOG_DEBUG, "DGLAPSolver::DGLAPSolver()", "c  array: {}", func(_r1));
 			} break;
 			default: {
-				log(LOG_INFO, "DGLAPSolver::DGLAPSolver()", "Found {} for the order, expected a value in range [0, 3].", order);
+				log(LOG_INFO, "DGLAPSolver::DGLAPSolver()", "Found {} for the order, expected a value in range [0, 3].", _order);
 			}
 		}
 		_S = decltype(_S){
-			trunc_idx+1, std::vector<std::vector<ArrayGrid>>{
+			_trunc_idx+1, std::vector<std::vector<ArrayGrid>>{
 				2, std::vector<ArrayGrid>{
 					2, ArrayGrid(_grid.size())
 				}
@@ -161,10 +164,11 @@ namespace Candia2
 
 
 		_F = std::vector<ArrayGrid>{
-			DISTS, ArrayGrid(grid.size())
+			DISTS, ArrayGrid(_grid.size())
 		};
 
 		setInitialConditions(initial_dist);
+		log(LOG_INFO, "DGLAP", "Successfully filled coefficients with initial conditions.");
 	}
 
 	DGLAPSolver::~DGLAPSolver()
@@ -334,7 +338,7 @@ namespace Candia2
 
 		if (options.use_truncated_nonsinglet_sol) {
 			for (uint t=1; t<=_trunc_idx; ++t) {
-				for (uint j=0; j<DISTS; ++j) {
+				for (uint j=0; j<_F.size(); ++j) {
 					for (uint n=0; n<=1; ++n) 
 						_S_NS[t][j][n].zero();
 				}
@@ -522,7 +526,7 @@ namespace Candia2
 		std::vector<ArrayGrid> resum_ns(DISTS, ArrayGrid(_grid.size()));
 		std::vector<ArrayGrid> resum_singlet(DISTS, ArrayGrid(_grid.size()));
 		std::vector<ArrayGrid> resum(DISTS, ArrayGrid(_grid.size()));
-
+		
 		bool performed_evolution = false;
 		for (_nf=_alpha_s.nfi(); _nf<=_alpha_s.nff(); _nf++) {
 			log(LOG_INFO, "DGLAP", "Setting nf={}", _nf);
@@ -680,27 +684,70 @@ namespace Candia2
 	} // evolve()
 
 
+	std::vector<ArrayGrid> DGLAPSolver::calculateSubtractionPDFs()
+	{
+		if (_order < 2) {
+			log(LOG_WARNING, "DGLAPSolver", "cannot create subtraction PDFs below NNLO");
+			return {};
+		}
 
+		double as = _alpha1/4.0/PI;
+		double as2 = as*as;
+		double mb = _initial_dist.masses(DIST_B);
+		double qf = _Qf;
+		double L = std::log(std::pow(qf/mb, 2.0));
+		
+		OpMatElemN3LO::update(-L, _nf);
 
-	std::map<int, int> DGLAPSolverLHAPDF::_subtraction_pdf_pids{
-		{FTILDE1, 9000},
-		{FTILDE2, 9001}
-	};
+		auto zero_func = [](double,double,double){ return 0.0; };
+		
+		auto& p1qg = getExpression("P1qg");
+	    auto a1qg_reg_func = [as](double lm, double nf, double x) {
+			auto trunced = ome::AQg_reg.truncate(1);
+			return trunced(as, lm, nf, x); };
+		OpMatElemCustom a1hg(a1qg_reg_func, zero_func, zero_func);
+
+		auto a2hq_reg_func = [as](double lm, double nf, double x) {
+			auto trunced = ome::AQqPS_reg.truncate(2);
+			return trunced(as, lm, nf, x); };
+		OpMatElemCustom a2hq(a2hq_reg_func, zero_func, zero_func);
+		
+		auto a2hg_reg_func = [as](double lm, double nf, double x) {
+			auto trunced = ome::AQg_reg.truncate(2);
+			return trunced(as, lm, nf, x); };
+		OpMatElemCustom a2hg(a2hg_reg_func, zero_func, zero_func);
+		
+
+		std::vector<ArrayGrid> subpdfs(4, ArrayGrid(_grid.size()));
+		for (uint k=0; k<_grid.size(); ++k) {
+			subpdfs[0][k] = as*_grid.convolution(_F[0], a1hg, k);
+		    double ftilde2 = as2*(
+				_grid.convolution(_F[31], a2hq, k) +
+				_grid.convolution(_F[0], a2hg, k)
+			);
+			subpdfs[1][k] = subpdfs[0][k] + ftilde2;
+			subpdfs[2][k] = std::abs(_F[5][k] - subpdfs[0][k]);
+			subpdfs[3][k] = std::abs(_F[5][k] - subpdfs[1][k]);
+		}
+
+		return subpdfs;
+	}
 
 	void DGLAPSolverLHAPDF::evolve(
 		double q0, double qf, double dq,
 		DGLAPSolver::options_type const& dglap_options)
 	{
 	    double nsize = (qf-q0)/dq;
-		uint size = std::trunc(nsize) + 1;
-		std::vector<double> as_qs(size);
-		std::iota(as_qs.begin(), as_qs.end(), double{0.0});
-		std::ranges::transform(
-			as_qs,std::ranges::begin(as_qs),
-			[q0,dq](double x) -> double { return q0 + dq*x; });
-
-		AlphaS alphas_all(_order, q0, qf, _dist->alpha0(), _mur2_muf2);
-		alphas_all.setVFNS(_dist->masses(), _dist->nfi());
+		int size = std::trunc(nsize) + 1;
+		
+		auto as_qs_view =
+			std::views::iota(0, size)
+			| std::views::transform([q0,dq](int x) -> double { return q0 + dq*x; });
+		auto as_qs = std::vector<double>(as_qs_view.begin(), as_qs_view.end());
+		as_qs.emplace_back(qf); // may be necessary
+	    
+		AlphaS alphas_all(_order, q0, qf, _dist.alpha0(), _mur2_muf2);
+		alphas_all.setVFNS(_dist.masses(), _dist.nfi());
 		std::vector<std::pair<double,double>> as_qvals = alphas_all.getValues(as_qs);
 		std::vector<double> as_vals(as_qvals.size());
 		std::ranges::transform(
@@ -717,15 +764,15 @@ namespace Candia2
 		for (double q : _as_qs) {
 			log(LOG_INFO, "DGLAPSolverLHAPDF", "Performing the evolution from {} to {}", q0, q);
 			
-			AlphaS alphas(_order, q0, q, _dist->alpha0(), _mur2_muf2);
-			alphas.setVFNS(_dist->masses(), _dist->nfi());
+			AlphaS alphas(_order, q0, q, _dist.alpha0(), _mur2_muf2);
+			alphas.setVFNS(_dist.masses(), _dist.nfi());
 			// alphas.setFFNS(4);
 
 			double alpha0 = alphas.post(alphas.nff());
 			double alphas_val = alphas.evaluate(alphas.masses(alphas.nff()), q, alpha0);
 			double as2 = std::pow(alphas_val, 2);
 
-			DGLAPSolver solver(_order, grid_in, alphas, q, _iterations, _trunc_idx, *_dist, _mur2_muf2);
+			DGLAPSolver solver(_order, grid_in, alphas, q, _iterations, _trunc_idx, _dist, _mur2_muf2);
 			solver.getOptions() = dglap_options;
 			std::vector<ArrayGrid> F = solver.evolve();
 			Grid& grid = solver.getGrid();
@@ -743,33 +790,12 @@ namespace Candia2
 			map[5] = F[5];
 			map[21] = F[0];
 
-			if (FTILDE1 & _added_subtraction_pdfs) {
-				log(LOG_DEBUG, "DGLAPSolverLHAPDF", "Adding ftilde1");
-				if (_order < 2) {
-					log(LOG_WARNING, "DGLAPSolverLHAPDF", "Attempting to define a subtraction PDF below NNLO.");
-				} else {
-					ArrayGrid ftilde1(grid.size());
-					for (auto [i, x] : grid.enumerate()) {
-						ftilde1[i] = grid.convolution(F[0], solver.getExpression("A2hg"), i);
-					}
-					map[_subtraction_pdf_pids[FTILDE1]] = ftilde1;
-				}
-			}
-			if (FTILDE2 & _added_subtraction_pdfs) {
-				log(LOG_DEBUG, "DGLAPSolverLHAPDF", "Adding ftilde1");
-				if (_order < 2) {
-					log(LOG_WARNING, "DGLAPSolverLHAPDF", "Attempting to define a subtraction PDF below NNLO.");
-				} else {
-					ArrayGrid ftilde2(grid.size());
-					for (auto [i, x] : grid.enumerate()) {
-						ftilde2[i] =
-							(grid.convolution(F[0], solver.getExpression("A2hg"), i)
-								+ grid.convolution(F[31], solver.getExpression("A2hq"), i));
-					}
-					map[_subtraction_pdf_pids[FTILDE2]] = ftilde2;
-				}
-			}
-			
+			std::vector<ArrayGrid> subtraction_pdfs = solver.calculateSubtractionPDFs();
+			map[FTILDE1] = subtraction_pdfs[0];
+			map[FTILDENLO] = subtraction_pdfs[1];
+			map[DELTAF1] = subtraction_pdfs[2];
+			map[DELTAFNLO] = subtraction_pdfs[3];
+
 		    _all_pdfs.emplace_back(std::make_pair(q, map));
 		}
 		
@@ -805,14 +831,10 @@ namespace Candia2
 				str.replace(ipos, what_to_replace.size(), replace_with);
 		};
 
-		std::vector<int> pids{
-			-5, -4, -3, -2, -1, 1, 2, 3, 4, 5, 21};
+		auto pids =
+			_all_pdfs[0].second
+			| std::views::transform([](std::pair<const int, ArrayGrid> const& p) -> int { return p.first; });
 
-		if (FTILDE1 & _added_subtraction_pdfs && _order >= 2)
-			pids.emplace_back(_subtraction_pdf_pids[FTILDE1]);
-		if (FTILDE2 & _added_subtraction_pdfs && _order >= 2)
-			pids.emplace_back(_subtraction_pdf_pids[FTILDE2]);
-		
 		perform_replace(infofile_in_contents, pids_replace_str, vec_to_str2(pids));
 		perform_replace(infofile_in_contents, order_replace_str, std::to_string(_order));
 		perform_replace(infofile_in_contents, as_qs_replace_str, vec_to_str2(_as_qs));

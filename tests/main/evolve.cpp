@@ -89,7 +89,7 @@ int main(int argc, char *argv[]) {
 	const uint iterations = stoi(argv[2]);
 	const uint trunc_idx = stoi(argv[3]);
 	const double mur2_muf2 = stold(argv[4]);
-	const double Qf = 54.5;
+	const double Qf = 10.0;
 
 	std::string datafile_name{};
 	if (argc == 6)
@@ -118,13 +118,13 @@ int main(int argc, char *argv[]) {
 	grid_options.use_alt_mapping = true;
 	grid_options.use_gsl_conv_routine = false;
 	grid_options.use_gsl_interp_routine = true;
-	
+
 	LesHouchesDistribution dist{};
 	AlphaS alphas(order, dist.Q0(), Qf, dist.alpha0(), mur2_muf2);
 	alphas.setVFNS(dist.masses(), dist.nfi());
 	// alphas.setFFNS(4);
 
-	DGLAPSolver solver(order, grid, alphas, Qf, iterations, trunc_idx, dist, mur2_muf2);
+	DGLAPSolver solver(order, grid, alphas, Qf, iterations, trunc_idx, std::move(dist), mur2_muf2);
 	auto& dglap_options = solver.getOptions();
 	dglap_options.use_truncated_nonsinglet_sol = false;
 	dglap_options.disable_heavy_flavor_matching = false;

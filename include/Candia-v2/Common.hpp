@@ -54,6 +54,7 @@ namespace Candia2
 	constexpr const uint INTERP_POINTS = 4;
 	constexpr const uint DEFAULT_ITERATIONS = 10;
 	constexpr const uint DEFAULT_TRUNC_IDX = 5;
+	constexpr const uint NUM_SUBTRACT_PDFS = 2;
 	/** @{ */
 
 
