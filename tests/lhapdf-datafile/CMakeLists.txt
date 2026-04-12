@@ -4,5 +4,6 @@ target_link_libraries(lhapdf-datafile PUBLIC candia GSL::gsl ${LHAPDF_LIBRARIES}
 
 set(lhapdf-datafile_anc
   ${CMAKE_CURRENT_SOURCE_DIR}/run.ps1
-  ${CMAKE_CURRENT_SOURCE_DIR}/infofile.in)
+  ${CMAKE_CURRENT_SOURCE_DIR}/infofile.in
+  ${CMAKE_CURRENT_SOURCE_DIR}/plot.gplt)
 file(COPY ${lhapdf-datafile_anc} DESTINATION ${CMAKE_CURRENT_BINARY_DIR})

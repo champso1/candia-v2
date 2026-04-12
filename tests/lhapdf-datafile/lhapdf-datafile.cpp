@@ -1,6 +1,7 @@
-// #include "Candia-v2/LHAPDFDistribution.hpp"
 #include "Candia-v2/Grid.hpp"
 #include "Candia-v2/OperatorMatrixElements.hpp"
+#include "Candia-v2/SplittingFn.hpp"
+#include "ome/AQg.h"
 using namespace Candia2;
 
 #include "LHAPDF/LHAPDF.h"
@@ -13,29 +14,36 @@ int main()
  
 	vector<double> xtab{1e-5, 1e-4, 1e-3, 1e-2, 0.1, 0.3, 0.5, 0.7, 0.9, 1.0};
 	Grid grid(xtab,
-		make_grid_filler<GridFillerLogLinQuad>(1e-5, 101, 51, 26),
+		make_grid_filler<GridFillerLogLinQuad>(1e-5, 101, 54, 26),
 		{ .default_gauss_points = 50, .split_interval = true});
 	auto& grid_options = grid.getOptions();
 	grid_options.use_alt_mapping = true;
 	grid_options.use_gsl_conv_routine = false;
 	grid_options.use_gsl_interp_routine = true;
+	grid.setupMappings();
 
 	double q = 10.0;
-	double q2 = std::pow(q, 2.0);
-	double as = pdf->alphasQ2(q2)/4.0/PI;
+	double q2 = q*q;
+	double as = pdf->alphasQ2(q2)/(4.0*PI);
 	double as2 = as*as;
-	double qf = 10.0;
 	double mb = pdf->quarkMass(5);
+	double mb2 = mb*mb;
+
+	log(LOG_DEBUG, "lhapdf-datafile.cpp", "Using:");
+	log(LOG_DEBUG, "lhapdf-datafile.cpp", "  q  ={}", q);
+	log(LOG_DEBUG, "lhapdf-datafile.cpp", "  q2 ={}", q2);
+	log(LOG_DEBUG, "lhapdf-datafile.cpp", "  as ={}", as);
+	log(LOG_DEBUG, "lhapdf-datafile.cpp", "  as2={}", as2);
+	log(LOG_DEBUG, "lhapdf-datafile.cpp", "  mb ={}", mb);
 	
-	double L = std::log(std::pow(q/mb, 2.0));
-	OpMatElemN3LO::update(-L, 5);
+	OpMatElem::update(std::log(mb2/q2), 5);
 
 	auto zero_func = [](double,double,double){ return 0.0; };
-		
-	auto a1qg_reg_func = [as](double lm, double nf, double x) {
-		auto trunced = ome::AQg_reg.truncate(1);
+
+	auto a1hg_reg_func = [as](double lm, double nf, double x) -> double {
+		auto trunced =ome::AQg_reg.truncate(1);
 		return trunced(as, lm, nf, x); };
-	OpMatElemCustom a1hg(a1qg_reg_func, zero_func, zero_func);
+	OpMatElemCustom a1hg(a1hg_reg_func, zero_func, zero_func);
 
 	auto a2hq_reg_func = [as](double lm, double nf, double x) {
 		auto trunced = ome::AQqPS_reg.truncate(2);
@@ -59,22 +67,19 @@ int main()
 	std::cout << "before printing\n";
 
 	std::ofstream outfile("out.dat");
-	ArrayGrid ftilde1(grid.size()), ftildeNLO(grid.size()), deltaf1(grid.size()), deltafNLO(grid.size());
+	ArrayGrid ftilde1(grid.size()), ftilde2(grid.size()), ftildeNLO(grid.size());
 	for (uint k=0; k<grid.size(); ++k) {
 	    ftilde1[k] = as*grid.convolution(g, a1hg, k);
-		double ftilde2 = as2*(
+		ftilde2[k] = as2*(
 			grid.convolution(sigma, a2hq, k) +
-			grid.convolution(g, a2hg, k)
-		);
-		ftildeNLO[k] = ftilde1[k] + ftilde2;
-		deltaf1[k] = b[k] - ftilde1[k];
-		deltafNLO[k] = b[k] - ftildeNLO[k];
+			grid.convolution(g, a2hg, k));
+		ftildeNLO[k] = ftilde1[k] + ftilde2[k];
 
 		outfile << grid[k] << ' '
+				<< b[k] << ' '
 				<< ftilde1[k] << ' '
-				<< ftildeNLO[k] << ' '
-				<< deltaf1[k] << ' '
-				<< deltafNLO[k] << '\n';
+				<< ftilde2[k] << ' '
+				<< ftildeNLO[k] << '\n';
 	}
  
 	delete pdf;

@@ -7,5 +7,8 @@ $testpdf_folder = ".\testpdf"
 if (Test-Path $testpdf_folder) {
 	Remove-Item -Recurse -Force $testpdf_folder
 }
+
+cmake -S ../../.. -B ../..
 cmake --build ../.. --config $buildtype --target lhapdf-datafile
 & ".\$buildtype\lhapdf-datafile.exe"
+gnuplot.exe .\plot.gplt

@@ -50,6 +50,9 @@ namespace Candia2
 		const uint xtab_len = xtab.size();
 		std::vector<double> Ntab(xtab_len);
 		ntab = std::vector<int>(xtab_len);
+		
+		points.clear();
+		points.resize(size);
 
 		double temp = -std::log10(xtab[0]);
 

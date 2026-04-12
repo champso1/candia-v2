@@ -78,8 +78,9 @@ namespace Candia2
 		 *  @brief Sets \f$\alpha_s\f$ to evolve with a variable number of flavors, with thresholds determined by @a masses.
 		 *  @param masses The array of on-shell masses at which \f$\alpha_s\f$ will perform matching
 		 *  @param nfi The starting value of \f$n_f\f$, determined by the selected initial distribution.
+		 *  @param nff The final value of \f$n_f\f$, determined by the selected initial distribution the the chosen final energy
 		 */
-		void setVFNS(std::array<double, 8> const& masses, uint nfi);
+		void setVFNS(std::array<double, 8> const& masses, uint nfi, uint nff);
 
 		double Q0() const { return _Q0; }
 		double Qf() const { return _Qf; }

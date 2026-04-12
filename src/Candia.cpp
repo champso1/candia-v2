@@ -747,7 +747,7 @@ namespace Candia2
 		as_qs.emplace_back(qf); // may be necessary
 	    
 		AlphaS alphas_all(_order, q0, qf, _dist.alpha0(), _mur2_muf2);
-		alphas_all.setVFNS(_dist.masses(), _dist.nfi());
+		alphas_all.setVFNS(_dist.masses(), _dist.nfi(), _dist.nff());
 		std::vector<std::pair<double,double>> as_qvals = alphas_all.getValues(as_qs);
 		std::vector<double> as_vals(as_qvals.size());
 		std::ranges::transform(
@@ -765,7 +765,7 @@ namespace Candia2
 			log(LOG_INFO, "DGLAPSolverLHAPDF", "Performing the evolution from {} to {}", q0, q);
 			
 			AlphaS alphas(_order, q0, q, _dist.alpha0(), _mur2_muf2);
-			alphas.setVFNS(_dist.masses(), _dist.nfi());
+			alphas.setVFNS(_dist.masses(), _dist.nfi(), _dist.nff());
 			// alphas.setFFNS(4);
 
 			double alpha0 = alphas.post(alphas.nff());

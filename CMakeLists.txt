@@ -93,6 +93,8 @@ option(LHAPDF_ROOT_DIR "Path to the installation root/prefix of LHAPDF." "/usr")
 if (WITH_LHAPDF)
   if (NOT USE_CUSTOM_WIN_LHAPDF)
 	list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/share/cmake")
+  else()
+	
   endif()
   find_package(LHAPDF REQUIRED)
   message("candia-v2: Compiling with LHAPDF support.")
