@@ -1,3 +1,5 @@
+// Candia.cpp
+
 #include "Candia-v2/Candia.hpp"
 #include "Candia-v2/Common.hpp"
 #include "Candia-v2/Distribution.hpp"
@@ -5,14 +7,6 @@
 #include "Candia-v2/Grid.hpp"
 #include "Candia-v2/SplittingFn.hpp"
 #include "Candia-v2/OperatorMatrixElements.hpp"
-#include "ome/AQg.h"
-#include "ome/AQqPS.h"
-
-#include <filesystem>
-#include <functional>
-#include <iterator>
-#include <memory>
-#include <ranges>
 
 
 // PDF indices
@@ -400,7 +394,7 @@ namespace Candia2
 		}
     }
 
-	void DGLAPSolver::fixDistributions2(std::vector<ArrayGrid>& resum)
+	void DGLAPSolver::fixDistributionsForce(std::vector<ArrayGrid>& resum)
 	{
 		auto get_singlet_dist = [&](uint j) -> ArrayGrid& {
 			if (!options.use_truncated_nonsinglet_sol)
@@ -665,7 +659,7 @@ namespace Candia2
 				// we want to make sure we return correctly
 				// the initial distributions
 				if (last_loop && !performed_evolution) {
-					fixDistributions2(resum);
+					fixDistributionsForce(resum);
 					_F = std::move(resum);
 					break;
 				}

@@ -1,3 +1,5 @@
+// Distribution.cpp
+
 #include "Candia-v2/Distribution.hpp"
 
 namespace Candia2
@@ -43,4 +45,4 @@ namespace Candia2
 			accessor(9, k) = xs(x);  // sb ( = s)
 		}
 	}
-}
+} // namespace Candia2

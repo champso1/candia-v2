@@ -1,3 +1,5 @@
+// AlphaS.cpp
+
 #include "Candia-v2/AlphaS.hpp"
 
 #include <cmath>

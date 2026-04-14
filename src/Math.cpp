@@ -1,3 +1,5 @@
+// Math.cpp
+
 #include "Candia-v2/Math.hpp"
 
 namespace Candia2
@@ -10,4 +12,4 @@ namespace Candia2
 			res *= x--;
 		return res;
 	}
-};
+}

@@ -1,3 +1,5 @@
+// OperatorMatrixElements.cpp
+
 #include "Candia-v2/OperatorMatrixElements.hpp"
 #include "Candia-v2/SpecialFuncs.hpp"
 
@@ -91,4 +93,4 @@ namespace Candia2
 
 
 	OpMatElemCustom::function_type ZERO_FUNC = [](double,double,double){ return 0.0; };
-};
+} // namespace Candia2

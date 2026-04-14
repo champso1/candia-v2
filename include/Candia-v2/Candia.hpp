@@ -82,7 +82,7 @@ namespace Candia2
 		std::array<double,8> _r1{}; //!< real solution to N3LO quadratic
 		std::array<double,8> _b{};  //!< \f$-2*\mathrm{Re}[r_2]\f$
 		std::array<double,8> _c{};  //!< \f$|r_2|^2\f$
-
+		
 		std::map<std::string_view, std::unique_ptr<Expression>> _expressions{}; //!< list of internal stores Expression objects
 		/**
 		 *  @brief Stores a unique pointer of the requested expression internally
@@ -96,7 +96,6 @@ namespace Candia2
 			std::unique_ptr<Expression> ptr = std::make_unique<TExpr>(std::forward<TExprArgs>(args)...);
 			_expressions.emplace(std::make_pair(name, std::move(ptr)));
 		}
-
 	public:
 		/**
 		 *  @brief returns the expression object with the given name
@@ -165,7 +164,7 @@ namespace Candia2
 			std::vector<ArrayGrid>& resum_singlet,
 			std::vector<ArrayGrid>& resum);
 
-		void fixDistributions2(std::vector<ArrayGrid>&);
+		void fixDistributionsForce(std::vector<ArrayGrid>& resum);
 
 		/** @brief takes the default exact coefficients (A, B, ...) and sets up S to contain all necessary info */
 		void setupTruncatedDistributions();
@@ -298,7 +297,6 @@ namespace Candia2
 		/** @} */
 
 #if ENABLE_THREADING
-
 		/**
 		 *  @defgroup singlethelpers Multi-Thread Singlet Helper Functions
 		 *  @{

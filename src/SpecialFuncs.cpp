@@ -1,5 +1,6 @@
-#include "Candia-v2/SpecialFuncs.hpp"
+// SpecialFuncs.cpp
 
+#include "Candia-v2/SpecialFuncs.hpp"
 
 namespace Candia2
 {
@@ -58,8 +59,5 @@ namespace Candia2
 
 		return HR3[2][2][1];
 	}
-
-
-
-}
+} // namespace Candia2
 

@@ -43,7 +43,7 @@ namespace Candia2
 		 *  @param other The other @a ArrayGrid
 		 */
 		explicit ArrayGrid(ArrayGrid const& other) : _base(other._base) {}
-		explicit ArrayGrid(ArrayGrid&& other) = delete; //!< no move constructor
+		explicit ArrayGrid(ArrayGrid&& other) = default;
 
 		/**
 		 *  @brief Initializes using list-initialization
@@ -53,8 +53,6 @@ namespace Candia2
 
 		/** Copy assignment operator performs like the copy constructor */
 		inline void operator=(ArrayGrid const& other) { _base = other.base(); }
-		void operator=(ArrayGrid&& other) = delete; //!< no move assignment operator
-
 
 		/** @brief returns the size of the array */
 		inline size_type size() const noexcept { return _base.size(); }
@@ -94,8 +92,6 @@ namespace Candia2
 
     template <uint N>
 	using MultiDimArrayGrid_t = MultiDimArrayGrid<N>::type;
-
-	
 }
 
 #endif // __ARRAYGRID_HPP

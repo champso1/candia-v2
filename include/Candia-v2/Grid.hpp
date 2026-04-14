@@ -11,11 +11,6 @@
 #include "Candia-v2/Options.hpp"
 #include "Candia-v2/ArrayGrid.hpp"
 
-#include <concepts>
-#include <type_traits>
-#include <vector>
-#include <memory>
-
 #include <gsl/gsl_integration.h>
 #include <gsl/gsl_interp.h>
 #include <gsl/gsl_spline.h>
