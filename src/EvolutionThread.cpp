@@ -1,3 +1,5 @@
+// EvolutionThread.cpp
+
 #include "Candia-v2/Candia.hpp"
 #include "Candia-v2/ArrayGrid.hpp"
 #include "Candia-v2/Common.hpp"
@@ -1179,4 +1181,4 @@ namespace Candia2
 				_S_NS[t][j][0] = _S_NS[t][j][1];
 		}
 	}
-}
+} // namespace Candia2

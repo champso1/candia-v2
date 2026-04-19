@@ -79,7 +79,11 @@
 				"BUILD_TESTS": "YES",
                 "BUILD_DOCS": "NO",
                 "BUILD_MANUSCRIPTS": "NO",
-                "WITH_LHAPDF": "NO"
+                "WITH_LHAPDF": "YES",
+				"USE_CUSTOM_WIN_LHAPDF": "YES",
+				"LHAPDF_DIR": "C:/Users/Casey/Documents/programs/LHAPDF-win/LHAPDF-6.5.6/out/lib/cmake/LHAPDF",
+				"yaml-cpp_DIR": "C:/Users/Casey/Documents/programs/LHAPDF-win/yaml-cpp/out/lib/cmake/yaml-cpp",
+				"GSL_ROOT": "C:/Users/Casey/Documents/programs/gsl/out"
             }
         }
     ],

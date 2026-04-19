@@ -1,3 +1,5 @@
+// LHAPDFDistribution.cpp
+
 #include "Candia-v2/LHAPDFDistribution.hpp"
 
 namespace Candia2
@@ -5,41 +7,47 @@ namespace Candia2
 	LHAPDFDistribution::LHAPDFDistribution(lhapdf_pdf_ptr_type lhapdf_pdf, value_type Q0, value_type Qf)
 		: _pdf{std::move(lhapdf_pdf)}
 	{
+		// 
 		_Q0 = Q0;
+		_Qf = Qf;
 
+		// TODO: not sure how I feel interpolating this value of alphas
+		// then proceeding to re-evolve it
+		// we should probably either determine this in some good way from the
+		// PDFs reference scale, or let alphas itself be grabbed from the PDF
+		// during the evolution
+		_alpha0 = _pdf->alphasQ(Q0);
+		
 		// up and down (1, 2) are going to be considered massless always (for now)
 		for (uint i : {3, 4, 5, 6})
 			_masses[i] = _pdf->quarkMass(i);
 
-		// set the first mass not less than Qf to Qf,
-		// and zero everything above it
-		auto it = std::lower_bound(_masses.begin(), _masses.end(), Qf);
-		if (it == _masses.end())
-			log(LOG_ERROR, "LHAPDF", "std::lower_bound failed");
-		*it =  Qf;
-		while (++it != _masses.end())
-			*it = 0.0;
-
-		// from reverse, set first mass less than Q0 to Q0,
-		// and everything after it to zero
-		it = std::upper_bound(_masses.begin(), _masses.end(), Q0);
-	    if (it == _masses.end()) {
-			log(LOG_ERROR, "LHAPDF", "std::upper_bound failed");
-		} else if (it == _masses.begin()) {
-			log(LOG_ERROR, "LHAPDF", "invalid provided mass array. input energy too low");
+		for (_nfi=1; _nfi<=_masses.size(); ++_nfi) {
+			if (Q0 <= _masses[_nfi])
+				break;
 		}
+		// this is required because if, say, charm mass (nf=4) is 1.3
+		// and q0 = 1.0, the above loop sets _nfi=4, but in reality
+		// it should be nf=3 since q0<1.3
+		if (Q0 < _masses[_nfi])
+			_nfi--;
+		if (_nfi < 1 || _nfi > 6)
+			log(LOG_ERROR, "LHAPDF", "error finding nfi (_nfi={})", _nfi);
 
-		*(--it) = Q0;
-		_nfi = std::distance(_masses.begin(), it);
-		while (--it != _masses.begin())
-			*it = 0.0;
-		
-		_alpha0 = _pdf->alphasQ(Q0);
+		for (_nff=6; _nff>=_nfi; --_nff) {
+			if (Qf > _masses[_nff])
+				break;
+		}
+		// we don't need the equivalent second if statement here like with nfi
+		// because again, say, if charm mass (nf=4) = 1.3 and bottom mass (nf=5) = 4.5,
+		// if we have Qf=2, or anything up to and including 4.5,
+		// then we are good staying with _nff = 4
+		if (_nff < 1 || _nff > 6)
+			log(LOG_ERROR, "LHAPDF", "error finding nf (_nff={})", _nff);
 
-		std::ostringstream ss{};
-		std::copy(_masses.begin(), _masses.end(), std::ostream_iterator<double>(ss, ", "));
-		log(LOG_DEBUG, "LHAPDF", "Using the following masses: {}", ss.str());
+		log(LOG_DEBUG, "LHAPDF", "Using the following masses: {}", vec_to_str(_masses));
 		log(LOG_DEBUG, "LHAPDF", "Using nfi = {}", _nfi);
+		log(LOG_DEBUG, "LHAPDF", "Using nff = {}", _nff);
 		log(LOG_DEBUG, "LHAPDF", "Using alpha0 = {}", _alpha0);
 		
 	}
@@ -69,4 +77,4 @@ namespace Candia2
 			accessor(9, k) = xs(x);  // sb ( = s)
 		}
 	}
-}
+} // namespace Candia2

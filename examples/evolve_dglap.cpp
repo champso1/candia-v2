@@ -119,11 +119,11 @@ int main(int argc, char *argv[]) {
 	grid_options.use_gsl_conv_routine = false;
 	grid_options.use_gsl_interp_routine = true;
 	
-	LesHouchesDistribution dist{};
+	LesHouchesDistribution dist(Qf);
 	AlphaS alphas(order, dist.Q0(), Qf, dist.alpha0(), kr);
 	auto& alphas_options = alphas.getOptions();
 	// alphas_options.use_broken_log_value = true;
-	alphas.setVFNS(dist.masses(), dist.nfi());
+	alphas.setVFNS(dist.masses(), dist.nfi(), dist.nff());
 	// alphas.setFFNS(4);
 
 	DGLAPSolver solver(order, grid, alphas, Qf, iterations, trunc_idx, dist, kr);

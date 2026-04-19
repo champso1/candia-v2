@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.20)
-project(candia_v2 VERSION 1.5.0)
+project(candia_v2 VERSION 1.6.0)
 set(CMAKE_EXPORT_COMPILE_COMMANDS on)
 set(CMAKE_INSTALL_PREFIX ${CMAKE_SOURCE_DIR}/install)
 set(CMAKE_CXX_STANDARD 20)
@@ -10,12 +10,6 @@ if (NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
   set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Build type." FORCE)
   set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS
 	"Debug" "Release" "MinSizeRel" "RelWithDebInfo")
-endif()
-
-option(BUILD_MANUSCRIPTS "Use pdflatex/bibtex to compile the available manuscripts" OFF)
-if (BUILD_MANUSCRIPTS)
-  message("candia-v2: building manuscripts")
-  add_subdirectory(manuscripts)
 endif()
 
 # build all vendor projects first before touching candia
@@ -84,10 +78,24 @@ target_sources(candia PUBLIC
   BASE_DIRS ${CMAKE_SOURCE_DIR}/include
   FILES ${headers})
 
+target_link_libraries(candia PRIVATE hplog nnlo_splitfuncs_fortran n3lo_splitfuncs_fortran ome GSL::gsl)
+target_include_directories(candia PUBLIC
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+  $<INSTALL_INTERFACE:include>)
+target_include_directories(candia PUBLIC ${GSL_INCLUDE_DIRS})
+add_subdirectory(examples)
+add_subdirectory(tests)
+
+
 option(WITH_LHAPDF "Compile in LHAPDF interface" OFF)
+option(USE_CUSTOM_WIN_LHAPDF "Internal option to use my custom modified version of LHAPDF that can be built on windows" OFF)
 option(LHAPDF_ROOT_DIR "Path to the installation root/prefix of LHAPDF." "/usr")
 if (WITH_LHAPDF)
-  list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/share/cmake")
+  if (NOT USE_CUSTOM_WIN_LHAPDF)
+	list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/share/cmake")
+  else()
+	
+  endif()
   find_package(LHAPDF REQUIRED)
   message("candia-v2: Compiling with LHAPDF support.")
   target_include_directories(candia PUBLIC ${LHAPDF_INCLUDE_DIR})
@@ -113,21 +121,14 @@ else()
   target_compile_definitions(candia PRIVATE ENABLE_THREADING=0)
 endif()
 
+option(BUILD_MANUSCRIPTS "Use pdflatex/bibtex to compile the available manuscripts" OFF)
+if (BUILD_MANUSCRIPTS)
+  message("candia-v2: building manuscripts")
+  add_subdirectory(manuscripts)
+endif()
 
-target_link_libraries(candia PRIVATE hplog nnlo_splitfuncs_fortran n3lo_splitfuncs_fortran ome GSL::gsl)
-target_include_directories(candia PUBLIC
-  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-  $<INSTALL_INTERFACE:include>)
-target_include_directories(candia PUBLIC ${GSL_INCLUDE_DIRS})
-add_subdirectory(examples)
-add_subdirectory(tests)
-
-# ====================
-# DOXYGEN
-# ====================
 
 option(BUILD_DOCS "Build Doxygen documentation" OFF)
-
 if(BUILD_DOCS)
   find_package(Doxygen)
   if (DOXYGEN_FOUND)

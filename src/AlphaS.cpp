@@ -1,3 +1,5 @@
+// AlphaS.cpp
+
 #include "Candia-v2/AlphaS.hpp"
 
 #include <cmath>
@@ -17,29 +19,30 @@ namespace Candia2
 			log(LOG_ERROR, "AlphaS::assertScheme()", "Must set a scheme before accessing alpha_s or mass values.");
 	}
 
-	void AlphaS::setVFNS(std::array<double, 8> const& masses, uint nfi)
+	void AlphaS::setVFNS(std::array<double, 8> const& masses, uint nfi, uint nff)
 	{
 	    _masses = masses;
 		_scheme = VARIABLE;
 		
 		_nfi = nfi;
-		double aux = _Qf;
-		uint i{};
-		
-		for (_nff=6; aux<=_masses[_nff]; _nff--);
-		if (_nff < _nfi)
-			_nff = _nfi;
+		_nff = nff;
 
-		if (aux>_masses[6])
-			i=7;
-		else
-			for (i=nfi+1; aux>_masses[i]; i++);
+		// not necessary to do this, but
+		// just for cleanliness in the mass array,
+		// we zero everything above and below the relevant masses
+		// also, since this is the array we use to calculate threshold values of alphas,
+		// we replace the mass with nf=_nfi with the initial energy
+		// and the mass with nf=_nff+1 with the final energy
+		// not nf=_nff, because we still do the evolution at that mass,
+		// its the next mass (_nff+1) that determines the final threshold
+		_masses[_nfi] = _Q0;
+		for (int i=_nfi-1; i>=0; --i)
+			_masses[i]=0.0;
+		_masses[_nff+1] = _Qf;
+		for (uint i=_nff+2; i<8; i++)
+			_masses[i]=0.;
 
-		_masses[i] = aux;
-		for (uint j=i+1; j<8; j++)
-			_masses[j]=0.;
-
-		log(LOG_DEBUG, "AlphaS", "Calculated mass array: {}", vec_to_str(_masses));
+		log(LOG_DEBUG, "AlphaS", "Calculated mass array: {}", vec_to_str2(_masses));
 		calculateThresholdValues();
 	}
 
@@ -194,31 +197,17 @@ namespace Candia2
 	{
 	    double mur_muf = std::sqrt(_mur2_muf2);
 		log(LOG_DEBUG, "AlphaS::calculateThresholdValues()", "Using mur/muf={}", mur_muf);
-		uint nf1 = 0;
 
 		if (options.use_broken_log_value)
 			log(LOG_WARNING, "AlphaS::calculateThresholdValues()", "Temporarily using broken value of the logarithm term (1.0).");
 
-		for (nf1=_nff; _Q0<mur_muf*_masses[nf1]; nf1--);
-		if (nf1<_nfi)
-			nf1++;
-
-		update(nf1);
-
-		// log(LOG_WARNING, "AlphaS", "REMEMBER TO SWITCH PRE AND POST BACK");
-		log(LOG_DEBUG, "AlphaS::calculateThresholdValues()", "May want to rewrite this function to be a little cleaner");
-		_pre[nf1] = evaluate(_Q0, mur_muf*_masses[nf1], _alpha0);
-		_post[nf1]  = postMatch(_pre[nf1], nf1);
-
-		uint nf;
-		for (nf=nf1-1; nf>=_nfi; nf--) {
-			update(nf);
-			
-			_post[nf] = evaluate(mur_muf*_masses[nf+1], mur_muf*_masses[nf], _pre[nf+1]);
-			_pre[nf]  = preMatch(_post[nf], nf);
-		}
 		
-		for (nf=nf1+1; nf<=_nff+1; nf++) {
+		update(_nfi);
+		
+		_post[_nfi] = _alpha0;
+		_pre[_nfi] = preMatch(_post[_nfi], _nfi);
+		
+		for (uint nf=_nfi+1; nf<=_nff+1; nf++) {
 			update(nf-1);
 
 			_pre[nf]  = evaluate(mur_muf*_masses[nf-1], mur_muf*_masses[nf], _post[nf-1]);
@@ -226,9 +215,8 @@ namespace Candia2
 		}
 		log(LOG_DEBUG, "AlphaS", "Computed alpha_s threshold values for VFNS. They are:");
 
-		for (nf=_nfi; nf<=_nff+1; nf++)
+		for (uint nf=_nfi; nf<=_nff+1; nf++)
 			log(LOG_DEBUG, "AlphaS", "{} {:14.9} {:14.9} {:14.9}", nf, _masses[nf], _pre[nf], _post[nf]);
-
 	}
 
 
@@ -239,9 +227,13 @@ namespace Candia2
 		if (Qi == Qf)
 			return alpha0;
 
-		if (Qf < Qi)
-			log(LOG_ERROR, "AlphaS::evaluate()", "Final energy Qf={} is smaller than initial energy Qi={}.", Qf, Qi);
+		// if (Qf < Qi)
+			// log(LOG_ERROR, "AlphaS::evaluate()", "Final energy Qf={} is smaller than initial energy Qi={}.", Qf, Qi);
 
+		// this will test if either (or both) Qi or Qf are zero simultaneously
+		if (Qi*Qf == 0.0)
+			log(LOG_ERROR, "AlphaS::evaluate()", "Either Qf={} or qi={} are zero", Qf, Qi);
+		
 		// at LO we have the exact solution
 		if (_order == 0) {
 			return (2.0*PI*alpha0) / (2.0*PI + alpha0*_beta0*std::log(Qf/Qi));
@@ -252,6 +244,8 @@ namespace Candia2
 		double h = 2.0*std::log(Qf/Qi) / static_cast<double>(steps);
 		double k1{}, k2{}, k3{}, k4{};
 		double a = alpha0;
+
+		log(LOG_DEBUG, "AlphaS::evaluate()", "for Qi={} -> Qf={}, as0={}, h={}", Qi, Qf, alpha0, h);
 		
 		for (uint i=0; i<steps; i++) {
 			k1 = h*betaFn(a);
@@ -265,74 +259,6 @@ namespace Candia2
 		return a;
 	}
 	
-	/*
-	static std::vector<double> get_qcd_coeffs(int loop_order, int nf)
-	{
-		std::vector<double> b;
-		if (loop_order < 1) return b;
-
-		// const double PI = 3.14159265358979323846;
-    
-		// 1-loop (b0)
-		b.push_back((33.0 - 2.0 * nf) / (12.0 * PI));
-		if (loop_order == 1) return b;
-
-		// 2-loop (b1)
-		b.push_back((153.0 - 19.0 * nf) / (24.0 * PI * PI));
-		if (loop_order == 2) return b;
-
-		// 3-loop (b2)
-		b.push_back((2857.0 - (5033.0 / 9.0) * nf + (325.0 / 27.0) * nf * nf) 
-			/ (128.0 * PI * PI * PI));
-		if (loop_order == 3) return b;
-
-		// 4-loop (b3)
-		// double zeta3 = 1.202056903159594;
-		double term1 = (149753.0 / 6.0) + 3564.0 * Zeta3;
-		double term2 = -(1078361.0 / 162.0) - (6508.0 / 27.0) * Zeta3;
-		double term3 = (50065.0 / 162.0) + (6472.0 / 81.0) * Zeta3;
-		double term4 = 1093.0 / 729.0;
-    
-		b.push_back((term1 + term2 * nf + term3 * nf * nf + term4 * nf * nf * nf) 
-			/ (256.0 * std::pow(PI, 4)));
-                
-		return b;
-	}
-
-	// Generic Beta Function Evaluator
-	static double beta_func(double alpha, const std::vector<double>& b) {
-		double beta = 0.0;
-		// Computes: - (b0*a^2 + b1*a^3 + b2*a^4 + ...)
-		for (size_t i = 0; i < b.size(); ++i) {
-			beta += b[i] * std::pow(alpha, i + 2);
-		}
-		return -beta;
-	}
-	
-
-	double AlphaS::evaluate(double Qi, double Qf, double alpha0) const
-	{
-		const static int steps = 1000;
-		std::vector<double> coeffs = get_qcd_coeffs(_order, _nf);
-    
-		// Grid setup: integrate over t = ln(Q^2) => dt = 2 * d(ln Q)
-		double t_i = 2.0 * std::log(Qi);
-		double t_f = 2.0 * std::log(Qf);
-		double h = (t_f - t_i) / steps;
-		double alpha = alpha0;
-
-		for (int i = 0; i < steps; ++i) {
-			double k1 = h * beta_func(alpha, coeffs);
-			double k2 = h * beta_func(alpha + 0.5 * k1, coeffs);
-			double k3 = h * beta_func(alpha + 0.5 * k2, coeffs);
-			double k4 = h * beta_func(alpha + k3, coeffs);
-
-			alpha += (k1 + 2.0 * k2 + 2.0 * k3 + k4) / 6.0;
-		}
-
-		return alpha;
-	}
-	*/
 	
 	void AlphaS::update(uint nf)
 	{
@@ -342,7 +268,6 @@ namespace Candia2
 		_beta2 = calcBeta2(nf);
 		_beta3 = calcBeta3(nf);
 	}
-
 	
 	std::vector<std::pair<double,double>> AlphaS::getValues(std::vector<double> const& qvals)
 	{
