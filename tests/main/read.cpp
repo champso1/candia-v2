@@ -1,15 +1,7 @@
-#include <cstdlib>
-#include <charconv>
-#include <string>
-#include <vector>
-#include <filesystem>
-using uint = unsigned;
-
 #include "Candia-v2/Common.hpp"
 using namespace Candia2;
 
 #include "util.hpp"
-using value_type = double;
 
 static void usage()
 {
@@ -43,8 +35,8 @@ int main(int argc, char *argv[])
 
 	auto [xtab, dists_raw] =
 		(origin == 0) ?
-		read_candia_file<value_type>(datafile_path, 37)
-		: read_other_file<value_type>(datafile_path, 37);
+		read_candia_file(datafile_path, 37)
+		: read_other_file(datafile_path, 37);
     auto dists = fix_dists(dists_raw, type);
 
 	std::string basename = datafile_path.filename().string().substr(0, datafile_path.filename().string().rfind('.'));	

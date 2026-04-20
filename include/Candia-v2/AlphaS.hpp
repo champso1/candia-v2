@@ -3,29 +3,21 @@
  *  @brief Contains the @a AlphaS class which handles the evolution of the QCD running coupling.
  */
 
-#ifndef __ALPHAS_HPP
-#define __ALPHAS_HPP
+#pragma once
 
 #include <array>
 #include <cmath>
 
 #include "Candia-v2/Common.hpp"
-#include "Candia-v2/Options.hpp"
 
 namespace Candia2
 {
-
-	struct AlphaSOptions final
-	{
-		bool use_broken_log_value{false}; //!< purely for debugging
-	};
-
 	class LHAPDFDistribution;
 
 	/**
 	 *  @brief Class to handle the evolution of the QCD running coupling
 	 */
-	class AlphaS : public OptionsBase<AlphaSOptions>
+	class AlphaS
 	{
 	private:
 		uint _order{}; //!< Perturbative order.
@@ -141,5 +133,3 @@ namespace Candia2
 	};
 
 } // class AlphaS
-
-#endif // __ALPHAS_HPP

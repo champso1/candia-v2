@@ -34,6 +34,8 @@ static std::string scientificToLatex(double num, int precision)
 	return std::vformat("${0: .{1}f}^{{{2:+}}}$",
 		std::make_format_args(mantissa, precision, exponent));
 }
+
+[[maybe_unused]]
 static std::string percentToLatex(double num)
 {
     return std::format("{:.2f}\\%", num*100.0);
@@ -122,7 +124,7 @@ dist_type fix_candia_dists(dist_type const& candia, int type)
 {
 	if (type == 0) {
 		dist_type candia_dists(11, std::vector<double>(candia.at(0).size(), 0.0));
-		for (int k=0; k<candia_dists.at(0).size(); ++k) {
+		for (uint k=0; k<candia_dists.at(0).size(); ++k) {
 			candia_dists.at(0).at(k) =  candia[0][k];
 			candia_dists.at(1).at(k) =  candia[1][k];
 			candia_dists.at(2).at(k) =  candia[2][k];
@@ -138,7 +140,7 @@ dist_type fix_candia_dists(dist_type const& candia, int type)
 		return candia_dists;
 	} else {
 		dist_type candia_dists(8, std::vector<double>(candia.at(0).size(), 0.0));
-		for (int k=0; k<candia_dists.at(0).size(); ++k) {
+		for (uint k=0; k<candia_dists.at(0).size(); ++k) {
 			candia_dists.at(0).at(k) = candia[1][k] - candia[6+1][k];
 			candia_dists.at(1).at(k) = candia[2][k] - candia[6+2][k];
 			candia_dists.at(2).at(k) = candia[2+6][k] - candia[6+1][k];
@@ -153,7 +155,11 @@ dist_type fix_candia_dists(dist_type const& candia, int type)
 }
 
 
-void outputLatexTable(dist_type const& data, std::string const& filename, std::vector<std::string> const& cols, std::string const& caption)
+void outputLatexTable(
+	dist_type const& data,
+	std::string const& filename,
+	std::vector<std::string> const& cols,
+	[[maybe_unused]] std::string const& caption)
 {
 	fs::path tex_table_dir = fs::current_path()/TEX_TABLE_DIR;
 	fs::path tex_table_base = tex_table_dir/TEX_TABLE_TEMPLATE;
@@ -163,14 +169,14 @@ void outputLatexTable(dist_type const& data, std::string const& filename, std::v
 		log(LOG_ERROR, "compare.cpp", "failed to open the tex template files.");
 	
 	std::string ncols = std::format("{}", cols.size()+1);
-	int pos;
+	std::string::size_type pos;
 	std::string table_text{};
 	
 	std::ifstream main_table_s(tex_table_base);
 	std::string main_table{std::istreambuf_iterator<char>(main_table_s), std::istreambuf_iterator<char>{}};
 	pos = main_table.find("^R^");
 	std::string col_def{};
-	for (int i=0; i<cols.size(); ++i)
+	for (uint i=0; i<cols.size(); ++i)
 		col_def += TEX_TABLE_COL_DEF;
 	main_table.replace(pos, 3, col_def);
 	pos = main_table.find("^COLS^");
@@ -201,7 +207,7 @@ void outputLatexTable(dist_type const& data, std::string const& filename, std::v
 		pos = sub_table.find("^COLS^", pos);
 	}
 	std::string amps{};
-	for (int i=0; i<cols.size(); ++i)
+	for (uint i=0; i<cols.size(); ++i)
 		amps += " &";
 	pos = sub_table.find("^AMPS^");
 	sub_table.replace(pos, 6, amps);
@@ -218,7 +224,7 @@ void outputLatexTable(dist_type const& data, std::string const& filename, std::v
 		log(LOG_INFO, "compare.cpp", "'latex' directory exists. Continuing.");
 
 	log(LOG_INFO, "compare.cpp", "Printing table information...");
-	for (int i=0; i<data.at(0).size(); ++i)
+	for (uint i=0; i<data.at(0).size(); ++i)
 	{
 		double x = XTAB.at(i);
 		table_text += scientificToLatex(x, 1) + " & ";

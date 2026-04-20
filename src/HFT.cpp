@@ -2,7 +2,6 @@
 
 #include "Candia-v2/ArrayGrid.hpp"
 #include "Candia-v2/Candia.hpp"
-#include "Candia-v2/OperatorMatrixElements.hpp"
 
 namespace Candia2
 {
@@ -79,10 +78,10 @@ namespace Candia2
 
 					// q
 					for (uint j=1; j<=_nf; j++)
-						HFT_N3LO1(arr[j], arr[j+6], j, k, SP, arr_accessor(j));
+						HFT_N3LO1(arr[j], arr[j+6], k, SP, arr_accessor(j));
 					// qbar
 					for (uint j=1+6; j<=_nf+6; j++)
-						HFT_N3LO2(arr[j-6], arr[j], j, k, SP, arr_accessor(j));
+						HFT_N3LO2(arr[j-6], arr[j], k, SP, arr_accessor(j));
 
 					HFT_N3LO3(arr_singlet[0], arr_singlet[1], k); // gluon
 					HFT_N3LO4(arr_singlet[0], arr_singlet[1], qminus, k, arr_accessor(_nf+1), arr_accessor(_nf+1+6)); // heavy flavor
@@ -138,7 +137,7 @@ namespace Candia2
     }
 
     // q
-	void DGLAPSolver::HFT_N3LO1(ArrayGrid& q, ArrayGrid& qb, uint j, uint k, double SP, ArrayGrid& qh)
+	void DGLAPSolver::HFT_N3LO1(ArrayGrid& q, ArrayGrid& qb, uint k, double SP, ArrayGrid& qh)
 	{
 	    const double as = _alpha_s.post(_nf+1);
 		const double fac_nnlo = as*as/(16.0*PI_2);
@@ -163,7 +162,7 @@ namespace Candia2
 	}
 
     // qbar
-	void DGLAPSolver::HFT_N3LO2(ArrayGrid& q, ArrayGrid& qb, uint j, uint k, double SP, ArrayGrid& qhb)
+	void DGLAPSolver::HFT_N3LO2(ArrayGrid& q, ArrayGrid& qb, uint k, double SP, ArrayGrid& qhb)
 	{
 		const double as = _alpha_s.post(_nf+1);
 		const double fac_nnlo = as*as/(16.0*PI_2);

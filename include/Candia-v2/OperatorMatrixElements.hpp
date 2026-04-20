@@ -3,13 +3,11 @@
  *  @brief Contains the @a OpMatElem class, a derivation of @a Expression, to handle the operator matrix elements.
  */
 
-#ifndef __OPERATOR_MATRIX_ELEMENTS_HPP
-#define __OPERATOR_MATRIX_ELEMENTS_HPP
+#pragma once
 
 #include "Candia-v2/Common.hpp"
 #include "Candia-v2/Expression.hpp"
 
-#include <concepts>
 #include <ome/ome.h>
 
 namespace Candia2
@@ -50,7 +48,7 @@ namespace Candia2
 	public:
 	    double calcRegular(double x) const override;
 		double calcPlus(double x) const override;
-		double calcDelta(double x) const override;
+		double calcDelta() const override;
 	};
 
 	/**
@@ -72,7 +70,7 @@ namespace Candia2
 	public:
 		double calcRegular(double x) const override;
 		double calcPlus(double x) const override;
-		double calcDelta(double x) const override;
+		double calcDelta() const override;
 	};
 
 	/**
@@ -132,11 +130,9 @@ namespace Candia2
 			return plus[3](_lm, _nf, x);
 		}
 
-		inline double calcDelta(double x) const override
+		inline double calcDelta() const override
 		{
-			UNUSED(x);
-
-			if (!_ome.has_delta())
+		    if (!_ome.has_delta())
 				return 0;
 
 			auto delta = _ome.get_delta().value();
@@ -151,22 +147,23 @@ namespace Candia2
 	class OpMatElemCustom final : public OpMatElem
 	{
 	public:
-		using function_type = std::function<double(double,double,double)>;
-		static function_type ZERO_FUNC;
+		using reg_function_type = std::function<double(double,double,double)>;
+		using plus_function_type = std::function<double(double,double,double)>;
+		using delta_function_type = std::function<double(double,double)>;
+		static reg_function_type REG_ZERO_FUNC;
+		static plus_function_type PLUS_ZERO_FUNC;
+		static delta_function_type DELTA_ZERO_FUNC;
 	private:
-		function_type _reg_func{ZERO_FUNC};
-		function_type _plus_func{ZERO_FUNC};
-		function_type _delta_func{ZERO_FUNC};
+		reg_function_type _reg_func{REG_ZERO_FUNC};
+		plus_function_type _plus_func{PLUS_ZERO_FUNC};
+		delta_function_type _delta_func{DELTA_ZERO_FUNC};
 	public:
-		OpMatElemCustom(function_type reg_func, function_type plus_func, function_type delta_func)
+		OpMatElemCustom(reg_function_type const& reg_func, plus_function_type const& plus_func, delta_function_type const& delta_func)
 			: _reg_func{reg_func}, _plus_func{plus_func}, _delta_func{delta_func}
 		{}
 
 		inline double calcRegular(double x) const override { return _reg_func(_lm, _nf, x); }
 		inline double calcPlus(double x)    const override { return _plus_func(_lm, _nf, x); }
-		inline double calcDelta(double x)   const override { return _delta_func(_lm, _nf, x); }
+		inline double calcDelta()           const override { return _delta_func(_lm, _nf); }
 	};
 };
-
-
-#endif // __OPERATOR_MATRIX_ELEMENTS_HPP

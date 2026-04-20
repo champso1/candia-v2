@@ -145,7 +145,7 @@ namespace Candia2
 		double a = alpha;
 		double res = alpha;
 
-		auto L = options.use_broken_log_value ? 1.0 : _L;
+		auto L = _L;
 		auto L2 = L*L;
 		auto L3 = L2*L;
 		log(LOG_DEBUG, "AlphaS::preMatch()", "Using L={}", L);
@@ -173,7 +173,7 @@ namespace Candia2
 		double a = alpha;
 		double res = alpha;
 
-		auto L = options.use_broken_log_value ? 1.0 : _L;
+		auto L = _L;
 		auto L2 = L*L;
 		auto L3 = L2*L;
 		log(LOG_DEBUG, "AlphaS::postMatch()", "Using L={}", L);
@@ -197,19 +197,13 @@ namespace Candia2
 	{
 	    double mur_muf = std::sqrt(_mur2_muf2);
 		log(LOG_DEBUG, "AlphaS::calculateThresholdValues()", "Using mur/muf={}", mur_muf);
-
-		if (options.use_broken_log_value)
-			log(LOG_WARNING, "AlphaS::calculateThresholdValues()", "Temporarily using broken value of the logarithm term (1.0).");
-
 		
 		update(_nfi);
-		
 		_post[_nfi] = _alpha0;
 		_pre[_nfi] = preMatch(_post[_nfi], _nfi);
 		
 		for (uint nf=_nfi+1; nf<=_nff+1; nf++) {
 			update(nf-1);
-
 			_pre[nf]  = evaluate(mur_muf*_masses[nf-1], mur_muf*_masses[nf], _post[nf-1]);
 			_post[nf] = postMatch(_pre[nf], nf);
 		}
@@ -226,9 +220,6 @@ namespace Candia2
 		// if the before/after energies are identical, there is nothing to evaluate
 		if (Qi == Qf)
 			return alpha0;
-
-		// if (Qf < Qi)
-			// log(LOG_ERROR, "AlphaS::evaluate()", "Final energy Qf={} is smaller than initial energy Qi={}.", Qf, Qi);
 
 		// this will test if either (or both) Qi or Qf are zero simultaneously
 		if (Qi*Qf == 0.0)
@@ -283,7 +274,7 @@ namespace Candia2
 
 		std::vector<std::pair<double,double>> vals{};
 		log(LOG_DEBUG, "AlphaS", "nfi={}, nff={}", _nfi, _nff);
-	    for (int i=_nfi; i<=_nff; ++i) {
+	    for (uint i=_nfi; i<=_nff; ++i) {
 			double q0 = _masses[i];
 			double qf = _masses[i+1];
 		    double a0 = _post[i];

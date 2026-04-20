@@ -3,8 +3,7 @@
  *  @brief Contains the @a SplittingFunction class, a derivation of @a Expression, to handle the splitting functions.
  */
 
-#ifndef __SPLITTINGFN_HPP
-#define __SPLITTINGFN_HPP
+#pragma once
 
 #include "Candia-v2/Common.hpp"
 #include "Candia-v2/Expression.hpp"
@@ -18,8 +17,6 @@ namespace Candia2
 	 */
 	class SplittingFunction : public Expression
 	{
-	public:
-		using typename Expression::value_type;
 	protected:
 		static uint _nf;      //!< number of active/currently massless flavors
 		static double _beta0; //!< \f$\beta_0\f$ value for P0gg calculation
@@ -56,9 +53,9 @@ namespace Candia2
 	public:
 	    using SplittingFunction::SplittingFunction;
 		
-		value_type calcRegular(value_type x) const override;
-		value_type calcPlus(value_type x) const override;
-		value_type calcDelta(value_type x) const override;
+		double calcRegular(double x) const override;
+		double calcPlus(double x) const override;
+		double calcDelta() const override;
 	};
 
 	/**
@@ -70,9 +67,9 @@ namespace Candia2
 	public:
 		using SplittingFunction::SplittingFunction;
 		
-		value_type calcRegular(value_type x) const override;
-		value_type calcPlus(value_type x) const override;
-		value_type calcDelta(value_type x) const override;
+		double calcRegular(double x) const override;
+		double calcPlus(double x) const override;
+		double calcDelta() const override;
 	};
 
 	/**
@@ -84,7 +81,7 @@ namespace Candia2
 	public:
 		using SplittingFunction::SplittingFunction;
 		
-		value_type calcRegular(value_type x) const override;
+		double calcRegular(double x) const override;
 	};
 
 	/**
@@ -96,7 +93,7 @@ namespace Candia2
 	public:
 		using SplittingFunction::SplittingFunction;
 		
-		value_type calcRegular(value_type x) const override;
+		double calcRegular(double x) const override;
 	};
 
 	/**
@@ -108,9 +105,9 @@ namespace Candia2
 	public:
 		using SplittingFunction::SplittingFunction;
 		
-		value_type calcRegular(value_type x) const override;
-		value_type calcPlus(value_type x) const override;
-		value_type calcDelta(value_type x) const override;
+		double calcRegular(double x) const override;
+		double calcPlus(double x) const override;
+		double calcDelta() const override;
 	};
 
 
@@ -123,9 +120,9 @@ namespace Candia2
 	public:
 		using SplittingFunction::SplittingFunction;
 		
-		value_type calcRegular(value_type x) const override;
-		value_type calcPlus(value_type x) const override;
-		value_type calcDelta(value_type x) const override;
+		double calcRegular(double x) const override;
+		double calcPlus(double x) const override;
+		double calcDelta() const override;
 	};
 
 	/**
@@ -137,9 +134,9 @@ namespace Candia2
 	public:
 		using SplittingFunction::SplittingFunction;
 		
-		value_type calcRegular(value_type x) const override;
-		value_type calcPlus(value_type x) const override;
-		value_type calcDelta(value_type x) const override;
+		double calcRegular(double x) const override;
+		double calcPlus(double x) const override;
+		double calcDelta() const override;
 	};
 
 	/**
@@ -151,9 +148,9 @@ namespace Candia2
 	public:
 		using SplittingFunction::SplittingFunction;
 		
-		value_type calcRegular(value_type x) const override;
-		value_type calcPlus(value_type x) const override;
-		value_type calcDelta(value_type x) const override;
+		double calcRegular(double x) const override;
+		double calcPlus(double x) const override;
+		double calcDelta() const override;
 	};
 
 	/**
@@ -165,7 +162,7 @@ namespace Candia2
 	public:
 		using SplittingFunction::SplittingFunction;
 		
-		value_type calcRegular(value_type x) const override;
+		double calcRegular(double x) const override;
 	};
 
 	/**
@@ -177,7 +174,7 @@ namespace Candia2
 	public:
 		using SplittingFunction::SplittingFunction;
 		
-		value_type calcRegular(value_type x) const override;
+		double calcRegular(double x) const override;
 	};
 
 	/**
@@ -189,9 +186,9 @@ namespace Candia2
 	public:
 		using SplittingFunction::SplittingFunction;
 		
-		value_type calcRegular(value_type x) const override;
-		value_type calcPlus(value_type x) const override;
-		value_type calcDelta(value_type x) const override;
+		double calcRegular(double x) const override;
+		double calcPlus(double x) const override;
+		double calcDelta() const override;
 	};
 
 
@@ -206,9 +203,9 @@ namespace Candia2
 	public:
 		using SplittingFunction::SplittingFunction;
 		
-		value_type calcRegular(value_type x) const override;
-		value_type calcPlus(value_type x) const override;
-		value_type calcDelta(value_type x) const override;
+		double calcRegular(double x) const override;
+		double calcPlus(double x) const override;
+		double calcDelta() const override;
 	};
 
 	/**
@@ -220,9 +217,9 @@ namespace Candia2
 	public:
 		using SplittingFunction::SplittingFunction;
 		
-		value_type calcRegular(value_type x) const override;
-		value_type calcPlus(value_type x) const override;
-		value_type calcDelta(value_type x) const override;
+		double calcRegular(double x) const override;
+		double calcPlus(double x) const override;
+		double calcDelta() const override;
 	};
 
 	/**
@@ -234,9 +231,9 @@ namespace Candia2
 	public:
 		using SplittingFunction::SplittingFunction;
 		
-		value_type calcRegular(value_type x) const override;
-		value_type calcPlus(value_type x) const override;
-		value_type calcDelta(value_type x) const override;
+		double calcRegular(double x) const override;
+		double calcPlus(double x) const override;
+		double calcDelta() const override;
 	};
 
 	/**
@@ -248,7 +245,7 @@ namespace Candia2
 	public:
 		using SplittingFunction::SplittingFunction;
 		
-		value_type calcRegular(value_type x) const override;
+		double calcRegular(double x) const override;
 	};
 
 	/**
@@ -260,9 +257,9 @@ namespace Candia2
 	public:
 		using SplittingFunction::SplittingFunction;
 		
-		value_type calcRegular(value_type x) const override;
-		value_type calcPlus(value_type x) const override;
-		value_type calcDelta(value_type x) const override;
+		double calcRegular(double x) const override;
+		double calcPlus(double x) const override;
+		double calcDelta() const override;
 	};
 
 	/**
@@ -274,7 +271,7 @@ namespace Candia2
 	public:
 		using SplittingFunction::SplittingFunction;
 		
-		value_type calcRegular(value_type x) const override;
+		double calcRegular(double x) const override;
 	};
 
 	/**
@@ -286,7 +283,7 @@ namespace Candia2
 	public:
 		using SplittingFunction::SplittingFunction;
 		
-		value_type calcRegular(value_type x) const override;
+		double calcRegular(double x) const override;
 	};
 
 	/**
@@ -298,9 +295,9 @@ namespace Candia2
 	public:
 		using SplittingFunction::SplittingFunction;
 		
-		value_type calcRegular(value_type x) const override;
-		value_type calcPlus(value_type x) const override;
-		value_type calcDelta(value_type x) const override;
+		double calcRegular(double x) const override;
+		double calcPlus(double x) const override;
+		double calcDelta() const override;
 	};
 
 
@@ -314,9 +311,9 @@ namespace Candia2
 	public:
 		using SplittingFunction::SplittingFunction;
 		
-		value_type calcRegular(value_type x) const override;
-		value_type calcPlus(value_type x) const override;
-		value_type calcDelta(value_type x) const override;
+		double calcRegular(double x) const override;
+		double calcPlus(double x) const override;
+		double calcDelta() const override;
 	};
 
 	/**
@@ -328,9 +325,9 @@ namespace Candia2
 	public:
 		using SplittingFunction::SplittingFunction;
 		
-		value_type calcRegular(value_type x) const override;
-		value_type calcPlus(value_type x) const override;
-		value_type calcDelta(value_type x) const override;
+		double calcRegular(double x) const override;
+		double calcPlus(double x) const override;
+		double calcDelta() const override;
 	};
 
 	/**
@@ -342,9 +339,9 @@ namespace Candia2
 	public:
 		using SplittingFunction::SplittingFunction;
 		
-		value_type calcRegular(value_type x) const override;
-		value_type calcPlus(value_type x) const override;
-		value_type calcDelta(value_type x) const override;
+		double calcRegular(double x) const override;
+		double calcPlus(double x) const override;
+		double calcDelta() const override;
 	};
 
 	/**
@@ -356,7 +353,7 @@ namespace Candia2
 	public:
 		using SplittingFunction::SplittingFunction;
 		
-		value_type calcRegular(value_type x) const override;
+		double calcRegular(double x) const override;
 	};
 
 	/**
@@ -368,9 +365,9 @@ namespace Candia2
 	public:
 		using SplittingFunction::SplittingFunction;
 		
-		value_type calcRegular(value_type x) const override;
-		value_type calcPlus(value_type x) const override;
-		value_type calcDelta(value_type x) const override;
+		double calcRegular(double x) const override;
+		double calcPlus(double x) const override;
+		double calcDelta() const override;
 	};
 
 	/**
@@ -382,7 +379,7 @@ namespace Candia2
 	public:
 		using SplittingFunction::SplittingFunction;
 		
-		value_type calcRegular(value_type x) const override;
+		double calcRegular(double x) const override;
 	};
 
 	/**
@@ -394,7 +391,7 @@ namespace Candia2
 	public:
 		using SplittingFunction::SplittingFunction;
 		
-		value_type calcRegular(value_type x) const override;
+		double calcRegular(double x) const override;
 	};
 
 	/**
@@ -406,9 +403,9 @@ namespace Candia2
 	public:
 		using SplittingFunction::SplittingFunction;
 		
-		value_type calcRegular(value_type x) const override;
-		value_type calcPlus(value_type x) const override;
-		value_type calcDelta(value_type x) const override;
+		double calcRegular(double x) const override;
+		double calcPlus(double x) const override;
+		double calcDelta() const override;
 	};
 
 
@@ -423,18 +420,19 @@ namespace Candia2
 		{
 			using SplittingFunction::SplittingFunction;
 		
-			inline value_type calcRegular(value_type x) const override
+			inline double calcRegular(double x) const override
 			{
 				int nf = static_cast<int>(_nf);
 				return p2nspa(&x, &nf)/8.0;
 			}
-			inline value_type calcPlus(value_type x) const override
+			inline double calcPlus(double x) const override
 			{
 				int nf = static_cast<int>(_nf);
 				return p2nsb(&x, &nf)/8.0;
 			}
-			inline value_type calcDelta(value_type x) const override
+			inline double calcDelta() const override
 			{
+				double x = 1.0;
 				int nf = static_cast<int>(_nf);
 				return p2nspc(&x, &nf)/8.0;
 			}
@@ -448,18 +446,19 @@ namespace Candia2
 		{
 			using SplittingFunction::SplittingFunction;
 		
-			inline value_type calcRegular(value_type x) const override
+			inline double calcRegular(double x) const override
 			{
 				int nf = static_cast<int>(_nf);
 				return p2nsma(&x, &nf)/8.0;
 			}
-			inline value_type calcPlus(value_type x) const override
+			inline double calcPlus(double x) const override
 			{
 				int nf = static_cast<int>(_nf);
 				return p2nsb(&x, &nf)/8.0;
 			}
-			inline value_type calcDelta(value_type x) const override
+			inline double calcDelta() const override
 			{
+				double x = 1.0;
 				int nf = static_cast<int>(_nf);
 				return p2nsmc(&x, &nf)/8.0;
 			}
@@ -473,18 +472,19 @@ namespace Candia2
 		{
 			using SplittingFunction::SplittingFunction;
 		
-			inline value_type calcRegular(value_type x) const override
+			inline double calcRegular(double x) const override
 			{
 				int nf = static_cast<int>(_nf);
 				return (p2nsma(&x, &nf) + p2nssa(&x, &nf))/8.0;
 			}
-			inline value_type calcPlus(value_type x) const override
+			inline double calcPlus(double x) const override
 			{
 				int nf = static_cast<int>(_nf);
 				return p2nsb(&x, &nf)/8.0;
 			}
-			inline value_type calcDelta(value_type x) const override
+			inline double calcDelta() const override
 			{
+				double x = 1.0;
 				int nf = static_cast<int>(_nf);
 				return p2nsmc(&x, &nf)/8.0;
 			}
@@ -498,18 +498,19 @@ namespace Candia2
 		{
 			using SplittingFunction::SplittingFunction;
 		
-			inline value_type calcRegular(value_type x) const override
+			inline double calcRegular(double x) const override
 			{
 				int nf = static_cast<int>(_nf);
 				return (p2nspa(&x, &nf) + p2psa(&x, &nf))/8.0;
 			}
-			inline value_type calcPlus(value_type x) const override
+			inline double calcPlus(double x) const override
 			{
 				int nf = static_cast<int>(_nf);
 				return p2nsb(&x, &nf)/8.0;
 			}
-			inline value_type calcDelta(value_type x) const override
+			inline double calcDelta() const override
 			{
+				double x = 1.0;
 				int nf = static_cast<int>(_nf);
 				return p2nspc(&x, &nf)/8.0;
 			}
@@ -523,7 +524,7 @@ namespace Candia2
 		{
 			using SplittingFunction::SplittingFunction;
 		
-			inline value_type calcRegular(value_type x) const override
+			inline double calcRegular(double x) const override
 			{
 				int nf = static_cast<int>(_nf);
 				return p2qga(&x, &nf)/8.0;
@@ -538,7 +539,7 @@ namespace Candia2
 		{
 			using SplittingFunction::SplittingFunction;
 		
-			inline value_type calcRegular(value_type x) const override
+			inline double calcRegular(double x) const override
 			{
 				int nf = static_cast<int>(_nf);
 				return p2gqa(&x, &nf)/8.0;
@@ -553,18 +554,19 @@ namespace Candia2
 		{
 			using SplittingFunction::SplittingFunction;
 		
-			inline value_type calcRegular(value_type x) const override
+			inline double calcRegular(double x) const override
 			{
 				int nf = static_cast<int>(_nf);
 				return p2gga(&x, &nf)/8.0;
 			}
-			inline value_type calcPlus(value_type x) const override
+			inline double calcPlus(double x) const override
 			{
 				int nf = static_cast<int>(_nf);
 				return p2ggb(&x, &nf)/8.0;
 			}
-			inline value_type calcDelta(value_type x) const override
+			inline double calcDelta() const override
 			{
+				double x = 1.0;
 				int nf = static_cast<int>(_nf);
 				return p2ggc(&x, &nf)/8.0;
 			}
@@ -583,20 +585,21 @@ namespace Candia2
 		public:
 			using SplittingFunction::SplittingFunction;
 		
-			inline value_type calcRegular(value_type x) const override
+			inline double calcRegular(double x) const override
 			{
 				int nf = static_cast<int>(_nf);
 				int imod = static_cast<int>(_imod);
 				return p3nspa(&x, &nf, &imod)/16.0;
 			}
-			inline value_type calcPlus(value_type x) const override
+			inline double calcPlus(double x) const override
 			{
 				int nf = static_cast<int>(_nf);
 				int imod = static_cast<int>(_imod);
 				return p3nspb(&x, &nf, &imod)/16.0;
 			}
-			inline value_type calcDelta(value_type x) const override
+			inline double calcDelta() const override
 			{
+				double x = 1.0;
 				int nf = static_cast<int>(_nf);
 				int imod = static_cast<int>(_imod);
 				return p3nspc(&x, &nf, &imod)/16.0;
@@ -612,20 +615,21 @@ namespace Candia2
 		public:
 			using SplittingFunction::SplittingFunction;
 		
-			inline value_type calcRegular(value_type x) const override
+			inline double calcRegular(double x) const override
 			{
 				int nf = static_cast<int>(_nf);
 				int imod = static_cast<int>(_imod);
 				return p3nsma(&x, &nf, &imod)/16.0;
 			}
-			inline value_type calcPlus(value_type x) const override
+			inline double calcPlus(double x) const override
 			{
 				int nf = static_cast<int>(_nf);
 				int imod = static_cast<int>(_imod);
 				return p3nsmb(&x, &nf, &imod)/16.0;
 			}
-			inline value_type calcDelta(value_type x) const override
+			inline double calcDelta() const override
 			{
+				double x = 1.0;
 				int nf = static_cast<int>(_nf);
 				int imod = static_cast<int>(_imod);
 				return p3nsmc(&x, &nf, &imod)/16.0;
@@ -641,20 +645,21 @@ namespace Candia2
 		public:
 			using SplittingFunction::SplittingFunction;
 		
-			inline value_type calcRegular(value_type x) const override
+			inline double calcRegular(double x) const override
 			{
 				int nf = static_cast<int>(_nf);
 				int imod = static_cast<int>(_imod);
 				return (p3nsma(&x, &nf, &imod) + p3nssa(&x, &nf, &imod))/16.0;
 			}
-			inline value_type calcPlus(value_type x) const override
+			inline double calcPlus(double x) const override
 			{
 				int nf = static_cast<int>(_nf);
 				int imod = static_cast<int>(_imod);
 				return p3nsmb(&x, &nf, &imod)/16.0;
 			}
-			inline value_type calcDelta(value_type x) const override
+			inline double calcDelta() const override
 			{
+				double x = 1.0;
 				int nf = static_cast<int>(_nf);
 				int imod = static_cast<int>(_imod);
 				return p3nsmc(&x, &nf, &imod)/16.0;
@@ -670,7 +675,7 @@ namespace Candia2
 		public:
 			using SplittingFunction::SplittingFunction;
 		
-			inline value_type calcRegular(value_type x) const override
+			inline double calcRegular(double x) const override
 			{
 				int nf = static_cast<int>(_nf);
 				int imod = static_cast<int>(_imod);
@@ -687,20 +692,21 @@ namespace Candia2
 		public:
 			using SplittingFunction::SplittingFunction;
 		
-			inline value_type calcRegular(value_type x) const override
+			inline double calcRegular(double x) const override
 			{
 				int nf = static_cast<int>(_nf);
 				int imod = static_cast<int>(_imod);
 				return (p3nspa(&x, &nf, &imod) + p3psa(&x, &nf, &imod))/16.0;
 			}
-			inline value_type calcPlus(value_type x) const override
+			inline double calcPlus(double x) const override
 			{
 				int nf = static_cast<int>(_nf);
 				int imod = static_cast<int>(_imod);
 				return p3nspb(&x, &nf, &imod)/16.0;
 			}
-			inline value_type calcDelta(value_type x) const override
+			inline double calcDelta() const override
 			{
+				double x = 1.0;
 				int nf = static_cast<int>(_nf);
 				int imod = static_cast<int>(_imod);
 				return p3nspc(&x, &nf, &imod)/16.0;
@@ -716,7 +722,7 @@ namespace Candia2
 		public:
 			using SplittingFunction::SplittingFunction;
 		
-			inline value_type calcRegular(value_type x) const override
+			inline double calcRegular(double x) const override
 			{
 				int nf = static_cast<int>(_nf);
 				int imod = static_cast<int>(_imod);
@@ -733,7 +739,7 @@ namespace Candia2
 		public:
 			using SplittingFunction::SplittingFunction;
 		
-			inline value_type calcRegular(value_type x) const override
+			inline double calcRegular(double x) const override
 			{
 				int nf = static_cast<int>(_nf);
 				int imod = static_cast<int>(_imod);
@@ -750,20 +756,21 @@ namespace Candia2
 		public:
 			using SplittingFunction::SplittingFunction;
 		
-			inline value_type calcRegular(value_type x) const override
+			inline double calcRegular(double x) const override
 			{
 				int nf = static_cast<int>(_nf);
 				int imod = static_cast<int>(_imod);
 				return p3gga_2410(&x, &nf, &imod)/16.0;
 			}
-			inline value_type calcPlus(value_type x) const override
+			inline double calcPlus(double x) const override
 			{
 				int nf = static_cast<int>(_nf);
 				int imod = static_cast<int>(_imod);
 				return p3ggb_2410(&x, &nf, &imod)/16.0;
 			}
-			inline value_type calcDelta(value_type x) const override
+			inline double calcDelta() const override
 			{
+				double x = 1.0;
 				int nf = static_cast<int>(_nf);
 				int imod = static_cast<int>(_imod);
 				return p3ggc_2410(&x, &nf, &imod)/16.0;
@@ -773,5 +780,3 @@ namespace Candia2
 	
 } // namespace Candia2
 
-
-#endif // __SPLITTINGFN_HPP

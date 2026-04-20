@@ -3,8 +3,7 @@
  *  @brief Contains the @a Distribution class and its derivations that implement various initial evolution conditions
  */
 
-#ifndef __DISTRIBUTION_HPP
-#define __DISTRIBUTION_HPP
+#pragma once
 
 #include "Candia-v2/Common.hpp"
 
@@ -76,7 +75,7 @@ namespace Candia2
 		/** Retrieves the initial value of \f$xs(x)\f$ at @a x */
 		virtual value_type xs(value_type x)  const = 0;
 		/** Retrieves the initial value of \f$xc(x)\f$ at @a x */
-		virtual value_type xc(value_type x)  const { return 0.0; }
+		virtual value_type xc([[maybe_unused]] value_type x)  const { return 0.0; }
 		/** Retrieves the initial value of \f$x\bar{u}(x)\f$ at @a x */
 		virtual value_type xub(value_type x) const = 0;
 		/** Retrieves the initial value of \f$x\bar{d}(x)\f$ at @a x */
@@ -84,7 +83,7 @@ namespace Candia2
 		/** Retrieves the initial value of \f$x\bar{s}(x)\f$ at @a x */
 		virtual value_type xsb(value_type x) const = 0;
 		/** Retrieves the initial value of \f$x\bar{c}(x)\f$ at @a x */
-		virtual value_type xcb(value_type x) const { return 0.0; }
+		virtual value_type xcb([[maybe_unused]] value_type x) const { return 0.0; }
 
 		/**
 		 *  @brief Helper for filling the set of singlet coefficients
@@ -188,6 +187,3 @@ namespace Candia2
 	};
 	
 } // namespace Candia2
-
-
-#endif // __DISTRIBUTION_HPP

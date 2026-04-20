@@ -19,15 +19,13 @@ namespace Candia2
 					  + (8.0/3.0)*(1.0-x)*L + 44.0/27.0 - (268.0/27.0)*x);
 	}
 
-	double A2ns::calcPlus(double x) const
+	double A2ns::calcPlus([[maybe_unused]] double x) const
 	{
-		UNUSED(x);
 		return CF*TR*(224.0/27.0);
 	}
 
-	double A2ns::calcDelta(double x) const
+	double A2ns::calcDelta() const
 	{
-		UNUSED(x);
 		return CF*TR*((-8.0/3.0)*Zeta3 + (40.0/9.0)*Zeta2 + 73.0/18.0);
 	}
 
@@ -56,16 +54,13 @@ namespace Candia2
 				+ (556.0/x - 628.0 + 548.0*x - 700.0*x*x)/27.0);
 	}
 
-	double A2gg::calcPlus(double x) const
+	double A2gg::calcPlus([[maybe_unused]] double x) const
 	{
-		UNUSED(x);
 		return NC*TR*224.0/27.0;
 	}
 
-	double A2gg::calcDelta(double x) const
+	double A2gg::calcDelta() const
 	{
-		UNUSED(x);
-		// return -CF*TR*15.0 + NC*TR*10.0/(9.0*27.0);
 		return -CF*TR*15.0 + NC*TR*10.0/9.0;
 	}
 
@@ -92,5 +87,7 @@ namespace Candia2
 
 
 
-	OpMatElemCustom::function_type ZERO_FUNC = [](double,double,double){ return 0.0; };
+	OpMatElemCustom::reg_function_type REG_ZERO_FUNC = [](double,double,double){ return 0.0; };
+	OpMatElemCustom::plus_function_type PLUS_ZERO_FUNC = [](double,double,double){ return 0.0; };
+	OpMatElemCustom::delta_function_type DELTA_ZERO_FUNC = [](double,double){ return 0.0; };
 } // namespace Candia2

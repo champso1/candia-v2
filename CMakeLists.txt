@@ -24,6 +24,7 @@ set(sources
 #  src/EvolutionThread.cpp
   src/Expression.cpp
   src/Grid.cpp
+  src/GridFillers.cpp
   src/HFT.cpp
 #  src/LHAPDFDistribution.cpp
   src/Math.cpp
@@ -68,9 +69,12 @@ set(n3lo_splitfuncs_fortran_src
   src/fortran/mvv_p3/xpqg3a.f90)
 add_library(n3lo_splitfuncs_fortran STATIC ${n3lo_splitfuncs_fortran_src})
 
-find_package(GSL REQUIRED)
-
 add_library(candia STATIC)
+if (MSVC)
+  target_compile_options(candia PUBLIC /W4)
+else()
+  target_compile_options(candia PUBLIC -Wall -Wextra -Wpedantic)
+endif()
 target_sources(candia PRIVATE ${sources})
 target_sources(candia PUBLIC
   FILE_SET cxx_headers
@@ -78,11 +82,10 @@ target_sources(candia PUBLIC
   BASE_DIRS ${CMAKE_SOURCE_DIR}/include
   FILES ${headers})
 
-target_link_libraries(candia PRIVATE hplog nnlo_splitfuncs_fortran n3lo_splitfuncs_fortran ome GSL::gsl)
+target_link_libraries(candia PRIVATE hplog nnlo_splitfuncs_fortran n3lo_splitfuncs_fortran ome)
 target_include_directories(candia PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:include>)
-target_include_directories(candia PUBLIC ${GSL_INCLUDE_DIRS})
 add_subdirectory(examples)
 add_subdirectory(tests)
 

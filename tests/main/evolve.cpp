@@ -1,22 +1,10 @@
-#include "Candia-v2/Grid.hpp"
-#include "Candia-v2/LHAPDFDistribution.hpp"
-#include <iomanip>
-#include <iostream>
-#include <iterator>
-#include <limits>
-#include <sstream>
-#include <vector>
-#include <fstream>
-#include <numeric>
-#include <cstdlib>
 #include <chrono>
 #include <filesystem>
-#include <ranges>
 using namespace std;
 namespace fs = filesystem;
 
 #include "Candia-v2/Candia.hpp"
-#include "Candia-v2/Distribution.hpp"
+// #include "Candia-v2/LHAPDFDistribution.hpp"
 using namespace Candia2;
 using out_type = std::vector<ArrayGrid>;
 
@@ -114,21 +102,17 @@ int main(int argc, char *argv[]) {
 	log_options.log_output_stream = log_output_file;
 	
 	vector<double> xtab{1e-5, 1e-4, 1e-3, 1e-2, 0.1, 0.3, 0.5, 0.7, 0.9, 1.0};
-	Grid grid(xtab, make_grid_filler<GridFillerLogLinQuad>(1e-5, 101, 51, 26), { .default_gauss_points = 50, .split_interval = true});
-	auto& grid_options = grid.getOptions();
-	grid_options.use_alt_mapping = true;
-	grid_options.use_gsl_conv_routine = false;
-	grid_options.use_gsl_interp_routine = true;
+	GridFillerLogLinQuad grid_filler{};
+	Grid grid(xtab, grid_filler, {});
 
-	LesHouchesDistribution benchmark_dist(Qf);
-	LHAPDFDistribution lhapdf_dist(make_lhapdf_pdf("CT18NLO"), 1.3, Qf);
-	AlphaS alphas(order, lhapdf_dist.Q0(), Qf, lhapdf_dist.alpha0(), mur2_muf2);
-	alphas.setVFNS(lhapdf_dist.masses(), lhapdf_dist.nfi(), lhapdf_dist.nff());
+	LesHouchesDistribution dist(Qf);
+	AlphaS alphas(order, dist.Q0(), Qf, dist.alpha0(), mur2_muf2);
+	alphas.setVFNS(dist.masses(), dist.nfi(), dist.nff());
 	// alphas.setFFNS(4);
 
-	DGLAPSolver solver(order, grid, alphas, Qf, iterations, trunc_idx, std::move(lhapdf_dist), mur2_muf2);
+	DGLAPSolver solver(order, grid, alphas, Qf, iterations, trunc_idx, std::move(dist), mur2_muf2);
 	auto& dglap_options = solver.getOptions();
-	dglap_options.use_truncated_nonsinglet_sol = false;
+	dglap_options.use_truncated_nonsinglet_sol = true;
 	dglap_options.disable_heavy_flavor_matching = false;
 	dglap_options.use_nnlo_matching_conditions_at_n3lo = false;
 	dglap_options.use_n3lo_heavyquark_asymmetry = true;
@@ -136,33 +120,11 @@ int main(int argc, char *argv[]) {
 	dglap_options.cache_exprs = false;
 
 	auto t0 = chrono::high_resolution_clock::now();
-	auto F = solver.evolve();
-
-	uint idx = grid.ntab()[4];
-	ArrayGrid ftilde1(grid.size()), ftilde2(grid.size());
-	for (auto [k, x] : solver.getGrid().enumerate()) {
-		ftilde1[k] = solver.getGrid().convolution(F[0], solver.getExpression("A2hg"), k);
-		ftilde2[k] =
-			solver.getGrid().convolution(F[0], solver.getExpression("A2hg"), k)
-			+ solver.getGrid().convolution(F[31], solver.getExpression("A2hq"), k);
-	}
-	log(LOG_INFO, "evolve.cpp", "ftilde1 at x=0.1 at q={}, is: {}", Qf, ftilde1[idx]);
-	log(LOG_INFO, "evolve.cpp", "ftilde2 at x=0.1 at q={}, is: {}", Qf, ftilde2[idx]);
-	
+	auto F = solver.evolve();	
 	auto tf = chrono::high_resolution_clock::now();
 	chrono::duration<double, ratio<1>> secs = tf-t0;
 	log(LOG_INFO, "evolve.cpp", "Evolution took {}.", secs);
 
 	datafile_name += ".dat";
 	outputData(F, xtab, grid, order, grid.size(), iterations, trunc_idx, mur2_muf2, datafile_name);
-
-	if (grid.getOptions().use_gsl_conv_routine) {
-		auto const& gsl_conv_errors = solver.getGrid().getGSLConvolutionErrors();
-		fs::path gsl_conv_errors_log_path("gsl-conv-errors.dat");
-		std::ofstream gsl_conv_errors_log_file(gsl_conv_errors_log_path);
-		std::ranges::copy(
-			gsl_conv_errors | std::views::transform([](auto&& _t){
-				auto [x,out,res] = _t; return std::format("{} {} {}", x, out, res); }),
-			std::ostream_iterator<std::string>(gsl_conv_errors_log_file, "\n"));
-	}
 }

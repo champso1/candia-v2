@@ -3,8 +3,7 @@
  *  @brief Contains the @a DGLAPSolver class which handles the actual evolution of the distributions
  */
 
-#ifndef __CANDIA_HPP
-#define __CANDIA_HPP
+#pragma once
 
 #include <concepts>
 #include <functional>
@@ -261,22 +260,20 @@ namespace Candia2
 		 *  @brief relation 1 for N3LO HFT
 		 *  @param q quark arraygrid
 		 *  @param qb anti-quark arraygrid
-		 *  @param j distribution index
 		 *  @param k current grid index
 		 *  @param SP pre-calculated piece independent of @a j
 		 *  @param qh the output q array to place the results. not the heavy quark dist, but a suitable enough name
 		 */
-		void HFT_N3LO1(ArrayGrid& q, ArrayGrid& qb, uint j, uint k, double SP, ArrayGrid& qh);
+		void HFT_N3LO1(ArrayGrid& q, ArrayGrid& qb, uint k, double SP, ArrayGrid& qh);
 		/**
 		 *  @brief relation 2 for N3LO HFT
 		 *  @param q quark arraygrid
 		 *  @param qb anti-quark arraygrid
-		 *  @param j distribution index
 		 *  @param k current grid index
 		 *  @param SP pre-calculated piece independent of @a j
 		 *  @param qhb the output qbar array to place the results. not the heavy quark dist, but a suitable enough name
 		 */
-		void HFT_N3LO2(ArrayGrid& q, ArrayGrid& qb, uint j, uint k, double SP, ArrayGrid& qhb);
+		void HFT_N3LO2(ArrayGrid& q, ArrayGrid& qb, uint k, double SP, ArrayGrid& qhb);
 		/**
 		 *  @brief relation 3 for N3LO HFT
 		 *  @param g gluon arraygrid
@@ -642,6 +639,7 @@ namespace Candia2
 	    double _mur2_muf2{1.0};
 
 		Distribution const& _dist;
+		Grid _grid;
 
 	    std::vector<std::pair<double, std::map<int,ArrayGrid>>> _all_pdfs{};
 		std::vector<double> _as_qs, _as_vals, _xvals;
@@ -654,41 +652,17 @@ namespace Candia2
 			DELTAF1 = 9003,
 			DELTAFNLO = 9004,
 		};
-
-	private:
-		// grid info -----
-		// the grid for some reason has some arguments that aren't correctly initialized
-		// when copy constructing, so we save this on creation
-		// of a DGLAPSolverLHAPDF object, and just create a new grid each time
-		// rather than accepting one
-		std::vector<double> _xtab;
-		std::unique_ptr<GridFillerBase> _grid_filler;
-		GaussLegendreArgs _gauleg_args;
-		GridOptions _grid_options;
-
 	public:
 		DGLAPSolverLHAPDF(
 			std::string const& name, std::filesystem::path const& infofile_in_path,
-			Distribution const& dist,
+			Distribution const& dist, Grid const& grid,
 		    uint order, uint iterations, uint trunc_idx, double mur2_muf2)
 			: _name{name}, _infofile_in_path{infofile_in_path},
-			  _dist{dist},
-			  _order{order}, _iterations{iterations}, _trunc_idx{trunc_idx}, _mur2_muf2{mur2_muf2}
+			  _order{order}, _iterations{iterations}, _trunc_idx{trunc_idx}, _mur2_muf2{mur2_muf2},
+			  _dist{dist}, _grid{grid}
 		{
-			if (!fs::exists(infofile_in_path))
+			if (!std::filesystem::exists(infofile_in_path))
 				log(LOG_ERROR, "DGLAPSolverLHAPDF", "infofile_in_path is invalid ({})", infofile_in_path.string());
-		}
-
-		inline void setGridInfo(
-			std::vector<double> const& xtab,
-			std::unique_ptr<GridFillerBase> grid_filler,
-			GaussLegendreArgs const& gauleg_args,
-			GridOptions const& grid_options)
-		{
-			_xtab = xtab;
-			_grid_filler = std::move(grid_filler);
-			_gauleg_args = gauleg_args;
-			_grid_options = grid_options;
 		}
 		
 		void evolve(
@@ -697,6 +671,3 @@ namespace Candia2
 		void write();
 	};
 }
-
-
-#endif // __CANDIA_HPP

@@ -249,10 +249,6 @@ namespace Candia2
 				auto& p2qg = getExpression("P2qg");
 				auto& p2gq = getExpression("P2gq");
 				auto& p2gg = getExpression("P2gg");
-				auto& p3qq = getExpression("P3qq");
-				auto& p3qg = getExpression("P3qg");
-				auto& p3gq = getExpression("P3gq");
-				auto& p3gg = getExpression("P3gg");
 
 				auto beta0 = _alpha_s.beta0();
 				auto beta1 = _alpha_s.beta1();

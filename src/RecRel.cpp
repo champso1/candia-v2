@@ -99,7 +99,6 @@ namespace Candia2
 		res += conv3 * fac3;
 		res += conv4 * fac4;
 
-		static int print_count = 10;
 		if (_is_scale_difference) {
 			const double beta0 = _alpha_s.beta0();
 			const double beta1 = _alpha_s.beta1();

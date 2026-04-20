@@ -3,8 +3,7 @@
  *  @brief Contains API to access harmonic polylogarithms available in accompanying Fortran code (using the C ABI)
  */
 
-#ifndef __SPECIALFUNCS_HPP
-#define __SPECIALFUNCS_HPP
+#pragma once
 
 namespace Candia2
 {
@@ -87,6 +86,3 @@ namespace Candia2
 	}
 	
 }; // namespace Candia2
-
-
-#endif // __SPECIALFUNCS_HPP

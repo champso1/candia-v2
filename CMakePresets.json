@@ -2,38 +2,11 @@
     "version": 8,
     "configurePresets": [
         {
-            "name": "clang-debug",
-            "displayName": "clang-debug",
-            "description": "Using compilers: C = clang, CXX = clang++",
-            "generator": "Ninja",
-            "binaryDir": "${sourceDir}/bin/${presetName}",
-            "cacheVariables": {
-                "CMAKE_INSTALL_PREFIX": "${sourceDir}/install/${presetName}",
-                "CMAKE_C_COMPILER": "clang",
-                "CMAKE_CXX_COMPILER": "clang++",
-                "CMAKE_BUILD_TYPE": "Debug"
-            }
-        },
-        {
-            "name": "clang-release",
-            "displayName": "clang-release",
-            "description": "Using compilers: C = clang, CXX = clang++",
-            "generator": "Ninja",
-            "binaryDir": "${sourceDir}/bin/${presetName}",
-            "cacheVariables": {
-                "CMAKE_INSTALL_PREFIX": "${sourceDir}/install/${presetName}",
-                "CMAKE_C_COMPILER": "clang",
-                "CMAKE_CXX_COMPILER": "clang++",
-                "CMAKE_BUILD_TYPE": "Release",
-                "ENABLE_THREADING": "ON"
-            }
-        },
-        {
             "name": "clang-testing",
             "displayName": "clang-testing",
             "description": "Using compilers: C = clang, CXX = clang++",
             "generator": "Ninja Multi-Config",
-            "binaryDir": "${sourceDir}/build",
+            "binaryDir": "${sourceDir}/bin/${presetName}",
             "cacheVariables": {
                 "CMAKE_INSTALL_PREFIX": "${sourceDir}/install/${presetName}",
                 "CMAKE_C_COMPILER": "clang",
@@ -69,7 +42,7 @@
             "displayName": "icx-testing",
             "description": "Using compilers: C = icx, CXX = icx",
             "generator": "Ninja Multi-Config",
-            "binaryDir": "${sourceDir}/build",
+            "binaryDir": "${sourceDir}/bin/${presetName}",
             "cacheVariables": {
                 "CMAKE_INSTALL_PREFIX": "${sourceDir}/install/${presetName}",
                 "CMAKE_C_COMPILER": "C:\\Program Files (x86)\\Intel\\oneAPI\\2025.3\\bin\\icx.exe",
@@ -85,29 +58,6 @@
 				"yaml-cpp_DIR": "C:/Users/Casey/Documents/programs/LHAPDF-win/yaml-cpp/out/lib/cmake/yaml-cpp",
 				"GSL_ROOT": "C:/Users/Casey/Documents/programs/gsl/out"
             }
-        }
-    ],
-    "buildPresets": [
-        {
-            "name": "ninja-release",
-            "description": "",
-            "displayName": "",
-            "configurePreset": "clang-testing",
-            "configuration": "Release"
-        },
-        {
-            "name": "ninja-debug",
-            "description": "",
-            "displayName": "",
-            "configurePreset": "clang-testing",
-            "configuration": "Debug"
-        },
-        {
-            "name": "ninja-relwithdebinfo",
-            "description": "",
-            "displayName": "",
-            "configurePreset": "clang-testing",
-            "configuration": "RelWithDebInfo"
         }
     ]
 }

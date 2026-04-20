@@ -1,14 +1,3 @@
-#include <algorithm>
-#include <charconv>
-#include <cstdlib>
-#include <cmath>
-#include <vector>
-#include <filesystem>
-#include <sstream>
-#include <iterator>
-
-using value_type = double;
-
 #include "util.hpp"
 
 static void usage()
@@ -28,10 +17,9 @@ static void usage()
 	exit(EXIT_FAILURE);
 }
 
-dist_type<value_type>
-compute_diffs(
-	dist_type<value_type> const& candia,
-	dist_type<value_type> const& other,
+static dist_type compute_diffs(
+	dist_type const& candia,
+	dist_type const& other,
 	int diff_type);
 
 int main(int argc, char *argv[])
@@ -54,19 +42,13 @@ int main(int argc, char *argv[])
 		std::from_chars(argv[5], argv[5] + 1, diff_type);
 	}
 
-	int ncols = cols[type].get().size();
-	
-	auto [xtab_candia, candia_dists_raw] = read_candia_file<value_type>(candia_filepath, 37);
-	auto [xtab_other, other_dists_raw] = read_other_file<value_type>(other_filepath, 37);
+	auto [xtab_candia, candia_dists_raw] = read_candia_file(candia_filepath, 37);
+	auto [xtab_other, other_dists_raw] = read_other_file(other_filepath, 37);
 	if (!std::ranges::equal(xtab_candia, xtab_other)) {
 		log(LOG_ERROR_NOQUIT, "compare.cpp", "Two xtab arrays for the candia and other datafile are not equivalent:");
 
-		std::ostringstream ss{};
-		std::ranges::copy(xtab_candia, std::ostream_iterator<value_type>(ss, ", "));
-		log(LOG_INFO, "compare.cpp", "Candia xtab: {}", ss.str());
-		ss = {};
-		std::ranges::copy(xtab_other, std::ostream_iterator<value_type>(ss, ", "));
-		log(LOG_INFO, "compare.cpp", "Other xtab: {}", ss.str());
+		log(LOG_INFO, "compare.cpp", "Candia xtab: {}", vec_to_str(xtab_candia));
+		log(LOG_INFO, "compare.cpp", "Other xtab: {}", vec_to_str(xtab_other));
 		exit(EXIT_FAILURE);
 	}
 	auto candia_dists = fix_dists(candia_dists_raw, type);
@@ -89,23 +71,22 @@ int main(int argc, char *argv[])
 }
 
 
-dist_type<value_type>
-compute_diffs(
-	dist_type<value_type> const& candia_data,
-	dist_type<value_type> const& other_data,
+static dist_type compute_diffs(
+	dist_type const& candia_data,
+	dist_type const& other_data,
 	int diff_type)
 {
 	auto reldiff =
-		[&](value_type candia, value_type other) -> value_type {
-			value_type base = diff_type == 0 ? other : (candia+other)/2.0;
+		[&](double candia, double other) -> double {
+			double base = diff_type == 0 ? other : (candia+other)/2.0;
 			return std::abs((candia-other)/base)*100.0;
 		};
 
-	dist_type<value_type> diffs{candia_data.size(), std::vector<value_type>(candia_data.at(0).size(), 0.0)};
+	dist_type diffs{candia_data.size(), std::vector<double>(candia_data.at(0).size(), 0.0)};
 	for (uint j=0; j<candia_data.size(); ++j) {
 		for (uint k=0; k<candia_data.at(0).size(); ++k) {
-			value_type candia = candia_data.at(j).at(k);
-			value_type other = other_data.at(j).at(k);
+			double candia = candia_data.at(j).at(k);
+			double other = other_data.at(j).at(k);
 			diffs.at(j).at(k) = reldiff(candia, other);
 		}
 	}

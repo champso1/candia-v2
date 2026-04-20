@@ -505,7 +505,6 @@ namespace Candia2
 	    log(LOG_INFO, "DGLAP", "Evolving to {} flavors.", _alpha_s.nff());
 		using out_type = decltype(_F);
 		loadAllExpressions();
-		_grid.setupMappings();
 
 		if (options.use_truncated_nonsinglet_sol)
 			setupTruncatedDistributions();
@@ -545,7 +544,7 @@ namespace Candia2
 				log(LOG_INFO, "DGLAP", "Loading all expression values into caches...");
 				_grid.useCachedExpressions();
 				for (auto& [_,expr] : _expressions)
-					expr->fill(_grid.points(), _grid.abscissae(), _grid.getMappings());
+					expr->fill(_grid.points(), _grid.abscissae(), _grid.filler().getMappings(-1.0));
 			}
 			log(LOG_DEBUG, "DGLAP", "Retrieving values of alpha_s, and calculating all logarithm factors");
 			bool resum_tab = _alpha_s.resumTabulated();
@@ -693,23 +692,24 @@ namespace Candia2
 		
 		OpMatElemN3LO::update(-L, _nf);
 
-		auto zero_func = [](double,double,double){ return 0.0; };
+		auto plus_zero_func = [](double,double,double){ return 0.0; };
+		auto delta_zero_func = [](double,double){ return 0.0; };
 		
-		auto& p1qg = getExpression("P1qg");
+		// auto& p1qg = getExpression("P1qg");
 	    auto a1qg_reg_func = [as](double lm, double nf, double x) {
 			auto trunced = ome::AQg_reg.truncate(1);
 			return trunced(as, lm, nf, x); };
-		OpMatElemCustom a1hg(a1qg_reg_func, zero_func, zero_func);
+		OpMatElemCustom a1hg(a1qg_reg_func, plus_zero_func, delta_zero_func);
 
 		auto a2hq_reg_func = [as](double lm, double nf, double x) {
 			auto trunced = ome::AQqPS_reg.truncate(2);
 			return trunced(as, lm, nf, x); };
-		OpMatElemCustom a2hq(a2hq_reg_func, zero_func, zero_func);
+		OpMatElemCustom a2hq(a2hq_reg_func, plus_zero_func, delta_zero_func);
 		
 		auto a2hg_reg_func = [as](double lm, double nf, double x) {
 			auto trunced = ome::AQg_reg.truncate(2);
 			return trunced(as, lm, nf, x); };
-		OpMatElemCustom a2hg(a2hg_reg_func, zero_func, zero_func);
+		OpMatElemCustom a2hg(a2hg_reg_func, plus_zero_func, delta_zero_func);
 		
 
 		std::vector<ArrayGrid> subpdfs(4, ArrayGrid(_grid.size()));
@@ -750,9 +750,7 @@ namespace Candia2
 		_as_qs = std::move(as_qs);
 		_as_vals = std::move(as_vals);
 
-		Grid grid_in(_xtab, std::move(_grid_filler), _gauleg_args);
-		grid_in.getOptions() = _grid_options;
-		_xvals = grid_in.points();
+		_xvals = _grid.points();
 
 		log(LOG_INFO, "DGLAPSolverLHAPDF", "Energy values: {}", vec_to_str(_as_qs));
 		for (double q : _as_qs) {
@@ -762,14 +760,9 @@ namespace Candia2
 			alphas.setVFNS(_dist.masses(), _dist.nfi(), _dist.nff());
 			// alphas.setFFNS(4);
 
-			double alpha0 = alphas.post(alphas.nff());
-			double alphas_val = alphas.evaluate(alphas.masses(alphas.nff()), q, alpha0);
-			double as2 = std::pow(alphas_val, 2);
-
-			DGLAPSolver solver(_order, grid_in, alphas, q, _iterations, _trunc_idx, _dist, _mur2_muf2);
+			DGLAPSolver solver(_order, _grid, alphas, q, _iterations, _trunc_idx, _dist, _mur2_muf2);
 			solver.getOptions() = dglap_options;
 			std::vector<ArrayGrid> F = solver.evolve();
-			Grid& grid = solver.getGrid();
 
 			std::map<int, ArrayGrid> map{};
 			map[-5] = F[11];
@@ -799,9 +792,9 @@ namespace Candia2
 	void DGLAPSolverLHAPDF::write()
 	{
 		log(LOG_INFO, "DGLAPSolverLHAPDF", "Spitting out the stuff...");
-		fs::path pdfdir_path = fs::current_path()/_name;
-		if (!fs::exists(pdfdir_path)) {
-			if (!fs::create_directory(pdfdir_path))
+		std::filesystem::path pdfdir_path = std::filesystem::current_path()/_name;
+		if (!std::filesystem::exists(pdfdir_path)) {
+			if (!std::filesystem::create_directory(pdfdir_path))
 				log(LOG_ERROR, "DGLAPSolverLHAPDF", "Failed to create the pdf outpout directory: '{}'", pdfdir_path.string());
 		}
 		
@@ -834,12 +827,12 @@ namespace Candia2
 		perform_replace(infofile_in_contents, as_qs_replace_str, vec_to_str2(_as_qs));
 		perform_replace(infofile_in_contents, as_vals_replace_str, vec_to_str2(_as_vals));
 
-		fs::path infofile_path = pdfdir_path/infofile_name;
+		std::filesystem::path infofile_path = pdfdir_path/infofile_name;
 		std::ofstream infofile(infofile_path);
 		std::copy(infofile_in_contents.begin(), infofile_in_contents.end(), std::ostreambuf_iterator<char>(infofile));
 		
 		std::string datafile_name = std::format("{}_0000.dat", _name);
-		fs::path datafile_path = pdfdir_path/datafile_name;
+		std::filesystem::path datafile_path = pdfdir_path/datafile_name;
 		std::ofstream datafile(datafile_path);
 		datafile << "PdfType: central\n";
 		datafile << "Format: lhagrid1\n";

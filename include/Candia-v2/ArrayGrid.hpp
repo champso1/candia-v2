@@ -3,10 +3,8 @@
  *  @brief Contains the @a ArrayGrid class which is nothing more than an array with some convenience methods
  */
 
-#ifndef __ARRAYGRID_HPP
-#define __ARRAYGRID_HPP
+#pragma once
 
-#include <concepts>
 #include <initializer_list>
 
 #include "Candia-v2/Common.hpp"
@@ -93,5 +91,3 @@ namespace Candia2
     template <uint N>
 	using MultiDimArrayGrid_t = MultiDimArrayGrid<N>::type;
 }
-
-#endif // __ARRAYGRID_HPP

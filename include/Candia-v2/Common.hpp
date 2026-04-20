@@ -3,8 +3,7 @@
  *  @brief Contains type definitions, constants, logging, and other misc definitions.
  */
 
-#ifndef __COMMON_HPP
-#define __COMMON_HPP
+#pragma once
 
 #include <functional>
 #include <string_view>
@@ -23,10 +22,7 @@
 #include <fstream>
 
 using uint = unsigned;
-namespace fs = std::filesystem;
 
-#define UNUSED(x) (void)(x)
-#define EPS 1e-8
 #define NUM_SINGLET_THREADS 8
 
 namespace Candia2
@@ -165,12 +161,12 @@ namespace Candia2
 	inline std::unordered_map<uint, uint> log_threads_line_offset{};
 	inline void registerThreadLogs(std::vector<uint> const& ids)
 	{
-		for (int i=0; i<ids.size(); ++i) {
+		for (uint i=0; i<ids.size(); ++i) {
 			log_threads_line_offset[ids[i]] = ids.size()-i;
 			std::cout << '\n';
 		}
 	}
-	inline void unregisterThreadLogs(std::vector<uint> const& ids)
+	inline void unregisterThreadLogs([[maybe_unused]] std::vector<uint> const& ids)
 	{
 		log_threads_line_offset.clear();
 	}
@@ -318,6 +314,3 @@ namespace Candia2
 			std::istreambuf_iterator<char>{});
 	}
 }; // namespace Candia2
-
-
-#endif // __COMMON_HPP
