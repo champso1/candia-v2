@@ -21,10 +21,10 @@ namespace Candia2
         startLogIterations();
         switch (_order) {
             case 0: {
-				auto& p0qq = getExpression("P0qq");
-				auto& p0qg = getExpression("P0qg");
-				auto& p0gq = getExpression("P0gq");
-				auto& p0gg = getExpression("P0gg");
+				auto& p0qq = getExpression(ExprName::P0qq);
+				auto& p0qg = getExpression(ExprName::P0qg);
+				auto& p0gq = getExpression(ExprName::P0gq);
+				auto& p0gg = getExpression(ExprName::P0gg);
 				
                 for (uint n=1; n<_iterations; n++) {
                     logIterations(n, _iterations-1, "SingletLO");
@@ -46,14 +46,14 @@ namespace Candia2
                 }
             } break;
             case 1: {
-				auto& p0qq = getExpression("P0qq");
-				auto& p0qg = getExpression("P0qg");
-				auto& p0gq = getExpression("P0gq");
-				auto& p0gg = getExpression("P0gg");
-				auto& p1qq = getExpression("P1qq");
-				auto& p1qg = getExpression("P1qg");
-				auto& p1gq = getExpression("P1gq");
-				auto& p1gg = getExpression("P1gg");
+				auto& p0qq = getExpression(ExprName::P0qq);
+				auto& p0qg = getExpression(ExprName::P0qg);
+				auto& p0gq = getExpression(ExprName::P0gq);
+				auto& p0gg = getExpression(ExprName::P0gg);
+				auto& p1qq = getExpression(ExprName::P1qq);
+				auto& p1qg = getExpression(ExprName::P1qg);
+				auto& p1gq = getExpression(ExprName::P1gq);
+				auto& p1gg = getExpression(ExprName::P1gg);
 				
 			    for (uint n=1; n<_iterations; n++) {
                     logIterations(n, _iterations-1, "SingletNLO");
@@ -122,18 +122,18 @@ namespace Candia2
                 }
             } break;
             case 2: {
-				auto& p0qq = getExpression("P0qq");
-				auto& p0qg = getExpression("P0qg");
-				auto& p0gq = getExpression("P0gq");
-				auto& p0gg = getExpression("P0gg");
-				auto& p1qq = getExpression("P1qq");
-				auto& p1qg = getExpression("P1qg");
-				auto& p1gq = getExpression("P1gq");
-				auto& p1gg = getExpression("P1gg");
-				auto& p2qq = getExpression("P2qq");
-				auto& p2qg = getExpression("P2qg");
-				auto& p2gq = getExpression("P2gq");
-				auto& p2gg = getExpression("P2gg");
+				auto& p0qq = getExpression(ExprName::P0qq);
+				auto& p0qg = getExpression(ExprName::P0qg);
+				auto& p0gq = getExpression(ExprName::P0gq);
+				auto& p0gg = getExpression(ExprName::P0gg);
+				auto& p1qq = getExpression(ExprName::P1qq);
+				auto& p1qg = getExpression(ExprName::P1qg);
+				auto& p1gq = getExpression(ExprName::P1gq);
+				auto& p1gg = getExpression(ExprName::P1gg);
+				auto& p2qq = getExpression(ExprName::P2qq);
+				auto& p2qg = getExpression(ExprName::P2qg);
+				auto& p2gq = getExpression(ExprName::P2gq);
+				auto& p2gg = getExpression(ExprName::P2gg);
 				
                 for (uint n=1; n<_iterations; n++) {
                     logIterations(n, _iterations-1, "SingletNNLO");
@@ -223,22 +223,22 @@ namespace Candia2
                 }
             } break;
             case 3: {
-				auto& p0qq = getExpression("P0qq");
-				auto& p0qg = getExpression("P0qg");
-				auto& p0gq = getExpression("P0gq");
-				auto& p0gg = getExpression("P0gg");
-				auto& p1qq = getExpression("P1qq");
-				auto& p1qg = getExpression("P1qg");
-				auto& p1gq = getExpression("P1gq");
-				auto& p1gg = getExpression("P1gg");
-				auto& p2qq = getExpression("P2qq");
-				auto& p2qg = getExpression("P2qg");
-				auto& p2gq = getExpression("P2gq");
-				auto& p2gg = getExpression("P2gg");
-				auto& p3qq = getExpression("P3qq");
-				auto& p3qg = getExpression("P3qg");
-				auto& p3gq = getExpression("P3gq");
-				auto& p3gg = getExpression("P3gg");
+				auto& p0qq = getExpression(ExprName::P0qq);
+				auto& p0qg = getExpression(ExprName::P0qg);
+				auto& p0gq = getExpression(ExprName::P0gq);
+				auto& p0gg = getExpression(ExprName::P0gg);
+				auto& p1qq = getExpression(ExprName::P1qq);
+				auto& p1qg = getExpression(ExprName::P1qg);
+				auto& p1gq = getExpression(ExprName::P1gq);
+				auto& p1gg = getExpression(ExprName::P1gg);
+				auto& p2qq = getExpression(ExprName::P2qq);
+				auto& p2qg = getExpression(ExprName::P2qg);
+				auto& p2gq = getExpression(ExprName::P2gq);
+				auto& p2gg = getExpression(ExprName::P2gg);
+				auto& p3qq = getExpression(ExprName::P3qq);
+				auto& p3qg = getExpression(ExprName::P3qg);
+				auto& p3gq = getExpression(ExprName::P3gq);
+				auto& p3gg = getExpression(ExprName::P3gg);
 				
                 for (uint n=1; n<_iterations; n++) {
                     logIterations(n, _iterations-1, "SingletN3LO");
@@ -365,7 +365,7 @@ namespace Candia2
         startLogIterations();
         switch (_order) {
             case 0: {
-				auto& p0ns = getExpression("P0ns");
+				auto& p0ns = getExpression(ExprName::P0ns);
 				
                 for (uint j=13; j<=12+_nf; ++j)
                     arr.get()[j] = _A[j][0];
@@ -392,9 +392,9 @@ namespace Candia2
                 }
             } break;
             case 1: {
-				auto& p0ns  = getExpression("P0ns");
-				auto& p1nsm = getExpression("P1nsm");
-				auto& p1nsp = getExpression("P1nsp");
+				auto& p0ns  = getExpression(ExprName::P0ns);
+				auto& p1nsm = getExpression(ExprName::P1nsm);
+				auto& p1nsp = getExpression(ExprName::P1nsp);
 				
                 for (uint j=13; j<=12+_nf; ++j)
                     arr.get()[j] = _B[j][0][0];
@@ -444,12 +444,12 @@ namespace Candia2
 				}
             } break;
             case 2: {
-				auto& p0ns  = getExpression("P0ns");
-				auto& p1nsm = getExpression("P1nsm");
-				auto& p1nsp = getExpression("P1nsp");
-				auto& p2nsm = getExpression("P2nsm");
-				auto& p2nsp = getExpression("P2nsp");
-				auto& p2nsv = getExpression("P2nsv");
+				auto& p0ns  = getExpression(ExprName::P0ns);
+				auto& p1nsm = getExpression(ExprName::P1nsm);
+				auto& p1nsp = getExpression(ExprName::P1nsp);
+				auto& p2nsm = getExpression(ExprName::P2nsm);
+				auto& p2nsp = getExpression(ExprName::P2nsp);
+				auto& p2nsv = getExpression(ExprName::P2nsv);
 				
                 for (uint j=26; j<=24+_nf; ++j)
                     arr.get()[j] = _C[j][0][0][0];
@@ -625,15 +625,15 @@ namespace Candia2
                 }
             } break;
             case 3: {
-				auto& p0ns  = getExpression("P0ns");
-				auto& p1nsm = getExpression("P1nsm");
-				auto& p1nsp = getExpression("P1nsp");
-				auto& p2nsm = getExpression("P2nsm");
-				auto& p2nsp = getExpression("P2nsp");
-				auto& p2nsv = getExpression("P2nsv");
-				auto& p3nsm = getExpression("P3nsm");
-				auto& p3nsp = getExpression("P3nsp");
-				auto& p3nsv = getExpression("P3nsv");
+				auto& p0ns  = getExpression(ExprName::P0ns);
+				auto& p1nsm = getExpression(ExprName::P1nsm);
+				auto& p1nsp = getExpression(ExprName::P1nsp);
+				auto& p2nsm = getExpression(ExprName::P2nsm);
+				auto& p2nsp = getExpression(ExprName::P2nsp);
+				auto& p2nsv = getExpression(ExprName::P2nsv);
+				auto& p3nsm = getExpression(ExprName::P3nsm);
+				auto& p3nsp = getExpression(ExprName::P3nsp);
+				auto& p3nsv = getExpression(ExprName::P3nsv);
 				
                 for (uint j=26; j<=24+_nf; ++j)
                     arr.get()[j] = _D[j][0][0][0][0];
@@ -1007,7 +1007,7 @@ namespace Candia2
         switch (_order) {
             startLogIterations();
             case 0: {
-				auto& p0ns = getExpression("P0ns");
+				auto& p0ns = getExpression(ExprName::P0ns);
 
 				std::vector<uint> dists{};
 				for (uint j=13; j<=12+_nf; ++j)
@@ -1035,9 +1035,9 @@ namespace Candia2
                 }
             }; break;
 			case 1: {
-				auto& p0ns  = getExpression("P0ns");
-				auto& p1nsm = getExpression("P1nsm");
-				auto& p1nsp = getExpression("P1nsp");
+				auto& p0ns  = getExpression(ExprName::P0ns);
+				auto& p1nsm = getExpression(ExprName::P1nsm);
+				auto& p1nsp = getExpression(ExprName::P1nsp);
 
 				for (uint j=13; j<=12+_nf; ++j)
                     arr[j] = _S_NS[0][j][0];
@@ -1089,12 +1089,12 @@ namespace Candia2
 				}
 			}; break;
 			case 2: {
-				auto& p0ns  = getExpression("P0ns");
-				auto& p1nsm = getExpression("P1nsm");
-				auto& p1nsp = getExpression("P1nsp");
-				auto& p2nsm = getExpression("P2nsm");
-				auto& p2nsp = getExpression("P2nsp");
-				auto& p2nsv = getExpression("P2nsv");
+				auto& p0ns  = getExpression(ExprName::P0ns);
+				auto& p1nsm = getExpression(ExprName::P1nsm);
+				auto& p1nsp = getExpression(ExprName::P1nsp);
+				auto& p2nsm = getExpression(ExprName::P2nsm);
+				auto& p2nsp = getExpression(ExprName::P2nsp);
+				auto& p2nsv = getExpression(ExprName::P2nsv);
 
 				for (uint j=26; j<=24+_nf; j++)
                     arr[j] = _S_NS[0][j][0];
@@ -1159,15 +1159,15 @@ namespace Candia2
 				}
 			}; break;
 			case 3: {
-				auto& p0ns  = getExpression("P0ns");
-				auto& p1nsm = getExpression("P1nsm");
-				auto& p1nsp = getExpression("P1nsp");
-				auto& p2nsm = getExpression("P2nsm");
-				auto& p2nsp = getExpression("P2nsp");
-				auto& p2nsv = getExpression("P2nsv");
-				auto& p3nsm = getExpression("P3nsm");
-				auto& p3nsp = getExpression("P3nsp");
-				auto& p3nsv = getExpression("P3nsv");
+				auto& p0ns  = getExpression(ExprName::P0ns);
+				auto& p1nsm = getExpression(ExprName::P1nsm);
+				auto& p1nsp = getExpression(ExprName::P1nsp);
+				auto& p2nsm = getExpression(ExprName::P2nsm);
+				auto& p2nsp = getExpression(ExprName::P2nsp);
+				auto& p2nsv = getExpression(ExprName::P2nsv);
+				auto& p3nsm = getExpression(ExprName::P3nsm);
+				auto& p3nsp = getExpression(ExprName::P3nsp);
+				auto& p3nsv = getExpression(ExprName::P3nsv);
 
 				double beta0 = _alpha_s.beta0();
 				double beta1 = _alpha_s.beta1();

@@ -8,7 +8,7 @@
 #include <cmath>
 #include <functional>
 #include <thread>
-
+#include <execution>
 
 namespace Candia2
 {
@@ -20,32 +20,27 @@ namespace Candia2
         for (uint j=0; j<=1; ++j)
             arr.get()[j*31] = _S[0][j][0];
 
-		uint size = _grid.size()-1;
-		uint part_size = size/NUM_SINGLET_THREADS;
+		auto grid_idxs = std::ranges::views::iota(uint{0}, _grid.size()-1);
 
 		startLogIterations();
         switch (_order) {
             case 0: {
-				auto& p0qq = getExpression("P0qq");
-				auto& p0qg = getExpression("P0qg");
-				auto& p0gq = getExpression("P0gq");
-				auto& p0gg = getExpression("P0gg");
+				auto& p0qq = getExpression(ExprName::P0qq);
+				auto& p0qg = getExpression(ExprName::P0qg);
+				auto& p0gq = getExpression(ExprName::P0gq);
+				auto& p0gg = getExpression(ExprName::P0gg);
 				
                 for (uint n=1; n<_iterations; n++) {
 					logIterations(n, _iterations-1, "SingletLO");
 					// log(LOG_INFO, "DGLAP", "LO Singlet Iteration {}", n);
                     
                     for (uint k=0; k<_grid.size()-1; k++) {
-						double v1 = recrelS_1(_S[0][1][0], k, p0qq);
-						double v2 = recrelS_1(_S[0][0][0], k, p0qg);
-						double v3 = recrelS_1(_S[0][1][0], k, p0gq);
-						double v4 = recrelS_1(_S[0][0][0], k, p0gg);
-                        _S[0][1][1][k] =
-							v1 +
-							v2;
+					    _S[0][1][1][k] =
+							recrelS_1(_S[0][1][0], k, p0qq) +
+							recrelS_1(_S[0][0][0], k, p0qg);
                         _S[0][0][1][k] =
-							v3 +
-							v4;
+							recrelS_1(_S[0][1][0], k, p0gq) +
+							recrelS_1(_S[0][0][0], k, p0gg);
 
 						for (uint j=0; j<=1; j++)
 							arr.get()[j*31][k] += _S[0][j][1][k] * std::pow(L1, n)/factorial(n);
@@ -56,14 +51,14 @@ namespace Candia2
                 }
             } break;
             case 1: {
-				auto& p0qq = getExpression("P0qq");
-				auto& p0qg = getExpression("P0qg");
-				auto& p0gq = getExpression("P0gq");
-				auto& p0gg = getExpression("P0gg");
-				auto& p1qq = getExpression("P1qq");
-				auto& p1qg = getExpression("P1qg");
-				auto& p1gq = getExpression("P1gq");
-				auto& p1gg = getExpression("P1gg");
+				auto& p0qq = getExpression(ExprName::P0qq);
+				auto& p0qg = getExpression(ExprName::P0qg);
+				auto& p0gq = getExpression(ExprName::P0gq);
+				auto& p0gg = getExpression(ExprName::P0gg);
+				auto& p1qq = getExpression(ExprName::P1qq);
+				auto& p1qg = getExpression(ExprName::P1qg);
+				auto& p1gq = getExpression(ExprName::P1gq);
+				auto& p1gg = getExpression(ExprName::P1gg);
 				
 			    for (uint n=1; n<_iterations; n++) {
 					// log(LOG_INFO, "DGLAP", "NLO Singlet Iteration {}", n);
@@ -85,15 +80,14 @@ namespace Candia2
                             _S[1][j][1][k] = -_S[0][j][1][k] * _alpha_s.beta1()/(4.0*PI*_alpha_s.beta0()) - _S[1][j][0][k];
                     }
 
-                    // new NLO piece convolution
-                    for (uint k=0; k<_grid.size()-1; k++) {
-                        _S[1][1][1][k] +=
+					std::for_each(std::execution::par_unseq, grid_idxs.begin(), grid_idxs.end(), [&](uint k){
+						_S[1][1][1][k] +=
 							recrelS_2(_S[1][1][0], _S[0][1][0], k, p0qq, p1qq) +
 							recrelS_2(_S[1][0][0], _S[0][0][0], k, p0qg, p1qg);
-					    _S[1][0][1][k] +=
+						_S[1][0][1][k] +=
 							recrelS_2(_S[1][1][0], _S[0][1][0], k, p0gq, p1gq) +
 							recrelS_2(_S[1][0][0], _S[0][0][0], k, p0gg, p1gg);
-                    }
+					});
 
                     // NLO truncation terms
                     for (uint t=2; t<=_trunc_idx; ++t) {
@@ -108,16 +102,14 @@ namespace Candia2
                                     - (T-1.0)*(_alpha_s.beta1()/(4.0*PI*_alpha_s.beta0()))*_S[t-1][j][0][k];
                         }
 
-						std::vector<std::thread> threads{};
-						for (uint i=0; i<NUM_SINGLET_THREADS-1; ++i) {
-							threads.emplace_back(&DGLAPSolver::_mt_EvolveDistributions_S_NLO, this,
-								t, i, i*part_size, (i+1)*part_size);
-						}
-						threads.emplace_back(&DGLAPSolver::_mt_EvolveDistributions_S_NLO, this,
-							t, NUM_SINGLET_THREADS, (NUM_SINGLET_THREADS-1)*part_size, size);
-
-						for (std::thread& t : threads)
-							t.join();
+						std::for_each(std::execution::par_unseq, grid_idxs.begin(), grid_idxs.end(), [&](uint k){
+							_S[t][1][1][k] += 
+								recrelS_2(_S[t][1][0], _S[t-1][1][0], k, p0qq, p1qq) +
+								recrelS_2(_S[t][0][0], _S[t-1][0][0], k, p0qg, p1qg);
+							_S[t][0][1][k] += 
+								recrelS_2(_S[t][1][0], _S[t-1][1][0], k, p0gq, p1gq) +
+								recrelS_2(_S[t][0][0], _S[t-1][0][0], k, p0gg, p1gg);
+						});
                     }
 
                     for (uint t=0; t<=_trunc_idx; ++t) {
@@ -134,18 +126,18 @@ namespace Candia2
                 }
             } break;
             case 2: {
-				auto& p0qq = getExpression("P0qq");
-				auto& p0qg = getExpression("P0qg");
-				auto& p0gq = getExpression("P0gq");
-				auto& p0gg = getExpression("P0gg");
-				auto& p1qq = getExpression("P1qq");
-				auto& p1qg = getExpression("P1qg");
-				auto& p1gq = getExpression("P1gq");
-				auto& p1gg = getExpression("P1gg");
-				auto& p2qq = getExpression("P2qq");
-				auto& p2qg = getExpression("P2qg");
-				auto& p2gq = getExpression("P2gq");
-				auto& p2gg = getExpression("P2gg");
+				auto& p0qq = getExpression(ExprName::P0qq);
+				auto& p0qg = getExpression(ExprName::P0qg);
+				auto& p0gq = getExpression(ExprName::P0gq);
+				auto& p0gg = getExpression(ExprName::P0gg);
+				auto& p1qq = getExpression(ExprName::P1qq);
+				auto& p1qg = getExpression(ExprName::P1qg);
+				auto& p1gq = getExpression(ExprName::P1gq);
+				auto& p1gg = getExpression(ExprName::P1gg);
+				auto& p2qq = getExpression(ExprName::P2qq);
+				auto& p2qg = getExpression(ExprName::P2qg);
+				auto& p2gq = getExpression(ExprName::P2gq);
+				auto& p2gg = getExpression(ExprName::P2gg);
 				
                 for (uint n=1; n<_iterations; n++) {
 					// log(LOG_INFO, "DGLAP", "NNLO Singlet Iteration {}", n);
@@ -177,6 +169,15 @@ namespace Candia2
 							recrelS_2(_S[1][0][0], _S[0][0][0], k, p0gg, p1gg);
                     }
 
+					std::for_each(std::execution::par_unseq, grid_idxs.begin(), grid_idxs.end(), [&](uint k){
+						_S[1][1][1][k] += 
+							recrelS_2(_S[1][1][0], _S[0][1][0], k, p0qq, p1qq) +
+							recrelS_2(_S[1][0][0], _S[0][0][0], k, p0qg, p1qg);
+						_S[1][0][1][k] += 
+							recrelS_2(_S[1][1][0], _S[0][1][0], k, p0gq, p1gq) +
+							recrelS_2(_S[1][0][0], _S[0][0][0], k, p0gg, p1gg);
+					});
+
                     // new NNLO piece non-convolution
                     for (uint k=0; k<_grid.size()-1; k++) {
                         for (uint j=0; j<=1; j++)
@@ -187,15 +188,14 @@ namespace Candia2
                                 - (_alpha_s.beta1()/(4.0*PI*_alpha_s.beta0()))*_S[1][j][0][k];
                     }
 
-                    // new NNLO piece convolution
-                    for (uint k=0; k<_grid.size()-1; k++) {
-                        _S[2][1][1][k] += 
-                            recrelS_3(_S[2][1][0], _S[1][1][0], _S[0][1][0], k, p0qq, p1qq, p2qq) +
-                            recrelS_3(_S[2][0][0], _S[1][0][0], _S[0][0][0], k, p0qg, p1qg, p2qg);
-                        _S[2][0][1][k] += 
-                            recrelS_3(_S[2][1][0], _S[1][1][0], _S[0][1][0], k, p0gq, p1gq, p2gq) +
-                            recrelS_3(_S[2][0][0], _S[1][0][0], _S[0][0][0], k, p0gg, p1gg, p2gg);
-                    }
+					std::for_each(std::execution::par_unseq, grid_idxs.begin(), grid_idxs.end(), [&](uint k){
+						_S[2][1][1][k] += 
+							recrelS_3(_S[2][1][0], _S[1][1][0], _S[0][1][0], k, p0qq, p1qq, p2qq) +
+							recrelS_3(_S[2][0][0], _S[1][0][0], _S[0][0][0], k, p0qg, p1qg, p2qg);
+						_S[2][0][1][k] += 
+							recrelS_3(_S[2][1][0], _S[1][1][0], _S[0][1][0], k, p0gq, p1gq, p2gq) +
+							recrelS_3(_S[2][0][0], _S[1][0][0], _S[0][0][0], k, p0gg, p1gg, p2gg);
+					});
 
                     for (uint t=3; t<=_trunc_idx; ++t) {
                         double T = static_cast<double>(t);
@@ -211,16 +211,14 @@ namespace Candia2
                                     - (T-2.0)*(_alpha_s.beta2()/(16.0*PI_2*_alpha_s.beta0()))*_S[t-2][j][0][k];
                         }
 
-						std::vector<std::thread> threads{};
-						for (uint i=0; i<NUM_SINGLET_THREADS-1; ++i) {
-							threads.emplace_back(&DGLAPSolver::_mt_EvolveDistributions_S_NNLO, this,
-								t, i, i*part_size, (i+1)*part_size);
-						}
-						threads.emplace_back(&DGLAPSolver::_mt_EvolveDistributions_S_NNLO, this,
-							t, NUM_SINGLET_THREADS, (NUM_SINGLET_THREADS-1)*part_size, size);
-
-						for (std::thread& t : threads)
-							t.join();
+						std::for_each(std::execution::par_unseq, grid_idxs.begin(), grid_idxs.end(), [&](uint k){
+							_S[t][1][1][k] += 
+								recrelS_3(_S[t][1][0], _S[t-1][1][0], _S[t-2][1][0], k, p0qq, p1qq, p2qq) +
+								recrelS_3(_S[t][0][0], _S[t-1][0][0], _S[t-2][0][0], k, p0qg, p1qg, p2qg);
+							_S[t][0][1][k] += 
+								recrelS_3(_S[t][1][0], _S[t-1][1][0], _S[t-2][1][0], k, p0gq, p1gq, p2gq) +
+								recrelS_3(_S[t][0][0], _S[t-1][0][0], _S[t-2][0][0], k, p0gg, p1gg, p2gg);
+						});
                     }
 
                     for (uint t=0; t<=_trunc_idx; ++t) {
@@ -237,18 +235,22 @@ namespace Candia2
                 }
             } break;
             case 3: {
-				auto& p0qq = getExpression("P0qq");
-				auto& p0qg = getExpression("P0qg");
-				auto& p0gq = getExpression("P0gq");
-				auto& p0gg = getExpression("P0gg");
-				auto& p1qq = getExpression("P1qq");
-				auto& p1qg = getExpression("P1qg");
-				auto& p1gq = getExpression("P1gq");
-				auto& p1gg = getExpression("P1gg");
-				auto& p2qq = getExpression("P2qq");
-				auto& p2qg = getExpression("P2qg");
-				auto& p2gq = getExpression("P2gq");
-				auto& p2gg = getExpression("P2gg");
+				auto& p0qq = getExpression(ExprName::P0qq);
+				auto& p0qg = getExpression(ExprName::P0qg);
+				auto& p0gq = getExpression(ExprName::P0gq);
+				auto& p0gg = getExpression(ExprName::P0gg);
+				auto& p1qq = getExpression(ExprName::P1qq);
+				auto& p1qg = getExpression(ExprName::P1qg);
+				auto& p1gq = getExpression(ExprName::P1gq);
+				auto& p1gg = getExpression(ExprName::P1gg);
+				auto& p2qq = getExpression(ExprName::P2qq);
+				auto& p2qg = getExpression(ExprName::P2qg);
+				auto& p2gq = getExpression(ExprName::P2gq);
+				auto& p2gg = getExpression(ExprName::P2gg);
+				auto& p3qq = getExpression(ExprName::P3qq);
+				auto& p3qg = getExpression(ExprName::P3qg);
+				auto& p3gq = getExpression(ExprName::P3gq);
+				auto& p3gg = getExpression(ExprName::P3gg);
 
 				auto beta0 = _alpha_s.beta0();
 				auto beta1 = _alpha_s.beta1();
@@ -280,14 +282,14 @@ namespace Candia2
                     }
 
                     // new NLO piece convolution
-                    for (uint k=0; k<_grid.size()-1; k++) {
-                        _S[1][1][1][k] +=
+                    std::for_each(std::execution::par_unseq, grid_idxs.begin(), grid_idxs.end(), [&](uint k){
+						_S[1][1][1][k] += 
 							recrelS_2(_S[1][1][0], _S[0][1][0], k, p0qq, p1qq) +
 							recrelS_2(_S[1][0][0], _S[0][0][0], k, p0qg, p1qg);
-					    _S[1][0][1][k] +=
+						_S[1][0][1][k] += 
 							recrelS_2(_S[1][1][0], _S[0][1][0], k, p0gq, p1gq) +
 							recrelS_2(_S[1][0][0], _S[0][0][0], k, p0gg, p1gg);
-                    }
+					});
 
                     // new NNLO piece non-convolution
                     for (uint k=0; k<_grid.size()-1; k++) {
@@ -300,14 +302,14 @@ namespace Candia2
                     }
 
                     // new NNLO piece non-convolution
-                    for (uint k=0; k<_grid.size()-1; k++) {
-                        _S[2][1][1][k] += 
-                            recrelS_3(_S[2][1][0], _S[1][1][0], _S[0][1][0], k, p0qq, p1qq, p2qq) +
-                            recrelS_3(_S[2][0][0], _S[1][0][0], _S[0][0][0], k, p0qg, p1qg, p2qg);
-                        _S[2][0][1][k] += 
-                            recrelS_3(_S[2][1][0], _S[1][1][0], _S[0][1][0], k, p0gq, p1gq, p2gq) +
-                            recrelS_3(_S[2][0][0], _S[1][0][0], _S[0][0][0], k, p0gg, p1gg, p2gg);
-                    }
+                    std::for_each(std::execution::par_unseq, grid_idxs.begin(), grid_idxs.end(), [&](uint k){
+						_S[2][1][1][k] += 
+							recrelS_3(_S[2][1][0], _S[1][1][0], _S[0][1][0], k, p0qq, p1qq, p2qq) +
+							recrelS_3(_S[2][0][0], _S[1][0][0], _S[0][0][0], k, p0qg, p1qg, p2qg);
+						_S[2][0][1][k] += 
+							recrelS_3(_S[2][1][0], _S[1][1][0], _S[0][1][0], k, p0gq, p1gq, p2gq) +
+							recrelS_3(_S[2][0][0], _S[1][0][0], _S[0][0][0], k, p0gg, p1gg, p2gg);
+					});
 
                     // new N3LO piece non-convolution
                     for (uint k=0; k<_grid.size()-1; k++) {
@@ -320,19 +322,15 @@ namespace Candia2
                                 - 2.0*fac1*_S[2][j][0][k]
                                 - fac2*_S[1][j][0][k];
                     }
-
-					{
-						std::vector<std::thread> threads{};
-						for (uint i=0; i<NUM_SINGLET_THREADS-1; ++i) {
-							threads.emplace_back(&DGLAPSolver::_mt_EvolveDistributions_S_N3LO, this,
-								3, i, i*part_size, (i+1)*part_size);
-						}
-						threads.emplace_back(&DGLAPSolver::_mt_EvolveDistributions_S_N3LO, this,
-							3, NUM_SINGLET_THREADS, (NUM_SINGLET_THREADS-1)*part_size, size);
-
-						for (std::thread& t : threads)
-							t.join();
-					}
+					
+					std::for_each(std::execution::par_unseq, grid_idxs.begin(), grid_idxs.end(), [&](uint k){
+						_S[3][1][1][k] += 
+							recrelS_4(_S[3][1][0], _S[2][1][0], _S[1][1][0], _S[0][1][0], k, p0qq, p1qq, p2qq, p3qq) +
+							recrelS_4(_S[3][0][0], _S[2][0][0], _S[1][0][0], _S[0][0][0], k, p0qg, p1qg, p2qg, p3qg);
+						_S[3][0][1][k] += 
+							recrelS_4(_S[3][1][0], _S[2][1][0], _S[1][1][0], _S[0][1][0], k, p0gq, p1gq, p2gq, p3gq) +
+							recrelS_4(_S[3][0][0], _S[2][0][0], _S[1][0][0], _S[0][0][0], k, p0gg, p1gg, p2gg, p3gg);
+					});
 
                     for (uint t=4; t<=_trunc_idx; ++t) {
                         double T = static_cast<double>(t);
@@ -350,16 +348,14 @@ namespace Candia2
                                     - (T-3.0)*fac3*_S[t-3][j][0][k];
                         }
 
-						std::vector<std::thread> threads{};
-						for (uint i=0; i<NUM_SINGLET_THREADS-1; ++i) {
-							threads.emplace_back(&DGLAPSolver::_mt_EvolveDistributions_S_N3LO, this,
-								t, i, i*part_size, (i+1)*part_size);
-						}
-						threads.emplace_back(&DGLAPSolver::_mt_EvolveDistributions_S_N3LO, this,
-							t, NUM_SINGLET_THREADS, (NUM_SINGLET_THREADS-1)*part_size, size);
-
-						for (std::thread& t : threads)
-							t.join();
+						std::for_each(std::execution::par_unseq, grid_idxs.begin(), grid_idxs.end(), [&](uint k){
+							_S[t][1][1][k] += 
+								recrelS_4(_S[t][1][0], _S[t-1][1][0], _S[t-2][1][0], _S[t-3][1][0], k, p0qq, p1qq, p2qq, p3qq) +
+								recrelS_4(_S[t][0][0], _S[t-1][0][0], _S[t-2][0][0], _S[t-3][0][0], k, p0qg, p1qg, p2qg, p3qg);
+							_S[t][0][1][k] += 
+								recrelS_4(_S[t][1][0], _S[t-1][1][0], _S[t-2][1][0], _S[t-3][1][0], k, p0gq, p1gq, p2gq, p3gq) +
+								recrelS_4(_S[t][0][0], _S[t-1][0][0], _S[t-2][0][0], _S[t-3][0][0], k, p0gg, p1gg, p2gg, p3gg);
+						});
                     }
 
                     for (uint t=0; t<=_trunc_idx; ++t) {
@@ -378,84 +374,6 @@ namespace Candia2
         }
 		endLogIterations();
     }
-	void DGLAPSolver::_mt_EvolveDistributions_S_NLO(uint t, int thread_idx, uint min, uint max)
-	{
-		initializeThreadIndex(thread_idx);
-
-		auto& p0qq = getExpression("P0qq");
-		auto& p0qg = getExpression("P0qg");
-		auto& p0gq = getExpression("P0gq");
-		auto& p0gg = getExpression("P0gg");
-		auto& p1qq = getExpression("P1qq");
-		auto& p1qg = getExpression("P1qg");
-		auto& p1gq = getExpression("P1gq");
-		auto& p1gg = getExpression("P1gg");
-		
-	    for (uint k=min; k<max; k++) {
-			_S[t][1][1][k] += 
-				recrelS_2(_S[t][1][0], _S[t-1][1][0], k, p0qq, p1qq) +
-				recrelS_2(_S[t][0][0], _S[t-1][0][0], k, p0qg, p1qg);
-			_S[t][0][1][k] += 
-				recrelS_2(_S[t][1][0], _S[t-1][1][0], k, p0gq, p1gq) +
-				recrelS_2(_S[t][0][0], _S[t-1][0][0], k, p0gg, p1gg);
-		}
-	}
-	void DGLAPSolver::_mt_EvolveDistributions_S_NNLO(uint t, int thread_idx, uint min, uint max)
-	{
-		initializeThreadIndex(thread_idx);
-
-		auto& p0qq = getExpression("P0qq");
-		auto& p0qg = getExpression("P0qg");
-		auto& p0gq = getExpression("P0gq");
-		auto& p0gg = getExpression("P0gg");
-		auto& p1qq = getExpression("P1qq");
-		auto& p1qg = getExpression("P1qg");
-		auto& p1gq = getExpression("P1gq");
-		auto& p1gg = getExpression("P1gg");
-		auto& p2qq = getExpression("P2qq");
-		auto& p2qg = getExpression("P2qg");
-		auto& p2gq = getExpression("P2gq");
-		auto& p2gg = getExpression("P2gg");
-		
-	    for (uint k=min; k<max; k++) {
-			_S[t][1][1][k] += 
-				recrelS_3(_S[t][1][0], _S[t-1][1][0], _S[t-2][1][0], k, p0qq, p1qq, p2qq) +
-				recrelS_3(_S[t][0][0], _S[t-1][0][0], _S[t-2][0][0], k, p0qg, p1qg, p2qg);
-			_S[t][0][1][k] += 
-				recrelS_3(_S[t][1][0], _S[t-1][1][0], _S[t-2][1][0], k, p0gq, p1gq, p2gq) +
-				recrelS_3(_S[t][0][0], _S[t-1][0][0], _S[t-2][0][0], k, p0gg, p1gg, p2gg);
-		}
-	}
-	void DGLAPSolver::_mt_EvolveDistributions_S_N3LO(uint t, int thread_idx, uint min, uint max)
-	{
-		initializeThreadIndex(thread_idx);
-
-		auto& p0qq = getExpression("P0qq");
-		auto& p0qg = getExpression("P0qg");
-		auto& p0gq = getExpression("P0gq");
-		auto& p0gg = getExpression("P0gg");
-		auto& p1qq = getExpression("P1qq");
-		auto& p1qg = getExpression("P1qg");
-		auto& p1gq = getExpression("P1gq");
-		auto& p1gg = getExpression("P1gg");
-		auto& p2qq = getExpression("P2qq");
-		auto& p2qg = getExpression("P2qg");
-		auto& p2gq = getExpression("P2gq");
-		auto& p2gg = getExpression("P2gg");
-		auto& p3qq = getExpression("P3qq");
-		auto& p3qg = getExpression("P3qg");
-		auto& p3gq = getExpression("P3gq");
-		auto& p3gg = getExpression("P3gg");
-		
-		for (uint k=min; k<max; k++) {
-			_S[t][1][1][k] += 
-				recrelS_4(_S[t][1][0], _S[t-1][1][0], _S[t-2][1][0], _S[t-3][1][0], k, p0qq, p1qq, p2qq, p3qq) +
-				recrelS_4(_S[t][0][0], _S[t-1][0][0], _S[t-2][0][0], _S[t-3][0][0], k, p0qg, p1qg, p2qg, p3qg);
-			_S[t][0][1][k] += 
-				recrelS_4(_S[t][1][0], _S[t-1][1][0], _S[t-2][1][0], _S[t-3][1][0], k, p0gq, p1gq, p2gq, p3gq) +
-				recrelS_4(_S[t][0][0], _S[t-1][0][0], _S[t-2][0][0], _S[t-3][0][0], k, p0gg, p1gg, p2gg, p3gg);
-		}
-	}
 	
 	void DGLAPSolver::evolveNonSingletThreaded(
         std::reference_wrapper<std::vector<ArrayGrid>> arr, 
@@ -507,9 +425,9 @@ namespace Candia2
                 std::array<double, 2> L{L1, L2};
 
 				for (uint j=13; j<=12+_nf; j++)
-					threads.emplace_back(&DGLAPSolver::_mt_EvolveDistribution_NS_NLO, this, arr, j, "P1nsm", L);
+					threads.emplace_back(&DGLAPSolver::_mt_EvolveDistribution_NS_NLO, this, arr, j, ExprName::P1nsm, L);
 				for (uint j=32; j<=30+_nf; j++)
-					threads.emplace_back(&DGLAPSolver::_mt_EvolveDistribution_NS_NLO, this, arr, j, "P1nsp", L);
+					threads.emplace_back(&DGLAPSolver::_mt_EvolveDistribution_NS_NLO, this, arr, j, ExprName::P1nsp, L);
 
 				for (std::thread& t : threads)
 					t.join();
@@ -536,9 +454,9 @@ namespace Candia2
 				std::vector<std::thread> threads{};
 
                 std::array<double, 3> L{L1, L2, L3};
-				std::array<std::string, 2> nsm{"P1nsm", "P2nsm"};
-				std::array<std::string, 2> nsp{"P1nsp", "P2nsp"};
-				std::array<std::string, 2> nsv{"P1nsm", "P2nsv"};
+				std::array<ExprName, 2> nsm{ExprName::P1nsm, ExprName::P2nsm};
+				std::array<ExprName, 2> nsp{ExprName::P1nsp, ExprName::P2nsp};
+				std::array<ExprName, 2> nsv{ExprName::P1nsm, ExprName::P2nsv};
 
 				for (uint j=26; j<=24+_nf; j++)
 					threads.emplace_back(&DGLAPSolver::_mt_EvolveDistribution_NS_NNLO, this, arr, j, nsm, L);
@@ -571,9 +489,9 @@ namespace Candia2
 				std::vector<std::thread> threads{};
 
                 std::array<double, 4> L{L1, L2, L3, L4};
-				std::array<std::string, 3> nsm{"P1nsm", "P2nsm", "P3nsm"};
-				std::array<std::string, 3> nsp{"P1nsp", "P2nsp", "P3nsp"};
-				std::array<std::string, 3> nsv{"P1nsm", "P2nsv", "P3nsv"};
+				std::array<ExprName, 3> nsm{ExprName::P1nsm, ExprName::P2nsm, ExprName::P3nsm};
+				std::array<ExprName, 3> nsp{ExprName::P1nsp, ExprName::P2nsp, ExprName::P3nsp};
+				std::array<ExprName, 3> nsv{ExprName::P1nsm, ExprName::P2nsv, ExprName::P3nsv};
 
 				for (uint j=26; j<=24+_nf; j++)
 					threads.emplace_back(&DGLAPSolver::_mt_EvolveDistribution_NS_N3LO, this, arr, j, nsm, L);
@@ -594,9 +512,7 @@ namespace Candia2
         std::reference_wrapper<std::vector<ArrayGrid>> arr, 
         uint j, double L1)
     {
-		initializeThreadIndex(j);
-
-		auto& p0ns = getExpression("P0ns");
+		auto& p0ns = getExpression(ExprName::P0ns);
 		
         for (uint n=1; n<_iterations; n++) {
 			logThreadIterations(j, n, _iterations-1, "NonSingletLO");
@@ -609,11 +525,9 @@ namespace Candia2
     }
     void DGLAPSolver::_mt_EvolveDistribution_NS_NLO(
         std::reference_wrapper<std::vector<ArrayGrid>> arr, 
-        uint j, std::string const& P1, std::array<double, 2> const&  L)
+        uint j, ExprName P1, std::array<double, 2> const&  L)
     {
-		initializeThreadIndex(j);
-
-		auto& p0ns = getExpression("P0ns");
+		auto& p0ns = getExpression(ExprName::P0ns);
 		auto& p1   = getExpression(P1);
 		
         double const L1 = L[0];
@@ -640,11 +554,9 @@ namespace Candia2
     }
     void DGLAPSolver::_mt_EvolveDistribution_NS_NNLO(
         std::reference_wrapper<std::vector<ArrayGrid>> arr, 
-        uint j, std::array<std::string, 2> const& P, std::array<double, 3> const& L)
+        uint j, std::array<ExprName, 2> const& P, std::array<double, 3> const& L)
     {
-		initializeThreadIndex(j);
-
-		auto& p0ns = getExpression("P0ns");
+		auto& p0ns = getExpression(ExprName::P0ns);
 		auto& p1   = getExpression(P[0]);
 		auto& p2   = getExpression(P[1]);
 		
@@ -714,11 +626,9 @@ namespace Candia2
     }
     void DGLAPSolver::_mt_EvolveDistribution_NS_N3LO(
         std::reference_wrapper<std::vector<ArrayGrid>> arr, 
-			uint j, std::array<std::string, 3> const& P, std::array<double, 4> const& L)
+			uint j, std::array<ExprName, 3> const& P, std::array<double, 4> const& L)
     {
-		initializeThreadIndex(j);
-
-		auto& p0ns = getExpression("P0ns");
+		auto& p0ns = getExpression(ExprName::P0ns);
 		auto& p1   = getExpression(P[0]);
 		auto& p2   = getExpression(P[1]);
 		auto& p3   = getExpression(P[2]);
@@ -898,9 +808,9 @@ namespace Candia2
 
 				std::vector<std::thread> threads{};
 				for (uint j=13; j<=12+_nf; ++j)
-					threads.emplace_back(&DGLAPSolver::_mt_EvolveDistribution_NST_NLO, this, arr, j, "P1nsm", L1);
+					threads.emplace_back(&DGLAPSolver::_mt_EvolveDistribution_NST_NLO, this, arr, j, ExprName::P1nsm, L1);
 				for (uint j=32; j<=30+_nf; ++j)
-					threads.emplace_back(&DGLAPSolver::_mt_EvolveDistribution_NST_NLO, this, arr, j, "P1nsp", L1);
+					threads.emplace_back(&DGLAPSolver::_mt_EvolveDistribution_NST_NLO, this, arr, j, ExprName::P1nsp, L1);
 
 				for (std::thread & t : threads)
 					t.join();
@@ -926,10 +836,10 @@ namespace Candia2
 
 				std::vector<std::thread> threads{};
 				for (uint j=26; j<=24+_nf; j++)
-					threads.emplace_back(&DGLAPSolver::_mt_EvolveDistribution_NST_NNLO, this, arr, j, "P1nsm", "P2nsm", L1);
+					threads.emplace_back(&DGLAPSolver::_mt_EvolveDistribution_NST_NNLO, this, arr, j, ExprName::P1nsm, ExprName::P2nsm, L1);
 				for (uint j=32; j<=30+_nf; ++j)
-					threads.emplace_back(&DGLAPSolver::_mt_EvolveDistribution_NST_NNLO, this, arr, j, "P1nsp", "P2nsp", L1);
-				threads.emplace_back(&DGLAPSolver::_mt_EvolveDistribution_NST_NNLO, this, arr, 25, "P1nsm", "P2nsv", L1);
+					threads.emplace_back(&DGLAPSolver::_mt_EvolveDistribution_NST_NNLO, this, arr, j, ExprName::P1nsp, ExprName::P2nsp, L1);
+				threads.emplace_back(&DGLAPSolver::_mt_EvolveDistribution_NST_NNLO, this, arr, 25, ExprName::P1nsm, ExprName::P2nsv, L1);
 				
 				for (std::thread & t : threads)
 					t.join();
@@ -955,10 +865,10 @@ namespace Candia2
 
 				std::vector<std::thread> threads{};
 				for (uint j=26; j<=24+_nf; j++)
-					threads.emplace_back(&DGLAPSolver::_mt_EvolveDistribution_NST_N3LO, this, arr, j, "P1nsm", "P2nsm", "P3nsm", L1);
+					threads.emplace_back(&DGLAPSolver::_mt_EvolveDistribution_NST_N3LO, this, arr, j, ExprName::P1nsm, ExprName::P2nsm, ExprName::P3nsm, L1);
 				for (uint j=32; j<=30+_nf; ++j)
-					threads.emplace_back(&DGLAPSolver::_mt_EvolveDistribution_NST_N3LO, this, arr, j, "P1nsp", "P2nsp", "P3nsp", L1);
-				threads.emplace_back(&DGLAPSolver::_mt_EvolveDistribution_NST_N3LO, this, arr, 25, "P1nsm", "P2nsv", "P3nsv", L1);
+					threads.emplace_back(&DGLAPSolver::_mt_EvolveDistribution_NST_N3LO, this, arr, j, ExprName::P1nsp, ExprName::P2nsp, ExprName::P3nsp, L1);
+						threads.emplace_back(&DGLAPSolver::_mt_EvolveDistribution_NST_N3LO, this, arr, 25, ExprName::P1nsm, ExprName::P2nsv, ExprName::P3nsv, L1);
 
 				for (std::thread & t : threads)
 					t.join();
@@ -970,9 +880,7 @@ namespace Candia2
 
 	void DGLAPSolver::_mt_EvolveDistribution_NST_LO(std::reference_wrapper<std::vector<ArrayGrid>> arr, uint j, double L1)
 	{
-		initializeThreadIndex(j);
-
-		auto& p0ns = getExpression("P0ns");
+		auto& p0ns = getExpression(ExprName::P0ns);
 
 		for (uint n=1; n<_iterations; n++) {
 			logThreadIterations(j, n, _iterations-1, "NonSingletLO (trunc)");
@@ -989,11 +897,10 @@ namespace Candia2
 	}
 	void DGLAPSolver::_mt_EvolveDistribution_NST_NLO(
 		std::reference_wrapper<std::vector<ArrayGrid>> arr, uint j,
-		std::string_view _p1, double L1)
+		ExprName _p1, double L1)
 	{
-		initializeThreadIndex(j);
 
-		auto& p0ns = getExpression("P0ns");
+		auto& p0ns = getExpression(ExprName::P0ns);
 		auto& p1 =   getExpression(_p1);
 
 		for (uint n=1; n<_iterations; n++) {
@@ -1035,11 +942,9 @@ namespace Candia2
 		}
 	}
 	void DGLAPSolver::_mt_EvolveDistribution_NST_NNLO(std::reference_wrapper<std::vector<ArrayGrid>> arr, uint j,
-		std::string_view _p1, std::string_view _p2, double L1)
+		ExprName _p1, ExprName _p2, double L1)
 	{
-		initializeThreadIndex(j);
-
-		auto& p0ns = getExpression("P0ns");
+		auto& p0ns = getExpression(ExprName::P0ns);
 		auto& p1 = getExpression(_p1);
 		auto& p2 = getExpression(_p2);
 
@@ -1094,11 +999,9 @@ namespace Candia2
 	}
 	void DGLAPSolver::_mt_EvolveDistribution_NST_N3LO(
 		std::reference_wrapper<std::vector<ArrayGrid>> arr, uint j,
-		std::string_view _p1, std::string_view _p2, std::string_view _p3, double L1)
+		ExprName _p1, ExprName _p2, ExprName _p3, double L1)
 	{
-		initializeThreadIndex(j);
-
-		auto& p0ns = getExpression("P0ns");
+		auto& p0ns = getExpression(ExprName::P0ns);
 		auto& p1 =   getExpression(_p1);
 		auto& p2 =   getExpression(_p2);
 		auto& p3 =   getExpression(_p3);

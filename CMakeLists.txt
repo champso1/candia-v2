@@ -82,7 +82,10 @@ target_sources(candia PUBLIC
   BASE_DIRS ${CMAKE_SOURCE_DIR}/include
   FILES ${headers})
 
+find_package(TBB REQUIRED)
+
 target_link_libraries(candia PRIVATE hplog nnlo_splitfuncs_fortran n3lo_splitfuncs_fortran ome)
+target_link_libraries(candia PUBLIC TBB::tbb)
 target_include_directories(candia PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:include>)

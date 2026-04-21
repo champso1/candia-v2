@@ -81,26 +81,34 @@ namespace Candia2
 		std::array<double,8> _r1{}; //!< real solution to N3LO quadratic
 		std::array<double,8> _b{};  //!< \f$-2*\mathrm{Re}[r_2]\f$
 		std::array<double,8> _c{};  //!< \f$|r_2|^2\f$
-		
-		std::map<std::string_view, std::unique_ptr<Expression>> _expressions{}; //!< list of internal stores Expression objects
-		/**
-		 *  @brief Stores a unique pointer of the requested expression internally
-		 *  @param name The name to associate the expression with
-		 *  @param args Any arguments to pass to the constructor of the expression
-		 */
+
+		enum class ExprName : uint
+		{
+			P0ns=0, P0qq, P0qg, P0gq, P0gg,
+			P1nsm, P1nsp, P1qq, P1qg, P1gq, P1gg,
+			P2nsm, P2nsp, P2nsv, P2qq, P2qg, P2gq, P2gg,
+			P3nsm, P3nsp, P3nsv, P3qq, P3qg, P3gq, P3gg,
+			A2ns, A2hq, A2hg, A2gq, A2gg,
+		    A3nsm, A3nsp, A3gq, A3gg, A3hq, A3hg, A3psqq, A3sqg, A3PSshq,
+			Count
+		};
+
+		std::array<std::unique_ptr<Expression>, static_cast<uint>(ExprName::Count)> _expressions{};
 		template <typename TExpr, typename... TExprArgs>
 		requires (std::derived_from<TExpr, Expression>)
-		void createExpression(std::string_view name, TExprArgs&&... args)
+		inline void createExpression(ExprName name, TExprArgs&&... args)
 		{
-			std::unique_ptr<Expression> ptr = std::make_unique<TExpr>(std::forward<TExprArgs>(args)...);
-			_expressions.emplace(std::make_pair(name, std::move(ptr)));
+		    _expressions[static_cast<uint>(name)] = std::make_unique<TExpr>(std::forward<TExprArgs>(args)...);
 		}
 	public:
 		/**
 		 *  @brief returns the expression object with the given name
 		 *  @param name The name associated with the expression object
 		 */
-		Expression& getExpression(std::string_view name);
+		inline Expression& getExpression(ExprName name)
+		{
+			return *_expressions[static_cast<uint>(name)];
+		}
 
 	private:
 		/** 
@@ -295,36 +303,6 @@ namespace Candia2
 
 #if ENABLE_THREADING
 		/**
-		 *  @defgroup singlethelpers Multi-Thread Singlet Helper Functions
-		 *  @{
-		 */
-		/**
-		 *  @brief Performs the NLO evolution of the coefficients
-		 *  @param t truncation index
-		 *  @param thread_idx a unique index passed to the function to ensure safe access to a gsl workspace
-		 *  @param min minimum grid index
-		 *  @param max maximum grid index
-		 */
-		void _mt_EvolveDistributions_S_NLO(uint t, int thread_idx, uint min, uint max);
-		/**
-		 *  @brief Performs the NNLO evolution of the coefficients
-		 *  @param t truncation index
-		 *  @param thread_idx a unique index passed to the function to ensure safe access to a gsl workspace
-		 *  @param min minimum grid index
-		 *  @param max maximum grid index
-		 */
-		void _mt_EvolveDistributions_S_NNLO(uint t, int thread_idx, uint min, uint max);
-		/**
-		 *  @brief Performs the N3LO evolution of the coefficients
-		 *  @param t truncation index
-		 *  @param thread_idx a unique index passed to the function to ensure safe access to a gsl workspace
-		 *  @param min minimum grid index
-		 *  @param max maximum grid index
-		 */
-		void _mt_EvolveDistributions_S_N3LO(uint t, int thread_idx, uint min, uint max);
-		/** @} */
-
-		/**
 		 *  @defgroup nonsinglethelpers Multi-Thread Non-Singlet Helper Functions
 		 *  @{
 		 */
@@ -347,7 +325,7 @@ namespace Candia2
 		 */
 	    void _mt_EvolveDistribution_NS_NLO(
 			std::reference_wrapper<std::vector<ArrayGrid>> arr, 
-			uint j, std::string const& P1, std::array<double, 2> const& L);
+			uint j, ExprName P1, std::array<double, 2> const& L);
 		/**
 		 *  @brief NNLO non-singlet multi-threaded helper routine
 		 *  @param arr reference to set of dists to place resummation results into
@@ -357,7 +335,7 @@ namespace Candia2
 		 */
 	    void _mt_EvolveDistribution_NS_NNLO(
 			std::reference_wrapper<std::vector<ArrayGrid>> arr, 
-			uint j, std::array<std::string, 2> const& P, std::array<double, 3> const& L);
+			uint j, std::array<ExprName, 2> const& P, std::array<double, 3> const& L);
 		/**
 		 *  @brief N3LO non-singlet multi-threaded helper routine
 		 *  @param arr reference to set of dists to place resummation results into
@@ -367,7 +345,7 @@ namespace Candia2
 		 */
 	    void _mt_EvolveDistribution_NS_N3LO(
 			std::reference_wrapper<std::vector<ArrayGrid>> arr, 
-			uint j, std::array<std::string, 3> const& P, std::array<double, 4> const& L);
+			uint j, std::array<ExprName, 3> const& P, std::array<double, 4> const& L);
 		/** @} */
 
 		/**
@@ -392,7 +370,7 @@ namespace Candia2
 		 */
 	    void _mt_EvolveDistribution_NST_NLO(
 			std::reference_wrapper<std::vector<ArrayGrid>> arr,
-			uint j, std::string_view p1, double L1);
+			uint j, ExprName p1, double L1);
 		/**
 		 *  @brief NNLO non-singlet multi-threaded helper routine
 		 *  @param arr reference to set of dists to place resummation results into
@@ -403,7 +381,7 @@ namespace Candia2
 		 */
 	    void _mt_EvolveDistribution_NST_NNLO(
 			std::reference_wrapper<std::vector<ArrayGrid>> arr,
-			uint j, std::string_view p1, std::string_view p2, double L1);
+			uint j, ExprName p1, ExprName p2, double L1);
 		/**
 		 *  @brief N3LO non-singlet multi-threaded helper routine
 		 *  @param arr reference to set of dists to place resummation results into
@@ -415,7 +393,7 @@ namespace Candia2
 		 */
 	    void _mt_EvolveDistribution_NST_N3LO(
 			std::reference_wrapper<std::vector<ArrayGrid>> arr,
-			uint j, std::string_view p1, std::string_view p2, std::string_view p3, double L1);
+			uint j, ExprName p1, ExprName p2, ExprName p3, double L1);
 		/** @} */
 
 		/** @defgroup recrels Recursion Relations */
