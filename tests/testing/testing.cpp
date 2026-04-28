@@ -1,20 +1,85 @@
-#include "Candia-v2/Candia.hpp"
-#include "Candia-v2/LHAPDFDistribution.hpp"
+#include "arraygrid2.hpp"
+#include "Candia-v2/ArrayGrid.hpp"
 using namespace Candia2;
 
-int main()
+#include <random>
+#include <charconv>
+#include <cstring>
+
+static constexpr uint ITERS = 15;
+static constexpr uint GRID = 200;
+
+void main1();
+void main2();
+
+int main(int argc, char** argv)
+{
+	if (argc != 2)
+		return 1;
+	int type{};
+	std::from_chars(argv[1], argv[1]+strlen(argv[1]), type);
+	switch (type) {
+		case 1: main1(); break;
+		case 2: main2(); break;
+		default: throw std::runtime_error("unreachable");
+	}
+}
+
+void main1()
 {
 	getLogOptions().show_debug_messages = true;
+	std::random_device dev{};
+	std::mt19937 mt{dev()};
+	std::uniform_real_distribution<double> dist{};
+	auto get_rand = [&](){ return dist(mt); };
 
-	const double Q0 = 1.35;
-	const double Qf = 100.0;
-	const uint order = 3;
-	const double mur2_muf2 = 1.0;
-	
-	LesHouchesDistribution dist(Qf);
-	LHAPDFDistribution lhapdf_dist(make_lhapdf_pdf("CT18NLO"), Q0, Qf);
-	AlphaS alphas(order, lhapdf_dist.Q0(), Qf, lhapdf_dist.alpha0(), mur2_muf2);
-	alphas.setVFNS(lhapdf_dist.masses(), lhapdf_dist.nfi(), lhapdf_dist.nff());
-	// alphas.setFFNS(4);
+	ArrayGrid2<6> arrgrid2({DISTS, 2, ITERS, ITERS, ITERS, GRID});
+
+	for (uint j=0; j<DISTS; ++j) {
+		for (uint s=0; s<2; ++s) {
+			for (uint t=0; t<ITERS; ++t) {
+				for (uint m=0; m<ITERS; ++m) {
+					for (uint n=0; n<ITERS; ++n) {
+						for (uint k=0; k<GRID; ++k)
+							arrgrid2(j,s,t,m,n,k) = get_rand();
+					}
+				}
+			}
+		}
+	}
+}
+
+void main2()
+{
+	getLogOptions().show_debug_messages = true;
+	std::random_device dev{};
+	std::mt19937 mt{dev()};
+	std::uniform_real_distribution<double> dist{};
+	auto get_rand = [&](){ return dist(mt); };
+
+	MultiDimArrayGrid_t<5> arrgridorig = MultiDimArrayGrid_t<5>{
+		DISTS, MultiDimArrayGrid_t<4>{
+			2, MultiDimArrayGrid_t<3>{
+				ITERS, MultiDimArrayGrid_t<2>{
+					ITERS, MultiDimArrayGrid_t<1>{
+						ITERS, ArrayGrid(GRID)
+					}
+				}
+			}
+		}
+	};
+
+	for (uint j=0; j<DISTS; ++j) {
+		for (uint s=0; s<2; ++s) {
+			for (uint t=0; t<ITERS; ++t) {
+				for (uint m=0; m<ITERS; ++m) {
+					for (uint n=0; n<ITERS; ++n) {
+						for (uint k=0; k<GRID; ++k)
+							arrgridorig[j][s][t][m][n][k] = get_rand();
+					}
+				}
+			}
+		}
+	}
 }
 
