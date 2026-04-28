@@ -431,7 +431,6 @@ namespace Candia2
 		const double dl = std::log(x);
 		const double dl1 = std::log1p(-x);
 
-		
 		double res1 = 2675.8 * dl/x + 14214.0/x - 144.0*std::pow(dl, 4.0) + 72.0*std::pow(dl, 3.0)
 			- 7471.0*std::pow(dl, 2.0) + 274.4*dl + 3589.0*dl1 - 20852.0
 			+ 3968.0*x - 3363.0*std::pow(x, 2.0) + 4848.0*std::pow(x, 3.0) 
@@ -461,158 +460,6 @@ namespace Candia2
 	}
 
 
-	/*
-	double P3nsp::calcRegular(double x) const
-	{	
-		double x1  = 1.0-x;
-		double dm  = 1.0/x1;
-		double dl  = std::log(x);
-		double dlm = std::log1p(-x);
-
-		double x2 = x*x;
-		double x3 = x*x*x;
-		double x4 = x*x*x*x;
-		double dl2 = dl*dl;
-		double dl3 = dl2*dl;
-		double dl4 = dl3*dl;
-		double dl5 = dl4*dl;
-		double dl6 = dl5*dl;
-		double dlm2 = dlm*dlm;
-		double dlm3 = dlm2*dlm;
- 
-		double nf = static_cast<double>(_nf);
-
-		// Leading large-nc
-		double P3NSA0 =
-			2.5e4 * (
-				x1 * (3.5254 + 8.6935*x - 1.5051*x2
-					+ 1.8300*x3)
-				+ 11.883*x*dl
-				- 0.09066*x*dl2
-				+ 11.410*x1*dlm
-				+ 13.376*dl*dlm
-			)
-			+ 5.167133e4*dl
-			+ 1.712095e4*dl2
-			+ 2.863226e3*dl3
-			+ 2.978255e2*dl4
-			+ 1.6e1*dl5
-			+ 5.0e-1*dl6
-			- 2.973385e4
-			+ 1.906980e4*dlm;
-
-		double P3NSA1 =
-			2.5e4 * (
-				x1 * (-0.74077 + 1.4860*x - 0.23631*std::pow(x,2)
-					+ 0.31584*x3)
-				+ 2.5251*x1*dlm
-				+ 2.5203*dl*dlm
-				+ 2.2242*x*dl
-				- 0.02460*x*dl2
-				+ 0.00310*x*dl3
-			)
-			- 9.239374e3*dl
-			- 2.917312e3*dl2
-			- 4.305308e2*dl3
-			- 3.6e1*dl4
-			- (4.0/3.0)*dl5
-			+ 8.115605e3
-			- 3.079761e3*dlm;
-
-		// Nonleading approximations
-		double P3NPA01 =
-			3948.16*x1
-			- 2464.61*(2.0*x - x*x)*x1
-			- 1839.44*dl2
-			- 402.156*dl3
-			- 1777.27*dlm2*x1
-			- 204.183*dlm3*x1
-			+ 507.152
-			- 5.587553e1*dl4
-			- 2.831276e0*dl5
-			- 1.488340e-1*dl6
-			- 2.601749e3
-			- 2.118867e3*dlm;
-
-		double P3NPA02 =
-			(8698.39 - 10490.47*x)*x*x1
-			+ 1389.73*dl
-			+ 189.576*dl2
-			- 173.936*dlm2*x1
-			+ 223.078*dlm3*x1
-			+ 505.209
-			- 5.587553e1*dl4
-			- 2.831276e0*dl5
-			- 1.488340e-1*dl6
-			- 2.601749e3
-			- 2.118867e3*dlm;
-
-		double P3NPA11 =
-			(-1116.34 + 1071.24*x)*x*x1
-			- 59.3041*dl2
-			- 8.4620*dl3
-			- 143.813*dlm*x1
-			- 18.8803*dlm3*x1
-			- 7.33927
-			+ 4.658436e0*dl4
-			+ 2.798354e-1*dl5
-			+ 3.121643e2
-			+ 3.379310e2*dlm;
-
-		double P3NPA12 =
-			(-690.151 - 656.386*x*x)*x1
-			+ 133.702*dl2
-			+ 34.0569*dl3
-			- 745.573*dlm*x1
-			+ 8.61438*dlm3*x1
-			- 7.53662
-			+ 4.658437e0*dl4
-			+ 2.798354e-1*dl5
-			+ 3.121643e2
-			+ 3.379310e2*dlm;
-
-		double P3NSPA2 =
-			2.5e2 * (
-				x1 * (3.0008 + 0.8619*x - 0.12411*x2
-					+ 0.31595*x3)
-				- 0.37529*x*dl
-				- 0.21684*x*dl2
-				- 0.02295*x*dl3
-				+ 0.03394*x1*dlm
-				+ 0.40431*dl*dlm
-			)
-			+ 3.930056e2*dl
-			+ 1.125705e2*dl2
-			+ 1.652675e1*dl3
-			+ 7.901235e-1*dl4
-			- 3.760092e2
-			+ 2.668861e1*dlm;
-
-		double P3NSA3 =
-			-2.426296
-			- 0.8460488*x
-			+ (0.5267490*dm - 3.687243 + 3.160494*x)*dl
-			- (1.316872*(dm + 0.1) - 1.448560*x)*dl2
-			- (0.2633745*dm - 0.131687*(1.0+x))*dl3;
-
-		double P3NSPAI =
-			P3NSA0
-			+ nf*P3NSA1
-			+ std::pow(nf,2)*P3NSPA2
-			+ std::pow(nf,3)*P3NSA3;
-
-		double res{};
-		if (_imod == 1)
-			res = P3NSPAI + P3NPA01 + nf*P3NPA11;
-		else if (_imod == 2)
-			res = P3NSPAI + P3NPA02 + nf*P3NPA12;
-		else
-			res = P3NSPAI
-				+ 0.5*((P3NPA01 + P3NPA02)
-					+ nf*(P3NPA11 + P3NPA12));
-		return res/16.0;
-	}
-	*/
     double P3nsp::calcRegular(double y) const
 	{
 		double y1 = 1.0 - y;
@@ -692,91 +539,87 @@ namespace Candia2
 	}
 	double P3nsp::calcPlus([[maybe_unused]] double x) const
 	{
-		double Nf = static_cast<double>(_nf);
-
-		const double a4qi =
-			2.120902e+4
-		  - 5.179372e+3*Nf
-		  + 1.955772e+2*Nf*Nf
-		  + 3.272344e+0*Nf*Nf*Nf;
-		const double a4ap1 = - 507.152 + 7.33927*Nf;
-		const double a4ap2 = - 505.209 + 7.53662*Nf;
-
-	    double res = std::numeric_limits<double>::max();
-		if (_imod == 1)
-			res = a4qi + a4ap1;
-		else if (_imod == 2)
-			res = a4qi + a4ap2;
-		else {
-			res = a4qi + 0.5*(a4ap1+a4ap2);
-		}
-
-		return res/16.0;
+		auto it = _plus_cache.find(0.0);
+		return it->second;
 	}
 	double P3nsp::calcDelta() const
 	{
-		double Nf = static_cast<double>(_nf);
-
-		// this is for the coefficients of a log(1-x) component,
-		// which is present in the event one does some antiderivatives first
-		// related to the plus distribution
-		// --> anti-derivative of 1/(1-x) is log(1-x)
-		// those pieces end up here somehow, but that is now how we do it in candia
-		// the pieces are kept here anyways just in case
-		/*
-		const double a4qi  =
+		return _delta_cache;
+	}
+	void P3nsp::preCalc()
+	{
+		double nf = static_cast<double>(_nf);
+		auto nf2 = nf*nf;
+		auto nf3 = nf*nf2;
+		
+		// --------------- REGULAR --------------- //
+		// --------------- PLUS --------------- //
+		a4qi =
 			2.120902e+4
-			- 5.179372e+3 * _nf
-			+ 1.955772e+2 * _nf * _nf
-			+ 3.272344e+0 * _nf * _nf * _nf;
-		const double a4ap1 = - 507.152 + 7.33927 * _nf;
-		const double a4ap2 = - 505.209 + 7.53662 * _nf;
-		*/
+			- 5.179372e+3*nf
+			+ 1.955772e+2*nf2
+			+ 3.272344e+0*nf3;
+		a4ap1 = - 507.152 + 7.33927*nf;
+		a4ap2 = - 505.209 + 7.53662*nf;
 
-		const double b4qi =
-			2.579609e+4 + 0.08
-		  - (5.818637e+3+0.97)   *Nf
-		  + (1.938554e+2+0.0037) *Nf*Nf
-		  +  3.014982e+0         *Nf*Nf*Nf;
-		const double b4ap1 = - 2405.03 + 267.965 * Nf;
-		const double b4ap2 = - 2394.47 + 269.028 * Nf;
-
-	    double res = std::numeric_limits<double>::max();
+	    double plus{};
 		if (_imod == 1)
-			res = b4qi + b4ap1;
+			plus = a4qi + a4ap1;
 		else if (_imod == 2)
-			res = b4qi + b4ap2;
-		else
-			res = b4qi + 0.5 * ( b4ap1 + b4ap2 );
+			plus = a4qi + a4ap2;
+		else {
+			plus = a4qi + 0.5*(a4ap1+a4ap2);
+		}
+		_plus_cache[0.0] = plus/16.0;
+		
+		// --------------- DELTA --------------- //
+		b4qi =
+			2.579609e+4 + 0.08
+			- (5.818637e+3+0.97)   *nf
+			+ (1.938554e+2+0.0037) *nf2
+			+  3.014982e+0         *nf3;
+		b4ap1 = - 2405.03 + 267.965 * nf;
+		b4ap2 = - 2394.47 + 269.028 * nf;
 
-		return res/16.0;
+	    double delta{};
+		if (_imod == 1)
+			delta = b4qi + b4ap1;
+		else if (_imod == 2)
+			delta = b4qi + b4ap2;
+		else
+			delta = b4qi + 0.5 * ( b4ap1 + b4ap2 );
+		_delta_cache = delta/16.0;
 	}
 
 
 	double P3nsm::calcRegular(double x) const
 	{
-		const double x2   = x*x;
-		const double x3   = x2*x;
-		const double omx  = 1.0-x;
-		const double dm   = 1.0/omx;
-		const double dl   = std::log(x);
-		const double dl2  = dl*dl;
-		const double dl3  = dl2*dl;
-		const double dl4  = dl3*dl;
-		const double dl5  = dl4*dl;
-		const double dl6  = dl5*dl;
-		const double dlm  = std::log1p(-x);
-		const double dlm2 = dlm*dlm;
-		const double dlm3 = dlm2*dlm;
+		double x2   = x*x;
+		double x3   = x2*x;
+		double omx  = 1.0-x;
+		double dm   = 1.0/omx;
+		double dl   = std::log(x);
+		double dl2  = dl*dl;
+		double dl3  = dl2*dl;
+		double dl4  = dl3*dl;
+		double dl5  = dl4*dl;
+		double dl6  = dl5*dl;
+		double dlm  = std::log1p(-x);
+		double dlm2 = dlm*dlm;
+		double dlm3 = dlm2*dlm;
+
+		double nf = static_cast<double>(_nf);
+		auto nf2 = nf*nf;
+		auto nf3 = nf*nf2;
 
 		// Leading large-n_c, nf^0 and nf^1, parametrized
-		const double p3nsa0  =
+		double p3nsa0  =
 			2.5e+4 * ( omx * ( 3.5254 + 8.6935 * x - 1.5051 * x2 + 1.8300 * x3 )
 					   + 11.883 * x * dl - 0.09066 * x * dl2 + 11.410 * omx * dlm + 13.376  * dl * dlm )
 			+ 5.167133e+4 * dl + 1.712095e+4 * dl2 + 2.863226e+3 * dl3 + 2.978255e+2 * dl4
 			+ 1.6e+1 * dl5 + 5.0e-1 * dl6 - 2.973385e+4 + 1.906980e+4 * dlm;
 
-		const double p3nsa1  =
+		double p3nsa1  =
 			2.5e+4 * ( omx * ( - 0.74077 + 1.4860 * x - 0.23631 * x2 + 0.31584 * x3 )
 					   + 2.5251 * omx * dlm + 2.5203 * dl * dlm + 2.2242 * x * dl
 					   - 0.02460 * x * dl2 + 0.00310 * x * dl3 )
@@ -784,120 +627,124 @@ namespace Candia2
 			- 4. / 3. * dl5 + 8.115605e+3 - 3.079761e+3 * dlm;
 
 		// Nonleading large-n_c, nf^0 and nf^1: two approximations
-		const double p3nma01 =
+		double p3nma01 =
 			( 5992.88 * ( 1.0 + 2.0 * x ) + 31321.44 * x2 ) * omx + 511.228 - 1618.07 * dl + 2.25480 * dl3
 			+ 31897.82 * dlm * omx + 4653.76 * dlm2 * omx + 4.964335e-1 * ( dl6 + 6.0 * dl5 )
 			- 2.601749e+3 - 2.118867e+3 * dlm;
-		const double p3nma02 =
+		double p3nma02 =
 			( 4043.59 - 15386.6 * x ) * x * omx + 502.481 + 1532.96  * dl2 + 31.6023 * dl3
 			- 3997.39  * dlm * omx + 511.567 * dlm3 * omx + 4.964335e-1 * ( dl6 + 18.0 * dl5 )
 			- 2.601749e+3 - 2.118867e+3 * dlm;
 
-		const double p3nma11 =
+		double p3nma11 =
 			( 114.457 * ( 1.0 + 2.0 * x ) + 2570.73 * x2 ) * omx - 7.08645 - 127.012 * dl2 + 2.69618 * dl4
 			+ 1856.63 * dlm * omx + 440.17 * dlm2 * omx + 3.121643e+2 + 3.379310e+2 * dlm;
-		const double p3nma12 =
+		double p3nma12 =
 			( - 335.995 * ( 2.0 + x ) - 1605.91 * x2 ) * omx - 7.82077 - 9.76627 * dl2 + 0.14218 * dl5
 			- 1360.04 * dlm * omx + 38.7337 * dlm3 * omx + 3.121643e+2 + 3.379310e+2 * dlm;
 
 		// nf^2 (parametrized) and nf^3 (exact)
-		const double p3nsma2 =
+		double p3nsma2 =
 			2.5e+2 * ( omx * ( 3.2206 + 1.7507 * x + 0.13281 * x2 + 0.45969 * x3 )
 					   + 1.5641 * x * dl - 0.37902 * x * dl2 - 0.03248 * x *dl3
 					   + 2.7511 * omx * dlm + 3.2709  * dl * dlm )
 			+ 4.378810e+2 * dl + 1.282948e+2 * dl2 + 1.959945e+1 * dl3
 			+ 9.876543e-1 * dl4 - 3.760092e+2 + 2.668861e+1 * dlm;
-		const double p3nsa3  =
+		double p3nsa3  =
 			- 2.426296 - 8.460488e-1 * x + ( 5.267490e-1 * dm - 3.687243 + 3.160494 * x ) * dl
 			- ( 1.316872 * ( dm + 1.0e-1) - 1.448560 * x ) * dl2
 			- ( 2.633744e-1 * dm - 1.31687e-1 * ( 1.0 + x ) ) * dl3;
 
 		// Assembly
-		const double Nf = static_cast<double>(_nf);
-		const double p3nsmai = p3nsa0 + Nf * p3nsa1 + Nf * Nf * p3nsma2 + Nf * Nf * Nf * p3nsa3;
+		double p3nsmai = p3nsa0 + nf * p3nsa1 + nf2 * p3nsma2 + nf3 * p3nsa3;
 	    double res = std::numeric_limits<double>::max();
 		if (_imod == 1)
-			res = p3nsmai + p3nma01 + Nf * p3nma11;
+			res = p3nsmai + p3nma01 + nf * p3nma11;
 		else if (_imod == 2)
-			res = p3nsmai + p3nma02 + Nf * p3nma12;
+			res = p3nsmai + p3nma02 + nf * p3nma12;
 		else
-			res = p3nsmai + 0.5*((p3nma01 + p3nma02) + Nf*(p3nma11 + p3nma12));
+			res = p3nsmai + 0.5*((p3nma01 + p3nma02) + nf*(p3nma11 + p3nma12));
 
 		return res/16.0;
 	}
 	double P3nsm::calcPlus([[maybe_unused]] double x) const
 	{
-		double Nf = static_cast<double>(_nf);
-
-		const double a4qi  =
-			2.120902e+4
-			- 5.179372e+3 * Nf
-			+ 1.955772e+2 * Nf * Nf
-			+ 3.272344e+0 * Nf * Nf * Nf;
-		const double a4ap1 = - 511.228 + 7.08645 * Nf;
-		const double a4ap2 = - 502.481 + 7.82077 * Nf;
-
-		double res = std::numeric_limits<double>::max();
-		if (_imod == 1)
-			res = a4qi + a4ap1;
-		else if (_imod == 2)
-			res = a4qi + a4ap2;
-		else
-			res = a4qi + 0.5*(a4ap1+a4ap2);
-
-		return res/16.0;
+		auto it = _plus_cache.find(0.0);
+		return it->second;
 	}
 	double P3nsm::calcDelta() const
 	{
-		double Nf = static_cast<double>(_nf);
-
-		/*
-		const double a4qi  =
-			2.120902e+4
-			- 5.179372e+3 * _nf
-			+ 1.955772e+2 * _nf * _nf
-			+ 3.272344e+0 * _nf * _nf * _nf;
-		const double a4ap1 = - 511.228 + 7.08645 * _nf;
-		const double a4ap2 = - 502.481 + 7.82077 * _nf;
-		*/
-
-		const double b4qi =
-			2.579609e+4 + 0.08
-			- ( 5.818637e+3 + 0.97 )   * Nf
-			+ ( 1.938554e+2 + 0.0037 ) * Nf * Nf
-			+   3.014982e+0 * Nf * Nf * Nf;
-		const double b4ap1 = - 2426.05  + 266.674 * Nf - 0.05 * Nf;
-		const double b4ap2 = - 2380.255 + 270.518 * Nf - 0.05 * Nf;
-
-		double res = std::numeric_limits<double>::max();
-		if (_imod == 1)
-			res = b4qi + b4ap1;
-		else if (_imod == 2)
-			res = b4qi + b4ap2;
-		else
-			res = b4qi + 0.5*(b4ap1+b4ap2);
-
-		return res/16.0;
+		return _delta_cache;
 	}
+	void P3nsm::preCalc()
+	{
+		double nf = static_cast<double>(_nf);
+		auto nf2 = nf*nf;
+		auto nf3 = nf*nf2;
+		
+		// --------------- REGULAR --------------- //
+		// --------------- PLUS --------------- //
+		a4qi  =
+			2.120902e+4
+			- 5.179372e+3 * nf
+			+ 1.955772e+2 * nf2
+			+ 3.272344e+0 * nf3;
+		a4ap1 = - 511.228 + 7.08645 * nf;
+		a4ap2 = - 502.481 + 7.82077 * nf;
+
+		double plus{};
+		if (_imod == 1)
+			plus = a4qi + a4ap1;
+		else if (_imod == 2)
+			plus = a4qi + a4ap2;
+		else
+			plus = a4qi + 0.5*(a4ap1+a4ap2);
+		_plus_cache[0.0] = plus/16.0;
+		
+		// --------------- DELTA --------------- //
+		b4qi =
+			2.579609e+4 + 0.08
+			- ( 5.818637e+3 + 0.97 )   * nf
+			+ ( 1.938554e+2 + 0.0037 ) * nf2
+			+   3.014982e+0            * nf3;
+		b4ap1 = - 2426.05  + 266.674 * nf - 0.05 * nf;
+		b4ap2 = - 2380.255 + 270.518 * nf - 0.05 * nf;
+
+		double delta{};
+		if (_imod == 1)
+			delta = b4qi + b4ap1;
+		else if (_imod == 2)
+			delta = b4qi + b4ap2;
+		else
+			delta = b4qi + 0.5*(b4ap1+b4ap2);
+		_delta_cache = delta/16.0;
+	}
+	
 
 	double P3nsv::calcRegular(double x) const
 	{
-		const double Nf = static_cast<double>(_nf);
 		double res1 = std::numeric_limits<double>::max();
 		double res2 = std::numeric_limits<double>::max();
-		{
-			const double x2   = x * x;
-			const double omx  = 1.0 - x;
-			const double dl   = std::log(x);
-			const double dl2  = dl * dl;
-			const double dl3  = dl2 * dl;
-			const double dl4  = dl3 * dl;
-			const double dl5  = dl4 * dl;
-			const double dl6  = dl5 * dl;
-			const double dlm  = std::log(omx);
-			const double dlm2 = dlm * dlm;
-			const double dlm3 = dlm2 * dlm;
 
+		double x2   = x * x;
+		double x3   = x2 * x;
+		double omx  = 1.0 - x;
+		double dm   = 1.0 / omx;
+		double dl   = std::log(x);
+		double dl2  = dl * dl;
+		double dl3  = dl2 * dl;
+		double dl4  = dl3 * dl;
+		double dl5  = dl4 * dl;
+		double dl6  = dl5 * dl;
+		double dlm  = std::log(omx);
+		double dlm2 = dlm * dlm;
+		double dlm3 = dlm2 * dlm;
+
+		double nf = static_cast<double>(_nf);
+		auto nf2 = nf*nf;
+		auto nf3 = nf2*nf;
+
+		{
 			// nf^1: two approximations
 			const double p3nsa11 =
 				omx * x * ( 4989.2 - 1607.73 * x ) + 3687.6 * dl + 3296.6 * dl2 + 1271.11* dl3
@@ -915,29 +762,15 @@ namespace Candia2
 				- 3.950617e-1 * dl5 + 1.970002e+1 * omx * dlm - 3.435474 * omx * dlm2;
 
 			if (_imod == 1)
-				res1 = Nf * p3nsa11 + Nf * Nf * p3nssa2;
+				res1 = nf * p3nsa11 + nf2 * p3nssa2;
 			else if (_imod == 2)
-				res1 = Nf * p3nsa12 + Nf * Nf * p3nssa2;
+				res1 = nf * p3nsa12 + nf2 * p3nssa2;
 			else
-				res1 = 0.5 *Nf * ( p3nsa11 + p3nsa12 ) + Nf * Nf * p3nssa2;
+				res1 = 0.5 * nf * ( p3nsa11 + p3nsa12 ) + nf2 * p3nssa2; // 
 		}
 
 		{
-			const double x2   = x * x;
-			const double x3   = x2 * x;
-			const double omx  = 1.0 - x;
-			const double dm   = 1.0 / omx;
-			const double dl   = std::log(x);
-			const double dl2  = dl * dl;
-			const double dl3  = dl2 * dl;
-			const double dl4  = dl3 * dl;
-			const double dl5  = dl4 * dl;
-			const double dl6  = dl5 * dl;
-			const double dlm  = std::log(omx);
-			const double dlm2 = dlm * dlm;
-			const double dlm3 = dlm2 * dlm;
-
-			// Leading large-n_c, nf^0 and nf^1, parametrized
+		    // Leading large-n_c, nf^0 and nf^1, parametrized
 			const double p3nsa0  =
 				2.5e+4 * ( omx * ( 3.5254 + 8.6935 * x - 1.5051 * x2 + 1.8300 * x3 )
 						+ 11.883 * x * dl - 0.09066 * x * dl2 + 11.410 * omx * dlm + 13.376  * dl * dlm )
@@ -980,72 +813,70 @@ namespace Candia2
 				- ( 2.633744e-1 * dm - 1.31687e-1 * ( 1. + x ) ) * dl3;
 
 			// Assembly
-			const double p3nsmai = p3nsa0 + Nf * p3nsa1 + Nf * Nf * p3nsma2 + Nf * Nf * Nf * p3nsa3;			
+			const double p3nsmai = p3nsa0 + nf * p3nsa1 + nf2 * p3nsma2 + nf3 * p3nsa3;			
 			if (_imod == 1)
-				res2 = p3nsmai + p3nma01 + Nf * p3nma11;
+				res2 = p3nsmai + p3nma01 + nf * p3nma11;
 			else if (_imod == 2)
-				res2 = p3nsmai + p3nma02 + Nf * p3nma12;
+				res2 = p3nsmai + p3nma02 + nf * p3nma12;
 			else
-				res2 = p3nsmai + 0.5 * ( ( p3nma01 + p3nma02 ) + Nf * ( p3nma11 + p3nma12 ) );
+				res2 = p3nsmai + 0.5 * ( ( p3nma01 + p3nma02 ) + nf * ( p3nma11 + p3nma12 ) );
 		}
 
 		return (res1+res2)/16.0;
 	}
 	double P3nsv::calcPlus([[maybe_unused]] double x) const
 	{
-		double Nf = static_cast<double>(_nf);
-
-		const double a4qi  = 2.120902e+4
-			- 5.179372e+3*Nf
-			+ 1.955772e+2*Nf*Nf
-			+ 3.272344e+0*Nf*Nf*Nf;
-		const double a4ap1 = -511.228 + 7.08645*Nf;
-		const double a4ap2 = -502.481 + 7.82077*Nf;
-
-	    double res = std::numeric_limits<double>::max();
-		if (_imod == 1)
-			res = a4qi + a4ap1;
-		else if (_imod == 2)
-			res = a4qi + a4ap2;
-		else
-			res = a4qi + 0.5*(a4ap1+a4ap2);
-
-		return res/16.0;
+	    auto it = _plus_cache.find(0.0);
+		return it->second;
 	}
+	
 	double P3nsv::calcDelta() const
 	{
-		double Nf = static_cast<double>(_nf);
-
-		/*
-		const double a4qi  =
-			2.120902e+4
-			- 5.179372e+3 * _nf
-			+ 1.955772e+2 * _nf * _nf
-			+ 3.272344e+0 * _nf * _nf * _nf;
-		const double a4ap1 = - 511.228 + 7.08645 * _nf;
-		const double a4ap2 = - 502.481 + 7.82077 * _nf;
-		*/
-
-		const double b4qi =
-			2.579609e+4 + 0.08
-			- ( 5.818637e+3 + 0.97 )   * Nf
-			+ ( 1.938554e+2 + 0.0037 ) * Nf * Nf
-			+   3.014982e+0 * Nf * Nf * Nf;
-		const double b4ap1 = - 2426.05  + 266.674 * Nf - 0.05 * Nf;
-		const double b4ap2 = - 2380.255 + 270.518 * Nf - 0.05 * Nf;
-
-	    double res = std::numeric_limits<double>::max();
-		if (_imod == 1)
-			res = b4qi + b4ap1;
-		else if (_imod == 2)
-			res = b4qi + b4ap2;
-		else
-			res = b4qi + 0.5*(b4ap1+b4ap2);
-
-		return res/16.0;
+	    return _delta_cache;
 	}
+	void P3nsv::preCalc()
+	{
+		double nf = static_cast<double>(_nf);
+		auto nf2 = nf*nf;
+		auto nf3 = nf*nf2;
+		
+		// --------------- REGULAR --------------- //
+		// 
+		// --------------- PLUS --------------- //
+		a4qi  = 2.120902e+4
+			- 5.179372e+3*nf
+			+ 1.955772e+2*nf2
+			+ 3.272344e+0*nf3;
+		a4ap1 = -511.228 + 7.08645*nf;
+		a4ap2 = -502.481 + 7.82077*nf;
 
+	    double plus;
+		if (_imod == 1)
+			plus = a4qi + a4ap1;
+		else if (_imod == 2)
+			plus = a4qi + a4ap2;
+		else
+			plus = a4qi + 0.5*(a4ap1+a4ap2);
+		_plus_cache[0.0] = plus/16.0;
+		
+		// --------------- DELTA --------------- //
+		b4qi =
+			2.579609e+4 + 0.08
+			- ( 5.818637e+3 + 0.97 )   *nf
+			+ ( 1.938554e+2 + 0.0037 ) *nf2
+			+   3.014982e+0            *nf3;
+		b4ap1 = - 2426.05  + 266.674*nf - 0.05*nf;
+		b4ap2 = - 2380.255 + 270.518*nf - 0.05*nf;
 
+	    double delta{};
+		if (_imod == 1)
+			delta = b4qi + b4ap1;
+		else if (_imod == 2)
+			delta = b4qi + b4ap2;
+		else
+			delta = b4qi + 0.5*(b4ap1+b4ap2);
+		_delta_cache = delta/16.0;
+	}
 
 
 	double P3ps::calcRegular(double x) const
@@ -1175,6 +1006,7 @@ namespace Candia2
 
 		return res/16.0;
 	}
+	
 
 	double P3qq::calcRegular(double x) const
 	{
@@ -1182,72 +1014,83 @@ namespace Candia2
 		double res1 = std::numeric_limits<double>::max(),
 			   res2 = std::numeric_limits<double>::max();
 
+		const double y = x;
+		double ym = 1.0 / y;
+		double y2 = y*y;
+		double y3 = y2*y;
+		double y1 = 1.0 - y;
+		double dm = 1.0 / y1;
+		double dl = std::log(y);
+		double dl2 = dl*dl;
+		double dl3 = dl2*dl;
+		double dl4 = dl3*dl;
+		double dl5 = dl4*dl;
+		double dl6 = dl5*dl;
+		double dlm = std::log1p(-y);
+		double dlm2 = dlm*dlm;
+		double dlm3 = dlm2*dlm;
+		double dlm4 = dlm3*dlm;
+
+		double nf = static_cast<double>(_nf);
+		double nf2 = nf*nf;
+		double nf3 = nf*nf2;
+		
 		// P3nsp
 		{
-			const double y = x;
-			double y1 = 1.0 - y;
-			double dm = 1.0 / y1;
-			double dl = std::log(y);
-			double dl1 = std::log1p(-y);
+		    // Leading large-n_c, nf^0 and nf^1, parametrized
+			double p3nsa0 = 2.5e4 * (y1 * (3.5254 + 8.6935 * y - 1.5051 * y2
+					+ 1.8300 * y3) + 11.883 * y * dl - 0.09066 * y * dl2
+				+ 11.410 * y1 * dlm + 13.376 * dl * dlm)
+				+ 5.167133e4 * dl + 1.712095e4 * dl2 + 2.863226e3 * dl3
+				+ 2.978255e2 * dl4 + 1.6e1 * dl5 + 5.e-1 * dl6
+				- 2.973385e4 + 1.906980e4 * dlm;
 
-			double nf = static_cast<double>(_nf);
-			double nf2 = nf*nf;
-			double nf3 = nf*nf2;
-
-			// Leading large-n_c, nf^0 and nf^1, parametrized
-			double p3nsa0 = 2.5e4 * (y1 * (3.5254 + 8.6935 * y - 1.5051 * std::pow(y, 2)
-					+ 1.8300 * std::pow(y, 3)) + 11.883 * y * dl - 0.09066 * y * std::pow(dl, 2)
-				+ 11.410 * y1 * dl1 + 13.376 * dl * dl1)
-				+ 5.167133e4 * dl + 1.712095e4 * std::pow(dl, 2) + 2.863226e3 * std::pow(dl, 3)
-				+ 2.978255e2 * std::pow(dl, 4) + 1.6e1 * std::pow(dl, 5) + 5.e-1 * std::pow(dl, 6)
-				- 2.973385e4 + 1.906980e4 * dl1;
-
-			double p3nsa1 = 2.5e4 * (y1 * (-0.74077 + 1.4860 * y - 0.23631 * std::pow(y, 2)
-					+ 0.31584 * std::pow(y, 3)) + 2.5251 * y1 * dl1 + 2.5203 * dl * dl1
-				+ 2.2242 * y * dl - 0.02460 * y * std::pow(dl, 2) + 0.00310 * y * std::pow(dl, 3))
-				- 9.239374e3 * dl - 2.917312e3 * std::pow(dl, 2)
-				- 4.305308e2 * std::pow(dl, 3) - 3.6e1 * std::pow(dl, 4) - (4.0/3.0) * std::pow(dl, 5)
-				+ 8.115605e3 - 3.079761e3 * dl1;
+			double p3nsa1 = 2.5e4 * (y1 * (-0.74077 + 1.4860 * y - 0.23631 * y2
+					+ 0.31584 * y3) + 2.5251 * y1 * dlm + 2.5203 * dl * dlm
+				+ 2.2242 * y * dl - 0.02460 * y * dl2 + 0.00310 * y * dl3)
+				- 9.239374e3 * dl - 2.917312e3 * dl2
+				- 4.305308e2 * dl3 - 3.6e1 * dl4 - (4.0/3.0) * dl5
+				+ 8.115605e3 - 3.079761e3 * dlm;
 
 			// Nonleading large-n_c, nf^0 and nf^1: two approximations
 			double p3npa01 = 3948.16 * y1 - 2464.61 * (2.0 * y - y * y) * y1
-				- 1839.44 * std::pow(dl, 2) - 402.156 * std::pow(dl, 3)
-				- 1777.27 * std::pow(dl1, 2) * y1 - 204.183 * std::pow(dl1, 3) * y1 + 507.152
-				- 5.587553e1 * std::pow(dl, 4) - 2.831276 * std::pow(dl, 5)
-				- 1.488340e-1 * std::pow(dl, 6) - 2.601749e3 - 2.118867e3 * dl1;
+				- 1839.44 * dl2 - 402.156 * dl3
+				- 1777.27 * dlm2 * y1 - 204.183 * dlm3 * y1 + 507.152
+				- 5.587553e1 * dl4 - 2.831276 * dl5
+				- 1.488340e-1 * dl6 - 2.601749e3 - 2.118867e3 * dlm;
 
 			double p3npa02 = (8698.39 - 10490.47 * y) * y * y1
-				+ 1389.73 * dl + 189.576 * std::pow(dl, 2)
-				- 173.936 * std::pow(dl1, 2) * y1 + 223.078 * std::pow(dl1, 3) * y1 + 505.209
-				- 5.587553e1 * std::pow(dl, 4) - 2.831276 * std::pow(dl, 5)
-				- 1.488340e-1 * std::pow(dl, 6) - 2.601749e3 - 2.118867e3 * dl1;
+				+ 1389.73 * dl + 189.576 * dl2
+				- 173.936 * dlm2 * y1 + 223.078 * dlm3 * y1 + 505.209
+				- 5.587553e1 * dl4 - 2.831276 * dl5
+				- 1.488340e-1 * dl6 - 2.601749e3 - 2.118867e3 * dlm;
 
 			double p3npa11 = (-1116.34 + 1071.24 * y) * y * y1
-				- 59.3041 * std::pow(dl, 2) - 8.4620 * std::pow(dl, 3)
-				- 143.813 * dl1 * y1 - 18.8803 * std::pow(dl1, 3) * y1 - 7.33927
-				+ 4.658436 * std::pow(dl, 4) + 2.798354e-1 * std::pow(dl, 5)
-				+ 3.121643e2 + 3.379310e2 * dl1;
+				- 59.3041 * dl2 - 8.4620 * dl3
+				- 143.813 * dlm * y1 - 18.8803 * dlm3 * y1 - 7.33927
+				+ 4.658436 * dl4 + 2.798354e-1 * dl5
+				+ 3.121643e2 + 3.379310e2 * dlm;
 
 			double p3npa12 = (-690.151 - 656.386 * y * y) * y1
-				+ 133.702 * std::pow(dl, 2) + 34.0569 * std::pow(dl, 3)
-				- 745.573 * dl1 * y1 + 8.61438 * std::pow(dl1, 3) * y1 - 7.53662
-				+ 4.658437 * std::pow(dl, 4) + 2.798354e-1 * std::pow(dl, 5)
-				+ 3.121643e2 + 3.379310e2 * dl1;
+				+ 133.702 * dl2 + 34.0569 * dl3
+				- 745.573 * dlm * y1 + 8.61438 * dlm3 * y1 - 7.53662
+				+ 4.658437 * dl4 + 2.798354e-1 * dl5
+				+ 3.121643e2 + 3.379310e2 * dlm;
 
 			// nf^2 (parametrized) and nf^3 (exact)
-			double p3nspa2 = 2.5e2 * (y1 * (3.0008 + 0.8619 * y - 0.12411 * std::pow(y, 2)
-					+ 0.31595 * std::pow(y, 3)) - 0.37529 * y * dl - 0.21684 * y * std::pow(dl, 2)
-				- 0.02295 * y * std::pow(dl, 3) + 0.03394 * y1 * dl1 + 0.40431 * dl * dl1)
-				+ 3.930056e2 * dl + 1.125705e2 * std::pow(dl, 2) + 1.652675e1 * std::pow(dl, 3)
-				+ 7.901235e-1 * std::pow(dl, 4) - 3.760092e2 + 2.668861e1 * dl1;
+			double p3nspa2 = 2.5e2 * (y1 * (3.0008 + 0.8619 * y - 0.12411 * y2
+					+ 0.31595 * y3) - 0.37529 * y * dl - 0.21684 * y * dl2
+				- 0.02295 * y * dl3 + 0.03394 * y1 * dlm + 0.40431 * dl * dlm)
+				+ 3.930056e2 * dl + 1.125705e2 * dl2 + 1.652675e1 * dl3
+				+ 7.901235e-1 * dl4 - 3.760092e2 + 2.668861e1 * dlm;
 
 			double p3nsa3 = - 2.426296 - 8.460488e-1 * y
 				+ (5.267490e-1 * dm - 3.687243 + 3.160494 * y) * dl
-				- (1.316872 * (dm + 0.1) - 1.448560 * y) * std::pow(dl, 2)
-				- (2.633745e-1 * dm - 1.31687e-1 * (1.0 + y)) * std::pow(dl, 3);
+				- (1.316872 * (dm + 0.1) - 1.448560 * y) * dl2
+				- (2.633745e-1 * dm - 1.31687e-1 * (1.0 + y)) * dl3;
 
 			// Assembly
-			double p3nspai = p3nsa0 + nf*p3nsa1 + nf2 * p3nspa2 + nf3 * p3nsa3;
+			double p3nspai = p3nsa0 + nf*p3nsa1 + nf2*p3nspa2 + nf3*p3nsa3;
 
 			if (_imod == 1) {
 				res1 = (p3nspai + p3npa01 + nf * p3npa11);
@@ -1260,37 +1103,15 @@ namespace Candia2
 
 		// P3ps
 		{
-			const double y = x;
-			double ym = 1.0 / y;
-			double y1 = 1.0 - y;
-			double dl = std::log(y);
-			double dl1 = std::log1p(-y);
-
-			double nf = static_cast<double>(_nf);
-			double nf2 = nf * nf;
-			double nf3 = nf * nf2;
-
-			// Known large-x coefficients
-			double x1l4cff = -5.6460905e1 * nf + 3.6213992 * nf2;
-			double x1l3cff = -2.4755054e2 * nf + 4.0559671e1 * nf2 - 1.5802469 * nf3;
-			double y1l4cff = -1.3168724e1 * nf;
-			double y1l3cff = -1.9911111e2 * nf + 1.3695473e1 * nf2;
-
-			// Known small-x coefficients
-			double bfkl1 = 1.7492273e3 * nf;
-			double x0l6cff = -7.5061728 * nf + 7.9012346e-1 * nf2;
-			double x0l5cff =  2.8549794e1 * nf + 3.7925926 * nf2;
-			double x0l4cff = -8.5480010e2 * nf + 7.7366255e1 * nf2 - 1.9753086e-1 * nf3;
-
 			// The resulting part of the function
-			double p3ps01 = bfkl1 * std::pow(dl, 2) * ym
-				+ x0l6cff * std::pow(dl, 6)
-				+ x0l5cff * std::pow(dl, 5)
-				+ x0l4cff * std::pow(dl, 4)
-				+ x1l3cff * y1 * std::pow(dl1, 3)
-				+ x1l4cff * y1 * std::pow(dl1, 4)
-				+ y1l3cff * (y1 * y1) * std::pow(dl1, 3)
-				+ y1l4cff * (y1 * y1) * std::pow(dl1, 4);
+			double p3ps01 = bfkl1 * dl2 * ym
+				+ x0l6cff * dl6
+				+ x0l5cff * dl5
+				+ x0l4cff * dl4
+				+ x1l3cff * y1 * dlm3
+				+ x1l4cff * y1 * dlm4
+				+ y1l3cff * (y1 * y1) * dlm3
+				+ y1l4cff * (y1 * y1) * dlm4;
 
 			double p3psapp1 = 0.0;
 			double p3psapp2 = 0.0;
@@ -1302,11 +1123,11 @@ namespace Candia2
 					- 104493.0  * y1 * (1.0 + 2.0 * y)
 					+ 34403.0   * y1 * (y * y)
 					+ 353656.0  * y1 * dl
-					+ 10620.0   * std::pow(dl, 2)
-					+ 40006.0   * std::pow(dl, 3)
-					- 7412.1    * y1 * dl1
-					- 2365.1    * y1 * std::pow(dl1, 2)
-					+ 1533.0    * (y1 * y1) * std::pow(dl1, 2);
+					+ 10620.0   * dl2
+					+ 40006.0   * dl3
+					- 7412.1    * y1 * dlm
+					- 2365.1    * y1 * dlm2
+					+ 1533.0    * (y1 * y1) * dlm2;
 
 				p3psapp2 = p3ps01
 					+ 54593.0   * y1 * dl * ym
@@ -1314,11 +1135,11 @@ namespace Candia2
 					- 195263.0  * y1
 					+ 12789.0   * y1 * y * (1.0 + y)
 					+ 4700.0    * y1 * dl
-					- 103604.0  * std::pow(dl, 2)
-					- 2758.3    * std::pow(dl, 3)
-					- 2801.2    * y1 * dl1
-					- 1986.9    * y1 * std::pow(dl1, 2)
-					- 6005.9    * (y1 * y1) * std::pow(dl1, 2);
+					- 103604.0  * dl2
+					- 2758.3    * dl3
+					- 2801.2    * y1 * dlm
+					- 1986.9    * y1 * dlm2
+					- 6005.9    * (y1 * y1) * dlm2;
 
 			} else if (_nf == 4) {
 				p3psapp1 = p3ps01
@@ -1327,11 +1148,11 @@ namespace Candia2
 					- 136319.0  * y1 * (1.0 + 2.0 * y)
 					+ 45379.0   * y1 * (y * y)
 					+ 461167.0  * y1 * dl
-					+ 13869.0   * std::pow(dl, 2)
-					+ 52525.0   * std::pow(dl, 3)
-					- 7498.2    * y1 * dl1
-					- 2491.5    * y1 * std::pow(dl1, 2)
-					+ 1727.2    * (y1 * y1) * std::pow(dl1, 2);
+					+ 13869.0   * dl2
+					+ 52525.0   * dl3
+					- 7498.2    * y1 * dlm
+					- 2491.5    * y1 * dlm2
+					+ 1727.2    * (y1 * y1) * dlm2;
 
 				p3psapp2 = p3ps01
 					+ 72987.0   * y1 * dl * ym
@@ -1339,11 +1160,11 @@ namespace Candia2
 					- 254921.0  * y1
 					+ 17138.0   * y1 * y * (1.0 + y)
 					+ 5212.9    * y1 * dl
-					- 135378.0  * std::pow(dl, 2)
-					- 3350.9    * std::pow(dl, 3)
-					- 1472.7    * y1 * dl1
-					- 1997.2    * y1 * std::pow(dl1, 2)
-					- 8123.3    * (y1 * y1) * std::pow(dl1, 2);
+					- 135378.0  * dl2
+					- 3350.9    * dl3
+					- 1472.7    * y1 * dlm
+					- 1997.2    * y1 * dlm2
+					- 8123.3    * (y1 * y1) * dlm2;
 
 			} else if (_nf == 5) {
 				p3psapp1 = p3ps01
@@ -1352,11 +1173,11 @@ namespace Candia2
 					- 166581.0  * y1 * (1.0 + 2.0 * y)
 					+ 56087.0   * y1 * (y * y)
 					+ 562992.0  * y1 * dl
-					+ 16882.0   * std::pow(dl, 2)
-					+ 64577.0   * std::pow(dl, 3)
-					- 6570.1    * y1 * dl1
-					- 2365.7    * y1 * std::pow(dl1, 2)
-					+ 1761.7    * (y1 * y1) * std::pow(dl1, 2);
+					+ 16882.0   * dl2
+					+ 64577.0   * dl3
+					- 6570.1    * y1 * dlm
+					- 2365.7    * y1 * dlm2
+					+ 1761.7    * (y1 * y1) * dlm2;
 
 				p3psapp2 = p3ps01
 					+ 91468.0   * y1 * dl * ym
@@ -1364,11 +1185,11 @@ namespace Candia2
 					- 311749.0  * y1
 					+ 21521.0   * y1 * y * (1.0 + y)
 					+ 4908.9    * y1 * dl
-					- 165795.0  * std::pow(dl, 2)
-					- 3814.9    * std::pow(dl, 3)
-					+ 804.5     * y1 * dl1
-					- 1760.8    * y1 * std::pow(dl1, 2)
-					- 10295.0   * (y1 * y1) * std::pow(dl1, 2);
+					- 165795.0  * dl2
+					- 3814.9    * dl3
+					+ 804.5     * y1 * dlm
+					- 1760.8    * y1 * dlm2
+					- 10295.0   * (y1 * y1) * dlm2;
 
 			} else if (_nf == 6) {
 				p3psapp1 = p3ps01
@@ -1377,11 +1198,11 @@ namespace Candia2
 					- 195241.0  * y1 * (1.0 + 2.0 * y)
 					+ 66517.0   * y1 * (y * y)
 					+ 658832.0  * y1 * dl
-					+ 19605.0   * std::pow(dl, 2)
-					+ 76125.0   * std::pow(dl, 3)
-					- 4734.5    * y1 * dl1
-					- 2035.2    * y1 * std::pow(dl1, 2)
-					+ 1633.1    * (y1 * y1) * std::pow(dl1, 2);
+					+ 19605.0   * dl2
+					+ 76125.0   * dl3
+					- 4734.5    * y1 * dlm
+					- 2035.2    * y1 * dlm2
+					+ 1633.1    * (y1 * y1) * dlm2;
 
 				p3psapp2 = p3ps01
 					+ 110032.0  * y1 * dl * ym
@@ -1389,15 +1210,14 @@ namespace Candia2
 					- 365676.0  * y1
 					+ 25934.0   * y1 * y * (1.0 + y)
 					+ 3614.4    * y1 * dl
-					- 194868.0  * std::pow(dl, 2)
-					- 4172.2    * std::pow(dl, 3)
-					+ 3924.3    * y1 * dl1
-					- 1324.9    * y1 * std::pow(dl1, 2)
-					- 12520.0   * (y1 * y1) * std::pow(dl1, 2);
+					- 194868.0  * dl2
+					- 4172.2    * dl3
+					+ 3924.3    * y1 * dlm
+					- 1324.9    * y1 * dlm2
+					- 12520.0   * (y1 * y1) * dlm2;
 
 			} else {
-				std::cerr << " Error in function p3psa: choice of nf " << std::endl;
-				return 0.0;
+				log(LOG_ERROR, "P3qg::calcRegular()", "nf ({}) out of bounds, not between 3 and 6.", _nf);
 			}
 
 			if (_imod == 1) {
@@ -1408,223 +1228,215 @@ namespace Candia2
 				res2 = 0.5 * (p3psapp1 + p3psapp2);
 			}
 		}
-
 		return (res1+res2)/16.0;
 	}
 	double P3qq::calcPlus([[maybe_unused]] double x) const
 	{
-		double Nf = static_cast<double>(_nf);
-
-		const double a4qi =
-			2.120902e+4
-		  - 5.179372e+3*Nf
-		  + 1.955772e+2*Nf*Nf
-		  + 3.272344e+0*Nf*Nf*Nf;
-		const double a4ap1 = - 507.152 + 7.33927*Nf;
-		const double a4ap2 = - 505.209 + 7.53662*Nf;
-
-	    double res = std::numeric_limits<double>::max();
-		if (_imod == 1)
-			res = a4qi + a4ap1;
-		else if (_imod == 2)
-			res = a4qi + a4ap2;
-		else
-			res = a4qi + 0.5*(a4ap1+a4ap2);
-
-		return res/16.0;
+		auto it = _plus_cache.find(0.0);
+		return it->second;;
 	}
 	double P3qq::calcDelta() const
 	{
-		double Nf = static_cast<double>(_nf);
+		return _delta_cache;
+	}
+	void P3qq::preCalc()
+	{
+		double nf = static_cast<double>(_nf);
+		auto nf2 = nf*nf;
+		auto nf3 = nf2*nf;
+		
+		// --------------- REGULAR --------------- //
+		// Known large-x coefficients
+		x1l4cff = -5.6460905e1 * nf + 3.6213992 * nf2;
+		x1l3cff = -2.4755054e2 * nf + 4.0559671e1 * nf2 - 1.5802469 * nf3;
+		y1l4cff = -1.3168724e1 * nf;
+		y1l3cff = -1.9911111e2 * nf + 1.3695473e1 * nf2;
 
-		// this is for the coefficients of a log(1-x) component,
-		// which is present in the event one does some antiderivatives first
-		// related to the plus distribution
-		// --> anti-derivative of 1/(1-x) is log(1-x)
-		// those pieces end up here somehow, but that is now how we do it in candia
-		// the pieces are kept here anyways just in case
-		/*
-		const double a4qi  =
+		// Known small-x coefficients
+		bfkl1 = 1.7492273e3 * nf;
+		x0l6cff = -7.5061728 * nf + 7.9012346e-1 * nf2;
+		x0l5cff =  2.8549794e1 * nf + 3.7925926 * nf2;
+		x0l4cff = -8.5480010e2 * nf + 7.7366255e1 * nf2 - 1.9753086e-1 * nf3;
+		
+		// --------------- PLUS --------------- //
+		a4qi =
 			2.120902e+4
-			- 5.179372e+3 * _nf
-			+ 1.955772e+2 * _nf * _nf
-			+ 3.272344e+0 * _nf * _nf * _nf;
-		const double a4ap1 = - 507.152 + 7.33927 * _nf;
-		const double a4ap2 = - 505.209 + 7.53662 * _nf;
-		*/
+		  - 5.179372e+3*nf
+		  + 1.955772e+2*nf2
+		  + 3.272344e+0*nf3;
+		a4ap1 = - 507.152 + 7.33927*nf;
+		a4ap2 = - 505.209 + 7.53662*nf;
 
-		const double b4qi =
-			2.579609e+4 + 0.08
-		  - (5.818637e+3+0.97)   *Nf
-		  + (1.938554e+2+0.0037) *Nf*Nf
-		  +  3.014982e+0         *Nf*Nf*Nf;
-		const double b4ap1 = - 2405.03 + 267.965 * Nf;
-		const double b4ap2 = - 2394.47 + 269.028 * Nf;
-
-	    double res = std::numeric_limits<double>::max();
+	    double plus{};
 		if (_imod == 1)
-			res = b4qi + b4ap1;
+			plus = a4qi + a4ap1;
 		else if (_imod == 2)
-			res = b4qi + b4ap2;
+			plus = a4qi + a4ap2;
 		else
-			res = b4qi + 0.5 * ( b4ap1 + b4ap2 );
+			plus = a4qi + 0.5*(a4ap1+a4ap2);
 
-		return res/16.0;
+		_plus_cache[0.0] = plus/16.0;
+		
+		// --------------- DELTA --------------- //
+		b4qi =
+			2.579609e+4 + 0.08
+		  - (5.818637e+3+0.97)   *nf
+		  + (1.938554e+2+0.0037) *nf2
+		  +  3.014982e+0         *nf3;
+		b4ap1 = - 2405.03 + 267.965*nf;
+		b4ap2 = - 2394.47 + 269.028*nf;
+
+	    double delta{};
+		if (_imod == 1)
+			delta = b4qi + b4ap1;
+		else if (_imod == 2)
+			delta = b4qi + b4ap2;
+		else
+			delta = b4qi + 0.5*(b4ap1 + b4ap2);
+	    _delta_cache = delta/16.0;
 	}
 
 
 	double P3qg::calcRegular(double x) const
 	{
-		double nf = static_cast<double>(_nf);
-		double YM  = 1.0 / x;
-		double Y1  = 1.0 - x;
-		double DL  = std::log(x);
-		double DL1 = std::log(1.0-x);
-
-		double nf2 = nf * nf;
-		double nf3 = nf * nf2;
-
-		// Large-x coefficients
-		double x1L5cff = 1.8518519e0 * nf - 4.1152263e-1 * nf2;
-		double x1L4cff = 3.5687794e1 * nf - 3.5116598e0 * nf2
-			- 8.2304527e-2 * nf3;
-
-		double y1L5cff = 2.8806584e0 * nf + 8.2304527e-1 * nf2;
-		double y1L4cff = -4.0511391e1 * nf + 5.5418381e0 * nf2
-			+ 1.6460905e-1 * nf3;
-
-		// Small-x coefficients
-		double bfkl1   = 3.9357613e3 * nf;
-
-		double x0L6cff = -1.9588477e1 * nf + 2.7654321e0 * nf2;
-		double x0L5cff =  2.1573663e1 * nf + 1.7244444e1 * nf2;
-		double x0L4cff = -2.8667643e3 * nf + 3.0122403e2 * nf2
-			+ 4.1316872e0 * nf3;
+		double ym = 1.0 / x;
+		double y1 = 1.0 - x;
+		double dl = std::log(x);
+		double dl2 = dl*dl;
+		double dl3 = dl2*dl;
+		double dl4 = dl3*dl;
+		double dl5 = dl4*dl;
+		double dl6 = dl5*dl;
+		double dlm = std::log1p(-x);
+	    double dlm2 = dlm*dlm;
+		double dlm3 = dlm2*dlm;
+		double dlm4 = dlm3*dlm;
+		double dlm5 = dlm4*dlm;
 
 		// Base contribution
 		double P3QG01 =
-			bfkl1 * YM * std::pow(DL, 2)
-			+ x0L6cff * std::pow(DL, 6)
-			+ x0L5cff * std::pow(DL, 5)
-			+ x0L4cff * std::pow(DL, 4)
-			+ x1L4cff * std::pow(DL1, 4)
-			+ x1L5cff * std::pow(DL1, 5)
-			+ y1L4cff * Y1 * std::pow(DL1, 4)
-			+ y1L5cff * Y1 * std::pow(DL1, 5);
+			bfkl1 * ym * dl2
+			+ x0l6cff * dl6
+			+ x0l5cff * dl5
+			+ x0l4cff * dl4
+			+ x1l4cff * dlm4
+			+ x1l5cff * dlm5
+			+ y1l4cff * y1 * dlm4
+			+ y1l5cff * y1 * dlm5;
 
 		double P3qgApp1 = 0.0;
 		double P3qgApp2 = 0.0;
 
-		if (nf == 3) {
+		if (_nf == 3) {
 			P3qgApp1 = P3QG01
-				+ 187500.0 * YM * DL
-				+ 826060.0 * YM * Y1
+				+ 187500.0 * ym * dl
+				+ 826060.0 * ym * y1
 				- 150474.0
 				+ 226254.0 * x * (2.0 - x)
-				+ 577733.0 * DL
-				- 180747.0 * std::pow(DL, 2)
-				+ 95411.0  * std::pow(DL, 3)
-				+ 119.8    * std::pow(DL1, 3)
-				+ 7156.3   * std::pow(DL1, 2)
-				+ 45790.0  * DL1
-				- 95682.0  * DL * DL1;
+				+ 577733.0 * dl
+				- 180747.0 * dl2
+				+ 95411.0  * dl3
+				+ 119.8    * dlm3
+				+ 7156.3   * dlm2
+				+ 45790.0  * dlm
+				- 95682.0  * dl * dlm;
 
 			P3qgApp2 = P3QG01
-				+ 135000.0 * YM * DL
-				+ 484742.0 * YM * Y1
+				+ 135000.0 * ym * dl
+				+ 484742.0 * ym * y1
 				- 11627.0
 				- 187478.0 * x * (2.0 - x)
-				+ 413512.0 * DL
-				- 82500.0  * std::pow(DL, 2)
-				+ 29987.0  * std::pow(DL, 3)
-				- 850.1    * std::pow(DL1, 3)
-				- 11425.0  * std::pow(DL1, 2)
-				- 75323.0  * DL1
-				+ 282836.0 * DL * DL1;
+				+ 413512.0 * dl
+				- 82500.0  * dl2
+				+ 29987.0  * dl3
+				- 850.1    * dlm3
+				- 11425.0  * dlm2
+				- 75323.0  * dlm
+				+ 282836.0 * dl * dlm;
 		}
-		else if (nf == 4) {
+		else if (_nf == 4) {
 			P3qgApp1 = P3QG01
-				+ 250000.0 * YM * DL
-				+ 1089180.0 * YM * Y1
+				+ 250000.0 * ym * dl
+				+ 1089180.0 * ym * y1
 				- 241088.0
 				+ 342902.0 * x * (2.0 - x)
-				+ 720081.0 * DL
-				- 247071.0 * std::pow(DL, 2)
-				+ 126405.0 * std::pow(DL, 3)
-				+ 272.4    * std::pow(DL1, 3)
-				+ 10911.0  * std::pow(DL1, 2)
-				+ 60563.0  * DL1
-				- 161448.0 * DL * DL1;
+				+ 720081.0 * dl
+				- 247071.0 * dl2
+				+ 126405.0 * dl3
+				+ 272.4    * dlm3
+				+ 10911.0  * dlm2
+				+ 60563.0  * dlm
+				- 161448.0 * dl * dlm;
 
 			P3qgApp2 = P3QG01
-				+ 180000.0 * YM * DL
-				+ 634090.0 * YM * Y1
+				+ 180000.0 * ym * dl
+				+ 634090.0 * ym * y1
 				- 55958.0
 				- 208744.0 * x * (2.0 - x)
-				+ 501120.0 * DL
-				- 116073.0 * std::pow(DL, 2)
-				+ 39173.0  * std::pow(DL, 3)
-				- 1020.8   * std::pow(DL1, 3)
-				- 13864.0  * std::pow(DL1, 2)
-				- 100922.0 * DL1
-				+ 343243.0 * DL * DL1;
+				+ 501120.0 * dl
+				- 116073.0 * dl2
+				+ 39173.0  * dl3
+				- 1020.8   * dlm3
+				- 13864.0  * dlm2
+				- 100922.0 * dlm
+				+ 343243.0 * dl * dlm;
 		}
-		else if (nf == 5) {
+		else if (_nf == 5) {
 			P3qgApp1 = P3QG01
-				+ 312500.0 * YM * DL
-				+ 1345700.0 * YM * Y1
+				+ 312500.0 * ym * dl
+				+ 1345700.0 * ym * y1
 				- 350466.0
 				+ 480028.0 * x * (2.0 - x)
-				+ 837903.0 * DL
-				- 315928.0 * std::pow(DL, 2)
-				+ 157086.0 * std::pow(DL, 3)
-				+ 472.7    * std::pow(DL1, 3)
-				+ 15415.0  * std::pow(DL1, 2)
-				+ 75644.0  * DL1
-				- 244869.0 * DL * DL1;
+				+ 837903.0 * dl
+				- 315928.0 * dl2
+				+ 157086.0 * dl3
+				+ 472.7    * dlm3
+				+ 15415.0  * dlm2
+				+ 75644.0  * dlm
+				- 244869.0 * dl * dlm;
 
 			P3qgApp2 = P3QG01
-				+ 225000.0 * YM * DL
-				+ 776837.0 * YM * Y1
+				+ 225000.0 * ym * dl
+				+ 776837.0 * ym * y1
 				- 119054.0
 				- 209530.0 * x * (2.0 - x)
-				+ 564202.0 * DL
-				- 152181.0 * std::pow(DL, 2)
-				+ 48046.0  * std::pow(DL, 3)
-				- 1143.8   * std::pow(DL1, 3)
-				- 15553.0  * std::pow(DL1, 2)
-				- 126212.0 * DL1
-				+ 385995.0 * DL * DL1;
+				+ 564202.0 * dl
+				- 152181.0 * dl2
+				+ 48046.0  * dl3
+				- 1143.8   * dlm3
+				- 15553.0  * dlm2
+				- 126212.0 * dlm
+				+ 385995.0 * dl * dlm;
 		}
-		else if (nf == 6) {
+		else if (_nf == 6) {
 			P3qgApp1 = P3QG01
-				+ 375000.0 * YM * DL
-				+ 1595330.0 * YM * Y1
+				+ 375000.0 * ym * dl
+				+ 1595330.0 * ym * y1
 				- 477729.0
 				+ 637552.0 * x * (2.0 - x)
-				+ 931556.0 * DL
-				- 387017.0 * std::pow(DL, 2)
-				+ 187509.0 * std::pow(DL, 3)
-				+ 715.5    * std::pow(DL1, 3)
-				+ 20710.0  * std::pow(DL1, 2)
-				+ 91373.0  * DL1
-				- 346374.0 * DL * DL1;
+				+ 931556.0 * dl
+				- 387017.0 * dl2
+				+ 187509.0 * dl3
+				+ 715.5    * dlm3
+				+ 20710.0  * dlm2
+				+ 91373.0  * dlm
+				- 346374.0 * dl * dlm;
 
 			P3qgApp2 = P3QG01
-				+ 270000.0 * YM * DL
-				+ 912695.0 * YM * Y1
+				+ 270000.0 * ym * dl
+				+ 912695.0 * ym * y1
 				- 200034.0
 				- 189918.0 * x * (2.0 - x)
-				+ 603114.0 * DL
-				- 190521.0 * std::pow(DL, 2)
-				+ 56661.0  * std::pow(DL, 3)
-				- 1224.3   * std::pow(DL1, 3)
-				- 16453.0  * std::pow(DL1, 2)
-				- 150856.0 * DL1
-				+ 410661.0 * DL * DL1;
+				+ 603114.0 * dl
+				- 190521.0 * dl2
+				+ 56661.0  * dl3
+				- 1224.3   * dlm3
+				- 16453.0  * dlm2
+				- 150856.0 * dlm
+				+ 410661.0 * dl * dlm;
 		}
-		else {
-			throw std::invalid_argument("Error in P3QGA: invalid nf (must be 3–6)");
+		else {	
+			log(LOG_ERROR, "P3qg::calcRegular()", "nf ({}) out of bounds, not between 3 and 6.", _nf);
 		}
 
 		double res{};
@@ -1636,61 +1448,54 @@ namespace Candia2
 			res = 0.5 * (P3qgApp1 + P3qgApp2);
 		return res/16.0;
 	}
+	void P3qg::preCalc()
+	{
+		double nf = static_cast<double>(_nf);
+		auto nf2 = nf*nf;
+		auto nf3 = nf2*nf;
+		
+		// Large-x coefficients
+		x1l5cff = 1.8518519e0 * nf - 4.1152263e-1 * nf2;
+		x1l4cff = 3.5687794e1 * nf - 3.5116598e0 * nf2 - 8.2304527e-2 * nf3;
+
+		y1l5cff = 2.8806584e0 * nf + 8.2304527e-1 * nf2;
+		y1l4cff = -4.0511391e1 * nf + 5.5418381e0 * nf2 + 1.6460905e-1 * nf3;
+
+		// Small-x coefficients
+		bfkl1   = 3.9357613e3 * nf;
+
+		x0l6cff = -1.9588477e1 * nf + 2.7654321e0 * nf2;
+		x0l5cff =  2.1573663e1 * nf + 1.7244444e1 * nf2;
+		x0l4cff = -2.8667643e3 * nf + 3.0122403e2 * nf2 + 4.1316872e0 * nf3;
+	}
+	
 
 	double P3gq::calcRegular(double x) const
 	{
-		double nf = static_cast<double>(_nf);
-		
-		double YM  = 1.0 / x;
-		double Y1  = 1.0 - x;
-		double DL  = std::log(x);
-		double DL1 = std::log(Y1);
-
-		int nf2 = nf * nf;
-		// int nf3 = nf * nf2;   // (kept for strict faithfulness)
-
-		// --------------------------------------------------------------
-		// Known large-x coefficients
-		// --------------------------------------------------------------
-
-		double x1L5cff = 1.3443073e1 - 5.4869684e-1 * nf;
-		double x1L4cff = 3.7539831e2 - 3.4494742e1 * nf
-			+ 8.7791495e-1 * nf2;
-
-		double y1L5cff = 2.2222222e1 - 5.4869684e-1 * nf;
-		double y1L4cff = 6.6242163e2 - 4.7992684e1 * nf
-			+ 8.7791495e-1 * nf2;
-
-		// --------------------------------------------------------------
-		// Small-x x^-1 coefficients
-		// --------------------------------------------------------------
-
-		double bfkl0 = -8.3086173e3 / 2.25;
-		double bfkl1 = (-1.0691199e5 - nf * 9.9638304e2) / 2.25;
-
-		// --------------------------------------------------------------
-		// Small-x double logs
-		// --------------------------------------------------------------
-
-		double x0L6cff =  5.2235940e1 - 7.3744856e0 * nf;
-		double x0L5cff = -2.9221399e2 + 1.8436214e0 * nf;
-		double x0L4cff =  7.3106077e3 - 3.7887135e2 * nf
-			- 3.2438957e1 * nf2;
-
-		// --------------------------------------------------------------
-		// Base function: P3gq01
-		// --------------------------------------------------------------
+	    double ym = 1.0 / x;
+		double y1 = 1.0 - x;
+		double dl = std::log(x);
+		double dl2 = dl*dl;
+		double dl3 = dl2*dl;
+		double dl4 = dl3*dl;
+		double dl5 = dl4*dl;
+		double dl6 = dl5*dl;
+		double dlm = std::log1p(-x);
+	    double dlm2 = dlm*dlm;
+		double dlm3 = dlm2*dlm;
+		double dlm4 = dlm3*dlm;
+		double dlm5 = dlm4*dlm;
 
 		double P3gq01 =
-			bfkl0 * YM * std::pow(DL, 3)
-			+ bfkl1 * YM * std::pow(DL, 2)
-			+ x0L6cff * std::pow(DL, 6)
-			+ x0L5cff * std::pow(DL, 5)
-			+ x0L4cff * std::pow(DL, 4)
-			+ x1L4cff * std::pow(DL1, 4)
-			+ x1L5cff * std::pow(DL1, 5)
-			+ y1L4cff * Y1 * std::pow(DL1, 4)
-			+ y1L5cff * Y1 * std::pow(DL1, 5);
+			bfkl0 * ym * dl3
+			+ bfkl1 * ym * dl2
+			+ x0l6cff * dl6
+			+ x0l5cff * dl5
+			+ x0l4cff * dl4
+			+ x1l4cff * dlm4
+			+ x1l5cff * dlm5
+			+ y1l4cff * y1 * dlm4
+			+ y1l5cff * y1 * dlm5;
 
 		double P3gqApp1 = 0.0;
 		double P3gqApp2 = 0.0;
@@ -1698,126 +1503,121 @@ namespace Candia2
 		// --------------------------------------------------------------
 		// nf-specific approximations
 		// --------------------------------------------------------------
-
 		if (_nf == 3) {
 			P3gqApp1 =
 				P3gq01
-				+ 3.5 * bfkl1 * YM * DL
-				- 27891.  * YM * Y1
+				+ 3.5 * bfkl1 * ym * dl
+				- 27891.  * ym * y1
 				- 309124.
 				+ 1056866. * x * (2.0 - x)
-				- 124735. * DL
-				- 16246.  * std::pow(DL,2)
-				+ 131175. * std::pow(DL,3)
-				+ 4970.1  * std::pow(DL1,3)
-				+ 60041.  * std::pow(DL1,2)
-				+ 343181. * DL1
-				- 958330. * DL * DL1;
+				- 124735. * dl
+				- 16246.  * dl2
+				+ 131175. * dl3
+				+ 4970.1  * dlm3
+				+ 60041.  * dlm2
+				+ 343181. * dlm
+				- 958330. * dl * dlm;
 
 			P3gqApp2 =
 				P3gq01
-				+ 7.0 * bfkl1 * YM * DL
-				- 1139334. * YM * Y1
+				+ 7.0 * bfkl1 * ym * dl
+				- 1139334. * ym * y1
 				+ 143008.
 				- 290390. * x * (2.0 - x)
-				- 659492. * DL
-				+ 303685. * std::pow(DL,2)
-				- 81867.  * std::pow(DL,3)
-				+ 1811.8  * std::pow(DL1,3)
-				- 465.9   * std::pow(DL1,2)
-				- 51206.  * DL1
-				+ 274249. * DL * DL1;
+				- 659492. * dl
+				+ 303685. * dl2
+				- 81867.  * dl3
+				+ 1811.8  * dlm3
+				- 465.9   * dlm2
+				- 51206.  * dlm
+				+ 274249. * dl * dlm;
 		} else if (_nf == 4) {
 			P3gqApp1 =
 				P3gq01
-				+ 3.5 * bfkl1 * YM * DL
-				- 8302.8 * YM * Y1
+				+ 3.5 * bfkl1 * ym * dl
+				- 8302.8 * ym * y1
 				- 347706.
 				+ 1105306. * x * (2.0 - x)
-				- 127650. * DL
-				- 29728.  * std::pow(DL,2)
-				+ 137537. * std::pow(DL,3)
-				+ 4658.1  * std::pow(DL1,3)
-				+ 59205.  * std::pow(DL1,2)
-				+ 345513. * DL1
-				- 995120. * DL * DL1;
+				- 127650. * dl
+				- 29728.  * dl2
+				+ 137537. * dl3
+				+ 4658.1  * dlm3
+				+ 59205.  * dlm2
+				+ 345513. * dlm
+				- 995120. * dl * dlm;
 
 			P3gqApp2 =
 				P3gq01
-				+ 7.0 * bfkl1 * YM * DL
-				- 1129822. * YM * Y1
+				+ 7.0 * bfkl1 * ym * dl
+				- 1129822. * ym * y1
 				+ 108527.
 				- 254166. * x * (2.0 - x)
-				- 667254. * DL
-				+ 293099. * std::pow(DL,2)
-				- 77437.  * std::pow(DL,3)
-				+ 1471.3  * std::pow(DL1,3)
-				- 1850.3  * std::pow(DL1,2)
-				- 52451.  * DL1
-				+ 248634. * DL * DL1;
+				- 667254. * dl
+				+ 293099. * dl2
+				- 77437.  * dl3
+				+ 1471.3  * dlm3
+				- 1850.3  * dlm2
+				- 52451.  * dlm
+				+ 248634. * dl * dlm;
 		} else if (_nf == 5) {
 			P3gqApp1 =
 				P3gq01
-				+ 3.5 * bfkl1 * YM * DL
-				+ 14035. * YM * Y1
+				+ 3.5 * bfkl1 * ym * dl
+				+ 14035. * ym * y1
 				- 384003.
 				+ 1152711. * x * (2.0 - x)
-				- 126346. * DL
-				- 42967.  * std::pow(DL,2)
-				+ 144270. * std::pow(DL,3)
-				+ 4385.5  * std::pow(DL1,3)
-				+ 58688.  * std::pow(DL1,2)
-				+ 348988. * DL1
-				- 1031165. * DL * DL1;
+				- 126346. * dl
+				- 42967.  * dl2
+				+ 144270. * dl3
+				+ 4385.5  * dlm3
+				+ 58688.  * dlm2
+				+ 348988. * dlm
+				- 1031165. * dl * dlm;
 
 			P3gqApp2 =
 				P3gq01
-				+ 7.0 * bfkl1 * YM * DL
-				- 1117561. * YM * Y1
+				+ 7.0 * bfkl1 * ym * dl
+				- 1117561. * ym * y1
 				+ 76329.
 				- 218973. * x * (2.0 - x)
-				- 670799. * DL
-				+ 282763. * std::pow(DL,2)
-				- 72633.  * std::pow(DL,3)
-				+ 1170.0  * std::pow(DL1,3)
-				- 2915.5  * std::pow(DL1,2)
-				- 52548.  * DL1
-				+ 223771. * DL * DL1;
+				- 670799. * dl
+				+ 282763. * dl2
+				- 72633.  * dl3
+				+ 1170.0  * dlm3
+				- 2915.5  * dlm2
+				- 52548.  * dlm
+				+ 223771. * dl * dlm;
 		} else if (_nf == 6) {
 			P3gqApp1 =
 				P3gq01
-				+ 3.5 * bfkl1 * YM * DL
-				+ 39203. * YM * Y1
+				+ 3.5 * bfkl1 * ym * dl
+				+ 39203. * ym * y1
 				- 417914.
 				+ 1199042. * x * (2.0 - x)
-				- 120750. * DL
-				- 55941.  * std::pow(DL,2)
-				+ 151383. * std::pow(DL,3)
-				+ 4149.2  * std::pow(DL1,3)
-				+ 58466.  * std::pow(DL1,2)
-				+ 353589. * DL1
-				- 1066510. * DL * DL1;
+				- 120750. * dl
+				- 55941.  * dl2
+				+ 151383. * dl3
+				+ 4149.2  * dlm3
+				+ 58466.  * dlm2
+				+ 353589. * dlm
+				- 1066510. * dl * dlm;
 
 			P3gqApp2 =
 				P3gq01
-				+ 7.0 * bfkl1 * YM * DL
-				- 1102470. * YM * Y1
+				+ 7.0 * bfkl1 * ym * dl
+				- 1102470. * ym * y1
 				+ 46517.
 				- 184858. * x * (2.0 - x)
-				- 670056. * DL
-				+ 272689. * std::pow(DL,2)
-				- 67453.  * std::pow(DL,3)
-				+ 905.0   * std::pow(DL1,3)
-				- 3686.2  * std::pow(DL1,2)
-				- 51523.  * DL1
-				+ 199594. * DL * DL1;
+				- 670056. * dl
+				+ 272689. * dl2
+				- 67453.  * dl3
+				+ 905.0   * dlm3
+				- 3686.2  * dlm2
+				- 51523.  * dlm
+				+ 199594. * dl * dlm;
 		} else {
 			log(LOG_ERROR, "P3gq::calcRegular()", "nf ({}) out of bounds, not between 3 and 6.", _nf);
 		}
-
-		// --------------------------------------------------------------
-		// return according to IMOD
-		// --------------------------------------------------------------
 
 		double res{};
 		if (_imod == 1)
@@ -1825,165 +1625,71 @@ namespace Candia2
 		else if (_imod == 2)
 			res = P3gqApp2;
 		else
-			res = 0.5 * (P3gqApp1 + P3gqApp2);
+			res = 0.5*(P3gqApp1 + P3gqApp2);
 		return res/16.0;
 	}
-
-	/*
-	double P3gg::calcRegular(double x) const
+	void P3gq::preCalc()
 	{
 		double nf = static_cast<double>(_nf);
+		auto nf2 = nf*nf;
 		
-		double YM  = 1.0 / x;
-		double Y1  = 1.0 - x;
-		double DL  = std::log(x);
-		double DL1 = std::log1p(-x);
+		// large-x coefficients
+		x1l5cff = 1.3443073e1 - 5.4869684e-1*nf;
+		x1l4cff = 3.7539831e2 - 3.4494742e1*nf + 8.7791495e-1*nf2;
 
-		double nf2 = nf * nf;
-		double nf3 = nf * nf2;
+		y1l5cff = 2.2222222e1 - 5.4869684e-1*nf;
+		y1l4cff = 6.6242163e2 - 4.7992684e1*nf + 8.7791495e-1*nf2;
 
-		// Large-x coefficients
-		double A4gluon =  40880.330
-			- 11714.246  * nf
-			+   440.04876 * nf2
-			+     7.3627750 * nf3;
+		// small-x coefficients
+		bfkl0 = -8.3086173e3 / 2.25;
+		bfkl1 = (-1.0691199e5 - nf*9.9638304e2) / 2.25;
 
-		double Ccoeff = 8.5814120e4 - 1.3880515e4 * nf + 1.3511111e2 * nf2;
-		double Dcoeff = 5.4482808e4 - 4.3411337e3 * nf - 2.1333333e1 * nf2;
-
-		// 1/x * ln^a(x) terms
-		double bfkl0 = -8.308617314e3;
-		double bfkl1 = -1.069119905e5 - 9.963830436e2 * nf;
-
-		// Base part
-		double P3gg01 =
-			bfkl0 * std::pow(DL, 3) * YM
-			+ bfkl1 * std::pow(DL, 2) * YM
-			+ Ccoeff * DL1
-			+ Dcoeff - A4gluon;
-
-		double P3ggApp1 = 0.0;
-		double P3ggApp2 = 0.0;
-
-		if (nf == 3) {
-			P3ggApp1 = P3gg01
-				+ 3.4 * bfkl1 * DL * YM
-				- 345063.0 * Y1 * YM
-				+ 86650.0 * (1.0 + x * x) * Y1
-				+ 158160.0 * DL
-				- 15741.0 * Y1 * std::pow(DL1, 2)
-				- 9417.0 * Y1 * std::pow(DL1, 3);
-
-			P3ggApp2 = P3gg01
-				+ 5.4 * bfkl1 * DL * YM
-				- 1265632.0 * Y1 * YM
-				- 656644.0 * (1.0 + x * x) * Y1
-				- 1352233.0 * DL
-				+ 203298.0 * Y1 * std::pow(DL1, 2)
-				+ 39112.0 * Y1 * std::pow(DL1, 3);
-		}
-		else if (nf == 4) {
-			P3ggApp1 = P3gg01
-				+ 3.4 * bfkl1 * DL * YM
-				- 342625.0 * Y1 * YM
-				+ 100372.0 * (1.0 + x * x) * Y1
-				+ 189167.0 * DL
-				- 29762.0 * Y1 * std::pow(DL1, 2)
-				- 12102.0 * Y1 * std::pow(DL1, 3);
-
-			P3ggApp2 = P3gg01
-				+ 5.4 * bfkl1 * DL * YM
-				- 1271540.0 * Y1 * YM
-				- 649661.0 * (1.0 + x * x) * Y1
-				- 1334919.0 * DL
-				+ 191263.0 * Y1 * std::pow(DL1, 2)
-				+ 36867.0 * Y1 * std::pow(DL1, 3);
-		}
-		else if (nf == 5) {
-			P3ggApp1 = P3gg01
-				+ 3.4 * bfkl1 * DL * YM
-				- 337540.0 * Y1 * YM
-				+ 119366.0 * (1.0 + x * x) * Y1
-				+ 223769.0 * DL
-				- 45129.0 * Y1 * std::pow(DL1, 2)
-				- 15046.0 * Y1 * std::pow(DL1, 3);
-
-			P3ggApp2 = P3gg01
-				+ 5.4 * bfkl1 * DL * YM
-				- 1274800.0 * Y1 * YM
-				- 637406.0 * (1.0 + x * x) * Y1
-				- 1314010.0 * DL
-				+ 177882.0 * Y1 * std::pow(DL1, 2)
-				+ 34362.0 * Y1 * std::pow(DL1, 3);
-		}
-		else {
-			throw std::invalid_argument("Error in P3GGA: invalid nf (must be 3,4,5)");
-		}
-
-		double res{};
-		if (_imod == 1)
-			res = P3ggApp1;
-		else if (_imod == 2)
-			res = P3ggApp2;
-		else
-			res = 0.5 * (P3ggApp1 + P3ggApp2);
-		return res/16.0;
+		x0l6cff =  5.2235940e1 - 7.3744856e0 * nf;
+		x0l5cff = -2.9221399e2 + 1.8436214e0 * nf;
+		x0l4cff =  7.3106077e3 - 3.7887135e2 * nf - 3.2438957e1 * nf2;
 	}
-	*/
+	
 
 	double P3gg::calcRegular(double x) const
 	{
 		double ym = 1.0 / x;
 		double y1 = 1.0 - x;
 		double dl = std::log(x);
-		double dl1 = std::log1p(-x);
+		double dl2 = dl*dl;
+		double dl3 = dl2*dl;
+		double dl4 = dl3*dl;
+		double dl5 = dl4*dl;
+		double dl6 = dl5*dl;
+		double dlm = std::log1p(-x);
+	    double dlm2 = dlm*dlm;
+		double dlm3 = dlm2*dlm;
+		double dlm4 = dlm3*dlm;
 
-		double nf = static_cast<double>(_nf);
-		double nf2 = nf*nf;
-		double nf3 = nf*nf2;
-
-		// Large-x coefficients
-		double a4gluon = 40880.330 - 11714.246 * nf + 440.04876 * nf2 + 7.3627750 * nf3;
-		double ccoeff  = 8.5814120e4 - 1.3880515e4 * nf + 1.3511111e2 * nf2;
-		double dcoeff  = 5.4482808e4 - 4.3411337e3 * nf - 2.1333333e1 * nf2;
-
-		double x1l4cff = 5.6460905e1 * nf - 3.6213992 * nf2;
-		double x1l3cff = 2.4755054e2 * nf - 4.0559671e1 * nf2 + 1.5802469 * nf3;
-
-		// Small-x coefficients
-		double bfkl0 = -8.3086173e3;
-		double bfkl1 = -1.0691199e5 - 9.9638304e2 * nf;
-
-		double x0l6cff =  1.44e2 - 2.7786008e1 * nf + 7.9012346e-1 * nf2;
-		double x0l5cff = -1.44e2 - 1.6208066e2 * nf + 1.4380247e1 * nf2;
-		double x0l4cff =  2.6165784e4 - 3.3447551e3 * nf + 9.1522635e1 * nf2 - 1.9753086e-1 * nf3;
-
-		// Resulting part
-		double p3gg01 = bfkl0 * std::pow(dl, 3) * ym
-			+ bfkl1 * std::pow(dl, 2) * ym
-			+ x0l6cff * std::pow(dl, 6)
-			+ x0l5cff * std::pow(dl, 5)
-			+ x0l4cff * std::pow(dl, 4)
-			+ ccoeff * dl1
+		double p3gg01 = bfkl0 * dl3 * ym
+			+ bfkl1 * dl2 * ym
+			+ x0l6cff * dl6
+			+ x0l5cff * dl5
+			+ x0l4cff * dl4
+			+ ccoeff * dlm
 			+ dcoeff - a4gluon
-			+ x1l4cff * y1 * std::pow(dl1, 4)
-			+ x1l3cff * y1 * std::pow(dl1, 3);
+			+ x1l4cff * y1 * dlm4
+			+ x1l3cff * y1 * dlm3;
 
 		double p3ggapp1 = 0.0;
 		double p3ggapp2 = 0.0;
 
-		if (nf == 3) {
+		if (_nf == 3) {
 			p3ggapp1 = p3gg01
 				- 421311.0  * y1 * dl * ym
 				- 325557.0  * y1 * ym
 				+ 1679790.0 * y1
 				- 1456863.0 * y1 * x
 				+ 3246307.0 * y1 * dl
-				+ 2026324.0 * std::pow(dl, 2)
-				+ 549188.0  * std::pow(dl, 3)
-				+ 8337.0    * y1 * dl1
-				+ 26718.0   * y1 * std::pow(dl1, 2)
-				- 27049.0   * (y1 * y1) * std::pow(dl1, 3);
+				+ 2026324.0 * dl2
+				+ 549188.0  * dl3
+				+ 8337.0    * y1 * dlm
+				+ 26718.0   * y1 * dlm2
+				- 27049.0   * (y1 * y1) * dlm3;
 
 			p3ggapp2 = p3gg01
 				- 700113.0  * y1 * dl * ym
@@ -1991,24 +1697,24 @@ namespace Candia2
 				+ 896407.0  * y1 * (1.0 + 2.0 * x)
 				- 162733.0  * y1 * (x * x)
 				- 2661862.0 * y1 * dl
-				+ 196759.0  * std::pow(dl, 2)
-				- 260607.0  * std::pow(dl, 3)
-				+ 84068.0   * y1 * dl1
-				+ 346318.0  * y1 * std::pow(dl1, 2)
-				+ 315725.0  * dl * std::pow(dl1, 2);
+				+ 196759.0  * dl2
+				- 260607.0  * dl3
+				+ 84068.0   * y1 * dlm
+				+ 346318.0  * y1 * dlm2
+				+ 315725.0  * dl * dlm2;
 
-		} else if (nf == 4) {
+		} else if (_nf == 4) {
 			p3ggapp1 = p3gg01
 				- 437084.0  * y1 * dl * ym
 				- 361570.0  * y1 * ym
 				+ 1696070.0 * y1
 				- 1457385.0 * y1 * x
 				+ 3195104.0 * y1 * dl
-				+ 2009021.0 * std::pow(dl, 2)
-				+ 544380.0  * std::pow(dl, 3)
-				+ 9938.0    * y1 * dl1
-				+ 24376.0   * y1 * std::pow(dl1, 2)
-				- 22143.0   * (y1 * y1) * std::pow(dl1, 3);
+				+ 2009021.0 * dl2
+				+ 544380.0  * dl3
+				+ 9938.0    * y1 * dlm
+				+ 24376.0   * y1 * dlm2
+				- 22143.0   * (y1 * y1) * dlm3;
 
 			p3ggapp2 = p3gg01
 				- 706649.0  * y1 * dl * ym
@@ -2016,24 +1722,24 @@ namespace Candia2
 				+ 836544.0  * y1 * (1.0 + 2.0 * x)
 				- 199929.0  * y1 * (x * x)
 				- 2683760.0 * y1 * dl
-				+ 168802.0  * std::pow(dl, 2)
-				- 250799.0  * std::pow(dl, 3)
-				+ 36967.0   * y1 * dl1
-				+ 24530.0   * y1 * std::pow(dl1, 2)
-				- 71470.0   * (y1 * y1) * std::pow(dl1, 2);
+				+ 168802.0  * dl2
+				- 250799.0  * dl3
+				+ 36967.0   * y1 * dlm
+				+ 24530.0   * y1 * dlm2
+				- 71470.0   * (y1 * y1) * dlm2;
 
-		} else if (nf == 5) {
+		} else if (_nf == 5) {
 			p3ggapp1 = p3gg01
 				- 439426.0  * y1 * dl * ym
 				- 293679.0  * y1 * ym
 				+ 1916281.0 * y1
 				- 1615883.0 * y1 * x
 				+ 3648786.0 * y1 * dl
-				+ 2166231.0 * std::pow(dl, 2)
-				+ 594588.0  * std::pow(dl, 3)
-				+ 50406.0   * y1 * dl1
-				+ 24692.0   * y1 * std::pow(dl1, 2)
-				+ 174067.0  * (y1 * y1) * dl1;
+				+ 2166231.0 * dl2
+				+ 594588.0  * dl3
+				+ 50406.0   * y1 * dlm
+				+ 24692.0   * y1 * dlm2
+				+ 174067.0  * (y1 * y1) * dlm;
 
 			p3ggapp2 = p3gg01
 				- 705978.0  * y1 * dl * ym
@@ -2041,24 +1747,24 @@ namespace Candia2
 				+ 1730508.0 * y1 * x
 				+ 353143.0  * y1 * (2.0 - x * x)
 				- 2602682.0 * y1 * dl
-				+ 178960.0  * std::pow(dl, 2)
-				- 218133.0  * std::pow(dl, 3)
-				+ 2285.0    * y1 * dl1
-				+ 19295.0   * y1 * std::pow(dl1, 2)
-				- 13719.0   * (y1 * y1) * std::pow(dl1, 2);
+				+ 178960.0  * dl2
+				- 218133.0  * dl3
+				+ 2285.0    * y1 * dlm
+				+ 19295.0   * y1 * dlm2
+				- 13719.0   * (y1 * y1) * dlm2;
 
-		} else if (nf == 6) {
+		} else if (_nf == 6) {
 			p3ggapp1 = p3gg01
 				- 476018.0  * y1 * dl * ym
 				- 469289.0  * y1 * ym
 				+ 2049351.0 * y1
 				- 1589000.0 * y1 * x
 				+ 3185549.0 * y1 * dl
-				+ 1994521.0 * std::pow(dl, 2)
-				+ 527723.0  * std::pow(dl, 3)
-				- 340674.0  * y1 * dl1
-				+ 22460.0   * y1 * std::pow(dl1, 2)
-				- 394556.0  * dl * dl1;
+				+ 1994521.0 * dl2
+				+ 527723.0  * dl3
+				- 340674.0  * y1 * dlm
+				+ 22460.0   * y1 * dlm2
+				- 394556.0  * dl * dlm;
 
 			p3ggapp2 = p3gg01
 				- 709863.0  * y1 * dl * ym
@@ -2066,35 +1772,62 @@ namespace Candia2
 				+ 1605315.0 * y1 * x
 				+ 360743.0  * y1 * (2.0 - x * x)
 				- 2426250.0 * y1 * dl
-				+ 230631.0  * std::pow(dl, 2)
-				- 185804.0  * std::pow(dl, 3)
-				- 7992.9    * y1 * dl1
-				+ 15918.0   * y1 * std::pow(dl1, 2)
-				- 32771.0   * (y1 * y1) * dl1;
+				+ 230631.0  * dl2
+				- 185804.0  * dl3
+				- 7992.9    * y1 * dlm
+				+ 15918.0   * y1 * dlm2
+				- 32771.0   * (y1 * y1) * dlm;
 		} else {
-			std::cerr << " Error in function p3gga: choice of nf " << std::endl;
-			std::abort();
+			log(LOG_ERROR, "SplitFunc", "Error in function P3gg: choice of nf ({})", _nf);
 		}
 
-		if (_imod == 1) return p3ggapp1;
-		if (_imod == 2) return p3ggapp2;
-		return (0.5 * (p3ggapp1 + p3ggapp2))/16.0;
+		double res{};
+		if (_imod == 1)
+		    res = p3ggapp1;
+		if (_imod == 2)
+			res = p3ggapp2;
+		else
+			res = 0.5*(p3ggapp1 + p3ggapp2);
+		return res/16.0;
 	}
 	
 	double P3gg::calcPlus([[maybe_unused]] double x) const
 	{
-		const double Nf = static_cast<double>(_nf);
-		
-		const double res = 40880.330 - 11714.246 * Nf + 440.04876 * std::pow(Nf, 2) + 7.3627750 * std::pow(Nf, 3);
-		return res/16.0;
+		auto it = _plus_cache.find(0.0);
+		return it->second;
 	}
 	double P3gg::calcDelta() const
 	{
-		const double nf = static_cast<double>(_nf);
+		return _delta_cache;
+	}
+
+	void P3gg::preCalc()
+	{
+		double nf = static_cast<double>(_nf);
 		auto nf2 = nf*nf;
 		auto nf3 = nf2*nf;
 
-		const double res = 68587.64 - 18143.983*nf + 423.81135*nf2 + 9.0672154e-1 * nf3;
-		return res/16.0;
+		// --------------- REGULAR --------------- //
+		// large-x coefficients
+		a4gluon = 40880.330 - 11714.246 * nf + 440.04876 * nf2 + 7.3627750 * nf3;
+		ccoeff  = 8.5814120e4 - 1.3880515e4 * nf + 1.3511111e2 * nf2;
+		dcoeff  = 5.4482808e4 - 4.3411337e3 * nf - 2.1333333e1 * nf2;
+
+		x1l4cff = 5.6460905e1 * nf - 3.6213992 * nf2;
+		x1l3cff = 2.4755054e2 * nf - 4.0559671e1 * nf2 + 1.5802469 * nf3;
+
+		// Small-x coefficients
+		bfkl0 = -8.3086173e3;
+		bfkl1 = -1.0691199e5 - 9.9638304e2 * nf;
+
+		x0l6cff =  1.44e2 - 2.7786008e1 * nf + 7.9012346e-1 * nf2;
+		x0l5cff = -1.44e2 - 1.6208066e2 * nf + 1.4380247e1 * nf2;
+		x0l4cff =  2.6165784e4 - 3.3447551e3 * nf + 9.1522635e1 * nf2 - 1.9753086e-1 * nf3;
+		
+		// --------------- PLUS --------------- //
+	    _plus_cache[0.0] = (40880.330 - 11714.246*nf + 440.04876*nf2 + 7.3627750*nf3)/16.0;
+		
+		// --------------- DELTA --------------- //
+		_delta_cache = (68587.64 - 18143.983*nf + 423.81135*nf2 + 9.0672154e-1*nf3)/16.0;
 	}
 } // namespace Candia2

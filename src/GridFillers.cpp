@@ -6,6 +6,36 @@
 
 namespace Candia2
 {
+	void GridFillerBase::addXtab(std::span<double> const& xtab, std::vector<double>& points, std::vector<int>& ntab)
+	{
+		// if the number of specified points and the grid filler algorithm align just right,
+		// we get an added xtab value of like 0.5 with also a 0.5000000000002 or something
+		// which fucks up the interpolation algorithm
+		// this just brute force checks all of the values in filled points array
+		// and just removes anything that is < 1e-5 from the xtab array point
+		// probably a better way to do it but who cares
+		for (double x : xtab) {
+			auto val1 = std::ranges::lower_bound(points, x);
+			if (std::abs(*val1 - x) < 1e-5)
+				points.erase(val1);
+			auto val2 = std::ranges::upper_bound(points, x);
+			if (std::abs(*val2 - x) < 1e-5)
+				points.erase(val2);
+		}
+		
+		std::set<double> points_set(points.begin(), points.end());
+		points_set.insert(xtab.begin(), xtab.end());
+		points = std::vector<double>(points_set.begin(), points_set.end());
+		
+		ntab.clear();
+		for (double x : xtab) {
+			if (auto it = std::find(points.begin(), points.end(), x); it != points.end()) {
+				ntab.emplace_back(std::distance(points.begin(), it));
+				continue;
+			}
+		}
+	}
+	
 	uint GridFillerLin::fill(std::vector<double>& points)
 	{
 		// this is to make the intervals less "clean"
@@ -20,19 +50,9 @@ namespace Candia2
 		    double x = min + (max-min)*k/static_cast<double>(size);
 			points.emplace_back(x);
 		}
-		
-		std::set<double> points_set(points.begin(), points.end());
-		points_set.insert(xtab.begin(), xtab.end());
-		points = std::vector<double>(points_set.begin(), points_set.end());
-		
-		ntab.clear();
-		for (double x : xtab) {
-			if (auto it = std::find(points.begin(), points.end(), x); it != points.end()) {
-				ntab.emplace_back(std::distance(points.begin(), it));
-				continue;
-			}
-		}
 
+		addXtab(xtab, points, ntab);
+		
 		return points.size();
 	}
 	std::vector<GridFillerBase::mapping_function_type> GridFillerLin::_mappings
@@ -152,17 +172,7 @@ namespace Candia2
 			points.emplace_back(x);
 		}
 		
-		std::set<double> points_set(points.begin(), points.end());
-		points_set.insert(xtab.begin(), xtab.end());
-		points = std::vector<double>(points_set.begin(), points_set.end());
-		
-		ntab.clear();
-		for (double x : xtab) {
-			if (auto it = std::find(points.begin(), points.end(), x); it != points.end()) {
-				ntab.emplace_back(std::distance(points.begin(), it));
-				continue;
-			}
-		}
+		addXtab(xtab, points, ntab);
 
 		return points.size();
 	}
@@ -202,17 +212,7 @@ namespace Candia2
 			points.emplace_back(x);
 		}
 		
-		std::set<double> points_set(points.begin(), points.end());
-		points_set.insert(xtab.begin(), xtab.end());
-		points = std::vector<double>(points_set.begin(), points_set.end());
-		
-		ntab.clear();
-		for (double x : xtab) {
-			if (auto it = std::find(points.begin(), points.end(), x); it != points.end()) {
-				ntab.emplace_back(std::distance(points.begin(), it));
-				continue;
-			}
-		}
+	    addXtab(xtab, points, ntab);
 		
 		return points.size();
 	}

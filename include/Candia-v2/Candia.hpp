@@ -240,64 +240,13 @@ namespace Candia2
 		 *  @defgroup hfthelpers Helpers for Heavy Flavor Treatment
 		 *  @{
 		 */
-		/**
-		 *  @brief relation 1 for NNLO HFT
-		 *  @param c NNLO array grid (quark/anti-quark)
-		 *  @param k current grid index
-		 *  @param q quark array grid
-		 */
 		void HFT_NNLO1(ArrayGrid& c, uint k, ArrayGrid& q);
-		/**
-		 *  @brief relation 2 for NNLO HFT
-		 *  @param g gluon arraygrid
-		 *  @param qp q^(+) arraygrid
-		 *  @param k current grid index
-		 */
 		void HFT_NNLO2(ArrayGrid& g, ArrayGrid& qp, uint k);
-		/**
-		 *  @brief relation 3 for NNLO HFT
-		 *  @param g gluon arraygrid
-		 *  @param qp q^(+) arraygrid
-		 *  @param k current grid index
-		 *  @param qh heavy quark array grid
-		 *  @param qhb anti-heavy quark array grid
-		 */
 		void HFT_NNLO3(ArrayGrid& g, ArrayGrid& qp, uint k, ArrayGrid& qh, ArrayGrid& qhb);
 
-		/**
-		 *  @brief relation 1 for N3LO HFT
-		 *  @param q quark arraygrid
-		 *  @param qb anti-quark arraygrid
-		 *  @param k current grid index
-		 *  @param SP pre-calculated piece independent of @a j
-		 *  @param qh the output q array to place the results. not the heavy quark dist, but a suitable enough name
-		 */
 		void HFT_N3LO1(ArrayGrid& q, ArrayGrid& qb, uint k, double SP, ArrayGrid& qh);
-		/**
-		 *  @brief relation 2 for N3LO HFT
-		 *  @param q quark arraygrid
-		 *  @param qb anti-quark arraygrid
-		 *  @param k current grid index
-		 *  @param SP pre-calculated piece independent of @a j
-		 *  @param qhb the output qbar array to place the results. not the heavy quark dist, but a suitable enough name
-		 */
 		void HFT_N3LO2(ArrayGrid& q, ArrayGrid& qb, uint k, double SP, ArrayGrid& qhb);
-		/**
-		 *  @brief relation 3 for N3LO HFT
-		 *  @param g gluon arraygrid
-		 *  @param qp q^(+) arraygrid
-		 *  @param k current grid index
-		 */
 		void HFT_N3LO3(ArrayGrid& g, ArrayGrid& qp, uint k);
-		/**
-		 *  @brief relation 4 for N3LO HFT
-		 *  @param g gluon arraygrid
-		 *  @param qp q^(+) arraygrid
-		 *  @param qminus q^(-) arraygrid
-		 *  @param k current grid index
-		 *  @param qh the heavy quark array to place the results
-		 *  @param qhb the heavy quark bar array to place the results
-		 */
 		void HFT_N3LO4(ArrayGrid& g, ArrayGrid& qp, ArrayGrid& qminus, uint k, ArrayGrid& qh, ArrayGrid& qhb);
 		/** @} */
 
@@ -306,43 +255,16 @@ namespace Candia2
 		 *  @defgroup nonsinglethelpers Multi-Thread Non-Singlet Helper Functions
 		 *  @{
 		 */
-		/**
-		 *  @brief LO non-singlet multi-threaded helper routine
-		 *  @param arr reference to set of dists to place resummation results into
-		 *  @param j distribution index
-		 *  @param L1 log term
-		 */
 		void _mt_EvolveDistribution_NS_LO(
 			std::reference_wrapper<std::vector<ArrayGrid>> arr, 
 			uint j, double L1);
-		/**
-		 *  @brief NLO non-singlet multi-threaded helper routine
-		 *  @param arr reference to set of dists to place resummation results into
-		 *  @param j distribution index
-		 *  @param P1 the name of the NS piece of the P1 splitting function, e.g. the plus or minus piece
-		 
-		 *  @param L array of logarithm terms up to NLO
-		 */
 	    void _mt_EvolveDistribution_NS_NLO(
 			std::reference_wrapper<std::vector<ArrayGrid>> arr, 
 			uint j, ExprName P1, std::array<double, 2> const& L);
-		/**
-		 *  @brief NNLO non-singlet multi-threaded helper routine
-		 *  @param arr reference to set of dists to place resummation results into
-		 *  @param j distribution index
-		 *  @param P array of names for the pieces of the NS splitting functions, e.g. the plus, minus, or valence pieces
-		 *  @param L array of logarithm terms up to NNLO
-		 */
 	    void _mt_EvolveDistribution_NS_NNLO(
 			std::reference_wrapper<std::vector<ArrayGrid>> arr, 
 			uint j, std::array<ExprName, 2> const& P, std::array<double, 3> const& L);
-		/**
-		 *  @brief N3LO non-singlet multi-threaded helper routine
-		 *  @param arr reference to set of dists to place resummation results into
-		 *  @param j distribution index
-		 *  @param P array of names for the pieces of the NS splitting functions, e.g. the plus, minus, or valence pieces
-		 *  @param L array of logarithm terms up to N3LO
-		 */
+
 	    void _mt_EvolveDistribution_NS_N3LO(
 			std::reference_wrapper<std::vector<ArrayGrid>> arr, 
 			uint j, std::array<ExprName, 3> const& P, std::array<double, 4> const& L);
@@ -352,45 +274,15 @@ namespace Candia2
 		 *  @defgroup nonsinglettrunchelpers Multi-Thread Non-Singlet Helper Functions (Truncated Ansatz)
 		 *  @{
 		 */
-		/**
-		 *  @brief LO non-singlet multi-threaded helper routine
-		 *  @param arr reference to set of dists to place resummation results into
-		 *  @param j distribution index
-		 *  @param L1 log term
-		 */
 		void _mt_EvolveDistribution_NST_LO(
 			std::reference_wrapper<std::vector<ArrayGrid>> arr,
 			uint j, double L1);
-		/**
-		 *  @brief NLO non-singlet multi-threaded helper routine
-		 *  @param arr reference to set of dists to place resummation results into
-		 *  @param j distribution index
-		 *  @param p1 the NLO splitting function
-		 *  @param L1 log term
-		 */
 	    void _mt_EvolveDistribution_NST_NLO(
 			std::reference_wrapper<std::vector<ArrayGrid>> arr,
 			uint j, ExprName p1, double L1);
-		/**
-		 *  @brief NNLO non-singlet multi-threaded helper routine
-		 *  @param arr reference to set of dists to place resummation results into
-		 *  @param j distribution index
-		 *  @param p1 the NLO splitting function
-		 *  @param p2 the NNLO splitting function
-		 *  @param L1 log term
-		 */
 	    void _mt_EvolveDistribution_NST_NNLO(
 			std::reference_wrapper<std::vector<ArrayGrid>> arr,
 			uint j, ExprName p1, ExprName p2, double L1);
-		/**
-		 *  @brief N3LO non-singlet multi-threaded helper routine
-		 *  @param arr reference to set of dists to place resummation results into
-		 *  @param j distribution index
-		 *  @param p1 the NLO splitting function
-		 *  @param p2 the NNLO splitting function
-		 *  @param p3 the N3LO splitting function
-		 *  @param L1 log term
-		 */
 	    void _mt_EvolveDistribution_NST_N3LO(
 			std::reference_wrapper<std::vector<ArrayGrid>> arr,
 			uint j, ExprName p1, ExprName p2, ExprName p3, double L1);
@@ -405,54 +297,15 @@ namespace Candia2
 		 *  @ingroup recrels
 		 *  @{
 		 */
-		/**
-		 *  @brief LO singlet recursion relation: \f$S^i_{n+1}(x) = -\frac{2}{\beta_0}[P \otimes S^i_n](x)\f$
-		 *  @param S arraygrid
-		 *  @param k grid index
-		 *  @param P LO splitting function
-		 */
-		double recrelS_1(
-			ArrayGrid& S,
-			uint k,
-			Expression& P);
-		/**
-		 *  @brief NLO singlet recursion relation
-		 *  @param S_i arraygrid corresponding to \f$S^i\f$
-		 *  @param S_im1 arraygrid corresponding to \f$S^{i-1}\f$
-		 *  @param k grid index
-		 *  @param P0 LO splitting function
-		 *  @param P1 NLO splitting function
-		 */
+		double recrelS_1(ArrayGrid& S, uint k, Expression& P);
 		double recrelS_2(
 			ArrayGrid& S_i, ArrayGrid& S_im1,
 			uint k,
 			Expression& P0, Expression& P1);
-		/**
-		 *  @brief NNLO singlet recursion relation
-		 *  @param S_i arraygrid corresponding to \f$S^i\f$
-		 *  @param S_im1 arraygrid corresponding to \f$S^{i-1}\f$
-		 *  @param S_im2 arraygrid corresponding to \f$S^{i-2}\f$
-		 *  @param k grid index
-		 *  @param P0 LO splitting function
-		 *  @param P1 NLO splitting function
-		 *  @param P2 NNLO splitting function
-		 */
 		double recrelS_3(
 			ArrayGrid& S_i, ArrayGrid& S_im1, ArrayGrid& S_im2,
 			uint k,
 			Expression& P0, Expression& P1, Expression& P2);
-		/**
-		 *  @brief N3LO singlet recursion relation
-		 *  @param S_i arraygrid corresponding to \f$S^i\f$
-		 *  @param S_im1 arraygrid corresponding to \f$S^{i-1}\f$
-		 *  @param S_im2 arraygrid corresponding to \f$S^{i-2}\f$
-		 *  @param S_im3 arraygrid corresponding to \f$S^{i-3}\f$
-		 *  @param k grid index
-		 *  @param P0 LO splitting function
-		 *  @param P1 NLO splitting function
-		 *  @param P2 NNLO splitting function
-		 *  @param P3 N3LO splitting function
-		 */
 		double recrelS_4(
 			ArrayGrid& S_i, ArrayGrid& S_im1, ArrayGrid& S_im2, ArrayGrid& S_im3,
 			uint k,
@@ -464,16 +317,7 @@ namespace Candia2
 		 *  @ingroup recrels
 		 *  @{
 		 */
-		/**
-		 *  @brief performs the LO recursion relation \f$A_{n+1}(x) = -\frac{2}{\beta_0}[P \otimes A_n](x)\f$
-		 *  @param A the LO arraygrid
-		 *  @param k the grid index
-		 *  @param P0 the LO splitting function
-		 */
-		double recrelLO(
-			ArrayGrid& A,
-			uint k,
-			Expression& P0);
+		double recrelLO(ArrayGrid& A, uint k, Expression& P0);
 		/** @} */
 
 		/**
@@ -481,23 +325,10 @@ namespace Candia2
 		 *  @ingroup recrels
 		 *  @{
 		 */
-		/**
-		 *  @brief performs the NLO recursion relation equivalent to the LO one
-		 *  @param B the NLO arraygrid
-		 *  @param k the grid index
-		 *  @param P0 the LO splitting function
-		 */
 		double recrelNLO_1(
 			ArrayGrid& B,
 			uint k,
 			Expression& P0);
-		/**
-		 *  @brief performs the 2nd NLO recursion relation
-		 *  @param B the NLO arraygrid
-		 *  @param k the grid index
-		 *  @param P0 the LO splitting function
-		 *  @param P1 the NLO splitting function
-		 */
 		double recrelNLO_2(
 			ArrayGrid& B,
 			uint k,
@@ -509,35 +340,14 @@ namespace Candia2
 		 *  @ingroup recrels
 		 *  @{
 		 */
-		/**
-		 *  @brief performs the NNLO recursion relation equivalent to the LO one
-		 *  @param C the NNLO arraygrid
-		 *  @param k the grid index
-		 *  @param P0 the LO splitting function
-		 */
 		double recrelNNLO_1(
 			ArrayGrid& C,
 			uint k,
 			Expression& P0);
-		/**
-		 *  @brief performs the 2nd NNLO recursion relation
-		 *  @param C the NNLO arraygrid
-		 *  @param k the grid index
-		 *  @param P0 the LO splitting function
-		 *  @param P1 the NLO splitting function
-		 *  @param P2 the NNLO splitting function
-		 */
 		double recrelNNLO_2(
 			ArrayGrid& C,
 			uint k,
 			Expression& P0, Expression& P1, Expression& P2);
-		/**
-		 *  @brief performs the 3rd NNLO recursion relation
-		 *  @param C the NNLO arraygrid
-		 *  @param k the grid index
-		 *  @param P0 the LO splitting function
-		 *  @param P1 the NLO splitting function
-		 */
 		double recrelNNLO_3(
 			ArrayGrid& C,
 			uint k,
@@ -549,51 +359,18 @@ namespace Candia2
 		 *  @ingroup recrels
 		 *  @{
 		 */
-		/**
-		 *  @brief performs the N3LO recursion relation equivalent to the LO one
-		 *  @param D the NNLO arraygrid
-		 *  @param k the grid index
-		 *  @param P0 the LO splitting function
-		 */
 		double recrelN3LO_1(
 			ArrayGrid& D,
 			uint k,
 			Expression& P0);
-		/**
-		 *  @brief performs the 2nd N3LO recursion relation
-		 *  @param D the NNLO arraygrid
-		 *  @param k the grid index
-		 *  @param P0 the LO splitting function
-		 *  @param P1 the NLO splitting function
-		 *  @param P2 the NNLO splitting function
-		 *  @param P3 the N3LO splitting function
-		 */
 		double recrelN3LO_2(
 			ArrayGrid& D,
 			uint k,
 			Expression& P0, Expression& P1, Expression& P2, Expression& P3);
-		/**
-		 *  @brief performs the 3nd N3LO recursion relation
-		 *  @param D the NNLO arraygrid
-		 *  @param k the grid index
-		 *  @param P0 the LO splitting function
-		 *  @param P1 the NLO splitting function
-		 *  @param P2 the NNLO splitting function
-		 *  @param P3 the N3LO splitting function
-		 */
 		double recrelN3LO_3(
 			ArrayGrid& D,
 			uint k,
 			Expression& P0, Expression& P1, Expression& P2, Expression& P3);
-		/**
-		 *  @brief performs the 4th N3LO recursion relation
-		 *  @param D the NNLO arraygrid
-		 *  @param k the grid index
-		 *  @param P0 the LO splitting function
-		 *  @param P1 the NLO splitting function
-		 *  @param P2 the NNLO splitting function
-		 *  @param P3 the N3LO splitting function
-		 */
 		double recrelN3LO_4(
 			ArrayGrid& D,
 			uint k,
@@ -606,7 +383,7 @@ namespace Candia2
 	 *  the output is a pdf "set", consisting of one file only,
 	 *  that is compatible with LHAPDF and able to be loaded via its API
 	 */
-	class DGLAPSolverLHAPDF final
+	class LHAPDFGrid final
 	{
 		std::string _name;
 		std::filesystem::path _infofile_in_path;
@@ -619,7 +396,7 @@ namespace Candia2
 		Distribution const& _dist;
 		Grid _grid;
 
-	    std::vector<std::pair<double, std::map<int,ArrayGrid>>> _all_pdfs{};
+	    std::vector<std::pair<double, std::unordered_map<int,ArrayGrid>>> _all_pdfs{};
 		std::vector<double> _as_qs, _as_vals, _xvals;
 
 	public:
@@ -631,7 +408,7 @@ namespace Candia2
 			DELTAFNLO = 9004,
 		};
 	public:
-		DGLAPSolverLHAPDF(
+		LHAPDFGrid(
 			std::string const& name, std::filesystem::path const& infofile_in_path,
 			Distribution const& dist, Grid const& grid,
 		    uint order, uint iterations, uint trunc_idx, double mur2_muf2)

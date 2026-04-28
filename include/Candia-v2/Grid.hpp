@@ -30,6 +30,8 @@ namespace Candia2
 		
 		virtual uint fill(std::vector<double>& points) = 0;
 		virtual std::span<mapping_function_type> getMappings(double x) = 0;
+
+		static void addXtab(std::span<double> const& xtab, std::vector<double>& points, std::vector<int>& ntab);
 	};
 
 	/** @brief Fills a grid linearly with a particular number of points. */

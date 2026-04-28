@@ -92,7 +92,6 @@ target_include_directories(candia PUBLIC
 add_subdirectory(examples)
 add_subdirectory(tests)
 
-
 option(WITH_LHAPDF "Compile in LHAPDF interface" OFF)
 option(USE_CUSTOM_WIN_LHAPDF "Internal option to use my custom modified version of LHAPDF that can be built on windows" OFF)
 option(LHAPDF_ROOT_DIR "Path to the installation root/prefix of LHAPDF." "/usr")

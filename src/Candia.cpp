@@ -276,7 +276,7 @@ namespace Candia2
 				case 1: return _B[j][0][0][k]; break;
 				case 2: return _C[j][0][0][0][k]; break;
 				case 3: return _D[j][0][0][0][0][k]; break;
-				default: throw "unreachable";
+				default: throw std::runtime_error("unreachable");
 			}
 		};
 
@@ -531,6 +531,9 @@ namespace Candia2
 				for (auto& expr : _expressions)
 					expr->fill(_grid.points(), _grid.abscissae(), _grid.filler().getMappings(-1.0));
 			}
+			for (auto& expr : _expressions)
+				expr->preCalc();
+			
 			log(LOG_DEBUG, "DGLAP", "Retrieving values of alpha_s, and calculating all logarithm factors");
 			bool resum_tab = _alpha_s.resumTabulated();
 			bool resum_threshold = !resum_tab;
@@ -712,7 +715,7 @@ namespace Candia2
 		return subpdfs;
 	}
 
-	void DGLAPSolverLHAPDF::evolve(
+	void LHAPDFGrid::evolve(
 		double q0, double qf, double dq,
 		DGLAPSolver::options_type const& dglap_options)
 	{
@@ -749,7 +752,7 @@ namespace Candia2
 			solver.getOptions() = dglap_options;
 			std::vector<ArrayGrid> F = solver.evolve();
 
-			std::map<int, ArrayGrid> map{};
+			std::unordered_map<int, ArrayGrid> map{};
 			map[-5] = F[11];
 			map[-4] = F[10];
 			map[-3] = F[9];
@@ -774,7 +777,7 @@ namespace Candia2
 		log(LOG_INFO, "DGLAPSolverLHAPDF", "Finished running.");
 	}
 
-	void DGLAPSolverLHAPDF::write()
+	void LHAPDFGrid::write()
 	{
 		log(LOG_INFO, "DGLAPSolverLHAPDF", "Spitting out the stuff...");
 		std::filesystem::path pdfdir_path = std::filesystem::current_path()/_name;

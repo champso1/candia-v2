@@ -5,7 +5,7 @@
 
 #pragma once
 
-#include <map>
+#include <unordered_map>
 #include <vector>
 
 #include "Candia-v2/Common.hpp"
@@ -18,7 +18,7 @@ namespace Candia2
 	class Expression
 	{
 	public:
-		using cache_type = std::map<double, double>; //!< alias for cache
+		using cache_type = std::unordered_map<double, double>; //!< alias for cache
 		using array_type = std::vector<double>; //!< alias for passed-in grid array
 		using mapping_type = std::function<std::pair<double,double>(double,double)>; //!< alias for mappings
 		
@@ -57,19 +57,25 @@ namespace Candia2
 			std::span<mapping_type> const& mapping);
 
 
-		/** @brief actually calculates the regular distribution */
+		/**
+		 *  @defgroup piececalulators Expression Calculators
+		 *  @{
+		 */
 		inline virtual double calcRegular([[maybe_unused]] double x) const { return 0.0; }
-		/** @brief actually calculates the plus distribution */
 		inline virtual double calcPlus([[maybe_unused]] double x) const { return 0.0; }
-		/** @brief actually calculates the delta distribution */
 		inline virtual double calcDelta() const { return 0.0; }
-		
+		/** @} */
 
-		/** @brief Retrieves the regular part of the expression evaluated at x from the cache */
+		/**
+		 *  @defgroup pieceretrievers Expression Retrievers
+		 *  @{
+		 */
 		inline virtual double regular(double x) { return _reg_cache[x]; }
-		/** @brief Retrieves the plus part of the expression evaluated at x from the cache */
 		inline virtual double plus(double x) { return _plus_cache[x]; }
-		/** @brief Retrieves the delta part of the expression evaluated at x from the cache */
 		inline virtual double delta() { return _delta_cache; }
+		/** @} */
+
+		/** @brief calculates all nf-dependent/constant pieces of an expression */
+		inline virtual void preCalc() {}
 	};
 };

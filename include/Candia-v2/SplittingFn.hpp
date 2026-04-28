@@ -308,12 +308,15 @@ namespace Candia2
 	 */
 	class P3nsp final: public SplittingFunction
 	{
+		double a4qi, a4ap1, a4ap2;
+		double b4qi, b4ap1, b4ap2;
 	public:
 		using SplittingFunction::SplittingFunction;
 		
 		double calcRegular(double x) const override;
 		double calcPlus(double x) const override;
 		double calcDelta() const override;
+		void preCalc() override;
 	};
 
 	/**
@@ -322,12 +325,16 @@ namespace Candia2
 	 */
 	class P3nsm final: public SplittingFunction
 	{
+	private:
+		double a4qi, a4ap1, a4ap2;
+		double b4qi, b4ap1, b4ap2;
 	public:
 		using SplittingFunction::SplittingFunction;
 		
 		double calcRegular(double x) const override;
 		double calcPlus(double x) const override;
 		double calcDelta() const override;
+		void preCalc() override;
 	};
 
 	/**
@@ -336,12 +343,16 @@ namespace Candia2
 	 */
 	class P3nsv final: public SplittingFunction
 	{
+	private:
+		double a4qi, a4ap1, a4ap2;
+		double b4qi, b4ap1, b4ap2;
 	public:
 		using SplittingFunction::SplittingFunction;
 		
 		double calcRegular(double x) const override;
 		double calcPlus(double x) const override;
 		double calcDelta() const override;
+		void preCalc() override;
 	};
 
 	/**
@@ -362,12 +373,21 @@ namespace Candia2
 	 */
 	class P3qq final: public SplittingFunction
 	{
+	private:
+		double x1l4cff, x1l3cff;
+		double y1l4cff, y1l3cff;
+		double bfkl1;
+		double x0l6cff, x0l5cff, x0l4cff;
+
+		double a4qi, a4ap1, a4ap2;
+		double b4qi, b4ap1, b4ap2;
 	public:
 		using SplittingFunction::SplittingFunction;
 		
 		double calcRegular(double x) const override;
 		double calcPlus(double x) const override;
 		double calcDelta() const override;
+		void preCalc() override;
 	};
 
 	/**
@@ -376,10 +396,16 @@ namespace Candia2
 	 */
 	class P3qg final: public SplittingFunction
 	{
+	private:
+		double x1l5cff, x1l4cff;
+		double y1l5cff, y1l4cff;
+		double bfkl1;
+		double x0l6cff, x0l5cff, x0l4cff;
 	public:
 		using SplittingFunction::SplittingFunction;
 		
 		double calcRegular(double x) const override;
+		void preCalc() override;
 	};
 
 	/**
@@ -388,10 +414,16 @@ namespace Candia2
 	 */
 	class P3gq final: public SplittingFunction
 	{
+	private:
+		double x1l5cff, x1l4cff;
+		double y1l5cff, y1l4cff;
+		double bfkl0, bfkl1;
+		double x0l6cff, x0l5cff, x0l4cff;
 	public:
 		using SplittingFunction::SplittingFunction;
-		
+
 		double calcRegular(double x) const override;
+		void preCalc() override;
 	};
 
 	/**
@@ -400,8 +432,16 @@ namespace Candia2
 	 */
 	class P3gg final: public SplittingFunction
 	{
+	private:
+		double a4gluon;
+		double ccoeff, dcoeff;
+		double x1l4cff, x1l3cff;
+		double bfkl0, bfkl1;
+		double x0l6cff, x0l5cff, x0l4cff;
 	public:
 		using SplittingFunction::SplittingFunction;
+
+		void preCalc() override;
 		
 		double calcRegular(double x) const override;
 		double calcPlus(double x) const override;
@@ -571,7 +611,7 @@ namespace Candia2
 				return p2ggc(&x, &nf)/8.0;
 			}
 		};
-	}
+	} // namespace mvv_p2
 
 	/** @defgroup n3lo_splitfuncs_fortran Fortran Versions of P3 Splitting Functions */
 	namespace mvv_p3
@@ -776,7 +816,7 @@ namespace Candia2
 				return p3ggc_2410(&x, &nf, &imod)/16.0;
 			}
 		};
-	}
+	} // namespace mvv_p3
 	
 } // namespace Candia2
 

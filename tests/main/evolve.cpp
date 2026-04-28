@@ -112,7 +112,7 @@ int main(int argc, char *argv[]) {
 
 	DGLAPSolver solver(order, grid, alphas, Qf, iterations, trunc_idx, std::move(dist), mur2_muf2);
 	auto& dglap_options = solver.getOptions();
-	dglap_options.use_truncated_nonsinglet_sol = false;
+	dglap_options.use_truncated_nonsinglet_sol = true;
 	dglap_options.disable_heavy_flavor_matching = false;
 	dglap_options.use_nnlo_matching_conditions_at_n3lo = false;
 	dglap_options.use_n3lo_heavyquark_asymmetry = true;

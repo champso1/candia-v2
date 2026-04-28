@@ -77,18 +77,22 @@ namespace Candia2
 		}
 	}
 
+	static thread_local int prev_interp_idx = 0;
     int Grid::interpFindIdx(value_type x)
 	{
 		const int n = static_cast<int>(size());
 		const int max_k = static_cast<int>(n-2*INTERP_POINTS);
 
-		auto it = std::upper_bound(_points.begin(), _points.end(), x);
+		auto it = std::upper_bound(_points.begin() + prev_interp_idx, _points.end(), x);
+		
 		int k = static_cast<int>(it - _points.begin()) - INTERP_POINTS;
 		
 		if (k < 0)
 			k = 0;
 		else if (k > max_k)
 			k = max_k;
+
+		prev_interp_idx = k;
 
 		return k;
 	}
@@ -103,10 +107,10 @@ namespace Candia2
 		
 		double const* xa = &(_points.data()[k]);
 		double const* ya = &(yy.base().data()[k]);
-		
-		std::array<double, 2*INTERP_POINTS> c{};
-		std::array<double, 2*INTERP_POINTS> d{};
 
+		double c[2*INTERP_POINTS]{};
+		double d[2*INTERP_POINTS]{};
+		
 		dif = std::abs(x - xa[0]);
 
 		for (int i=0; i<n; i++) {
@@ -163,6 +167,7 @@ namespace Candia2
 		double ak = A[k];
 		double out = 0.0;
 		uint s = X.size();
+		prev_interp_idx = 0;
 		for (uint i=0; i<s; i++) {
 			double z = X[i];
 			double w = W[i];

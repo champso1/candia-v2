@@ -16,7 +16,8 @@
 				"BUILD_TESTS": "YES",
                 "BUILD_DOCS": "NO",
                 "BUILD_MANUSCRIPTS": "NO",
-                "WITH_LHAPDF": "NO"
+                "WITH_LHAPDF": "YES",
+				"LHAPDF_ROOT_DIR": "$env{HOME}/.local"
             }
         },
 		{
