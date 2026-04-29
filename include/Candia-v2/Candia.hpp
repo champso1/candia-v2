@@ -65,18 +65,42 @@ namespace Candia2
 		double _alpha0{}; //!< initial alpha_s in an interval
 		double _alpha1{}; //!< final alpha_s in an interval
 
+		inline std::vector<uint> getEvolutionIndices()
+		{
+			std::vector<uint> idxs{};
+			switch (_order) {
+				case 0:
+				case 1: {
+					for (uint j=13; j<=12+_nf; ++j)
+						idxs.emplace_back(j);
+					for (uint j=32; j<=30+_nf; ++j)
+						idxs.emplace_back(j);
+				}; break;
+				case 2:
+				case 3: {
+					for (uint j=26; j<=24+_nf; ++j)
+						idxs.emplace_back(j);
+					for (uint j=32; j<=30+_nf; ++j)
+						idxs.emplace_back(j);
+					idxs.emplace_back(25);
+				} break;
+				default: throw std::runtime_error("unreachable");
+			}
+			return idxs;
+		}
+
 		Distribution const& _initial_dist; //!< reference to initial distribution
 
 		uint _iterations{}; //!< number of singlet/non-singlet iterations
 		uint _trunc_idx{}; //!< number of additional singlet truncated iterations
 
-		MultiDimArrayGrid_t<2> _A{}; //!< LO coeffs
-		MultiDimArrayGrid_t<3> _B{}; //!< NLO coeffs
-		MultiDimArrayGrid_t<4> _C{}; //!< NNLO coeffs
-		MultiDimArrayGrid_t<5> _D{}; //!< N3LO coeffs
-	    MultiDimArrayGrid_t<3> _S{}; //!< singlet coeffs
-		MultiDimArrayGrid_t<3> _S_NS{}; //!< non-singlet coeffs (truncated)
-		std::vector<ArrayGrid> _F{}; //!< final distributions
+	    ArrayGridN<3> _A; //!< LO coeffs
+		ArrayGridN<4> _B; //!< NLO coeffs
+		ArrayGridN<5> _C; //!< NNLO coeffs
+		ArrayGridN<6> _D; //!< N3LO coeffs
+	    ArrayGridN<4> _S; //!< singlet coeffs
+		ArrayGridN<4> _S_NS; //!< non-singlet coeffs (truncated)
+		std::vector<ArrayGrid> _F; //!< final distributions
 
 		std::array<double,8> _r1{}; //!< real solution to N3LO quadratic
 		std::array<double,8> _b{};  //!< \f$-2*\mathrm{Re}[r_2]\f$
@@ -111,6 +135,43 @@ namespace Candia2
 		}
 
 	private:
+		inline double& getSingletCoeffValue(uint j, uint k) {
+			if (!options.use_truncated_nonsinglet_sol)
+				return _S(0,j,0,k);
+			else
+				return _S_NS(0,j,0,k);
+		}
+		inline ArrayGridView getSingletCoeffArray(uint j) {
+			if (!options.use_truncated_nonsinglet_sol)
+				return _S(0,j,0);
+			else
+				return _S_NS(0,j,0);
+		}
+		
+	    inline double& getNonSingletCoeffValue(uint j, uint k) {
+			if (options.use_truncated_nonsinglet_sol)
+				return _S_NS(0,j,0,k);
+			switch (_order) {
+				case 0: return _A(j,0,k); break;
+				case 1: return _B(j,0,0,k); break;
+				case 2: return _C(j,0,0,0,k); break;
+				case 3: return _D(j,0,0,0,0,k); break;
+				default: throw std::runtime_error("unreachable");
+			}
+		}
+
+		inline ArrayGridView getNonSingletCoeffArray(uint j) {
+			if (options.use_truncated_nonsinglet_sol)
+				return _S_NS(0,j,0);
+			switch (_order) {
+				case 0: return _A(j,0); break;
+				case 1: return _B(j,0,0); break;
+				case 2: return _C(j,0,0,0); break;
+				case 3: return _D(j,0,0,0,0); break;
+				default: throw std::runtime_error("unreachable");
+			}
+		}
+		
 		/** 
 		 *  @brief Helper function to create/load all expression objects for the provided order.
 		 */
@@ -176,7 +237,7 @@ namespace Candia2
 		/** @brief takes the default exact coefficients (A, B, ...) and sets up S to contain all necessary info */
 		void setupTruncatedDistributions();
 
-		void evolveSinglet(std::reference_wrapper<std::vector<ArrayGrid>> arr, double L1);
+		void evolveSinglet(std::vector<ArrayGrid>& arr, double L1);
 		/**
 		 *  @brief Evolves the non-singlet distributions
 		 *  @param arr Reference to the array in which to place the resummed results,
@@ -186,9 +247,7 @@ namespace Candia2
 		 *  @param L3 The NNLO logarithmic coefficient (actually an arctan)
 		 *  @param L4 The N3LO logarithmic coefficient
 		 */
-		void evolveNonSinglet(
-			std::reference_wrapper<std::vector<ArrayGrid>> arr, 
-			double L1, double L2, double L3, double L4);
+		void evolveNonSinglet(std::vector<ArrayGrid>& arr, double L1, double L2, double L3, double L4);
 
 		/**
 		 *  @brief Evolves the non-singlet distributions with the truncated ansatz
@@ -206,9 +265,7 @@ namespace Candia2
 		 *  which will be different if resumming to the final energy vs a threshold one
 		 *  @param L1 the logarithmic coefficient
 		 */
-		void evolveSingletThreaded(
-			std::reference_wrapper<std::vector<ArrayGrid>> arr,
-			double L1);
+		void evolveSingletThreaded(std::reference_wrapper<std::vector<ArrayGrid>> arr, double L1);
 		/**
 		 *  @brief Evolves the non-singlet distributions
 		 *  @param arr Reference to the array in which to place the resummed results,
@@ -218,9 +275,7 @@ namespace Candia2
 		 *  @param L3 The NNLO logarithmic coefficient (actually an arctan)
 		 *  @param L4 The N3LO logarithmic coefficient
 		 */
-		void evolveNonSingletThreaded(
-			std::reference_wrapper<std::vector<ArrayGrid>> arr, 
-			double L1, double L2, double L3, double L4);
+		void evolveNonSingletThreaded(std::reference_wrapper<std::vector<ArrayGrid>> arr, double L1, double L2, double L3, double L4);
 
 		/**
 		 *  @brief Evolves the non-singlet distributions with the truncated ansatz (threaded version)
@@ -240,14 +295,14 @@ namespace Candia2
 		 *  @defgroup hfthelpers Helpers for Heavy Flavor Treatment
 		 *  @{
 		 */
-		void HFT_NNLO1(ArrayGrid& c, uint k, ArrayGrid& q);
-		void HFT_NNLO2(ArrayGrid& g, ArrayGrid& qp, uint k);
-		void HFT_NNLO3(ArrayGrid& g, ArrayGrid& qp, uint k, ArrayGrid& qh, ArrayGrid& qhb);
+		void HFT_NNLO1(ArrayGridView c, uint k, ArrayGridView q);
+		void HFT_NNLO2(ArrayGridView g, ArrayGridView qp, uint k);
+		void HFT_NNLO3(ArrayGridView g, ArrayGridView qp, uint k, ArrayGridView qh, ArrayGridView qhb);
 
-		void HFT_N3LO1(ArrayGrid& q, ArrayGrid& qb, uint k, double SP, ArrayGrid& qh);
-		void HFT_N3LO2(ArrayGrid& q, ArrayGrid& qb, uint k, double SP, ArrayGrid& qhb);
-		void HFT_N3LO3(ArrayGrid& g, ArrayGrid& qp, uint k);
-		void HFT_N3LO4(ArrayGrid& g, ArrayGrid& qp, ArrayGrid& qminus, uint k, ArrayGrid& qh, ArrayGrid& qhb);
+		void HFT_N3LO1(ArrayGridView q, ArrayGridView qb, uint k, double SP, ArrayGridView qh);
+		void HFT_N3LO2(ArrayGridView q, ArrayGridView qb, uint k, double SP, ArrayGridView qhb);
+		void HFT_N3LO3(ArrayGridView g, ArrayGridView qp, uint k);
+		void HFT_N3LO4(ArrayGridView g, ArrayGridView qp, ArrayGridView qminus, uint k, ArrayGridView qh, ArrayGridView qhb);
 		/** @} */
 
 #if ENABLE_THREADING
@@ -297,17 +352,17 @@ namespace Candia2
 		 *  @ingroup recrels
 		 *  @{
 		 */
-		double recrelS_1(ArrayGrid& S, uint k, Expression& P);
+		double recrelS_1(ArrayGridView S, uint k, Expression& P);
 		double recrelS_2(
-			ArrayGrid& S_i, ArrayGrid& S_im1,
+			ArrayGridView S_i, ArrayGridView S_im1,
 			uint k,
 			Expression& P0, Expression& P1);
 		double recrelS_3(
-			ArrayGrid& S_i, ArrayGrid& S_im1, ArrayGrid& S_im2,
+			ArrayGridView S_i, ArrayGridView S_im1, ArrayGridView S_im2,
 			uint k,
 			Expression& P0, Expression& P1, Expression& P2);
 		double recrelS_4(
-			ArrayGrid& S_i, ArrayGrid& S_im1, ArrayGrid& S_im2, ArrayGrid& S_im3,
+			ArrayGridView S_i, ArrayGridView S_im1, ArrayGridView S_im2, ArrayGridView S_im3,
 			uint k,
 			Expression& P0, Expression& P1, Expression& P2, Expression& P3);
 		/** @} */
@@ -317,7 +372,7 @@ namespace Candia2
 		 *  @ingroup recrels
 		 *  @{
 		 */
-		double recrelLO(ArrayGrid& A, uint k, Expression& P0);
+		double recrelLO(ArrayGridView A, uint k, Expression& P0);
 		/** @} */
 
 		/**
@@ -326,11 +381,11 @@ namespace Candia2
 		 *  @{
 		 */
 		double recrelNLO_1(
-			ArrayGrid& B,
+			ArrayGridView B,
 			uint k,
 			Expression& P0);
 		double recrelNLO_2(
-			ArrayGrid& B,
+			ArrayGridView B,
 			uint k,
 			Expression& P0, Expression& P1);
 		/** @} */
@@ -341,15 +396,15 @@ namespace Candia2
 		 *  @{
 		 */
 		double recrelNNLO_1(
-			ArrayGrid& C,
+			ArrayGridView C,
 			uint k,
 			Expression& P0);
 		double recrelNNLO_2(
-			ArrayGrid& C,
+			ArrayGridView C,
 			uint k,
 			Expression& P0, Expression& P1, Expression& P2);
 		double recrelNNLO_3(
-			ArrayGrid& C,
+			ArrayGridView C,
 			uint k,
 			Expression& P0, Expression& P1);
 		/** @} */
@@ -360,19 +415,19 @@ namespace Candia2
 		 *  @{
 		 */
 		double recrelN3LO_1(
-			ArrayGrid& D,
+			ArrayGridView D,
 			uint k,
 			Expression& P0);
 		double recrelN3LO_2(
-			ArrayGrid& D,
+			ArrayGridView D,
 			uint k,
 			Expression& P0, Expression& P1, Expression& P2, Expression& P3);
 		double recrelN3LO_3(
-			ArrayGrid& D,
+			ArrayGridView D,
 			uint k,
 			Expression& P0, Expression& P1, Expression& P2, Expression& P3);
 		double recrelN3LO_4(
-			ArrayGrid& D,
+			ArrayGridView D,
 			uint k,
 			Expression& P0, Expression& P1, Expression& P2, Expression& P3);
 		/** @} */

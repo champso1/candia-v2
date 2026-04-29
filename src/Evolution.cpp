@@ -5,18 +5,14 @@
 #include "Candia-v2/Common.hpp"
 #include "Candia-v2/Math.hpp"
 
-#include <cmath>
-#include <functional>
-
 namespace Candia2
 {
 	thread_local int thread_index = -1;
 	
-    void DGLAPSolver::evolveSinglet(
-        std::reference_wrapper<std::vector<ArrayGrid>> arr, double L1
-    ) {
+    void DGLAPSolver::evolveSinglet(std::vector<ArrayGrid>& arr, double L1)
+	{
         for (uint j=0; j<=1; ++j)
-            arr.get()[j*31] = _S[0][j][0];
+			std::ranges::copy(_S(0,j,0), arr[j*31].begin());
 		
         startLogIterations();
         switch (_order) {
@@ -30,19 +26,19 @@ namespace Candia2
                     logIterations(n, _iterations-1, "SingletLO");
                     
                     for (uint k=0; k<_grid.size()-1; k++) {
-                        _S[0][1][1][k] =
-							recrelS_1(_S[0][1][0], k, p0qq) +
-							recrelS_1(_S[0][0][0], k, p0qg);
-                        _S[0][0][1][k] =
-							recrelS_1(_S[0][1][0], k, p0gq) +
-							recrelS_1(_S[0][0][0], k, p0gg);
+                        _S(0,1,1,k) =
+							recrelS_1(_S(0,1,0), k, p0qq) +
+							recrelS_1(_S(0,0,0), k, p0qg);
+                        _S(0,0,1,k) =
+							recrelS_1(_S(0,1,0), k, p0gq) +
+							recrelS_1(_S(0,0,0), k, p0gg);
 
 						for (uint j=0; j<=1; ++j)
-							arr.get()[j*31][k] += _S[0][j][1][k] * std::pow(L1, n)/factorial(n);
+							arr[j*31](k) += _S(0,j,1,k) * std::pow(L1, n)/factorial(n);
                     }
 
 					for (uint j=0; j<=1; ++j)
-						_S[0][j][0] = _S[0][j][1];
+						std::ranges::copy(_S(0,j,1), _S(0,j,0).begin());
                 }
             } break;
             case 1: {
@@ -60,28 +56,28 @@ namespace Candia2
 
                     // LO piece (non truncated)
                     for (uint k=0; k<_grid.size()-1; k++) {
-                        _S[0][1][1][k] =
-							recrelS_1(_S[0][1][0], k, p0qq) +
-							recrelS_1(_S[0][0][0], k, p0qg);
-                        _S[0][0][1][k] = 
-							recrelS_1(_S[0][1][0], k, p0gq) +
-							recrelS_1(_S[0][0][0], k, p0gg);
+                        _S(0,1,1,k) =
+							recrelS_1(_S(0,1,0), k, p0qq) +
+							recrelS_1(_S(0,0,0), k, p0qg);
+                        _S(0,0,1,k) = 
+							recrelS_1(_S(0,1,0), k, p0gq) +
+							recrelS_1(_S(0,0,0), k, p0gg);
                     }
 
                     // new NLO piece non-convolution
                     for (uint k=0; k<_grid.size()-1; k++) {
                         for (uint j=0; j<=1; j++)
-                            _S[1][j][1][k] = -_S[0][j][1][k] * _alpha_s.beta1()/(4.0*PI*_alpha_s.beta0()) - _S[1][j][0][k];
+                            _S(1,j,1,k) = -_S(0,j,1,k) * _alpha_s.beta1()/(4.0*PI*_alpha_s.beta0()) - _S(1,j,0,k);
                     }
 
                     // new NLO piece convolution
                     for (uint k=0; k<_grid.size()-1; k++) {
-                        _S[1][1][1][k] +=
-							recrelS_2(_S[1][1][0], _S[0][1][0], k, p0qq, p1qq) +
-							recrelS_2(_S[1][0][0], _S[0][0][0], k, p0qg, p1qg);
-					    _S[1][0][1][k] +=
-							recrelS_2(_S[1][1][0], _S[0][1][0], k, p0gq, p1gq) +
-							recrelS_2(_S[1][0][0], _S[0][0][0], k, p0gg, p1gg);
+                        _S(1,1,1,k) +=
+							recrelS_2(_S(1,1,0), _S(0,1,0), k, p0qq, p1qq) +
+							recrelS_2(_S(1,0,0), _S(0,0,0), k, p0qg, p1qg);
+					    _S(1,0,1,k) +=
+							recrelS_2(_S(1,1,0), _S(0,1,0), k, p0gq, p1gq) +
+							recrelS_2(_S(1,0,0), _S(0,0,0), k, p0gg, p1gg);
                     }
 
                     // NLO truncation terms
@@ -91,33 +87,33 @@ namespace Candia2
                         // non-convolution piece:
                         for (uint k=0; k<_grid.size()-1; k++) {
                             for (uint j=0; j<=1; j++)
-                                _S[t][j][1][k] =
-                                    - (_alpha_s.beta1()/(4.0*PI*_alpha_s.beta0()))*_S[t-1][j][1][k]
-                                    - T*_S[t][j][0][k]
-                                    - (T-1.0)*(_alpha_s.beta1()/(4.0*PI*_alpha_s.beta0()))*_S[t-1][j][0][k];
+                                _S(t,j,1,k) =
+                                    - (_alpha_s.beta1()/(4.0*PI*_alpha_s.beta0()))*_S(t-1,j,1,k)
+                                    - T*_S(t,j,0,k)
+                                    - (T-1.0)*(_alpha_s.beta1()/(4.0*PI*_alpha_s.beta0()))*_S(t-1,j,0,k);
                         }
 
                         // convolution piece
                         for (uint k=0; k<_grid.size()-1; k++) {
-                            _S[t][1][1][k] += 
-								recrelS_2(_S[t][1][0], _S[t-1][1][0], k, p0qq, p1qq) +
-								recrelS_2(_S[t][0][0], _S[t-1][0][0], k, p0qg, p1qg);
-                            _S[t][0][1][k] += 
-								recrelS_2(_S[t][1][0], _S[t-1][1][0], k, p0gq, p1gq) +
-								recrelS_2(_S[t][0][0], _S[t-1][0][0], k, p0gg, p1gg);
+                            _S(t,1,1,k) += 
+								recrelS_2(_S(t,1,0), _S(t-1,1,0), k, p0qq, p1qq) +
+								recrelS_2(_S(t,0,0), _S(t-1,0,0), k, p0qg, p1qg);
+                            _S(t,0,1,k) += 
+								recrelS_2(_S(t,1,0), _S(t-1,1,0), k, p0gq, p1gq) +
+								recrelS_2(_S(t,0,0), _S(t-1,0,0), k, p0gg, p1gg);
                         }
                     }
 
                     for (uint t=0; t<=_trunc_idx; ++t) {
                         for (uint j=0; j<=1; ++j) {
                             for (uint k=0; k<_grid.size()-1; k++)
-                                arr.get()[j*31][k] += _S[t][j][1][k] * std::pow(_alpha1, t) * std::pow(L1, n)/factorial(n);        
+                                arr[j*31](k) += _S(t,j,1,k) * std::pow(_alpha1, t) * std::pow(L1, n)/factorial(n);        
                         }
                     }
                 
                     for (uint t=0; t<=_trunc_idx; ++t) {
                         for (uint j=0; j<=1; ++j)
-                            _S[t][j][0] = _S[t][j][1];
+							std::ranges::copy(_S(t,j,1), _S(t,j,0).begin());
                     }
                 }
             } break;
@@ -140,48 +136,48 @@ namespace Candia2
 
                     // LO piece (non truncated)
                     for (uint k=0; k<_grid.size()-1; k++) {
-                        _S[0][1][1][k] =
-							recrelS_1(_S[0][1][0], k, p0qq) +
-							recrelS_1(_S[0][0][0], k, p0qg);
-                        _S[0][0][1][k] =
-							recrelS_1(_S[0][1][0], k, p0gq) +
-							recrelS_1(_S[0][0][0], k, p0gg);
+                        _S(0,1,1,k) =
+							recrelS_1(_S(0,1,0), k, p0qq) +
+							recrelS_1(_S(0,0,0), k, p0qg);
+                        _S(0,0,1,k) =
+							recrelS_1(_S(0,1,0), k, p0gq) +
+							recrelS_1(_S(0,0,0), k, p0gg);
                     }
 
                     // new NLO piece non-convolution
                     for (uint k=0; k<_grid.size()-1; k++) {
                         for (uint j=0; j<=1; j++)
-                            _S[1][j][1][k] = -_S[0][j][1][k] * _alpha_s.beta1()/(4.0*PI*_alpha_s.beta0()) - _S[1][j][0][k];
+                            _S(1,j,1,k) = -_S(0,j,1,k) * _alpha_s.beta1()/(4.0*PI*_alpha_s.beta0()) - _S(1,j,0,k);
                     }
 
                     // new NLO piece convolution
                     for (uint k=0; k<_grid.size()-1; k++) {
-                        _S[1][1][1][k] +=
-							recrelS_2(_S[1][1][0], _S[0][1][0], k, p0qq, p1qq) +
-							recrelS_2(_S[1][0][0], _S[0][0][0], k, p0qg, p1qg);
-					    _S[1][0][1][k] +=
-							recrelS_2(_S[1][1][0], _S[0][1][0], k, p0gq, p1gq) +
-							recrelS_2(_S[1][0][0], _S[0][0][0], k, p0gg, p1gg);
+                        _S(1,1,1,k) +=
+							recrelS_2(_S(1,1,0), _S(0,1,0), k, p0qq, p1qq) +
+							recrelS_2(_S(1,0,0), _S(0,0,0), k, p0qg, p1qg);
+					    _S(1,0,1,k) +=
+							recrelS_2(_S(1,1,0), _S(0,1,0), k, p0gq, p1gq) +
+							recrelS_2(_S(1,0,0), _S(0,0,0), k, p0gg, p1gg);
                     }
 
                     // new NNLO piece non-convolution
                     for (uint k=0; k<_grid.size()-1; k++) {
                         for (uint j=0; j<=1; j++)
-                            _S[2][j][1][k] =
-                                - (_alpha_s.beta1()/(4.0*PI*_alpha_s.beta0()))*_S[1][j][1][k]
-                                - (_alpha_s.beta2()/(16.0*PI_2*_alpha_s.beta0()))*_S[0][j][1][k]
-                                - 2.0*_S[2][j][0][k]
-                                - (_alpha_s.beta1()/(4.0*PI*_alpha_s.beta0()))*_S[1][j][0][k];
+                            _S(2,j,1,k) =
+                                - (_alpha_s.beta1()/(4.0*PI*_alpha_s.beta0()))*_S(1,j,1,k)
+                                - (_alpha_s.beta2()/(16.0*PI_2*_alpha_s.beta0()))*_S(0,j,1,k)
+                                - 2.0*_S(2,j,0,k)
+                                - (_alpha_s.beta1()/(4.0*PI*_alpha_s.beta0()))*_S(1,j,0,k);
                     }
 
                     // new NNLO piece convolution
                     for (uint k=0; k<_grid.size()-1; k++) {
-                        _S[2][1][1][k] += 
-                            recrelS_3(_S[2][1][0], _S[1][1][0], _S[0][1][0], k, p0qq, p1qq, p2qq) +
-                            recrelS_3(_S[2][0][0], _S[1][0][0], _S[0][0][0], k, p0qg, p1qg, p2qg);
-                        _S[2][0][1][k] += 
-                            recrelS_3(_S[2][1][0], _S[1][1][0], _S[0][1][0], k, p0gq, p1gq, p2gq) +
-                            recrelS_3(_S[2][0][0], _S[1][0][0], _S[0][0][0], k, p0gg, p1gg, p2gg);
+                        _S(2,1,1,k) += 
+                            recrelS_3(_S(2,1,0), _S(1,1,0), _S(0,1,0), k, p0qq, p1qq, p2qq) +
+                            recrelS_3(_S(2,0,0), _S(1,0,0), _S(0,0,0), k, p0qg, p1qg, p2qg);
+                        _S(2,0,1,k) += 
+                            recrelS_3(_S(2,1,0), _S(1,1,0), _S(0,1,0), k, p0gq, p1gq, p2gq) +
+                            recrelS_3(_S(2,0,0), _S(1,0,0), _S(0,0,0), k, p0gg, p1gg, p2gg);
                     }
 
                     for (uint t=3; t<=_trunc_idx; ++t) {
@@ -190,35 +186,35 @@ namespace Candia2
                         // non-convolution piece:
                         for (uint k=0; k<_grid.size()-1; k++) {
                             for (uint j=0; j<=1; j++)
-                                _S[t][j][1][k] =
-                                    - (_alpha_s.beta1()/(4.0*PI*_alpha_s.beta0()))*_S[t-1][j][1][k]
-                                    - (_alpha_s.beta2()/(16.0*PI_2*_alpha_s.beta0()))*_S[t-2][j][1][k]
-                                    - T*_S[t][j][0][k]
-                                    - (T-1.0)*(_alpha_s.beta1()/(4.0*PI*_alpha_s.beta0()))*_S[t-1][j][0][k]
-                                    - (T-2.0)*(_alpha_s.beta2()/(16.0*PI_2*_alpha_s.beta0()))*_S[t-2][j][0][k];
+                                _S(t,j,1,k) =
+                                    - (_alpha_s.beta1()/(4.0*PI*_alpha_s.beta0()))*_S(t-1,j,1,k)
+                                    - (_alpha_s.beta2()/(16.0*PI_2*_alpha_s.beta0()))*_S(t-2,j,1,k)
+                                    - T*_S(t,j,0,k)
+                                    - (T-1.0)*(_alpha_s.beta1()/(4.0*PI*_alpha_s.beta0()))*_S(t-1,j,0,k)
+                                    - (T-2.0)*(_alpha_s.beta2()/(16.0*PI_2*_alpha_s.beta0()))*_S(t-2,j,0,k);
                         }
 
                         // convolution piece
                         for (uint k=0; k<_grid.size()-1; k++) {
-                            _S[t][1][1][k] += 
-                                recrelS_3(_S[t][1][0], _S[t-1][1][0], _S[t-2][1][0], k, p0qq, p1qq, p2qq) +
-                                recrelS_3(_S[t][0][0], _S[t-1][0][0], _S[t-2][0][0], k, p0qg, p1qg, p2qg);
-                            _S[t][0][1][k] += 
-                                recrelS_3(_S[t][1][0], _S[t-1][1][0], _S[t-2][1][0], k, p0gq, p1gq, p2gq) +
-                                recrelS_3(_S[t][0][0], _S[t-1][0][0], _S[t-2][0][0], k, p0gg, p1gg, p2gg);
+                            _S(t,1,1,k) += 
+                                recrelS_3(_S(t,1,0), _S(t-1,1,0), _S(t-2,1,0), k, p0qq, p1qq, p2qq) +
+                                recrelS_3(_S(t,0,0), _S(t-1,0,0), _S(t-2,0,0), k, p0qg, p1qg, p2qg);
+                            _S(t,0,1,k) += 
+                                recrelS_3(_S(t,1,0), _S(t-1,1,0), _S(t-2,1,0), k, p0gq, p1gq, p2gq) +
+                                recrelS_3(_S(t,0,0), _S(t-1,0,0), _S(t-2,0,0), k, p0gg, p1gg, p2gg);
                         }
                     }
 
                     for (uint t=0; t<=_trunc_idx; ++t) {
                         for (uint j=0; j<=1; ++j) {
                             for (uint k=0; k<_grid.size()-1; k++)
-                                arr.get()[j*31][k] += _S[t][j][1][k] * std::pow(_alpha1, t) * std::pow(L1, n)/factorial(n);        
+                                arr[j*31](k) += _S(t,j,1,k) * std::pow(_alpha1, t) * std::pow(L1, n)/factorial(n);        
                         }
                     }
                 
                     for (uint t=0; t<=_trunc_idx; ++t) {
                         for (uint j=0; j<=1; ++j)
-                            _S[t][j][0] = _S[t][j][1];
+							std::ranges::copy(_S(t,j,1), _S(t,j,0).begin());
                     }
                 }
             } break;
@@ -245,71 +241,71 @@ namespace Candia2
 
                     // LO piece
                     for (uint k=0; k<_grid.size()-1; k++) {
-                        _S[0][1][1][k] =
-							recrelS_1(_S[0][1][0], k, p0qq) +
-							recrelS_1(_S[0][0][0], k, p0qg);
-                        _S[0][0][1][k] =
-							recrelS_1(_S[0][1][0], k, p0gq) +
-							recrelS_1(_S[0][0][0], k, p0gg);
+                        _S(0,1,1,k) =
+							recrelS_1(_S(0,1,0), k, p0qq) +
+							recrelS_1(_S(0,0,0), k, p0qg);
+                        _S(0,0,1,k) =
+							recrelS_1(_S(0,1,0), k, p0gq) +
+							recrelS_1(_S(0,0,0), k, p0gg);
                     }
 
                     // new NLO piece non-convolution
                     for (uint k=0; k<_grid.size()-1; k++) {
                         for (uint j=0; j<=1; j++)
-                            _S[1][j][1][k] = -_S[0][j][1][k] * _alpha_s.beta1()/(4.0*PI*_alpha_s.beta0()) - _S[1][j][0][k];
+                            _S(1,j,1,k) = -_S(0,j,1,k) * _alpha_s.beta1()/(4.0*PI*_alpha_s.beta0()) - _S(1,j,0,k);
                     }
 
                     // new NLO piece convolution
                     for (uint k=0; k<_grid.size()-1; k++) {
-                        _S[1][1][1][k] +=
-							recrelS_2(_S[1][1][0], _S[0][1][0], k, p0qq, p1qq) +
-							recrelS_2(_S[1][0][0], _S[0][0][0], k, p0qg, p1qg);
-					    _S[1][0][1][k] +=
-							recrelS_2(_S[1][1][0], _S[0][1][0], k, p0gq, p1gq) +
-							recrelS_2(_S[1][0][0], _S[0][0][0], k, p0gg, p1gg);
+                        _S(1,1,1,k) +=
+							recrelS_2(_S(1,1,0), _S(0,1,0), k, p0qq, p1qq) +
+							recrelS_2(_S(1,0,0), _S(0,0,0), k, p0qg, p1qg);
+					    _S(1,0,1,k) +=
+							recrelS_2(_S(1,1,0), _S(0,1,0), k, p0gq, p1gq) +
+							recrelS_2(_S(1,0,0), _S(0,0,0), k, p0gg, p1gg);
                     }
 
                     // new NNLO piece non-convolution
                     for (uint k=0; k<_grid.size()-1; k++) {
                         for (uint j=0; j<=1; j++)
-                            _S[2][j][1][k] =
-                                - (_alpha_s.beta1()/(4.0*PI*_alpha_s.beta0()))*_S[1][j][1][k]
-                                - (_alpha_s.beta2()/(16.0*PI_2*_alpha_s.beta0()))*_S[0][j][1][k]
-                                - 2.0*_S[2][j][0][k]
-                                - (_alpha_s.beta1()/(4.0*PI*_alpha_s.beta0()))*_S[1][j][0][k];
+                            _S(2,j,1,k) =
+                                - (_alpha_s.beta1()/(4.0*PI*_alpha_s.beta0()))*_S(1,j,1,k)
+                                - (_alpha_s.beta2()/(16.0*PI_2*_alpha_s.beta0()))*_S(0,j,1,k)
+                                - 2.0*_S(2,j,0,k)
+                                - (_alpha_s.beta1()/(4.0*PI*_alpha_s.beta0()))*_S(1,j,0,k);
                     }
 
                     // new NNLO piece non-convolution
                     for (uint k=0; k<_grid.size()-1; k++) {
-                        _S[2][1][1][k] += 
-                            recrelS_3(_S[2][1][0], _S[1][1][0], _S[0][1][0], k, p0qq, p1qq, p2qq) +
-                            recrelS_3(_S[2][0][0], _S[1][0][0], _S[0][0][0], k, p0qg, p1qg, p2qg);
+                        _S(2,1,1,k) += 
+                            recrelS_3(_S(2,1,0), _S(1,1,0), _S(0,1,0), k, p0qq, p1qq, p2qq) +
+                            recrelS_3(_S(2,0,0), _S(1,0,0), _S(0,0,0), k, p0qg, p1qg, p2qg);
 
-                        _S[2][0][1][k] += 
-                            recrelS_3(_S[2][1][0], _S[1][1][0], _S[0][1][0], k, p0gq, p1gq, p2gq) +
-                            recrelS_3(_S[2][0][0], _S[1][0][0], _S[0][0][0], k, p0gg, p1gg, p2gg);
+                        _S(2,0,1,k) += 
+                            recrelS_3(_S(2,1,0), _S(1,1,0), _S(0,1,0), k, p0gq, p1gq, p2gq) +
+                            recrelS_3(_S(2,0,0), _S(1,0,0), _S(0,0,0), k, p0gg, p1gg, p2gg);
                     }
 
                     // new N3LO piece non-convolution
                     for (uint k=0; k<_grid.size()-1; k++) {
                         for (uint j=0; j<=1; j++)
-                            _S[3][j][1][k] =
-                                - (_alpha_s.beta1()/(4.0*PI*_alpha_s.beta0()))*_S[2][j][1][k]
-                                - (_alpha_s.beta2()/(16.0*PI_2*_alpha_s.beta0()))*_S[1][j][1][k]
-                                - (_alpha_s.beta3()/(64.0*PI_3*_alpha_s.beta0()))*_S[0][j][1][k]
-                                - 3.0*_S[3][j][0][k]
-                                - 2.0*(_alpha_s.beta1()/(4.0*PI*_alpha_s.beta0()))*_S[2][j][0][k]
-                                - (_alpha_s.beta2()/(16.0*PI_2*_alpha_s.beta0()))*_S[1][j][0][k];
+                            _S(3,j,1,k) =
+                                - (_alpha_s.beta1()/(4.0*PI*_alpha_s.beta0()))*_S(2,j,1,k)
+                                - (_alpha_s.beta2()/(16.0*PI_2*_alpha_s.beta0()))*_S(1,j,1,k)
+                                - (_alpha_s.beta3()/(64.0*PI_3*_alpha_s.beta0()))*_S(0,j,1,k)
+                                - 3.0*_S(3,j,0,k)
+                                - 2.0*(_alpha_s.beta1()/(4.0*PI*_alpha_s.beta0()))*_S(2,j,0,k)
+                                - (_alpha_s.beta2()/(16.0*PI_2*_alpha_s.beta0()))*_S(1,j,0,k);
                     }
 
                     // new N3LO piece convolution
                     for (uint k=0; k<_grid.size()-1; k++) {
-                        _S[3][1][1][k] += 
-                            recrelS_4(_S[3][1][0], _S[2][1][0], _S[1][1][0], _S[0][1][0], k, p0qq, p1qq, p2qq, p3qq) +
-                            recrelS_4(_S[3][0][0], _S[2][0][0], _S[1][0][0], _S[0][0][0], k, p0qg, p1qg, p2qg, p3qg);
-                        _S[3][0][1][k] += 
-                            recrelS_4(_S[3][1][0], _S[2][1][0], _S[1][1][0], _S[0][1][0], k, p0gq, p1gq, p2gq, p3gq) +
-                            recrelS_4(_S[3][0][0], _S[2][0][0], _S[1][0][0], _S[0][0][0], k, p0gg, p1gg, p2gg, p3gg);
+                        _S(3,1,1,k) += 
+                            recrelS_4(_S(3,1,0), _S(2,1,0), _S(1,1,0), _S(0,1,0), k, p0qq, p1qq, p2qq, p3qq) +
+                            recrelS_4(_S(3,0,0), _S(2,0,0), _S(1,0,0), _S(0,0,0), k, p0qg, p1qg, p2qg, p3qg);
+                        _S(3,0,1,k) += 
+                            recrelS_4(_S(3,1,0), _S(2,1,0), _S(1,1,0), _S(0,1,0), k, p0gq, p1gq, p2gq, p3gq) +
+                            recrelS_4(_S(3,0,0), _S(2,0,0), _S(1,0,0), _S(0,0,0), k, p0gg, p1gg, p2gg, p3gg);
                     }
 
                     for (uint t=4; t<=_trunc_idx; ++t) {
@@ -318,37 +314,37 @@ namespace Candia2
                         // non-convolution piece:
                         for (uint k=0; k<_grid.size()-1; k++) {
                             for (uint j=0; j<=1; j++)
-                                _S[t][j][1][k] =
-                                    - (_alpha_s.beta1()/(4.0*PI*_alpha_s.beta0()))*_S[t-1][j][1][k]
-                                    - (_alpha_s.beta2()/(16.0*PI_2*_alpha_s.beta0()))*_S[t-2][j][1][k]
-                                    - (_alpha_s.beta3()/(64.0*PI_3*_alpha_s.beta0()))*_S[t-3][j][1][k]
-                                    - T*_S[t][j][0][k]
-                                    - (T-1.0)*(_alpha_s.beta1()/(4.0*PI*_alpha_s.beta0()))*_S[t-1][j][0][k]
-                                    - (T-2.0)*(_alpha_s.beta2()/(16.0*PI_2*_alpha_s.beta0()))*_S[t-2][j][0][k]
-                                    - (T-3.0)*(_alpha_s.beta3()/(64.0*PI_3*_alpha_s.beta0()))*_S[t-3][j][0][k];
+                                _S(t,j,1,k) =
+                                    - (_alpha_s.beta1()/(4.0*PI*_alpha_s.beta0()))*_S(t-1,j,1,k)
+                                    - (_alpha_s.beta2()/(16.0*PI_2*_alpha_s.beta0()))*_S(t-2,j,1,k)
+                                    - (_alpha_s.beta3()/(64.0*PI_3*_alpha_s.beta0()))*_S(t-3,j,1,k)
+                                    - T*_S(t,j,0,k)
+                                    - (T-1.0)*(_alpha_s.beta1()/(4.0*PI*_alpha_s.beta0()))*_S(t-1,j,0,k)
+                                    - (T-2.0)*(_alpha_s.beta2()/(16.0*PI_2*_alpha_s.beta0()))*_S(t-2,j,0,k)
+                                    - (T-3.0)*(_alpha_s.beta3()/(64.0*PI_3*_alpha_s.beta0()))*_S(t-3,j,0,k);
                         }
 
                         // convolution piece
                         for (uint k=0; k<_grid.size()-1; k++) {
-                            _S[t][1][1][k] += 
-                                recrelS_4(_S[t][1][0], _S[t-1][1][0], _S[t-2][1][0], _S[t-3][1][0],k, p0qq, p1qq, p2qq, p3qq) +
-                                recrelS_4(_S[t][0][0], _S[t-1][0][0], _S[t-2][0][0], _S[t-3][0][0],k, p0qg, p1qg, p2qg, p3qg);
-                            _S[t][0][1][k] += 
-                                recrelS_4(_S[t][1][0], _S[t-1][1][0], _S[t-2][1][0], _S[t-3][1][0],k, p0gq, p1gq, p2gq, p3gq) +
-                                recrelS_4(_S[t][0][0], _S[t-1][0][0], _S[t-2][0][0], _S[t-3][0][0],k, p0gg, p1gg, p2gg, p3gg);
+                            _S(t,1,1,k) += 
+                                recrelS_4(_S(t,1,0), _S(t-1,1,0), _S(t-2,1,0), _S(t-3,1,0),k, p0qq, p1qq, p2qq, p3qq) +
+                                recrelS_4(_S(t,0,0), _S(t-1,0,0), _S(t-2,0,0), _S(t-3,0,0),k, p0qg, p1qg, p2qg, p3qg);
+                            _S(t,0,1,k) += 
+                                recrelS_4(_S(t,1,0), _S(t-1,1,0), _S(t-2,1,0), _S(t-3,1,0),k, p0gq, p1gq, p2gq, p3gq) +
+                                recrelS_4(_S(t,0,0), _S(t-1,0,0), _S(t-2,0,0), _S(t-3,0,0),k, p0gg, p1gg, p2gg, p3gg);
                         }
                     }
 					
                     for (uint t=0; t<=_trunc_idx; ++t) {
                         for (uint j=0; j<=1; ++j) {
                             for (uint k=0; k<_grid.size()-1; k++)
-                                arr.get()[j*31][k] += _S[t][j][1][k] * std::pow(_alpha1, t) * std::pow(L1, n)/factorial(n);        
+                                arr[j*31](k) += _S(t,j,1,k) * std::pow(_alpha1, t) * std::pow(L1, n)/factorial(n);        
                         }
                     }
                 
                     for (uint t=0; t<=_trunc_idx; ++t) {
                         for (uint j=0; j<=1; ++j)
-                            _S[t][j][0] = _S[t][j][1];
+							std::ranges::copy(_S(t,j,1), _S(t,j,0).begin());
                     }
                 }
             } break;
@@ -358,36 +354,23 @@ namespace Candia2
 
 
 
-    void DGLAPSolver::evolveNonSinglet(
-        std::reference_wrapper<std::vector<ArrayGrid>> arr,
-        double L1, double L2, double L3, double L4) 
+    void DGLAPSolver::evolveNonSinglet(std::vector<ArrayGrid>& arr, double L1, double L2, double L3, double L4) 
     {
         startLogIterations();
         switch (_order) {
             case 0: {
 				auto& p0ns = getExpression(ExprName::P0ns);
-				
-                for (uint j=13; j<=12+_nf; ++j)
-                    arr.get()[j] = _A[j][0];
-                for (uint j=32; j<=30+_nf; ++j)
-                    arr.get()[j] = _A[j][0];
+				auto idxs = getEvolutionIndices();
 
                 for (uint n=1; n<_iterations; n++) {
                     logIterations(n, _iterations-1, "NonSingletLO");
-                    for (uint k=0; k<_grid.size()-1; k++) {
-                        for (uint j=13; j<=30+_nf; j++) {
-                            _A[j][1][k] = recrelLO(_A[j][0], k, p0ns);
-                            arr.get()[j][k] += _A[j][1][k]*std::pow(L1, n)/factorial(n);
-
-                            if (j == (12+_nf))
-                                j = 31;
-                        }   
-                    }
-
-                    for (uint j=13; j<=30+_nf; ++j) {
-                        _A[j][0] = _A[j][1];
-                        if (j == (12+_nf))
-                            j = 31;
+                    for (uint j : idxs) {
+						std::ranges::copy(_A(j,0), arr[j].begin());
+						for (uint k=0; k<_grid.size()-1; k++)  {
+                            _A(j,1,k) = recrelLO(_A(j,0), k, p0ns);
+                            arr[j](k) += _A(j,1,k)*std::pow(L1, n)/factorial(n);
+                        }
+						std::ranges::copy(_A(j,1), _A(j,0).begin());
                     }
                 }
             } break;
@@ -395,52 +378,34 @@ namespace Candia2
 				auto& p0ns  = getExpression(ExprName::P0ns);
 				auto& p1nsm = getExpression(ExprName::P1nsm);
 				auto& p1nsp = getExpression(ExprName::P1nsp);
-				
-                for (uint j=13; j<=12+_nf; ++j)
-                    arr.get()[j] = _B[j][0][0];
-                for (uint j=32; j<=30+_nf; ++j)
-                    arr.get()[j] = _B[j][0][0];
 
-                for (uint s=1; s<_iterations; s++) {
-					logIterations(s, _iterations-1, "NonSingletNLO");
-
-					for (uint k=0; k<_grid.size()-1;k++) {
-						for (uint j=13; j<=12+_nf; j++) {
-							for (uint n=1; n<=s; n++) {
-								_B[j][1][n][k] = recrelNLO_1(_B[j][0][n-1], k, p0ns);
-                                arr.get()[j][k] += _B[j][1][n][k]*std::pow(L1,n)*std::pow(L2,s-n)/factorial(n)/factorial(s-n);
-                            }
-
-                            uint n = 0;
-                            double res = recrelNLO_2(_B[j][0][0], k, p0ns, p1nsm);
-							_B[j][1][0][k] = -_B[j][1][1][k] + res;
-                            arr.get()[j][k] += _B[j][1][0][k]
-                                *std::pow(L1,n)*std::pow(L2,s-n)
-                                /factorial(n)/factorial(s-n);
-						}
-
-						for (uint j=32; j<=30+_nf; j++) {
-							for (uint n=1; n<=s; n++) {
-								_B[j][1][n][k] = recrelNLO_1(_B[j][0][n-1], k, p0ns);
-                                arr.get()[j][k] += _B[j][1][n][k]*std::pow(L1,n)*std::pow(L2,s-n)/factorial(n)/factorial(s-n);
-                            }
-
-                            uint n = 0;
-                            double res = recrelNLO_2(_B[j][0][0], k, p0ns, p1nsp);
-							_B[j][1][0][k] = -_B[j][1][1][k] + res;
-                            arr.get()[j][k] += _B[j][1][0][k]
-                                *std::pow(L1,n)*std::pow(L2,s-n)
-                                /factorial(n)/factorial(s-n);
+				auto go = [&](uint j, uint s, Expression& p1) {
+					std::ranges::copy(_B(j,0,0), arr[j].begin());
+					for (uint n=1; n<=s; n++) {
+						for (uint k=0; k<_grid.size()-1;k++) {
+							_B(j,1,n,k) = recrelNLO_1(_B(j,0,n-1), k, p0ns);
+							arr[j](k) += _B(j,1,n,k)*std::pow(L1,n)*std::pow(L2,s-n)/factorial(n)/factorial(s-n);
 						}
 					}
 
-                    for (uint j=13; j<=30+_nf; ++j) {
-                        for (uint n=0; n<=s; ++n)
-                            _B[j][0][n] = _B[j][1][n];
-
-                        if (j == (12+_nf))
-                            j = 31;
-                    }
+					uint n = 0;
+					for (uint k=0; k<_grid.size()-1;k++) {
+						double res = recrelNLO_2(_B(j,0,0), k, p0ns, p1);
+						_B(j,1,0,k) = -_B(j,1,1,k) + res;
+						arr[j](k) += _B(j,1,0,k)
+							*std::pow(L1,n)*std::pow(L2,s-n)
+							/factorial(n)/factorial(s-n);
+					}
+					
+					for (uint n=0; n<=s; ++n)
+						std::ranges::copy(_B(j,1,n), _B(j,0,n).begin());
+				};
+                for (uint s=1; s<_iterations; s++) {
+					logIterations(s, _iterations-1, "NonSingletNLO");
+				    for (uint j=13; j<=12+_nf; ++j)
+						go(j, s, p1nsm);
+					for (uint j=32; j<=30+_nf; ++j)
+						go(j, s, p1nsp);
 				}
             } break;
             case 2: {
@@ -450,178 +415,74 @@ namespace Candia2
 				auto& p2nsm = getExpression(ExprName::P2nsm);
 				auto& p2nsp = getExpression(ExprName::P2nsp);
 				auto& p2nsv = getExpression(ExprName::P2nsv);
-				
-                for (uint j=26; j<=24+_nf; ++j)
-                    arr.get()[j] = _C[j][0][0][0];
-                for (uint j=32; j<=30+_nf; ++j)
-                    arr.get()[j] = _C[j][0][0][0];
-                arr.get()[25] = _C[25][0][0][0];
 
-                for (uint s=1; s<_iterations; s++) {
-					logIterations(s, _iterations-1, "NonSingletNNLO");
+				auto go = [&](uint j, uint s, Expression& p1, Expression& p2) {
+					std::ranges::copy(_C(j,0,0,0), arr[j].begin());
 
-					for (uint k=0; k<_grid.size()-1; k++) {
-						for (uint j=26; j<=24+_nf; j++) {
-							// recrel #1:
-							for (uint t=1; t<=s; t++) {
-								for (uint n=1; n<=t; n++) {
-                                    double recrel = recrelNNLO_1(_C[j][0][t-1][n-1], k, p0ns);
-									_C[j][1][t][n][k] = recrel;
+					// recrel #1:
+					for (uint t=1; t<=s; t++) {
+						for (uint n=1; n<=t; n++) {
+							for (uint k=0; k<_grid.size()-1; k++) {
+								double recrel = recrelNNLO_1(_C(j,0,t-1,n-1), k, p0ns);
+								_C(j,1,t,n,k) = recrel;
 
-                                    double orig = _C[j][1][t][n][k];
-									double powers = std::pow(L1,n)*std::pow(L2,(t-n))*std::pow(L3,(s-t));
-									double factorials = factorial(n)*factorial(t-n)*factorial(s-t);
-									double res = orig*powers/factorials;
+								double orig = _C(j,1,t,n,k);
+								double powers = std::pow(L1,n)*std::pow(L2,(t-n))*std::pow(L3,(s-t));
+								double factorials = factorial(n)*factorial(t-n)*factorial(s-t);
+								double res = orig*powers/factorials;
 
-                                    arr.get()[j][k] += res;
-                                }
-							}
-
-							// recrel #2:
-							{
-								double fac1 = -0.5*_C[j][1][s][1][k];
-								double fac2 = recrelNNLO_2(_C[j][0][s-1][0], k, p0ns, p1nsm, p2nsm);
-								_C[j][1][s][0][k] = fac1 + fac2;
-
-                                uint n = 0;
-                                uint t = s;
-                                double orig = _C[j][1][s][0][k];
-                                double powers = std::pow(L1,n)*std::pow(L2,(t-n))*std::pow(L3,(s-t));
-                                double factorials = factorial(n)*factorial(t-n)*factorial(s-t);
-                                double res = orig*powers/factorials;
-
-                                arr.get()[j][k] += res;
-							}
-
-							// recrel #3:
-							for (int t=s-1; t>=0; t--) {
-								double fac1 = -2.0*_alpha_s.beta1()*(_C[j][1][t+1][0][k] + _C[j][1][t+1][1][k]);
-								double fac2 = recrelNNLO_3(_C[j][0][t][0], k, p0ns, p1nsm);
-								_C[j][1][t][0][k] = fac1 + fac2;
-
-                                uint n = 0;
-                                double orig = _C[j][1][t][0][k];
-                                double powers = std::pow(L1,n)*std::pow(L2,(t-n))*std::pow(L3,(s-t));
-                                double factorials = factorial(n)*factorial(t-n)*factorial(s-t);
-                                double res = orig*powers/factorials;
-
-                                arr.get()[j][k] += res;
-							}
-						}
-
-						for (uint j=32; j<=30+_nf; j++) {
-							// recrel #1:
-							for (uint t=1; t<=s; t++) {
-								for (uint n=1; n<=t; n++) {
-									double recrel = recrelNNLO_1(_C[j][0][t-1][n-1], k, p0ns);
-									_C[j][1][t][n][k] = recrel;
-
-                                    double orig = _C[j][1][t][n][k];
-									double powers = std::pow(L1,n)*std::pow(L2,(t-n))*std::pow(L3,(s-t));
-									double factorials = factorial(n)*factorial(t-n)*factorial(s-t);
-									double res = orig*powers/factorials;
-
-                                    arr.get()[j][k] += res;
-                                }
-							}
-
-							// recrel #2:
-							{
-								double fac1 = -0.5*_C[j][1][s][1][k];
-								double fac2 = recrelNNLO_2(_C[j][0][s-1][0], k, p0ns, p1nsp, p2nsp);
-								_C[j][1][s][0][k] = fac1 + fac2;
-
-                                uint n = 0;
-                                uint t = s;
-                                double orig = _C[j][1][s][0][k];
-                                double powers = std::pow(L1,n)*std::pow(L2,(t-n))*std::pow(L3,(s-t));
-                                double factorials = factorial(n)*factorial(t-n)*factorial(s-t);
-                                double res = orig*powers/factorials;
-
-                                arr.get()[j][k] += res;
-							}
-
-							// recrel #3:
-							for (int t=s-1; t>=0; t--) {
-								double fac1 = -2.0*_alpha_s.beta1()*(_C[j][1][t+1][0][k] + _C[j][1][t+1][1][k]);
-								double fac2 = recrelNNLO_3(_C[j][0][t][0], k, p0ns, p1nsp);
-								_C[j][1][t][0][k] = fac1 + fac2;
-
-                                uint n = 0;
-                                double orig = _C[j][1][t][0][k];
-                                double powers = std::pow(L1,n)*std::pow(L2,(t-n))*std::pow(L3,(s-t));
-                                double factorials = factorial(n)*factorial(t-n)*factorial(s-t);
-                                double res = orig*powers/factorials;
-
-                                arr.get()[j][k] += res;
-							}
-						}
-
-					    {
-							// recrel #1:
-							for (uint t=1; t<=s; t++) {
-								for (uint n=1; n<=t; n++) {
-									double recrel = recrelNNLO_1(_C[25][0][t-1][n-1], k, p0ns);
-									_C[25][1][t][n][k] = recrel;
-
-                                    double orig = _C[25][1][t][n][k];
-									double powers = std::pow(L1,n)*std::pow(L2,(t-n))*std::pow(L3,(s-t));
-									double factorials = factorial(n)*factorial(t-n)*factorial(s-t);
-									double res = orig*powers/factorials;
-
-                                    arr.get()[25][k] += res;
-                                }
-							}
-
-							// recrel #2:
-							{
-								double fac1 = -0.5*_C[25][1][s][1][k];
-								double fac2 = recrelNNLO_2(_C[25][0][s-1][0], k, p0ns, p1nsm, p2nsv);
-								_C[25][1][s][0][k] = fac1 + fac2;
-
-                                uint n = 0;
-                                uint t = s;
-                                double orig = _C[25][1][s][0][k];
-                                double powers = std::pow(L1,n)*std::pow(L2,(t-n))*std::pow(L3,(s-t));
-                                double factorials = factorial(n)*factorial(t-n)*factorial(s-t);
-                                double res = orig*powers/factorials;
-
-                                arr.get()[25][k] += res;
-							}
-							
-							// recrel #3:
-							for (int t=s-1; t>=0; t--) {
-								double fac1 = -2.0*_alpha_s.beta1()*(_C[25][1][t+1][0][k] + _C[25][1][t+1][1][k]);
-								double fac2 = recrelNNLO_3(_C[25][0][t][0], k, p0ns, p1nsm);
-								_C[25][1][t][0][k] = fac1 + fac2;
-
-                                uint n = 0;
-                                double orig = _C[25][1][t][0][k];
-                                double powers = std::pow(L1,n)*std::pow(L2,(t-n))*std::pow(L3,(s-t));
-                                double factorials = factorial(n)*factorial(t-n)*factorial(s-t);
-                                double res = orig*powers/factorials;
-
-                                arr.get()[25][k] += res;
+								arr[j](k) += res;
 							}
 						}
 					}
 
-                    for (uint j=26; j<=24+_nf; j++) {
-                        for (uint t=0; t<=s; ++t) {
-                            for (uint n=0; n<=t; ++n)
-                                _C[j][0][t][n] = _C[j][1][t][n];
-                        }
-                    }
-                    for (uint j=32; j<=30+_nf; j++) {
-                        for (uint t=0; t<=s; ++t) {
-                            for (uint n=0; n<=t; ++n)
-                                _C[j][0][t][n] = _C[j][1][t][n];
-                        }
-                    }
-                    for (uint t=0; t<=s; ++t) {
-                        for (uint n=0; n<=t; ++n)
-                            _C[25][0][t][n] = _C[25][1][t][n];
-                    }
+					// recrel #2:
+					for (uint k=0; k<_grid.size()-1; k++) {
+						double fac1 = -0.5*_C(j,1,s,1,k);
+						double fac2 = recrelNNLO_2(_C(j,0,s-1,0), k, p0ns, p1, p2);
+						_C(j,1,s,0,k) = fac1 + fac2;
+
+						uint n = 0;
+						uint t = s;
+						double orig = _C(j,1,s,0,k);
+						double powers = std::pow(L1,n)*std::pow(L2,(t-n))*std::pow(L3,(s-t));
+						double factorials = factorial(n)*factorial(t-n)*factorial(s-t);
+						double res = orig*powers/factorials;
+
+						arr[j](k) += res;
+					}
+
+					// recrel #3:
+					for (int t=s-1; t>=0; t--) {
+						for (uint k=0; k<_grid.size()-1; k++) {
+							double fac1 = -2.0*_alpha_s.beta1()*(_C(j,1,t+1,0,k) + _C(j,1,t+1,1,k));
+							double fac2 = recrelNNLO_3(_C(j,0,t,0), k, p0ns, p1);
+							_C(j,1,t,0,k) = fac1 + fac2;
+
+							uint n = 0;
+							double orig = _C(j,1,t,0,k);
+							double powers = std::pow(L1,n)*std::pow(L2,(t-n))*std::pow(L3,(s-t));
+							double factorials = factorial(n)*factorial(t-n)*factorial(s-t);
+							double res = orig*powers/factorials;
+
+							arr[j](k) += res;
+						}
+					}
+					
+					for (uint t=0; t<=s; ++t) {
+						for (uint n=0; n<=t; ++n)
+							std::ranges::copy(_C(j,1,t,n), _C(j,0,t,n).begin());
+					}
+				};
+
+                for (uint s=1; s<_iterations; s++) {
+					logIterations(s, _iterations-1, "NonSingletNNLO");
+
+					for (uint j=26; j<=24+_nf; ++j)
+						go(j, s, p1nsm, p2nsm);
+					for (uint j=32; j<=30+_nf; ++j)
+						go(j, s, p1nsp, p2nsp);
+					go(25, s, p1nsm, p2nsv);
                 }
             } break;
             case 3: {
@@ -634,12 +495,6 @@ namespace Candia2
 				auto& p3nsm = getExpression(ExprName::P3nsm);
 				auto& p3nsp = getExpression(ExprName::P3nsp);
 				auto& p3nsv = getExpression(ExprName::P3nsv);
-				
-                for (uint j=26; j<=24+_nf; ++j)
-                    arr.get()[j] = _D[j][0][0][0][0];
-                for (uint j=32; j<=30+_nf; ++j)
-                    arr.get()[j] = _D[j][0][0][0][0];
-                arr.get()[25] = _D[25][0][0][0][0];
 
                 // some shorthand
 				double r1 = _r1[_nf];
@@ -647,391 +502,167 @@ namespace Candia2
 				double c = _c[_nf];
 				double gamma = (r1*r1 + r1*b + c)*_alpha_s.beta3();
 
-                for (uint s=1; s<_iterations; s++) {
-                    logIterations(s, _iterations-1, "NonSingletN3LO");
+				auto go = [&](uint j, uint s, Expression& p1, Expression& p2, Expression& p3) {
+					std::ranges::copy(_D(j,0,0,0,0), arr[j].begin());
 					
-					for (uint k=0; k<_grid.size()-1; k++) {
-						// minus distributions
-						for (uint j=26; j<=24+_nf; j++) {
-							// recrel #1:
-							for (uint t=1; t<=s; t++) {
-								for (uint m=1; m<=t; m++) {
-									for (uint n=1; n<=m; n++) {
-										_D[j][1][t][m][n][k] = recrelN3LO_1(_D[j][0][t-1][m-1][n-1], k, p0ns);
+					// recrel #1
+					for (uint t=1; t<=s; t++) {
+						for (uint m=1; m<=t; m++) {
+							for (uint n=1; n<=m; n++) {
+								for (uint k=0; k<_grid.size()-1; k++) {
+									_D(j,1,t,m,n,k) = recrelN3LO_1(_D(j,0,t-1,m-1,n-1), k, p0ns);
 
-                                        double orig = _D[j][1][t][m][n][k];
-										double powers =
-											std::pow(L1,n)
-											*std::pow(L2,(m-n))
-											*std::pow(L3,(t-m))
-											*std::pow(L4,(s-t));
-										double factorials =
-											factorial(n)
-											*factorial(m-n)
-											*factorial(t-m)
-											*factorial(s-t);
-										double res = orig*powers/factorials;
+									double orig = _D(j,1,t,m,n,k);
+									double powers =
+										std::pow(L1,n)
+										*std::pow(L2,(m-n))
+										*std::pow(L3,(t-m))
+										*std::pow(L4,(s-t));
+									double factorials =
+										factorial(n)
+										*factorial(m-n)
+										*factorial(t-m)
+										*factorial(s-t);
+									double res = orig*powers/factorials;
 										
-										arr.get()[j][k] += res;
-                                    }
-								}
-							}
-
-							// recrel #2:
-							{
-								double fac1 = (
-									0.5*(16.0*PI_2*_alpha_s.beta1() + 4*PI*r1*_alpha_s.beta2() - (c + b*r1)*_alpha_s.beta3())
-								) * _D[j][1][s][s][1][k];
-								double fac2 = recrelN3LO_2(_D[j][0][s-1][s-1][0], k, p0ns, p1nsm, p2nsm, p3nsm);
-								_D[j][1][s][s][0][k] = (fac1 + fac2)/gamma;
-
-                                uint t = s;
-                                uint m = s;
-                                uint n = 0;
-                                double orig = _D[j][1][s][s][0][k];
-                                double powers =
-                                    std::pow(L1,n)
-                                    *std::pow(L2,(m-n))
-                                    *std::pow(L3,(t-m))
-                                    *std::pow(L4,(s-t));
-                                double factorials =
-                                    factorial(n)
-                                    *factorial(m-n)
-                                    *factorial(t-m)
-                                    *factorial(s-t);
-                                double res = orig*powers/factorials;
-                                
-                                arr.get()[j][k] += res;
-							}
-
-							// recrel #3:
-							for (int m=s-1; m>=0; m--) {
-								double fac1 = -(
-									16.0*PI_2*_alpha_s.beta1() + 4.0*PI*r1*_alpha_s.beta2() + r1*r1*_alpha_s.beta3()
-								) * _D[j][1][s][m+1][1][k];
-								double fac2 = recrelN3LO_3(_D[j][0][s-1][m][0], k, p0ns, p1nsm, p2nsm, p3nsm);
-								_D[j][1][s][m][0][k] = (fac1 + fac2)/gamma;
-
-                                uint t = s;
-                                uint n = 0;
-                                double orig = _D[j][1][s][m][0][k];
-                                double powers =
-                                    std::pow(L1,n)
-                                    *std::pow(L2,(m-n))
-                                    *std::pow(L3,(t-m))
-                                    *std::pow(L4,(s-t));
-                                double factorials =
-                                    factorial(n)
-                                    *factorial(m-n)
-                                    *factorial(t-m)
-                                    *factorial(s-t);
-                                double res = orig*powers/factorials;
-                                
-                                arr.get()[j][k] += res;
-							}
-
-							// recrel #4:
-							for (int t=s-1; t>=0; t--) {
-								for (int m=t; m>=0; m--) {
-									double fac1a = -2.0*b*gamma;
-									double fac1b = 32*PI_2*(b+r1)*_alpha_s.beta1() - 8*PI*c*_alpha_s.beta2() - 2*c*r1*_alpha_s.beta3();
-									double fac1 = fac1a*_D[j][1][t+1][m+1][0][k] + fac1b*_D[j][1][t+1][m+1][1][k];
-									double fac2 = recrelN3LO_4(_D[j][0][t][m][0], k, p0ns, p1nsm, p2nsm, p3nsm);
-									_D[j][1][t][m][0][k] = (fac1 + fac2)/gamma;
-
-                                    uint n = 0;
-                                    double orig = _D[j][1][t][m][0][k];
-                                    double powers =
-                                        std::pow(L1,n)
-                                        *std::pow(L2,(m-n))
-                                        *std::pow(L3,(t-m))
-                                        *std::pow(L4,(s-t));
-                                    double factorials =
-                                        factorial(n)
-                                        *factorial(m-n)
-                                        *factorial(t-m)
-                                        *factorial(s-t);
-                                    double res = orig*powers/factorials;
-                                    
-                                    arr.get()[j][k] += res;
-								}
-							}
-						}
-
-						// plus distributions
-						for (uint j=32; j<=30+_nf; j++) {
-						    // recrel #1:
-							for (uint t=1; t<=s; t++) {
-								for (uint m=1; m<=t; m++) {
-									for (uint n=1; n<=m; n++) {
-										_D[j][1][t][m][n][k] = recrelN3LO_1(_D[j][0][t-1][m-1][n-1], k, p0ns);
-
-                                        double orig = _D[j][1][t][m][n][k];
-										double powers =
-											std::pow(L1,n)
-											*std::pow(L2,(m-n))
-											*std::pow(L3,(t-m))
-											*std::pow(L4,(s-t));
-										double factorials =
-											factorial(n)
-											*factorial(m-n)
-											*factorial(t-m)
-											*factorial(s-t);
-										double res = orig*powers/factorials;
-										
-										arr.get()[j][k] += res;
-                                    }
-								}
-							}
-
-							// recrel #2:
-							{
-								double fac1 = (
-									0.5*(16.0*PI_2*_alpha_s.beta1() + 4*PI*r1*_alpha_s.beta2() - (c + b*r1)*_alpha_s.beta3())
-								) * _D[j][1][s][s][1][k];
-								double fac2 = recrelN3LO_2(_D[j][0][s-1][s-1][0], k, p0ns, p1nsp, p2nsp, p3nsp);
-								_D[j][1][s][s][0][k] = (fac1 + fac2)/gamma;
-
-                                uint t = s;
-                                uint m = s;
-                                uint n = 0;
-                                double orig = _D[j][1][s][s][0][k];
-                                double powers =
-                                    std::pow(L1,n)
-                                    *std::pow(L2,(m-n))
-                                    *std::pow(L3,(t-m))
-                                    *std::pow(L4,(s-t));
-                                double factorials =
-                                    factorial(n)
-                                    *factorial(m-n)
-                                    *factorial(t-m)
-                                    *factorial(s-t);
-                                double res = orig*powers/factorials;
-                                
-                                arr.get()[j][k] += res;
-							}
-
-							// recrel #3:
-							for (int m=s-1; m>=0; m--) {
-								double fac1 = -(
-									16.0*PI_2*_alpha_s.beta1() + 4.0*PI*r1*_alpha_s.beta2() + r1*r1*_alpha_s.beta3()
-								) * _D[j][1][s][m+1][1][k];
-								double fac2 = recrelN3LO_3(_D[j][0][s-1][m][0], k, p0ns, p1nsp, p2nsp, p3nsp);
-								_D[j][1][s][m][0][k] = (fac1 + fac2)/gamma;
-
-                                uint t = s;
-                                uint n = 0;
-                                double orig = _D[j][1][s][m][0][k];
-                                double powers =
-                                    std::pow(L1,n)
-                                    *std::pow(L2,(m-n))
-                                    *std::pow(L3,(t-m))
-                                    *std::pow(L4,(s-t));
-                                double factorials =
-                                    factorial(n)
-                                    *factorial(m-n)
-                                    *factorial(t-m)
-                                    *factorial(s-t);
-                                double res = orig*powers/factorials;
-                                
-                                arr.get()[j][k] += res;
-							}
-
-							// recrel #4:
-							for (int t=s-1; t>=0; t--) {
-								for (int m=t; m>=0; m--) {
-									double fac1a = -2.0*b*gamma;
-									double fac1b = 32*PI_2*(b+r1)*_alpha_s.beta1() - 8*PI*c*_alpha_s.beta2() - 2*c*r1*_alpha_s.beta3();
-									double fac1 = fac1a*_D[j][1][t+1][m+1][0][k] + fac1b*_D[j][1][t+1][m+1][1][k];
-									double fac2 = recrelN3LO_4(_D[j][0][t][m][0], k, p0ns, p1nsp, p2nsp, p3nsp);
-									_D[j][1][t][m][0][k] = (fac1 + fac2)/gamma;
-
-                                    uint n = 0;
-                                    double orig = _D[j][1][t][m][0][k];
-                                    double powers =
-                                        std::pow(L1,n)
-                                        *std::pow(L2,(m-n))
-                                        *std::pow(L3,(t-m))
-                                        *std::pow(L4,(s-t));
-                                    double factorials =
-                                        factorial(n)
-                                        *factorial(m-n)
-                                        *factorial(t-m)
-                                        *factorial(s-t);
-                                    double res = orig*powers/factorials;
-                                    
-                                    arr.get()[j][k] += res;
-								}
-							}
-						}
-
-						// valence distribution
-						{
-						    // recrel #1:
-							for (uint t=1; t<=s; t++) {
-								for (uint m=1; m<=t; m++) {
-									for (uint n=1; n<=m; n++) {
-										_D[25][1][t][m][n][k] = recrelN3LO_1(_D[25][0][t-1][m-1][n-1], k, p0ns);
-
-                                        double orig = _D[25][1][t][m][n][k];
-										double powers =
-											std::pow(L1,n)
-											*std::pow(L2,(m-n))
-											*std::pow(L3,(t-m))
-											*std::pow(L4,(s-t));
-										double factorials =
-											factorial(n)
-											*factorial(m-n)
-											*factorial(t-m)
-											*factorial(s-t);
-										double res = orig*powers/factorials;
-										
-										arr.get()[25][k] += res;
-                                    }
-								}
-							}
-
-							// recrel #2:
-							{
-								double fac1 = (
-									0.5*(16.0*PI_2*_alpha_s.beta1() + 4*PI*r1*_alpha_s.beta2() - (c + b*r1)*_alpha_s.beta3())
-								) * _D[25][1][s][s][1][k];
-								double fac2 = recrelN3LO_2(_D[25][0][s-1][s-1][0], k, p0ns, p1nsm, p2nsv, p3nsv);
-								_D[25][1][s][s][0][k] = (fac1 + fac2)/gamma;
-
-                                uint t = s;
-                                uint m = s;
-                                uint n = 0;
-                                double orig = _D[25][1][s][s][0][k];
-                                double powers =
-                                    std::pow(L1,n)
-                                    *std::pow(L2,(m-n))
-                                    *std::pow(L3,(t-m))
-                                    *std::pow(L4,(s-t));
-                                double factorials =
-                                    factorial(n)
-                                    *factorial(m-n)
-                                    *factorial(t-m)
-                                    *factorial(s-t);
-                                double res = orig*powers/factorials;
-                                
-                                arr.get()[25][k] += res;
-							}
-
-							// recrel #3:
-							for (int m=s-1; m>=0; m--) {
-								double fac1 = -(
-									16.0*PI_2*_alpha_s.beta1() + 4.0*PI*r1*_alpha_s.beta2() + r1*r1*_alpha_s.beta3()
-								) * _D[25][1][s][m+1][1][k];
-								double fac2 = recrelN3LO_3(_D[25][0][s-1][m][0], k, p0ns, p1nsm, p2nsv, p3nsv);
-								_D[25][1][s][m][0][k] = (fac1 + fac2)/gamma;
-
-                                uint t = s;
-                                uint n = 0;
-                                double orig = _D[25][1][s][m][0][k];
-                                double powers =
-                                    std::pow(L1,n)
-                                    *std::pow(L2,(m-n))
-                                    *std::pow(L3,(t-m))
-                                    *std::pow(L4,(s-t));
-                                double factorials =
-                                    factorial(n)
-                                    *factorial(m-n)
-                                    *factorial(t-m)
-                                    *factorial(s-t);
-                                double res = orig*powers/factorials;
-                                
-                                arr.get()[25][k] += res;
-							}
-
-							// recrel #4:
-							for (int t=s-1; t>=0; t--) {
-								for (int m=t; m>=0; m--) {
-									double fac1a = -2.0*b*gamma;
-									double fac1b = 32*PI_2*(b+r1)*_alpha_s.beta1() - 8*PI*c*_alpha_s.beta2() - 2*c*r1*_alpha_s.beta3();
-									double fac1 = fac1a*_D[25][1][t+1][m+1][0][k] + fac1b*_D[25][1][t+1][m+1][1][k];
-									double fac2 = recrelN3LO_4(_D[25][0][t][m][0], k, p0ns, p1nsm, p2nsv, p3nsv);
-									_D[25][1][t][m][0][k] = (fac1 + fac2)/gamma;
-
-                                    uint n = 0;
-                                    double orig = _D[25][1][t][m][0][k];
-                                    double powers =
-                                        std::pow(L1,n)
-                                        *std::pow(L2,(m-n))
-                                        *std::pow(L3,(t-m))
-                                        *std::pow(L4,(s-t));
-                                    double factorials =
-                                        factorial(n)
-                                        *factorial(m-n)
-                                        *factorial(t-m)
-                                        *factorial(s-t);
-                                    double res = orig*powers/factorials;
-                                    
-                                    arr.get()[25][k] += res;
+									arr[j](k) += res;
 								}
 							}
 						}
 					}
 
-                    for (uint j=26; j<=24+_nf; j++) {
-                        for (uint t=0; t<=s; ++t) {
-                            for (uint m=0; m<=s; ++m) {
-                                for (uint n=0; n<=s; ++n)
-                                    _D[j][0][t][m][n] = _D[j][1][t][m][n];
-                            }
-                        }
-                    }
-                    for (uint j=32; j<=30+_nf; j++) {
-                        for (uint t=0; t<=s; ++t) {
-                            for (uint m=0; m<=s; ++m) {
-                                for (uint n=0; n<=s; ++n)
-                                    _D[j][0][t][m][n] = _D[j][1][t][m][n];
-                            }
-                        }
-                    }
-                    for (uint t=0; t<=s; ++t) {
-                        for (uint m=0; m<=s; ++m) {
-                            for (uint n=0; n<=s; ++n)
-                                _D[25][0][t][m][n] = _D[25][1][t][m][n];
-                        }
-                    }
+					// recrel #2:
+					for (uint k=0; k<_grid.size()-1; k++) {
+						double fac1 = (
+							0.5*(16.0*PI_2*_alpha_s.beta1() + 4*PI*r1*_alpha_s.beta2() - (c + b*r1)*_alpha_s.beta3())
+						) * _D(j,1,s,s,1,k);
+						double fac2 = recrelN3LO_2(_D(j,0,s-1,s-1,0), k, p0ns, p1, p2, p3);
+						_D(j,1,s,s,0,k) = (fac1 + fac2)/gamma;
+
+						uint t = s;
+						uint m = s;
+						uint n = 0;
+						double orig = _D(j,1,s,s,0,k);
+						double powers =
+							std::pow(L1,n)
+							*std::pow(L2,(m-n))
+							*std::pow(L3,(t-m))
+							*std::pow(L4,(s-t));
+						double factorials =
+							factorial(n)
+							*factorial(m-n)
+							*factorial(t-m)
+							*factorial(s-t);
+						double res = orig*powers/factorials;
+                                
+						arr[j](k) += res;
+					}
+
+					// recrel #3:
+					for (int m=s-1; m>=0; m--) {
+						for (uint k=0; k<_grid.size()-1; k++) {
+							double fac1 = -(
+								16.0*PI_2*_alpha_s.beta1() + 4.0*PI*r1*_alpha_s.beta2() + r1*r1*_alpha_s.beta3()
+							) * _D(j,1,s,m+1,1,k);
+							double fac2 = recrelN3LO_3(_D(j,0,s-1,m,0), k, p0ns, p1, p2, p3);
+							_D(j,1,s,m,0,k) = (fac1 + fac2)/gamma;
+
+							uint t = s;
+							uint n = 0;
+							double orig = _D(j,1,s,m,0,k);
+							double powers =
+								std::pow(L1,n)
+								*std::pow(L2,(m-n))
+								*std::pow(L3,(t-m))
+								*std::pow(L4,(s-t));
+							double factorials =
+								factorial(n)
+								*factorial(m-n)
+								*factorial(t-m)
+								*factorial(s-t);
+							double res = orig*powers/factorials;
+                                
+							arr[j](k) += res;
+						}
+					}
+
+					// recrel #4:
+					for (int t=s-1; t>=0; t--) {
+						for (int m=t; m>=0; m--) {
+							for (uint k=0; k<_grid.size()-1; k++) {
+								double fac1a = -2.0*b*gamma;
+								double fac1b = 32*PI_2*(b+r1)*_alpha_s.beta1() - 8*PI*c*_alpha_s.beta2() - 2*c*r1*_alpha_s.beta3();
+								double fac1 = fac1a*_D(j,1,t+1,m+1,0,k) + fac1b*_D(j,1,t+1,m+1,1,k);
+								double fac2 = recrelN3LO_4(_D(j,0,t,m,0), k, p0ns, p1, p2, p3);
+								_D(j,1,t,m,0,k) = (fac1 + fac2)/gamma;
+
+								uint n = 0;
+								double orig = _D(j,1,t,m,0,k);
+								double powers =
+									std::pow(L1,n)
+									*std::pow(L2,(m-n))
+									*std::pow(L3,(t-m))
+									*std::pow(L4,(s-t));
+								double factorials =
+									factorial(n)
+									*factorial(m-n)
+									*factorial(t-m)
+									*factorial(s-t);
+								double res = orig*powers/factorials;
+                                    
+								arr[j](k) += res;
+							}
+						}
+					}
+
+					for (uint t=0; t<=s; ++t) {
+						for (uint m=0; m<=s; ++m) {
+							for (uint n=0; n<=s; ++n)
+								std::ranges::copy(_D(j,1,t,m,n), _D(j,0,t,m,n).begin());
+						}
+					}
+				};
+
+                for (uint s=1; s<_iterations; s++) {
+                    logIterations(s, _iterations-1, "NonSingletN3LO");
+					
+					for (uint j=26; j<=24+_nf; ++j)
+						go(j, s, p1nsm, p2nsm, p3nsm);
+					for (uint j=32; j<=30+_nf; ++j)
+						go(j, s, p1nsp, p2nsp, p3nsp);
+					go(25, s, p1nsm, p2nsv, p3nsv);
                 }
             } break;
         }
+		endLogIterations();
     }
 
 
 	void DGLAPSolver::evolveNonSingletTrunc(std::vector<ArrayGrid>& arr, double L1)
 	{
 		log(LOG_INFO, "DGLAP", "Using the truncated ansatz for the non-singlet sector");
+		startLogIterations();
         switch (_order) {
-            startLogIterations();
             case 0: {
 				auto& p0ns = getExpression(ExprName::P0ns);
 
-				std::vector<uint> dists{};
-				for (uint j=13; j<=12+_nf; ++j)
-                    dists.emplace_back(j);
-                for (uint j=32; j<=30+_nf; ++j)
-                    dists.emplace_back(j);
-				for (auto j : dists)
-                    arr[j] = _S_NS[0][j][0];
+				auto go = [&](uint j, double fac) {
+					std::ranges::copy(_S_NS(0,j,0), arr[j].begin());
+					for (uint k=0; k<_grid.size()-1; k++) {
+						_S_NS(0,j,1,k) = recrelS_1(_S_NS(0,j,0), k, p0ns);
+						arr[j](k) += _S_NS(0,j,1,k)*fac;
+					}
+					std::ranges::copy(_S_NS(0,j,1), _S_NS(0,j,0).begin());
+				};
 				
                 for (uint n=1; n<_iterations; n++) {
                     logIterations(n, _iterations-1, "NonSingletLO (trunc)");
 					
 					double fac = std::pow(L1, n)/factorial(n);
-
-				    for (auto j : dists) {
-						for (uint k=0; k<_grid.size()-1; k++) {
-							_S_NS[0][j][1][k] = recrelS_1(_S_NS[0][j][0], k, p0ns);
-
-							arr[j][k] += _S_NS[0][j][1][k]*fac;
-						}
-					}
-					
-                    for (auto j : dists)
-                        _S_NS[0][j][0] = _S_NS[0][j][1];
+				    for (uint j=13; j<=12+_nf; ++j)
+						go(j, fac);
+					for (uint j=32; j<=30+_nf; ++j)
+						go(j, fac);
                 }
             }; break;
 			case 1: {
@@ -1039,31 +670,28 @@ namespace Candia2
 				auto& p1nsm = getExpression(ExprName::P1nsm);
 				auto& p1nsp = getExpression(ExprName::P1nsp);
 
-				for (uint j=13; j<=12+_nf; ++j)
-                    arr[j] = _S_NS[0][j][0];
-                for (uint j=32; j<=30+_nf; ++j)
-                    arr[j] = _S_NS[0][j][0];
-
 				auto go = [&](uint j, double fac, Expression& p1) {
+					std::ranges::copy(_S_NS(0,j,0), arr[j].begin());
+					
 					// LO piece
 					for (uint k=0; k<_grid.size()-1; k++)
-						_S_NS[0][j][1][k] = recrelS_1(_S_NS[0][j][0], k, p0ns);
+						_S_NS(0,j,1,k) = recrelS_1(_S_NS(0,j,0), k, p0ns);
 
 					// NLO
 					for (uint k=0; k<_grid.size()-1; k++) {
-						_S_NS[1][j][1][k] = -_S_NS[0][j][1][k] * _alpha_s.beta1()/(4.0*PI*_alpha_s.beta0()) - _S_NS[1][j][0][k];
-						_S_NS[1][j][1][k] += recrelS_2(_S_NS[1][j][0], _S_NS[0][j][0], k, p0ns, p1);
+						_S_NS(1,j,1,k) = -_S_NS(0,j,1,k) * _alpha_s.beta1()/(4.0*PI*_alpha_s.beta0()) - _S_NS(1,j,0,k);
+						_S_NS(1,j,1,k) += recrelS_2(_S_NS(1,j,0), _S_NS(0,j,0), k, p0ns, p1);
 					}
 
 					// truncation terms
 					for (uint t=2; t<=_trunc_idx; ++t) {
 						double T = static_cast<double>(t);
 						for (uint k=0; k<_grid.size()-1; k++) {
-							_S_NS[t][j][1][k] =
-								- (_alpha_s.beta1()/(4.0*PI*_alpha_s.beta0()))*_S_NS[t-1][j][1][k]
-								- T*_S_NS[t][j][0][k]
-								- (T-1.0)*(_alpha_s.beta1()/(4.0*PI*_alpha_s.beta0()))*_S_NS[t-1][j][0][k];
-							_S_NS[t][j][1][k] += recrelS_2(_S_NS[t][j][0], _S_NS[t-1][j][0], k, p0ns, p1);
+							_S_NS(t,j,1,k) =
+								- (_alpha_s.beta1()/(4.0*PI*_alpha_s.beta0()))*_S_NS(t-1,j,1,k)
+								- T*_S_NS(t,j,0,k)
+								- (T-1.0)*(_alpha_s.beta1()/(4.0*PI*_alpha_s.beta0()))*_S_NS(t-1,j,0,k);
+							_S_NS(t,j,1,k) += recrelS_2(_S_NS(t,j,0), _S_NS(t-1,j,0), k, p0ns, p1);
 						}
 					}
 
@@ -1071,12 +699,12 @@ namespace Candia2
 					for (uint t=0; t<=_trunc_idx; ++t) {
 						double a = std::pow(_alpha1, t);
 						for (uint k=0; k<_grid.size()-1; k++)
-							arr[j][k] += _S_NS[t][j][1][k]*a*fac;
+							arr[j](k) += _S_NS(t,j,1,k)*a*fac;
 					}
 
 					// setup for next iteration
 					for (uint t=0; t<=_trunc_idx; ++t)
-						_S_NS[t][j][0] = _S_NS[t][j][1];
+						std::ranges::copy(_S_NS(t,j,1), _S_NS(t,j,0).begin());
 				};
 				
 				for (uint n=1; n<_iterations; n++) {
@@ -1096,43 +724,39 @@ namespace Candia2
 				auto& p2nsp = getExpression(ExprName::P2nsp);
 				auto& p2nsv = getExpression(ExprName::P2nsv);
 
-				for (uint j=26; j<=24+_nf; j++)
-                    arr[j] = _S_NS[0][j][0];
-                for (uint j=32; j<=30+_nf; ++j)
-                    arr[j] = _S_NS[0][j][0];
-				arr[25] = _S_NS[0][25][0];
-
 				auto go = [&](uint j, double fac, Expression& p1, Expression& p2) {
+					std::ranges::copy(_S_NS(0,j,0), arr[j].begin());
+					
 					// LO piece
 					for (uint k=0; k<_grid.size()-1; k++)
-						_S_NS[0][j][1][k] = recrelS_1(_S_NS[0][j][0], k, p0ns);
+						_S_NS(0,j,1,k) = recrelS_1(_S_NS(0,j,0), k, p0ns);
 
 					// NLO
 					for (uint k=0; k<_grid.size()-1; k++) {
-						_S_NS[1][j][1][k] = -_S_NS[0][j][1][k] * _alpha_s.beta1()/(4.0*PI*_alpha_s.beta0()) - _S_NS[1][j][0][k];
-						_S_NS[1][j][1][k] += recrelS_2(_S_NS[1][j][0], _S_NS[0][j][0], k, p0ns, p1);
+						_S_NS(1,j,1,k) = -_S_NS(0,j,1,k) * _alpha_s.beta1()/(4.0*PI*_alpha_s.beta0()) - _S_NS(1,j,0,k);
+						_S_NS(1,j,1,k) += recrelS_2(_S_NS(1,j,0), _S_NS(0,j,0), k, p0ns, p1);
 					}
 
 					// NNLO
                     for (uint k=0; k<_grid.size()-1; k++) {
-						_S_NS[2][j][1][k] =
-							- (_alpha_s.beta1()/(4.0*PI*_alpha_s.beta0()))*_S_NS[1][j][1][k]
-							- (_alpha_s.beta2()/(16.0*PI_2*_alpha_s.beta0()))*_S_NS[0][j][1][k]
-							- 2.0*_S_NS[2][j][0][k]
-							- (_alpha_s.beta1()/(4.0*PI*_alpha_s.beta0()))*_S_NS[1][j][0][k];
-						_S_NS[2][j][1][k] += recrelS_3(_S_NS[2][j][0], _S_NS[1][j][0], _S_NS[0][j][0], k, p0ns, p1, p2);
+						_S_NS(2,j,1,k) =
+							- (_alpha_s.beta1()/(4.0*PI*_alpha_s.beta0()))*_S_NS(1,j,1,k)
+							- (_alpha_s.beta2()/(16.0*PI_2*_alpha_s.beta0()))*_S_NS(0,j,1,k)
+							- 2.0*_S_NS(2,j,0,k)
+							- (_alpha_s.beta1()/(4.0*PI*_alpha_s.beta0()))*_S_NS(1,j,0,k);
+						_S_NS(2,j,1,k) += recrelS_3(_S_NS(2,j,0), _S_NS(1,j,0), _S_NS(0,j,0), k, p0ns, p1, p2);
                     }
 
 					for (uint t=3; t<=_trunc_idx; ++t) {
                         double T = static_cast<double>(t);
                         for (uint k=0; k<_grid.size()-1; k++) {
-							_S_NS[t][j][1][k] =
-								- (_alpha_s.beta1()/(4.0*PI*_alpha_s.beta0()))*_S_NS[t-1][j][1][k]
-								- (_alpha_s.beta2()/(16.0*PI_2*_alpha_s.beta0()))*_S_NS[t-2][j][1][k]
-								- T*_S_NS[t][j][0][k]
-								- (T-1.0)*(_alpha_s.beta1()/(4.0*PI*_alpha_s.beta0()))*_S_NS[t-1][j][0][k]
-								- (T-2.0)*(_alpha_s.beta2()/(16.0*PI_2*_alpha_s.beta0()))*_S_NS[t-2][j][0][k];
-							_S_NS[t][j][1][k] += recrelS_3(_S_NS[t][j][0], _S_NS[t-1][j][0], _S_NS[t-2][j][0], k, p0ns, p1, p2);
+							_S_NS(t,j,1,k) =
+								- (_alpha_s.beta1()/(4.0*PI*_alpha_s.beta0()))*_S_NS(t-1,j,1,k)
+								- (_alpha_s.beta2()/(16.0*PI_2*_alpha_s.beta0()))*_S_NS(t-2,j,1,k)
+								- T*_S_NS(t,j,0,k)
+								- (T-1.0)*(_alpha_s.beta1()/(4.0*PI*_alpha_s.beta0()))*_S_NS(t-1,j,0,k)
+								- (T-2.0)*(_alpha_s.beta2()/(16.0*PI_2*_alpha_s.beta0()))*_S_NS(t-2,j,0,k);
+							_S_NS(t,j,1,k) += recrelS_3(_S_NS(t,j,0), _S_NS(t-1,j,0), _S_NS(t-2,j,0), k, p0ns, p1, p2);
                         }
                     }
 
@@ -1140,12 +764,12 @@ namespace Candia2
 					for (uint t=0; t<=_trunc_idx; ++t) {
 						double a = std::pow(_alpha1, t);
 						for (uint k=0; k<_grid.size()-1; k++)
-							arr[j][k] += _S_NS[t][j][1][k]*a*fac;
+							arr[j](k) += _S_NS(t,j,1,k)*a*fac;
 					}
 
 					// setup for next iteration
 					for (uint t=0; t<=_trunc_idx; ++t)
-						_S_NS[t][j][0] = _S_NS[t][j][1];
+						std::ranges::copy(_S_NS(t,j,1), _S_NS(t,j,0).begin());
 				};
 				
 				for (uint n=1; n<_iterations; n++) {
@@ -1174,44 +798,40 @@ namespace Candia2
 				double beta2 = _alpha_s.beta2();
 				double beta3 = _alpha_s.beta3();
 
-				for (uint j=26; j<=24+_nf; j++)
-                    arr[j] = _S_NS[0][j][0];
-                for (uint j=32; j<=30+_nf; ++j)
-                    arr[j] = _S_NS[0][j][0];
-				arr[25] = _S_NS[0][25][0];
-
 				auto go = [&](uint j, double fac, Expression& p1, Expression& p2, Expression& p3) {
+					std::ranges::copy(_S_NS(0,j,0), arr[j].begin());
+					
 				    // LO piece
 					for (uint k=0; k<_grid.size()-1; k++)
-						_S_NS[0][j][1][k] = recrelS_1(_S_NS[0][j][0], k, p0ns);
+						_S_NS(0,j,1,k) = recrelS_1(_S_NS(0,j,0), k, p0ns);
 
 					// NLO
 					for (uint k=0; k<_grid.size()-1; k++) {
-						_S_NS[1][j][1][k] = -_S_NS[0][j][1][k] * beta1/(4.0*PI*beta0) - _S_NS[1][j][0][k];
-						_S_NS[1][j][1][k] += recrelS_2(_S_NS[1][j][0], _S_NS[0][j][0], k, p0ns, p1);
+						_S_NS(1,j,1,k) = -_S_NS(0,j,1,k) * beta1/(4.0*PI*beta0) - _S_NS(1,j,0,k);
+						_S_NS(1,j,1,k) += recrelS_2(_S_NS(1,j,0), _S_NS(0,j,0), k, p0ns, p1);
 					}
 
 					// NNLO
                     for (uint k=0; k<_grid.size()-1; k++) {
-						_S_NS[2][j][1][k] =
-							- (beta1/(4.0*PI*beta0))*_S_NS[1][j][1][k]
-							- (beta2/(16.0*PI_2*beta0))*_S_NS[0][j][1][k]
-							- 2.0*_S_NS[2][j][0][k]
-							- (beta1/(4.0*PI*beta0))*_S_NS[1][j][0][k];
-						_S_NS[2][j][1][k] += recrelS_3(_S_NS[2][j][0], _S_NS[1][j][0], _S_NS[0][j][0], k, p0ns, p1, p2);
+						_S_NS(2,j,1,k) =
+							- (beta1/(4.0*PI*beta0))*_S_NS(1,j,1,k)
+							- (beta2/(16.0*PI_2*beta0))*_S_NS(0,j,1,k)
+							- 2.0*_S_NS(2,j,0,k)
+							- (beta1/(4.0*PI*beta0))*_S_NS(1,j,0,k);
+						_S_NS(2,j,1,k) += recrelS_3(_S_NS(2,j,0), _S_NS(1,j,0), _S_NS(0,j,0), k, p0ns, p1, p2);
                     }
 
 					// N3LO
                     for (uint k=0; k<_grid.size()-1; k++) {
-						_S_NS[3][j][1][k] =
-							- (beta1/(4.0*PI*beta0))*_S_NS[2][j][1][k]
-							- (beta2/(16.0*PI_2*beta0))*_S_NS[1][j][1][k]
-							- (beta3/(64.0*PI_3*beta0))*_S_NS[0][j][1][k]
-							- 3.0*_S_NS[3][j][0][k]
-							- 2.0*(beta1/(4.0*PI*beta0))*_S_NS[2][j][0][k]
-							- (beta2/(16.0*PI_2*beta0))*_S_NS[1][j][0][k];
-						_S_NS[3][j][1][k] += recrelS_4(
-							_S_NS[3][j][0], _S_NS[2][j][0], _S_NS[1][j][0], _S_NS[0][j][0],
+						_S_NS(3,j,1,k) =
+							- (beta1/(4.0*PI*beta0))*_S_NS(2,j,1,k)
+							- (beta2/(16.0*PI_2*beta0))*_S_NS(1,j,1,k)
+							- (beta3/(64.0*PI_3*beta0))*_S_NS(0,j,1,k)
+							- 3.0*_S_NS(3,j,0,k)
+							- 2.0*(beta1/(4.0*PI*beta0))*_S_NS(2,j,0,k)
+							- (beta2/(16.0*PI_2*beta0))*_S_NS(1,j,0,k);
+						_S_NS(3,j,1,k) += recrelS_4(
+							_S_NS(3,j,0), _S_NS(2,j,0), _S_NS(1,j,0), _S_NS(0,j,0),
 							k,
 							p0ns, p1, p2, p3);
                     }
@@ -1219,16 +839,16 @@ namespace Candia2
                     for (uint t=4; t<=_trunc_idx; ++t) {
                         double T = static_cast<double>(t);
                         for (uint k=0; k<_grid.size()-1; k++) {
-							_S_NS[t][j][1][k] =
-								- (beta1/(4.0*PI*beta0))*_S_NS[t-1][j][1][k]
-								- (beta2/(16.0*PI_2*beta0))*_S_NS[t-2][j][1][k]
-								- (beta3/(64.0*PI_3*beta0))*_S_NS[t-3][j][1][k]
-								- T*_S_NS[t][j][0][k]
-								- (T-1.0)*(beta1/(4.0*PI*beta0))*_S_NS[t-1][j][0][k]
-								- (T-2.0)*(beta2/(16.0*PI_2*beta0))*_S_NS[t-2][j][0][k]
-								- (T-3.0)*(beta3/(64.0*PI_3*beta0))*_S_NS[t-3][j][0][k];
-							_S_NS[t][j][1][k] += recrelS_4(
-								_S_NS[t][j][0], _S_NS[t-1][j][0], _S_NS[t-2][j][0], _S_NS[t-3][j][0],
+							_S_NS(t,j,1,k) =
+								- (beta1/(4.0*PI*beta0))*_S_NS(t-1,j,1,k)
+								- (beta2/(16.0*PI_2*beta0))*_S_NS(t-2,j,1,k)
+								- (beta3/(64.0*PI_3*beta0))*_S_NS(t-3,j,1,k)
+								- T*_S_NS(t,j,0,k)
+								- (T-1.0)*(beta1/(4.0*PI*beta0))*_S_NS(t-1,j,0,k)
+								- (T-2.0)*(beta2/(16.0*PI_2*beta0))*_S_NS(t-2,j,0,k)
+								- (T-3.0)*(beta3/(64.0*PI_3*beta0))*_S_NS(t-3,j,0,k);
+							_S_NS(t,j,1,k) += recrelS_4(
+								_S_NS(t,j,0), _S_NS(t-1,j,0), _S_NS(t-2,j,0), _S_NS(t-3,j,0),
 								k,
 								p0ns, p1, p2, p3);
                         }
@@ -1238,12 +858,12 @@ namespace Candia2
 					for (uint t=0; t<=_trunc_idx; ++t) {
 						double a = std::pow(_alpha1, t);
 						for (uint k=0; k<_grid.size()-1; k++)
-							arr[j][k] += _S_NS[t][j][1][k]*a*fac;
+							arr[j](k) += _S_NS(t,j,1,k)*a*fac;
 					}
 
 					// setup for next iteration
 					for (uint t=0; t<=_trunc_idx; ++t)
-						_S_NS[t][j][0] = _S_NS[t][j][1];
+						std::ranges::copy(_S_NS(t,j,1), _S_NS(t,j,0).begin());
 				};
 				
 				for (uint n=1; n<_iterations; n++) {
@@ -1257,5 +877,6 @@ namespace Candia2
 				}
 			}; break;
         }
+		endLogIterations();
 	}
 } // namespace Candia2

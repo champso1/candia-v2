@@ -276,7 +276,7 @@ namespace Candia2
 		 */
 		double mappingFunctionBase(
 			uint k, value_type x, auto&& yandjaccessor,
-			Expression& E, ArrayGrid& A,
+			Expression& E, std::span<double> A,
 			value_type eplus1,
 			gauleg_type const& X, gauleg_type const& W);
 
@@ -296,14 +296,14 @@ namespace Candia2
 		 *  @param y the array grid to interpolate
 		 *  @param x the value of x to interpolate at
 		 */
-		value_type interpolate(ArrayGrid& y, value_type x);
+		value_type interpolate(std::span<double> y, value_type x);
 		/**
 		 *  @brief Performs a convolution between an array @a A and an expression @a E
 		 *  @param A the array
 		 *  @param E the expression
 		 *  @param k the grid index to perform the convolution at
 		 */
-		value_type convolution(ArrayGrid& A, Expression& E, uint k);
+		value_type convolution(std::span<double> A, Expression& E, uint k);
 	private:
 	    /** Initializes the set of gauss-legendre weights and abscissae */
 		void initGauLeg(value_type x1, value_type x2, gauleg_type& Xi, gauleg_type& Wi);

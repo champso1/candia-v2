@@ -3,7 +3,6 @@
 #include "Candia-v2/Candia.hpp"
 #include "Candia-v2/Common.hpp"
 #include "Candia-v2/Distribution.hpp"
-#include "Candia-v2/ArrayGrid.hpp"
 #include "Candia-v2/Grid.hpp"
 #include "Candia-v2/SplittingFn.hpp"
 #include "Candia-v2/OperatorMatrixElements.hpp"
@@ -56,111 +55,58 @@ namespace Candia2
 		  _mur2_muf2{mur2_muf2}, _log_mur2_muf2{std::log(mur2_muf2)}, _log_muf2_mur2{-_log_mur2_muf2},
 		  _is_scale_difference{mur2_muf2 != 1.0},
 		  _initial_dist{initial_dist},
-		  _iterations{iterations}, _trunc_idx{trunc_idx}
+		  _iterations{iterations}, _trunc_idx{trunc_idx},
+		  _A({DISTS, 2, grid.size()}),
+		  _B({DISTS, 2, iterations, grid.size()}),
+		  _C({DISTS, 2, iterations, iterations, grid.size()}),
+		  _D({DISTS, 2, iterations, iterations, iterations, grid.size()}),
+		  _S({trunc_idx+1, 2, 2, grid.size()}),
+		  _S_NS{},
+		  _F(DISTS, ArrayGrid(grid.size()))
 	{
 		log(::CANDIA_OPENING_TEXT);
 
 		log(LOG_INFO, "DGLAP", "Evolving with log(mu_R / mu_F) = log({:.1}) = {:.4}.", _mur2_muf2, _log_mur2_muf2);
 
-		switch(_order) {
-			case 0: {
-				if (_trunc_idx != 0) {
-					_trunc_idx = 0; // LO has exact singlet solution, do not add additional terms
-					log(LOG_WARNING, "DGLAP", "Specified value of the truncation index ({}) will be set to zero.", _trunc_idx);
-				}
-
-				_A = std::vector<std::vector<ArrayGrid>>{
-					DISTS, std::vector<ArrayGrid>{
-						2, ArrayGrid(_grid.size())
-					}
-				};
-			} break;
-			case 1: {
-				_B = MultiDimArrayGrid_t<3>{
-					DISTS, MultiDimArrayGrid_t<2>{
-						2, MultiDimArrayGrid_t<1>{
-							_iterations, ArrayGrid(_grid.size())
-						}
-					}
-				};
-
-			} break;
-			case 2: {
-				_C = MultiDimArrayGrid_t<4>{
-					DISTS, MultiDimArrayGrid_t<3>{
-						2, MultiDimArrayGrid_t<2>{
-							_iterations, MultiDimArrayGrid_t<1>{
-								_iterations, ArrayGrid(_grid.size())
-							}
-						}
-					}
-				};
-			} break;
-			case 3: {
-				_D = MultiDimArrayGrid_t<5>{
-					DISTS, MultiDimArrayGrid_t<4>{
-						2, MultiDimArrayGrid_t<3>{
-							_iterations, MultiDimArrayGrid_t<2>{
-								_iterations, MultiDimArrayGrid_t<1>{
-									_iterations, ArrayGrid(_grid.size())
-								}
-							}
-						}
-					}
-				};
-
-				_r1[1] = -0.965105642503553;
-				_b[1] = -2.0 * 0.1629296392275606;
-				_c[1] = std::pow(0.1629296392275606, 2) + std::pow(0.9535744823175397, 2);
-
-				_r1[2] = -1.0315080774348302;
-				_b[2] = -2.0 * 0.18523659836580222;
-				_c[2] = std::pow(0.18523659836580222, 2) + std::pow(1.0299109343730084, 2);
-				
-				_r1[3] = -1.1120253073038324;
-				_b[3] = -2.0 * 0.2214224000789979;
-				_c[3] = std::pow(0.2214224000789979, 2) + std::pow(1.131077812338495, 2);
-
-				_r1[4] = -1.2090185772488318;
-				_b[4] = -2.0 * 0.2867586032664649;
-				_c[4] = std::pow(0.2867586032664649, 2) + std::pow(1.272794345339416, 2);
-				
-				_r1[5] = -1.3205899823870375;
-				_b[5] = -2.0 * 0.42477034063852415;
-				_c[5] = std::pow(0.42477034063852415, 2) + std::pow(1.4854822725151384, 2);
-				
-				_r1[6] = -1.4277979273114205;
-				_b[6] = -2.0 * 0.7964970177083996;
-				_c[6] = std::pow(0.7964970177083996, 2) + std::pow(1.816809978388145, 2);
-
-				auto func = [](std::array<double, 8> const& a) -> std::string {
-					auto view =
-						std::views::iota(1) | std::views::take(6)
-						| std::views::transform([&a](int i){ return a[i]; });
-					return vec_to_str(view);
-				};
-				log(LOG_DEBUG, "DGLAPSolver::DGLAPSolver()", "r1 array: {}", func(_r1));
-				log(LOG_DEBUG, "DGLAPSolver::DGLAPSolver()", "b  array: {}", func(_r1));
-				log(LOG_DEBUG, "DGLAPSolver::DGLAPSolver()", "c  array: {}", func(_r1));
-			} break;
-			default: {
-				log(LOG_INFO, "DGLAPSolver::DGLAPSolver()", "Found {} for the order, expected a value in range [0, 3].", _order);
-			}
+		if (_order == 0 && _trunc_idx != 0) {
+			_trunc_idx = 0; // LO has exact singlet solution, do not add additional terms
+			log(LOG_WARNING, "DGLAP", "Specified value of the truncation index ({}) will be set to zero.", _trunc_idx);
 		}
-		_S = decltype(_S){
-			_trunc_idx+1, std::vector<std::vector<ArrayGrid>>{
-				2, std::vector<ArrayGrid>{
-					2, ArrayGrid(_grid.size())
-				}
-			}
+
+		_r1[1] = -0.965105642503553;
+		_b[1] = -2.0 * 0.1629296392275606;
+		_c[1] = std::pow(0.1629296392275606, 2) + std::pow(0.9535744823175397, 2);
+
+		_r1[2] = -1.0315080774348302;
+		_b[2] = -2.0 * 0.18523659836580222;
+		_c[2] = std::pow(0.18523659836580222, 2) + std::pow(1.0299109343730084, 2);
+				
+		_r1[3] = -1.1120253073038324;
+		_b[3] = -2.0 * 0.2214224000789979;
+		_c[3] = std::pow(0.2214224000789979, 2) + std::pow(1.131077812338495, 2);
+
+		_r1[4] = -1.2090185772488318;
+		_b[4] = -2.0 * 0.2867586032664649;
+		_c[4] = std::pow(0.2867586032664649, 2) + std::pow(1.272794345339416, 2);
+				
+		_r1[5] = -1.3205899823870375;
+		_b[5] = -2.0 * 0.42477034063852415;
+		_c[5] = std::pow(0.42477034063852415, 2) + std::pow(1.4854822725151384, 2);
+				
+		_r1[6] = -1.4277979273114205;
+		_b[6] = -2.0 * 0.7964970177083996;
+		_c[6] = std::pow(0.7964970177083996, 2) + std::pow(1.816809978388145, 2);
+
+		auto func = [](std::array<double, 8> const& a) -> std::string {
+			auto view =
+				std::views::iota(1) | std::views::take(6)
+				| std::views::transform([&a](int i){ return a[i]; });
+			return vec_to_str(view);
 		};
-		log(LOG_INFO, "DGLAP", "Reserved space in coefficient arrays.");
-
-
-		_F = std::vector<ArrayGrid>{
-			DISTS, ArrayGrid(_grid.size())
-		};
-
+		log(LOG_DEBUG, "DGLAPSolver::DGLAPSolver()", "r1 array: {}", func(_r1));
+		log(LOG_DEBUG, "DGLAPSolver::DGLAPSolver()", "b  array: {}", func(_r1));
+		log(LOG_DEBUG, "DGLAPSolver::DGLAPSolver()", "c  array: {}", func(_r1));
+	    
 		setInitialConditions(initial_dist);
 		log(LOG_INFO, "DGLAP", "Successfully filled coefficients with initial conditions.");
 	}
@@ -176,18 +122,18 @@ namespace Candia2
 		log(LOG_INFO, "DGLAP", "Setting initial conditions... ");
 
 		dist.fillSingletCoeffs(
-			[&](uint j, uint k) -> ArrayGrid::value_type& {
-				return _S[0][j][0][k]; },
+			[&](uint j, uint k) -> double& {
+				return _S(0,j,0,k); },
 			_grid.points());
 		dist.fillNonSingletCoeffs(
-			[&](uint j, uint k) -> ArrayGrid::value_type& {
+			[&](uint j, uint k) -> double& {
 			switch (_order) {
-				case 0: return _A[j][0][k]; break;
-				case 1: return _B[j][0][0][k]; break;
-				case 2: return _C[j][0][0][0][k]; break;
-				case 3: return _D[j][0][0][0][0][k]; break;
-				default:
-					exit(EXIT_FAILURE); }},
+				case 0: return _A(j,0,k); break;
+				case 1: return _B(j,0,0,k); break;
+				case 2: return _C(j,0,0,0,k); break;
+				case 3: return _D(j,0,0,0,0,k); break;
+				default: throw std::runtime_error("unreachable");
+			}},
 			_grid.points());
 	}
 
@@ -268,38 +214,26 @@ namespace Candia2
 
     void DGLAPSolver::setupCoefficients()
     {
-		auto get_dist = [&](uint j, uint k) -> double& {
-			if (options.use_truncated_nonsinglet_sol)
-				return _S_NS[0][j][0][k];
-			switch (_order) {
-				case 0: return _A[j][0][k]; break;
-				case 1: return _B[j][0][0][k]; break;
-				case 2: return _C[j][0][0][0][k]; break;
-				case 3: return _D[j][0][0][0][0][k]; break;
-				default: throw std::runtime_error("unreachable");
-			}
-		};
-
-		for (uint k=0; k<_grid.size(); k++) {
+	    for (uint k=0; k<_grid.size(); k++) {
 			for (uint j=13; j<=18; j++)
-				get_dist(j, k) = get_dist(j-12, k)-get_dist(j-6, k);
+				getNonSingletCoeffValue(j, k) = getNonSingletCoeffValue(j-12, k)-getNonSingletCoeffValue(j-6, k);
 		
-			get_dist(25, k)=0.;
+			getNonSingletCoeffValue(25, k)=0.;
 			for (uint j=13; j<=18; j++)
-				get_dist(25, k) += get_dist(j, k);
+				getNonSingletCoeffValue(25, k) += getNonSingletCoeffValue(j, k);
 
 			for (uint j=26; j<=30; j++)
-				get_dist(j, k) = get_dist(13, k)-get_dist(j-12, k);
+				getNonSingletCoeffValue(j, k) = getNonSingletCoeffValue(13, k)-getNonSingletCoeffValue(j-12, k);
 
 			for (uint j=19; j<=24; j++)
-				get_dist(j, k) = get_dist(j-18, k)+get_dist(j-12, k);
+				getNonSingletCoeffValue(j, k) = getNonSingletCoeffValue(j-18, k)+getNonSingletCoeffValue(j-12, k);
 
-			_S[0][1][0][k] = 0.0;
+			_S(0,1,0,k) = 0.0;
 			for (uint j=19; j<=24; j++)
-				_S[0][1][0][k] += get_dist(j, k);
+				_S(0,1,0,k) += getNonSingletCoeffValue(j, k);
 		
 			for (uint j=32; j<=36; j++)
-				get_dist(j, k)=get_dist(19, k)-get_dist(j-12, k);
+				getNonSingletCoeffValue(j, k)=getNonSingletCoeffValue(19, k)-getNonSingletCoeffValue(j-12, k);
 		}
     }
 
@@ -311,7 +245,7 @@ namespace Candia2
         for (uint t=1; t<=_trunc_idx; ++t) {
 			for (uint j=0; j<=1; ++j) {
 				for (uint n=0; n<=1; ++n) 
-					_S[t][j][n].zero();
+					std::ranges::fill(_S(t,j,n), 0.0);
 			}
         }
 
@@ -319,138 +253,119 @@ namespace Candia2
 			for (uint t=1; t<=_trunc_idx; ++t) {
 				for (uint j=0; j<_F.size(); ++j) {
 					for (uint n=0; n<=1; ++n) 
-						_S_NS[t][j][n].zero();
+						std::ranges::fill(_S_NS(t,j,n), 0.0);
 				}
 			}
 		}
 
 		for (uint j=0; j<=1; ++j)
-			resum[j*31] = resum_singlet[j*31];
+			std::ranges::copy(resum_singlet[j*31], resum[j*31].begin());
 		switch (_order) {
 			case 0:
 			case 1: {
 				for (uint j=13; j<=12+_nf; j++)
-					resum[j] = resum_ns[j];
+					std::ranges::copy(resum_ns[j], resum[j].begin());
 				for (uint j=32; j<=30+_nf; j++)
-					resum[j] = resum_ns[j];
+					std::ranges::copy(resum_ns[j], resum[j].begin());
 			} break;
 			case 2:
 			case 3: {
 				for (uint j=26; j<=24+_nf; ++j)
-					resum[j] = resum_ns[j];
+					std::ranges::copy(resum_ns[j], resum[j].begin());
 				for (uint j=32; j<=30+_nf; ++j)
-					resum[j] = resum_ns[j];
-				resum[25] = resum_ns[25];
+					std::ranges::copy(resum_ns[j], resum[j].begin());
+				std::ranges::copy(resum_ns[25], resum[25].begin());
 			} break;
 		}
 
         double Nf = static_cast<double>(_nf);
 		for (uint k=0; k<_grid.size()-1;k++) {
 			if (_order>=2) {
-				resum[13][k]=resum[25][k];
+				resum[13](k) = resum[25](k);
 				for (uint j=26; j<=24+_nf; j++)
-					resum[13][k] += resum[j][k];
-				resum[13][k] /= Nf;
+					resum[13](k) += resum[j](k);
+				resum[13](k) /= Nf;
 				for (uint j=14; j<=12+_nf; j++)
-					resum[j][k] = resum[13][k] - resum[j+12][k];
+					resum[j](k) = resum[13](k) - resum[j+12](k);
 			}
 
-			resum[19][k] = resum[31][k];
+			resum[19](k) = resum[31](k);
 			for (uint j=32; j<=30+_nf; j++)
-				resum[19][k] += resum[j][k];
-			resum[19][k] /= Nf;
+				resum[19](k) += resum[j](k);
+			resum[19](k) /= Nf;
 
 			for (uint j=20; j<=18+_nf; j++)
-				resum[j][k] = resum[19][k] - resum[j+12][k];
+				resum[j](k) = resum[19](k) - resum[j+12](k);
 
 			for (uint j=1; j<=_nf; j++) {
-				resum[j][k]   =0.5*(resum[j+18][k] + resum[j+12][k]);
-				resum[j+6][k] =0.5*(resum[j+18][k] - resum[j+12][k]);
+				resum[j](k)   =0.5*(resum[j+18](k) + resum[j+12](k));
+				resum[j+6](k) =0.5*(resum[j+18](k) - resum[j+12](k));
 			}
 
 			if (_order<2) {
-				resum[25][k]=0.0;
+				resum[25](k)=0.0;
 				for (uint j=13; j<=12+_nf; j++)
-					resum[25][k] += resum[j][k];
+					resum[25](k) += resum[j](k);
 
 				for (uint j=26; j<=24+_nf; j++)
-					resum[j][k] = resum[13][k] - resum[j-12][k];
+					resum[j](k) = resum[13](k) - resum[j-12](k);
 			}
 		}
     }
 
 	void DGLAPSolver::fixDistributionsForce(std::vector<ArrayGrid>& resum)
 	{
-		auto get_singlet_dist = [&](uint j) -> ArrayGrid& {
-			if (!options.use_truncated_nonsinglet_sol)
-				return _S[0][j][0];
-			else
-				return _S_NS[0][j][0];
-		};
-		auto get_nonsinglet_dist = [&](uint j) -> ArrayGrid& {
-			if (options.use_truncated_nonsinglet_sol)
-				return _S_NS[0][j][0];
-			switch (_order) {
-				case 0: return _A[j][0]; break;
-				case 1: return _B[j][0][0]; break;
-				case 2: return _C[j][0][0][0]; break;
-				case 3: return _D[j][0][0][0][0]; break;
-				default: throw "unreachable";
-			}
-		};
-
-
 		for (uint j=0; j<=1; ++j)
-			resum[j*31] = get_singlet_dist(j);
+			std::ranges::copy(getSingletCoeffArray(j), resum[j*31].begin());
 		switch (_order) {
 			case 0:
 			case 1: {
 				for (uint j=13; j<=12+_nf; j++)
-					resum[j] = get_nonsinglet_dist(j);
+					std::ranges::copy(getNonSingletCoeffArray(j), resum[j].begin());
 				for (uint j=32; j<=30+_nf; j++)
-					resum[j] = get_nonsinglet_dist(j);
+					std::ranges::copy(getNonSingletCoeffArray(j), resum[j].begin());
 			} break;
 			case 2:
 			case 3: {
 				for (uint j=26; j<=24+_nf; ++j)
-					resum[j] = get_nonsinglet_dist(j);
+					std::ranges::copy(getNonSingletCoeffArray(j), resum[j].begin());
 				for (uint j=32; j<=30+_nf; ++j)
-					resum[j] = get_nonsinglet_dist(j);
-				resum[25] = get_nonsinglet_dist(25);
+					std::ranges::copy(getNonSingletCoeffArray(j), resum[j].begin());
+				std::ranges::copy(getNonSingletCoeffArray(25), resum[25].begin());
 			} break;
 		}
 
         double Nf = static_cast<double>(_nf);
 		for (uint k=0; k<_grid.size()-1;k++) {
 			if (_order>=2) {
-				resum[13][k]=resum[25][k];
+				resum[13](k)=resum[25](k);
 				for (uint j=26; j<=24+_nf; j++)
-					resum[13][k] += resum[j][k];
-				resum[13][k] /= Nf;
+					resum[13](k) += resum[j](k);
+				resum[13](k) /= Nf;
 				for (uint j=14; j<=12+_nf; j++)
-					resum[j][k] = resum[13][k] - resum[j+12][k];
+					resum[j](k) = resum[13](k) - resum[j+12](k);
 			}
 
-			resum[19][k] = resum[31][k];
+			resum[19](k) = resum[31](k);
 			for (uint j=32; j<=30+_nf; j++)
-				resum[19][k] += resum[j][k];
-			resum[19][k] /= Nf;
+				resum[19](k) += resum[j](k);
+			resum[19](k) /= Nf;
 
 			for (uint j=20; j<=18+_nf; j++)
-				resum[j][k] = resum[19][k] - resum[j+12][k];
+				resum[j](k) = resum[19](k) - resum[j+12](k);
 
 			for (uint j=1; j<=_nf; j++) {
-				resum[j][k]   =0.5*(resum[j+18][k] + resum[j+12][k]);
-				resum[j+6][k] =0.5*(resum[j+18][k] - resum[j+12][k]);
+				resum[j](k)   = 0.5*(resum[j+18](k) + resum[j+12](k));
+				resum[j+6](k) = 0.5*(resum[j+18](k) - resum[j+12](k));
 			}
 
 			if (_order<2) {
-				resum[25][k]=0.0;
+				resum[25](k)=0.0;
 				for (uint j=13; j<=12+_nf; j++)
-					resum[25][k] += resum[j][k];
+					resum[25](k) += resum[j](k);
 
 				for (uint j=26; j<=24+_nf; j++)
-					resum[j][k] = resum[13][k] - resum[j-12][k];
+					resum[j](k) = resum[13](k) - resum[j-12](k);
 			}
 		}
 	}
@@ -458,26 +373,17 @@ namespace Candia2
 	void DGLAPSolver::setupTruncatedDistributions()
 	{
 		log(LOG_INFO, "Grid", "Using truncated ansatz for non-singlet sector.");
-		
-	    _S_NS = decltype(_S_NS){
-			_trunc_idx+1, std::vector<std::vector<ArrayGrid>>{
-				DISTS, std::vector<ArrayGrid>{
-					2, ArrayGrid(_grid.size())
-				}
-			}
-		};
 
-		auto coeff_accessor = [&](uint j) -> ArrayGrid const& {
+		_S_NS.resize({_trunc_idx+1, DISTS, 2, _grid.size()});
+
+		for (uint j=0; j<DISTS; ++j) {
 			switch (_order) {
-				case 0: return _A[j][0];
-				case 1: return _B[j][0][0];
-				case 2: return _C[j][0][0][0];
-				case 3: return _D[j][0][0][0][0];
-				default: throw "unreachable";
+				case 0: std::ranges::copy(_A(j,0), _S_NS(0,j,0).begin()); break;
+				case 1: std::ranges::copy(_B(j,0,0), _S_NS(0,j,0).begin()); break;
+				case 2: std::ranges::copy(_C(j,0,0,0), _S_NS(0,j,0).begin()); break;
+				case 3: std::ranges::copy(_D(j,0,0,0,0), _S_NS(0,j,0).begin()); break;
 			}
-		};
-		for (uint j=0; j<DISTS; ++j)
-			_S_NS[0][j][0] = coeff_accessor(j);
+		}
 		
 		_A.clear();
 		_B.clear();
@@ -494,7 +400,6 @@ namespace Candia2
 		if (options.use_truncated_nonsinglet_sol)
 			setupTruncatedDistributions();
 
-		//std::array<double,1> Qtab{_Qf};
 		out_type final_dists;
 
 		// since we now only store two iterations at once,
@@ -627,19 +532,10 @@ namespace Candia2
 					// from the temporary array
 					// back to the n=0 piece
 					for (uint j=0; j<DISTS; ++j) {
-						if (options.use_truncated_nonsinglet_sol) {
-							_S_NS[0][j][0] = resum[j];
-						} else {
-							switch (_order) {
-								case 0: _A[j][0] 		   = resum[j]; break;
-								case 1: _B[j][0][0] 	   = resum[j]; break;
-								case 2: _C[j][0][0][0]     = resum[j]; break;
-								case 3: _D[j][0][0][0][0]  = resum[j]; break;
-							}
-						}
+						std::ranges::copy(resum[j], getNonSingletCoeffArray(j).begin());
 					}
 					for (uint j=0; j<=1; ++j)
-						_S[0][j][0] = resum[j*31];
+						std::ranges::copy(resum[j*31], _S(0,j,0).begin());
 				}
 			} else { // if (alpha0 != alpha1)
 				// if we've done no evolutions or anything,
@@ -702,14 +598,14 @@ namespace Candia2
 
 		std::vector<ArrayGrid> subpdfs(4, ArrayGrid(_grid.size()));
 		for (uint k=0; k<_grid.size(); ++k) {
-			subpdfs[0][k] = as*_grid.convolution(_F[0], a1hg, k);
+			subpdfs[0](k) = as*_grid.convolution(_F[0], a1hg, k);
 		    double ftilde2 = as2*(
 				_grid.convolution(_F[31], a2hq, k) +
 				_grid.convolution(_F[0], a2hg, k)
 			);
-			subpdfs[1][k] = subpdfs[0][k] + ftilde2;
-			subpdfs[2][k] = std::abs(_F[5][k] - subpdfs[0][k]);
-			subpdfs[3][k] = std::abs(_F[5][k] - subpdfs[1][k]);
+			subpdfs[1](k) = subpdfs[0](k) + ftilde2;
+			subpdfs[2](k) = std::abs(_F[5](k) - subpdfs[0](k));
+			subpdfs[3](k) = std::abs(_F[5](k) - subpdfs[1](k));
 		}
 
 		return subpdfs;
@@ -836,7 +732,7 @@ namespace Candia2
 			for (uint iq=0; iq<_as_qs.size(); ++iq) {
 				datafile << "   ";
 				for (int pid : pids)
-					datafile << std::setw(17) << _all_pdfs[iq].second[pid][ix] << ' ';
+					datafile << std::setw(17) << _all_pdfs[iq].second[pid](ix) << ' ';
 				datafile << '\n';
 			}
 		}

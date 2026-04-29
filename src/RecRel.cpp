@@ -5,7 +5,7 @@
 namespace Candia2
 {	
 	double DGLAPSolver::recrelS_1(
-		ArrayGrid& S,
+		ArrayGridView S,
 		uint k,
 		Expression& P)
 	{
@@ -14,8 +14,8 @@ namespace Candia2
 	}
 	
 	double DGLAPSolver::recrelS_2(
-		ArrayGrid& S_i,
-		ArrayGrid& S_im1,
+		ArrayGridView S_i,
+		ArrayGridView S_im1,
 		uint k,
 		Expression& P0,
 		Expression& P1)
@@ -35,9 +35,9 @@ namespace Candia2
 	}
 
 	double DGLAPSolver::recrelS_3(
-		ArrayGrid& S_i, // C
-		ArrayGrid& S_im1, // B
-		ArrayGrid& S_im2, // A
+		ArrayGridView S_i, // C
+		ArrayGridView S_im1, // B
+		ArrayGridView S_im2, // A
 		uint k,
 		Expression& P0,
 		Expression& P1,
@@ -73,10 +73,10 @@ namespace Candia2
 	}
 
 	double DGLAPSolver::recrelS_4(
-		ArrayGrid& S_i,
-		ArrayGrid& S_im1,
-		ArrayGrid& S_im2,
-		ArrayGrid& S_im3,
+		ArrayGridView S_i,
+		ArrayGridView S_im1,
+		ArrayGridView S_im2,
+		ArrayGridView S_im3,
 		uint k,
 		Expression& P0,
 		Expression& P1,
@@ -129,7 +129,7 @@ namespace Candia2
 
 
 	double DGLAPSolver::recrelLO(
-		ArrayGrid & A,
+		ArrayGridView A,
 		uint k,
 		Expression & P0)
 	{
@@ -139,7 +139,7 @@ namespace Candia2
 
 
 	double DGLAPSolver::recrelNLO_1(
-		ArrayGrid& B,
+		ArrayGridView B,
 		uint k,
 		Expression& P0)
 	{
@@ -147,7 +147,7 @@ namespace Candia2
 		return -(2.0/_alpha_s.beta0())*conv;
 	}
 	double DGLAPSolver::recrelNLO_2(
-		ArrayGrid& B,
+		ArrayGridView B,
 		uint k,
 		Expression& P0,
 		Expression& P1)
@@ -165,7 +165,7 @@ namespace Candia2
 
 
 	double DGLAPSolver::recrelNNLO_1(
-		ArrayGrid& C,
+		ArrayGridView C,
 		uint k,
 		Expression& P0)
 	{
@@ -173,7 +173,7 @@ namespace Candia2
 		return -(2.0/_alpha_s.beta0())*conv;
 	}
 	double DGLAPSolver::recrelNNLO_2(
-		ArrayGrid& C,
+		ArrayGridView C,
 		uint k,
 		Expression& P0,
 		Expression& P1,
@@ -199,7 +199,7 @@ namespace Candia2
 	    return res;
 	}
 	double DGLAPSolver::recrelNNLO_3(
-		ArrayGrid& C,
+		ArrayGridView C,
 		uint k,
 		Expression& P0,
 		Expression& P1)
@@ -218,7 +218,7 @@ namespace Candia2
 
 
 	double DGLAPSolver::recrelN3LO_1(
-		ArrayGrid& D,
+		ArrayGridView D,
 		uint k,
 		Expression& P0)
 	{
@@ -226,7 +226,7 @@ namespace Candia2
 		return -(2.0/_alpha_s.beta0()) * conv;
 	}
 	double DGLAPSolver::recrelN3LO_2(
-		ArrayGrid& D,
+		ArrayGridView D,
 		uint k,
 		Expression& P0,
 		Expression& P1,
@@ -267,7 +267,7 @@ namespace Candia2
 		return res;
 	}
 	double DGLAPSolver::recrelN3LO_3(
-		ArrayGrid& D,
+		ArrayGridView D,
 		uint k,
 		Expression& P0,
 		Expression& P1,
@@ -307,7 +307,7 @@ namespace Candia2
 	    return res;
 	}
 	double DGLAPSolver::recrelN3LO_4(
-		ArrayGrid& D,
+		ArrayGridView D,
 		uint k,
 		Expression& P0,
 		Expression& P1,

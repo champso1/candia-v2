@@ -29,20 +29,20 @@ namespace Candia2
 		std::vector<ArrayGrid> arr_singlet(2, ArrayGrid(_grid.size()));
 
 		for (uint j=0; j<=1; ++j)
-			arr_singlet[j] = _S[0][j][0];
+			std::ranges::copy(_S(0,j,0), arr_singlet[j].begin());
 
-		auto arr_accessor = [&](uint j) -> ArrayGrid& {
+		auto arr_accessor = [&](uint j) -> ArrayGridView {
 			if (_order == 2) {
-				return getOptions().use_truncated_nonsinglet_sol ? _S_NS[0][j][0] : _C[j][0][0][0];
+				return getOptions().use_truncated_nonsinglet_sol ? _S_NS(0,j,0) : _C(j,0,0,0);
 			} else if (_order == 3) {
-				return getOptions().use_truncated_nonsinglet_sol ? _S_NS[0][j][0] : _D[j][0][0][0][0];
+				return getOptions().use_truncated_nonsinglet_sol ? _S_NS(0,j,0) : _D(j,0,0,0,0);
 			}
 			throw "unreachable";
 		};
 		
 		for (uint i=1; i<=_nf; i++) {
 			for (uint j=i; j<=i+6; j+=6)
-				arr[j] = arr_accessor(j);
+				std::ranges::copy(arr_accessor(j), arr[j].begin());
 		}
 
 		double as = _alpha_s.post(_nf+1);
@@ -108,7 +108,7 @@ namespace Candia2
 		}
     }
 
-	void DGLAPSolver::HFT_NNLO1(ArrayGrid& c, uint k, ArrayGrid& q)
+	void DGLAPSolver::HFT_NNLO1(ArrayGridView c, uint k, ArrayGridView q)
     {
 		auto& a2ns = getExpression(ExprName::A2ns);
         double const as = _alpha_s.post(_nf+1);
@@ -117,7 +117,7 @@ namespace Candia2
 	    q[k] += std::pow(as/(4.0*PI), 2) * conv;
     }
 
-    void DGLAPSolver::HFT_NNLO2(ArrayGrid& g, ArrayGrid& qp, uint k)
+    void DGLAPSolver::HFT_NNLO2(ArrayGridView g, ArrayGridView qp, uint k)
     {
 		auto& a2gq = getExpression(ExprName::A2gq);
 		auto& a2gg = getExpression(ExprName::A2gg);
@@ -125,10 +125,10 @@ namespace Candia2
         double const conv1 = _grid.convolution(qp, a2gq, k);
         double const conv2 = _grid.convolution(g, a2gg, k);
 
-		_S[0][0][0][k] += std::pow(as/(4.0*PI), 2) * (conv1 + conv2);
+		_S(0,0,0,k) += std::pow(as/(4.0*PI), 2) * (conv1 + conv2);
     }
 
-    void DGLAPSolver::HFT_NNLO3(ArrayGrid& g, ArrayGrid& qp, uint k, ArrayGrid& qh, ArrayGrid& qhb)
+    void DGLAPSolver::HFT_NNLO3(ArrayGridView g, ArrayGridView qp, uint k, ArrayGridView qh, ArrayGridView qhb)
     {
 		auto& a2hq = getExpression(ExprName::A2hq);
 		auto& a2hg = getExpression(ExprName::A2hg);
@@ -142,7 +142,7 @@ namespace Candia2
     }
 
     // q
-	void DGLAPSolver::HFT_N3LO1(ArrayGrid& q, ArrayGrid& qb, uint k, double SP, ArrayGrid& qh)
+	void DGLAPSolver::HFT_N3LO1(ArrayGridView q, ArrayGridView qb, uint k, double SP, ArrayGridView qh)
 	{
 	    const double as = _alpha_s.post(_nf+1);
 		const double fac_nnlo = as*as/(16.0*PI_2);
@@ -167,7 +167,7 @@ namespace Candia2
 	}
 
     // qbar
-	void DGLAPSolver::HFT_N3LO2(ArrayGrid& q, ArrayGrid& qb, uint k, double SP, ArrayGrid& qhb)
+	void DGLAPSolver::HFT_N3LO2(ArrayGridView q, ArrayGridView qb, uint k, double SP, ArrayGridView qhb)
 	{
 		const double as = _alpha_s.post(_nf+1);
 		const double fac_nnlo = as*as/(16.0*PI_2);
@@ -192,7 +192,7 @@ namespace Candia2
 	}
 
 	// gluon (index 0 in S array)
-	void DGLAPSolver::HFT_N3LO3(ArrayGrid& g, ArrayGrid& qp, uint k)
+	void DGLAPSolver::HFT_N3LO3(ArrayGridView g, ArrayGridView qp, uint k)
 	{
 		const double as = _alpha_s.post(_nf+1);
 		const double fac_nnlo = as*as/(16.0*PI_2);
@@ -203,11 +203,11 @@ namespace Candia2
 		const double conv2a = _grid.convolution(g, getExpression(ExprName::A2gg), k);
 		const double conv2b = _grid.convolution(g, getExpression(ExprName::A3gg), k);
 		
-		_S[0][0][0][k] += (fac_nnlo*conv1a + fac_n3lo*conv1b) + (fac_nnlo*conv2a + fac_n3lo*conv2b);
+		_S(0,0,0,k) += (fac_nnlo*conv1a + fac_n3lo*conv1b) + (fac_nnlo*conv2a + fac_n3lo*conv2b);
 	}
 
 	// heavy flavor
-	void DGLAPSolver::HFT_N3LO4(ArrayGrid& g, ArrayGrid& qp, ArrayGrid& qminus, uint k, ArrayGrid& qh, ArrayGrid& qhb)
+	void DGLAPSolver::HFT_N3LO4(ArrayGridView g, ArrayGridView qp, ArrayGridView qminus, uint k, ArrayGridView qh, ArrayGridView qhb)
 	{
 		const double as = _alpha_s.post(_nf+1);
 		const double fac_nnlo = as*as/(16.0*PI_2);

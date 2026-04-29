@@ -17,7 +17,6 @@ add_subdirectory(vendor)
 
 set(sources
   src/AlphaS.cpp
-  src/ArrayGrid.cpp
   src/Candia.cpp
   src/Distribution.cpp
 #  src/Evolution.cpp

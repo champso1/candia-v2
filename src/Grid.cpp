@@ -97,7 +97,7 @@ namespace Candia2
 		return k;
 	}
 
-	Grid::value_type Grid::interpolate(ArrayGrid& yy, value_type x)
+	Grid::value_type Grid::interpolate(std::span<double> yy, value_type x)
 	{
 		constexpr int n = 2*INTERP_POINTS;
 		int ns=0;
@@ -106,10 +106,10 @@ namespace Candia2
 		int k = interpFindIdx(x);
 		
 		double const* xa = &(_points.data()[k]);
-		double const* ya = &(yy.base().data()[k]);
+		double const* ya = &(yy.data()[k]);
 
-		double c[2*INTERP_POINTS]{};
-		double d[2*INTERP_POINTS]{};
+		double c[n]{};
+		double d[n]{};
 		
 		dif = std::abs(x - xa[0]);
 
@@ -147,7 +147,7 @@ namespace Candia2
 
 	Grid::value_type Grid::mappingFunctionBase(
 		uint k, value_type x, auto&& yandjaccessor,
-		Expression& E, ArrayGrid& A,
+		Expression& E, std::span<double> A,
 		value_type eplus1,
 		gauleg_type const& X, gauleg_type const& W)
 	{
@@ -183,7 +183,7 @@ namespace Candia2
 		return out;
 	}
 
-	Grid::value_type Grid::convolution(ArrayGrid& A, Expression &E, uint k)
+	Grid::value_type Grid::convolution(std::span<double> A, Expression &E, uint k)
 	{
 		double x = _points[k];
 		double eplus1 = _use_cached_expressions ? E.plus(1.0) : E.calcPlus(1.0);

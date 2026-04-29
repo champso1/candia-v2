@@ -10,7 +10,7 @@ static constexpr uint ITERS = 15;
 static constexpr uint GRID = 200;
 
 void main1();
-void main2();
+void main2() {}
 
 int main(int argc, char** argv)
 {
@@ -42,40 +42,6 @@ void main1()
 					for (uint n=0; n<ITERS; ++n) {
 						for (uint k=0; k<GRID; ++k)
 							arrgrid2(j,s,t,m,n,k) = get_rand();
-					}
-				}
-			}
-		}
-	}
-}
-
-void main2()
-{
-	getLogOptions().show_debug_messages = true;
-	std::random_device dev{};
-	std::mt19937 mt{dev()};
-	std::uniform_real_distribution<double> dist{};
-	auto get_rand = [&](){ return dist(mt); };
-
-	MultiDimArrayGrid_t<5> arrgridorig = MultiDimArrayGrid_t<5>{
-		DISTS, MultiDimArrayGrid_t<4>{
-			2, MultiDimArrayGrid_t<3>{
-				ITERS, MultiDimArrayGrid_t<2>{
-					ITERS, MultiDimArrayGrid_t<1>{
-						ITERS, ArrayGrid(GRID)
-					}
-				}
-			}
-		}
-	};
-
-	for (uint j=0; j<DISTS; ++j) {
-		for (uint s=0; s<2; ++s) {
-			for (uint t=0; t<ITERS; ++t) {
-				for (uint m=0; m<ITERS; ++m) {
-					for (uint n=0; n<ITERS; ++n) {
-						for (uint k=0; k<GRID; ++k)
-							arrgridorig[j][s][t][m][n][k] = get_rand();
 					}
 				}
 			}
