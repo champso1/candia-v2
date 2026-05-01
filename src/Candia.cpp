@@ -430,14 +430,10 @@ namespace Candia2
 			log(LOG_DEBUG, "DGLAP", "Loading relevant splitting function / OME values into cache");
 			SplittingFunction::update(_nf, _alpha_s.beta0(), _log_muf2_mur2);
 			OpMatElem::update(-_log_mur2_muf2, _nf);
-			if (getOptions().cache_exprs) {
-				log(LOG_INFO, "DGLAP", "Loading all expression values into caches...");
-				_grid.useCachedExpressions();
-				for (auto& expr : _expressions)
-					expr->fill(_grid.points(), _grid.abscissae(), _grid.filler().getMappings(-1.0));
-			}
-			for (auto& expr : _expressions)
+			for (auto& expr : _expressions) {
+				expr->fill(_grid.points());
 				expr->preCalc();
+			}
 			
 			log(LOG_DEBUG, "DGLAP", "Retrieving values of alpha_s, and calculating all logarithm factors");
 			bool resum_tab = _alpha_s.resumTabulated();
@@ -576,24 +572,23 @@ namespace Candia2
 		
 		OpMatElemN3LO::update(-L, _nf);
 
-		auto plus_zero_func = [](double,double,double){ return 0.0; };
-		auto delta_zero_func = [](double,double){ return 0.0; };
+		auto zero_func = [](double,double){ return 0.0; };
 		
 		// auto& p1qg = getExpression("P1qg");
 	    auto a1qg_reg_func = [as](double lm, double nf, double x) {
 			auto trunced = ome::AQg_reg.truncate(1);
 			return trunced(as, lm, nf, x); };
-		OpMatElemCustom a1hg(a1qg_reg_func, plus_zero_func, delta_zero_func);
+		OpMatElemCustom a1hg(a1qg_reg_func, zero_func, zero_func);
 
 		auto a2hq_reg_func = [as](double lm, double nf, double x) {
 			auto trunced = ome::AQqPS_reg.truncate(2);
 			return trunced(as, lm, nf, x); };
-		OpMatElemCustom a2hq(a2hq_reg_func, plus_zero_func, delta_zero_func);
+		OpMatElemCustom a2hq(a2hq_reg_func, zero_func, zero_func);
 		
 		auto a2hg_reg_func = [as](double lm, double nf, double x) {
 			auto trunced = ome::AQg_reg.truncate(2);
 			return trunced(as, lm, nf, x); };
-		OpMatElemCustom a2hg(a2hg_reg_func, plus_zero_func, delta_zero_func);
+		OpMatElemCustom a2hg(a2hg_reg_func, zero_func, zero_func);
 		
 
 		std::vector<ArrayGrid> subpdfs(4, ArrayGrid(_grid.size()));

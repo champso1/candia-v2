@@ -37,7 +37,6 @@ namespace Candia2
 			APPROX_B = 2,
 			APPROX_AVG = 3
 		} n3lo_splitfunc_imod{APPROX_AVG}; //!< approximation to use for the N3LO splitting functions
-		bool cache_exprs{false}; //!< whether to cache the splitting functions/OMEs rather than evaluating them every time
 	};
 
 	/**

@@ -47,7 +47,7 @@ namespace Candia2
 	{
 	public:
 	    double calcRegular(double x) const override;
-		double calcPlus(double x) const override;
+		double calcPlus() const override;
 		double calcDelta() const override;
 	};
 
@@ -57,7 +57,6 @@ namespace Candia2
 	 */
 	class A2gq final : public OpMatElem
 	{
-	public:
 		double calcRegular(double x) const override;
 	};
 
@@ -67,9 +66,8 @@ namespace Candia2
 	 */
 	class A2gg final : public OpMatElem
 	{
-	public:
 		double calcRegular(double x) const override;
-		double calcPlus(double x) const override;
+		double calcPlus() const override;
 		double calcDelta() const override;
 	};
 
@@ -79,7 +77,6 @@ namespace Candia2
 	 */
 	class A2hq final : public OpMatElem
 	{
-	public:
 		double calcRegular(double x) const override;
 	};
 
@@ -89,7 +86,6 @@ namespace Candia2
 	 */
 	class A2hg final : public OpMatElem
 	{
-	public:
 		double calcRegular(double x) const override;
 	};
 
@@ -120,23 +116,36 @@ namespace Candia2
 			auto reg = _ome.get_regular().value();
 			return reg[3](_lm, _nf, x);
 		}
-
-		inline double calcPlus(double x) const override
+		inline double calcPlus() const override
 		{
 			if (!_ome.has_plus())
 				return 0;
 
 			auto plus = _ome.get_plus().value();
-			return plus[3](_lm, _nf, x);
+			return plus[3](_lm, _nf, 0.0);
 		}
-
 		inline double calcDelta() const override
 		{
-		    if (!_ome.has_delta())
+			if (!_ome.has_delta())
 				return 0;
 
 			auto delta = _ome.get_delta().value();
 			return delta[3](_lm, _nf);
+		}
+		
+
+		inline void preCalc() override
+		{
+			_plus_cache = 0.0;
+			_delta_cache = 0.0;
+			if (_ome.has_plus()) {
+				auto plus = _ome.get_plus().value();
+				_plus_cache = plus[3](_lm, _nf, 0.0);
+			}
+			if (_ome.has_delta()) {
+				auto delta = _ome.get_delta().value();
+				_delta_cache = delta[3](_lm, _nf);
+			}
 		}
 	};
 
@@ -148,22 +157,19 @@ namespace Candia2
 	{
 	public:
 		using reg_function_type = std::function<double(double,double,double)>;
-		using plus_function_type = std::function<double(double,double,double)>;
+		using plus_function_type = std::function<double(double,double)>;
 		using delta_function_type = std::function<double(double,double)>;
-		static reg_function_type REG_ZERO_FUNC;
-		static plus_function_type PLUS_ZERO_FUNC;
-		static delta_function_type DELTA_ZERO_FUNC;
 	private:
-		reg_function_type _reg_func{REG_ZERO_FUNC};
-		plus_function_type _plus_func{PLUS_ZERO_FUNC};
-		delta_function_type _delta_func{DELTA_ZERO_FUNC};
+		reg_function_type _reg_func;
+		plus_function_type _plus_func;
+		delta_function_type _delta_func;
 	public:
 		OpMatElemCustom(reg_function_type const& reg_func, plus_function_type const& plus_func, delta_function_type const& delta_func)
 			: _reg_func{reg_func}, _plus_func{plus_func}, _delta_func{delta_func}
 		{}
 
 		inline double calcRegular(double x) const override { return _reg_func(_lm, _nf, x); }
-		inline double calcPlus(double x)    const override { return _plus_func(_lm, _nf, x); }
+		inline double calcPlus()            const override { return _plus_func(_lm, _nf); }
 		inline double calcDelta()           const override { return _delta_func(_lm, _nf); }
 	};
 };

@@ -77,44 +77,40 @@ namespace Candia2
 		}
 	}
 
-	static thread_local int prev_interp_idx = 0;
+	constexpr auto NN = 2*INTERP_POINTS;
     int Grid::interpFindIdx(value_type x)
 	{
-		const int n = static_cast<int>(size());
-		const int max_k = static_cast<int>(n-2*INTERP_POINTS);
+		static const int n = static_cast<int>(size());
+		static const int max_k = static_cast<int>(n-NN);
 
-		auto it = std::upper_bound(_points.begin() + prev_interp_idx, _points.end(), x);
-		
+		auto it = std::upper_bound(
+			_points.begin(),
+			_points.end(),
+			x);
 		int k = static_cast<int>(it - _points.begin()) - INTERP_POINTS;
-		
-		if (k < 0)
-			k = 0;
-		else if (k > max_k)
-			k = max_k;
 
-		prev_interp_idx = k;
-
-		return k;
+		return std::clamp(k, 0, max_k);
 	}
 
 	Grid::value_type Grid::interpolate(std::span<double> yy, value_type x)
 	{
-		constexpr int n = 2*INTERP_POINTS;
-		int ns=0;
-		double y, den, dif, dift, ho, hp, w;
-
+		constexpr int n = 2 * INTERP_POINTS;
+    
 		int k = interpFindIdx(x);
-		
-		double const* xa = &(_points.data()[k]);
-		double const* ya = &(yy.data()[k]);
+		double const* xa = &(_points[k]);
+		double const* ya = &(yy[k]);
 
-		double c[n]{};
-		double d[n]{};
-		
-		dif = std::abs(x - xa[0]);
+		double c[n];
+		double d[n];
+    
+		int ns = 0;
+		double dif = std::abs(x - xa[0]);
+		c[0] = ya[0];
+		d[0] = ya[0];
 
-		for (int i=0; i<n; i++) {
-			if ((dift = std::abs(x - xa[i])) < dif) {
+		for (int i=1; i<n; i++) {
+			double dift = std::abs(x - xa[i]);
+			if (dift < dif) {
 				ns = i;
 				dif = dift;
 			}
@@ -122,19 +118,21 @@ namespace Candia2
 			d[i] = ya[i];
 		}
 
-		y = ya[ns--];
+		double y = ya[ns--];
 
 		for (int m=1; m<n; m++) {
-		    for (int i=0; i<n-m; i++) {
-				ho = xa[i] - x;
-				hp = xa[i+m] - x;
-				w = c[i+1] - d[i];
+			for (int i=0; i<(n-m); i++) {
+				double ho = xa[i] - x;
+				double hp = xa[i+m] - x;
+				double w = c[i+1] - d[i];
 
-				den = ho-hp;
-				if (std::abs(ho-hp) < 1e-15)
+				double grid_diff = xa[i] - xa[i+m]; 
+
+				if (grid_diff > -1e-15) {
 					log(LOG_ERROR, "Grid::interpolate()", "found a denominator equal to 0.0 ({}, {}, {})", x, xa[i], xa[i+m]);
+				}
 
-				den = w/den;
+				double den = w/grid_diff;
 				d[i] = hp*den;
 				c[i] = ho*den;
 			}
@@ -147,38 +145,25 @@ namespace Candia2
 
 	Grid::value_type Grid::mappingFunctionBase(
 		uint k, value_type x, auto&& yandjaccessor,
-		Expression& E, std::span<double> A,
-		value_type eplus1,
+		[[maybe_unused]] Expression& E, std::span<double> A,
+		value_type plus,
 		gauleg_type const& X, gauleg_type const& W)
 	{
-		auto reg = [&](double y) {
-			if (_use_cached_expressions)
-				return E.regular(y);
-			else
-				return E.calcRegular(y);
-		};
-		auto plus = [&](double y) {
-			if (_use_cached_expressions)
-				return E.plus(y);
-			else
-				return E.calcPlus(y);
-		};
-		
 		double ak = A[k];
 		double out = 0.0;
 		uint s = X.size();
-		prev_interp_idx = 0;
 		for (uint i=0; i<s; i++) {
 			double z = X[i];
 			double w = W[i];
 			auto [y, J] = yandjaccessor(x, z);
 			double a = x/y;
-			double eregy = reg(y);
+			double eregy = E.calcRegular(y);
 			double interpa = interpolate(A, a);
-			double eplusy = plus(y);
-			
-			out += w*J * eregy*interpa;
-			out += w*J * (1.0/(1.0-y))*(eplusy*interpa - eplus1*ak);
+
+			double fac1 = w*J * eregy*interpa;
+			double fac2 = w*J * (1.0/(1.0-y))*plus*(interpa - ak);
+			out += fac1;
+			out += fac2;
 		}
 		return out;
 	}
@@ -186,13 +171,13 @@ namespace Candia2
 	Grid::value_type Grid::convolution(std::span<double> A, Expression &E, uint k)
 	{
 		double x = _points[k];
-		double eplus1 = _use_cached_expressions ? E.plus(1.0) : E.calcPlus(1.0);
-		double ed1 = _use_cached_expressions ? E.delta() : E.calcDelta();
-		double res = (eplus1*std::log1p(-x) + ed1) * A[k];
+		double plus = E.plus();
+		double delta = E.delta();
+		double res = (plus*std::log1p(-x) + delta) * A[k];
 
 		auto mappings = _filler.get().getMappings(x);
 		for (auto& mapping : mappings)
-			res += mappingFunctionBase(k, x, mapping, E, A, eplus1, _Xi, _Wi);
+			res += mappingFunctionBase(k, x, mapping, E, A, plus, _Xi, _Wi);
 		
 		return res;
 	}

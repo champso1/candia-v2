@@ -134,10 +134,10 @@ namespace Candia2
 					auto a = pivot1/x;
 					return std::make_pair(x*std::pow(a, z), x*std::pow(a, z)*std::log(a));},
 				[&]([[maybe_unused]] double x, double z) { return std::make_pair(pivot1+(pivot2-pivot1)*z, pivot2-pivot1); },
-				[&]([[maybe_unused]] double x, double z) { return std::make_pair(1.0-(1.0-pivot2)*std::pow(1.0-z, 3), 3.0*(1.0-pivot2)*(1.0-z)*(1.0-z)); },
+				[&]([[maybe_unused]] double x, double z) { return std::make_pair(1.0-(1.0-pivot2)*(1.0-z)*(1.0-z), 2.0*(1.0-pivot2)*(1.0-z)); },
 				[&](double x, double z) { return std::make_pair(x+(pivot2-x)*z, pivot2-x); },
-				[&]([[maybe_unused]] double x, double z) { return std::make_pair(1.0-(1.0-pivot2)*std::pow(1.0-z, 3), 3.0*(1.0-pivot2)*(1.0-z)*(1.0-z)); },
-				[](double x, double z) { return std::make_pair(1.0-(1.0-x)*std::pow(1.0-z, 3), 3.0*(1.0-x)*(1.0-z)*(1.0-z)); },
+				[&]([[maybe_unused]] double x, double z) { return std::make_pair(1.0-(1.0-pivot2)*(1.0-z)*(1.0-z), 2.0*(1.0-pivot2)*(1.0-z)); },
+				[](double x, double z) { return std::make_pair(1.0-(1.0-x)*(1.0-z)*(1.0-z), 2.0*(1.0-x)*(1.0-z)); },
 			};
 		}
 	public:
@@ -200,8 +200,6 @@ namespace Candia2
 		ConvIntArgs _convint_args; //!< contains misc convolution/interpolation options/args
 		gauleg_type _Xi{}; //!< list of split-up gauleg abscissae per interval
 		gauleg_type _Wi{}; //!< list of split-up gauleg weights per interval
-
-		bool _use_cached_expressions{false}; //!< whether to use cached expressions. set via DGLAPSolver based on its options
 	public:
 		/** @brief provides a facility like python's enumerate() to return an index and value at once */
 		struct EnumerateIterator final
@@ -279,12 +277,6 @@ namespace Candia2
 			Expression& E, std::span<double> A,
 			value_type eplus1,
 			gauleg_type const& X, gauleg_type const& W);
-
-		/** @brief sets the flag to use the cached expressions */
-		void useCachedExpressions() { _use_cached_expressions = true; }
-
-		/** @brief returns the flag for whether to use the cached expressions */
-		bool usingCachedExpressions() { return _use_cached_expressions; }
 
 		/**
 		 *  @brief Uses a binary search to find the grid point closest to the given value of x

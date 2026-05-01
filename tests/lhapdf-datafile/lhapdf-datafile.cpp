@@ -33,23 +33,22 @@ int main()
 	uint nf = 5;
 	OpMatElem::update(lm, nf);
 
-	auto zero_func = [](double,double,double){ return 0.0; };
-	auto delta_zero_func = [](double,double){ return 0.0; };
+	auto zero_func = [](double,double){ return 0.0; };
 
 	auto a1hg_reg_func = [as,lm,nf](double, double, double x) -> double {
 		auto trunced = ome::AQg_reg.truncate(1);
 		return trunced(as, lm, nf, x); };
-	OpMatElemCustom a1hg(a1hg_reg_func, zero_func, delta_zero_func);
+	OpMatElemCustom a1hg(a1hg_reg_func, zero_func, zero_func);
 
 	auto a2hq_reg_func = [as](double lm, double nf, double x) {
 		auto trunced = ome::AQqPS_reg.truncate(2);
 		return trunced(as, lm, nf, x); };
-	OpMatElemCustom a2hq(a2hq_reg_func, zero_func, delta_zero_func);
+	OpMatElemCustom a2hq(a2hq_reg_func, zero_func, zero_func);
 		
 	auto a2hg_reg_func = [as](double lm, double nf, double x) {
 		auto trunced = ome::AQg_reg.truncate(2);
 		return trunced(as, lm, nf, x); };
-	OpMatElemCustom a2hg(a2hg_reg_func, zero_func, delta_zero_func);
+	OpMatElemCustom a2hg(a2hg_reg_func, zero_func, zero_func);
 	
 	ArrayGrid b(grid.size()), g(grid.size()), sigma(grid.size());
 	for (uint k=0; k<grid.size(); ++k) {

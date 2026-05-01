@@ -5,10 +5,10 @@
 
 #pragma once
 
-#include <unordered_map>
-#include <vector>
-
 #include "Candia-v2/Common.hpp"
+#include "Candia-v2/ArrayGrid.hpp"
+
+#include <vector>
 
 namespace Candia2
 {
@@ -18,13 +18,13 @@ namespace Candia2
 	class Expression
 	{
 	public:
-		using cache_type = std::unordered_map<double, double>; //!< alias for cache
+		using cache_type = ArrayGrid; //!< alias for cache
 		using array_type = std::vector<double>; //!< alias for passed-in grid array
 		using mapping_type = std::function<std::pair<double,double>(double,double)>; //!< alias for mappings
 		
 	protected:
 		cache_type _reg_cache{}; //!< stores the values of the regular part of the expression
-		cache_type _plus_cache{}; //!< stores the values of the plus part of the expression
+		double _plus_cache; //!< stores the value of the plus part of the expression
 		double _delta_cache; //!< stores the value of the delta coefficient
 
 		Expression() = default; //!< default constructor
@@ -43,39 +43,45 @@ namespace Candia2
 		inline virtual void clear()
 		{
 			_reg_cache.clear();
-			_plus_cache.clear();
+			_plus_cache = 0.0;
 			_delta_cache = 0.0;
 		}
 
 		/**
-		 *  @brief Fills the cache with the gauss-legendre points given @a grid_points and @a gauss_points
+		 *  @brief Fills the cache(s) with the values of the regular part of the expression on the grid for interpolation
 		 *  @param grid_points The array of grid points.
-		 *  @param gauss_points The array of gauss-legendre abscissae
 		 */
-		virtual void fill(
-			array_type const& grid_points, array_type const& gauss_points,
-			std::span<mapping_type> const& mapping);
-
-
-		/**
-		 *  @defgroup piececalulators Expression Calculators
-		 *  @{
-		 */
-		inline virtual double calcRegular([[maybe_unused]] double x) const { return 0.0; }
-		inline virtual double calcPlus([[maybe_unused]] double x) const { return 0.0; }
-		inline virtual double calcDelta() const { return 0.0; }
-		/** @} */
+		inline virtual void fill(array_type const& grid_points)
+		{
+			auto enumerate =
+				std::ranges::views::iota(uint{0},grid_points.size()-1)
+				| std::ranges::views::transform([&](uint i){ return std::make_pair(i, grid_points[i]); });
+			
+			_reg_cache.resize(grid_points.size());
+			std::ranges::fill(_reg_cache, double{0});
+			for (auto [i, x] : enumerate)
+				_reg_cache[i] = calcRegular(x);
+		}
 
 		/**
 		 *  @defgroup pieceretrievers Expression Retrievers
 		 *  @{
 		 */
-		inline virtual double regular(double x) { return _reg_cache[x]; }
-		inline virtual double plus(double x) { return _plus_cache[x]; }
+		inline virtual ArrayGridView regular() { return _reg_cache.view(); }
+		inline virtual double plus() { return _plus_cache; }
 		inline virtual double delta() { return _delta_cache; }
 		/** @} */
 
+
+		inline virtual double calcRegular([[maybe_unused]] double x) const { return 0.0; }
+		inline virtual double calcPlus() const { return 0.0; }
+		inline virtual double calcDelta() const { return 0.0; }
+
 		/** @brief calculates all nf-dependent/constant pieces of an expression */
-		inline virtual void preCalc() {}
+		virtual void preCalc()
+		{
+			_plus_cache = calcPlus();
+			_delta_cache = calcDelta();
+		}
 	};
 };
