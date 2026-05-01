@@ -40,7 +40,8 @@ set(headers
   include/Candia-v2/Distribution.hpp
   include/Candia-v2/Expression.hpp
   include/Candia-v2/Grid.hpp
-#  include/Candia-v2/LHAPDFDistribution.hpp
+  #  include/Candia-v2/LHAPDFDistribution.hpp
+  include/Candia-v2/LHAPDFGrid.hpp
   include/Candia-v2/Math.hpp
   include/Candia-v2/OperatorMatrixElements.hpp
   include/Candia-v2/Options.hpp
@@ -91,15 +92,11 @@ target_include_directories(candia PUBLIC
 add_subdirectory(examples)
 add_subdirectory(tests)
 
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/share/cmake")
+
 option(WITH_LHAPDF "Compile in LHAPDF interface" OFF)
-option(USE_CUSTOM_WIN_LHAPDF "Internal option to use my custom modified version of LHAPDF that can be built on windows" OFF)
 option(LHAPDF_ROOT_DIR "Path to the installation root/prefix of LHAPDF." "/usr")
 if (WITH_LHAPDF)
-  if (NOT USE_CUSTOM_WIN_LHAPDF)
-	list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/share/cmake")
-  else()
-	
-  endif()
   find_package(LHAPDF REQUIRED)
   message("candia-v2: Compiling with LHAPDF support.")
   target_include_directories(candia PUBLIC ${LHAPDF_INCLUDE_DIR})
