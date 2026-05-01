@@ -26,6 +26,7 @@ set(sources
   src/GridFillers.cpp
   src/HFT.cpp
 #  src/LHAPDFDistribution.cpp
+  src/LHAPDFGrid.cpp
   src/Math.cpp
   src/OperatorMatrixElements.cpp
   src/RecRel.cpp
@@ -40,7 +41,7 @@ set(headers
   include/Candia-v2/Distribution.hpp
   include/Candia-v2/Expression.hpp
   include/Candia-v2/Grid.hpp
-  #  include/Candia-v2/LHAPDFDistribution.hpp
+#  include/Candia-v2/LHAPDFDistribution.hpp
   include/Candia-v2/LHAPDFGrid.hpp
   include/Candia-v2/Math.hpp
   include/Candia-v2/OperatorMatrixElements.hpp

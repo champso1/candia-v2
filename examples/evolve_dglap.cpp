@@ -102,8 +102,7 @@ int main(int argc, char *argv[]) {
 	std::ofstream log_output_file(log_path);
 
 	auto& log_options = getLogOptions();
-	log_options.show_debug_messages = false;
-	log_options.show_thread_output = true;
+	log_options.verbosity = LOG_DEBUG;
 	log_options.use_log_output_stream = true;
 	log_options.log_output_stream = log_output_file;
 	

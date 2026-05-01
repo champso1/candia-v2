@@ -71,7 +71,8 @@ namespace Candia2
 	/** Enum for defining a set of standard logging types. */
 	enum LogType : int
 	{
-		LOG_DEBUG = 0,
+		LOG_NONE = -1,
+		LOG_DEBUG,
 		LOG_INFO,
 		LOG_WARNING,
 		LOG_ERROR,
@@ -97,24 +98,14 @@ namespace Candia2
 	/** @brief struct to store flags/options for logging */
 	struct LogOptions final
 	{
-		bool silent{false}; //!< suppresses all messages
-		bool show_debug_messages{false}; //!< switch for showing debug messages. only useful for debugging, default off
-		bool show_thread_output{false};  //!< switch for showing the output from threads. often floods the console, default off
-
+		int verbosity{LOG_WARNING}; //!< anything equal to or above (in terms of priority) is displayed, everything else isn't
 		bool use_log_output_stream{false}; //!< switch for whether we are logging to another output stream, like a file
 		std::reference_wrapper<std::ostream> log_output_stream{std::ref(std::cerr)}; //!< actual output stream. only used if @a use_log_output_stream is true
-
-		inline static LogOptions makeDefault()
-		{
-			return LogOptions{};
-		}
 	};
 	/** @brief global options struct */
-	inline LogOptions _log_options = LogOptions::makeDefault();
+	inline LogOptions _log_options{};
 	/** @brief returns the global options for setting values */
 	inline LogOptions& getLogOptions() { return _log_options; }
-	/** @brief setter for apply some desired options */
-	inline void setLogOptions(LogOptions const& o) { _log_options = LogOptions{o}; };
 
 	/**
 	 *  @brief Prints a message to standard out and possibly an additional stream with a nice prefix.
@@ -124,13 +115,16 @@ namespace Candia2
 	 *  @param args args used to format the string, as used in std::format
 	 */
 	template <typename... TArgs>
-	void log(uint log_type, std::string_view prefix, std::format_string<TArgs...> fmt_string, TArgs&& ...args)
+	void log(int log_type, std::string_view prefix, std::format_string<TArgs...> fmt_string, TArgs&& ...args)
 	{
-		if (getLogOptions().silent)
+		if (getLogOptions().verbosity == LOG_NONE)
 			return;
-		if (log_type == LOG_DEBUG && !getLogOptions().show_debug_messages)
+
+		// we treat LOG_THREAD identical to LOG_INFO so we must handle that
+		if (log_type == LOG_THREAD && getLogOptions().verbosity > LOG_INFO)
 			return;
-		if (log_type == LOG_THREAD && !getLogOptions().show_thread_output)
+
+		if (log_type < getLogOptions().verbosity)
 			return;
 			
 		std::string log_text = std::vformat(fmt_string.get(), std::make_format_args(args...));
@@ -152,6 +146,9 @@ namespace Candia2
 	template <typename... TArgs>
 	void log(std::format_string<TArgs...> fmt_string, TArgs&&... args)
 	{
+		if (getLogOptions().verbosity == LOG_NONE || getLogOptions().verbosity > LOG_INFO)
+			return;
+		
 		std::string log_text = std::vformat(fmt_string.get(), std::make_format_args(args...));
 		if (getLogOptions().use_log_output_stream)
 			getLogOptions().log_output_stream.get() << log_text;
@@ -161,6 +158,9 @@ namespace Candia2
 	inline std::unordered_map<uint, uint> log_threads_line_offset{};
 	inline void registerThreadLogs(std::vector<uint> const& ids)
 	{
+		if (getLogOptions().verbosity == LOG_NONE || getLogOptions().verbosity > LOG_INFO)
+			return;
+			
 		for (uint i=0; i<ids.size(); ++i) {
 			log_threads_line_offset[ids[i]] = ids.size()-i;
 			std::cout << '\n';
@@ -168,6 +168,9 @@ namespace Candia2
 	}
 	inline void unregisterThreadLogs([[maybe_unused]] std::vector<uint> const& ids)
 	{
+		if (getLogOptions().verbosity == LOG_NONE || getLogOptions().verbosity > LOG_INFO)
+			return;
+
 		log_threads_line_offset.clear();
 	}
 	inline std::mutex log_threads_mutex;
@@ -181,8 +184,9 @@ namespace Candia2
 	template <typename... TArgs>
 	void logThreadIterations(uint thread_idx, uint val, uint end, std::string_view prefix)
 	{
-		if (!getLogOptions().show_thread_output)
+		if (getLogOptions().verbosity == LOG_NONE || getLogOptions().verbosity > LOG_INFO)
 			return;
+		
 		auto log_type = LOG_THREAD;
 
 		auto count = log_threads_line_offset[thread_idx];
@@ -213,7 +217,13 @@ namespace Candia2
 	}
 
 	inline void startLogIterations(){ return; }
-	inline void endLogIterations(){ std::cout << '\n'; }
+	inline void endLogIterations()
+	{
+		if (getLogOptions().verbosity == LOG_NONE || getLogOptions().verbosity > LOG_INFO)
+			return;
+		
+		std::cout << '\n';
+	}
 	/**
 	 *  @brief Prints messages to standard out for iterations in a nice way that doesn't flood stdout
 	 *  @param val the i in i/j, for the iteration count
@@ -223,8 +233,9 @@ namespace Candia2
 	template <typename... TArgs>
 	void logIterations(uint val, uint end, std::string_view prefix)
 	{
-		if (!getLogOptions().show_thread_output)
+	    if (getLogOptions().verbosity == LOG_NONE || getLogOptions().verbosity > LOG_INFO)
 			return;
+		
 		auto log_type = LOG_INFO;
 
 		double ratio = static_cast<double>(val)/static_cast<double>(end);

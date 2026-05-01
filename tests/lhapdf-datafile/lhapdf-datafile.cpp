@@ -1,82 +1,56 @@
-#include "Candia-v2/Grid.hpp"
-#include "Candia-v2/OperatorMatrixElements.hpp"
+#include "Candia-v2/Common.hpp"
+#include "Candia-v2/LHAPDFGrid.hpp"
+#include <LHAPDF/Config.h>
+#include <LHAPDF/Factories.h>
+#include <LHAPDF/LHAGlue.h>
+#include <filesystem>
 using namespace Candia2;
 
 #include "LHAPDF/LHAPDF.h"
 using namespace LHAPDF;
 
+namespace fs = std::filesystem;
+
 int main()
 {
-	PDF* pdf = mkPDF("CT18NLO", 0);
-	std::vector<int> pids = pdf->flavors();
- 
-	vector<double> xtab{1e-5, 1e-4, 1e-3, 1e-2, 0.1, 0.3, 0.5, 0.7, 0.9, 1.0};
-	GridFillerLogLinQuad filler{};
-	Grid grid(xtab, filler, {});
+	getLogOptions().verbosity = LOG_INFO;
+	log(LOG_INFO, "lhapdf-datafile.cpp", "running the however many evolutions...");
+	getLogOptions().verbosity = LOG_WARNING;
 
-	double q = 10.0;
-	double q2 = q*q;
-	double as = pdf->alphasQ2(q2)/(4.0*PI);
-	double as2 = as*as;
-	double mb = pdf->quarkMass(5);
-	double mb2 = mb*mb;
+	LesHouchesDistribution dist(100.0);
+	std::vector<double> xtab{1e-5, 1e-4, 1e-3, 1e-2, 0.1, 0.3, 0.5, 0.7, 0.9, 1.0};
+	GridFillerLogLinQuad grid_filler(1e-5, 100, 50, 100);
+	Grid grid(xtab, grid_filler, {});
+	DGLAPOptions dglap_options{};
+	dglap_options.use_truncated_nonsinglet_sol = true;
+	dglap_options.disable_heavy_flavor_matching = false;
+	dglap_options.use_nnlo_matching_conditions_at_n3lo = false;
+	dglap_options.use_n3lo_heavyquark_asymmetry = true;
+	dglap_options.use_fortran_n3lo_splitfuncs = false;
 	
-	getLogOptions().show_debug_messages = true;
-	log(LOG_DEBUG, "lhapdf-datafile.cpp", "Using:");
-	log(LOG_DEBUG, "lhapdf-datafile.cpp", "  q  ={}", q);
-	log(LOG_DEBUG, "lhapdf-datafile.cpp", "  q2 ={}", q2);
-	log(LOG_DEBUG, "lhapdf-datafile.cpp", "  as ={}", as);
-	log(LOG_DEBUG, "lhapdf-datafile.cpp", "  as2={}", as2);
-	log(LOG_DEBUG, "lhapdf-datafile.cpp", "  mb ={}", mb);
-
-	double lm = std::log(mb2/q2);
-	uint nf = 5;
-	OpMatElem::update(lm, nf);
-
-	auto zero_func = [](double,double){ return 0.0; };
-
-	auto a1hg_reg_func = [as,lm,nf](double, double, double x) -> double {
-		auto trunced = ome::AQg_reg.truncate(1);
-		return trunced(as, lm, nf, x); };
-	OpMatElemCustom a1hg(a1hg_reg_func, zero_func, zero_func);
-
-	auto a2hq_reg_func = [as](double lm, double nf, double x) {
-		auto trunced = ome::AQqPS_reg.truncate(2);
-		return trunced(as, lm, nf, x); };
-	OpMatElemCustom a2hq(a2hq_reg_func, zero_func, zero_func);
-		
-	auto a2hg_reg_func = [as](double lm, double nf, double x) {
-		auto trunced = ome::AQg_reg.truncate(2);
-		return trunced(as, lm, nf, x); };
-	OpMatElemCustom a2hg(a2hg_reg_func, zero_func, zero_func);
+	LHAPDFGrid lhapdfgrid(
+		"testpdf", fs::current_path()/"infofile.in",
+		dist, grid,
+		0, 8, 8, 1);
 	
-	ArrayGrid b(grid.size()), g(grid.size()), sigma(grid.size());
-	for (uint k=0; k<grid.size(); ++k) {
-		b[k] = pdf->xfxQ2(5, grid[k], q2);
-		g[k] = pdf->xfxQ2(21, grid[k], q2);
-		sigma[k] = 0.0;
-		for (int nf=1; nf<=5; ++nf)
-			sigma[k] += pdf->xfxQ2(nf, grid[k], q2) + pdf->xfxQ2(-nf, grid[k], q2);
-	}
+	lhapdfgrid.evolve(std::numbers::sqrt2, 110.0, 5.0, dglap_options);
 
-	std::cout << "before printing\n";
+	getLogOptions().verbosity = LOG_INFO;
+	log(LOG_INFO, "lhapdf-datafile.cpp", "finished running the however many evolutions");
+	lhapdfgrid.write();
 
-	std::ofstream outfile("out.dat");
-	ArrayGrid ftilde1(grid.size()), ftilde2(grid.size()), ftildeNLO(grid.size());
-	for (uint k=0; k<grid.size(); ++k) {
-	    ftilde1[k] = grid.convolution(g, a1hg, k);
-		ftilde2[k] = as2*(
-			grid.convolution(sigma, a2hq, k) +
-			grid.convolution(g, a2hg, k));
-		ftildeNLO[k] = ftilde1[k] + ftilde2[k];
+	fs::path testpdfdir = fs::current_path()/"testpdf";
+	fs::path testpdfdir_dest = fs::path("/home/champson/.local/share/LHAPDF");
+    const auto copyoptions = fs::copy_options::recursive | fs::copy_options::overwrite_existing;
+	fs::copy(testpdfdir, testpdfdir_dest, copyoptions);
 
-		outfile << grid[k] << ' '
-				<< b[k] << ' '
-				<< ftilde1[k] << ' '
-				<< ftilde2[k] << ' '
-				<< ftildeNLO[k] << '\n';
-	}
- 
+	setVerbosity(0);
+	PDF const* pdf = mkPDF("testpdf", 0);
+	double Q = 100.0;
+	double Q2 = Q*Q;
+	double x = 0.1;
+	uint pid = 21;
+	double xfq = pdf->xfxQ2(pid, x, Q2);
+	log(LOG_INFO, "lhapdf-datafile.cpp", "xf_q(Q={},x={}) = {}", Q, x, xfq);
 	delete pdf;
-	return 0;
 }
