@@ -10,6 +10,7 @@ using namespace Candia2;
 
 using dist_type = std::vector<std::vector<double>>;
 using xtab_type = std::vector<double>;
+using grid_points_type = std::vector<double>;
 
 std::string percentToLatex(double percent);
 std::string scientificToLatex(double num, int precision, bool benchmark_format);
@@ -43,7 +44,15 @@ inline std::vector<std::reference_wrapper<const std::vector<std::string>>> cols{
 
 void print_compare_types(std::string_view filename);
 
-std::pair<xtab_type, dist_type> read_candia_file(fs::path const &path, uint size);
+struct ReadCandiaFileResult final
+{
+	xtab_type xtab;
+	dist_type dists_raw;
+	dist_type dists_ntabbed;
+	grid_points_type grid_points;
+};
+
+ReadCandiaFileResult read_candia_file(fs::path const &path, uint size);
 dist_type fix_dists(dist_type const& dists, int type);
 std::pair<xtab_type, dist_type> read_other_file(fs::path const &path, uint size);
 

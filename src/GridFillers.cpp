@@ -6,7 +6,7 @@
 
 namespace Candia2
 {
-	void GridFillerBase::addXtab(std::span<double> const& xtab, std::vector<double>& points, std::vector<int>& ntab)
+	void GridFillerBase::addXtab(std::vector<double> const& xtab, std::vector<double>& points, std::vector<int>& ntab)
 	{
 		// if the number of specified points and the grid filler algorithm align just right,
 		// we get an added xtab value of like 0.5 with also a 0.5000000000002 or something

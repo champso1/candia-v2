@@ -68,7 +68,7 @@ static void outputData(
 
 	// print them out
 	for (uint k=0; k<grid.size(); k++){
-		outfile << setw(15) << setprecision(8) << grid.at(k) << ' ';
+		outfile << setw(15) << setprecision(8) << grid[k] << ' ';
 		outfile << setprecision(std::numeric_limits<double>::max_digits10);	
 		for (uint j=0; j<DISTS; ++j)
 			outfile << F[j][k] << ' ';

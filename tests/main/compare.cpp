@@ -42,7 +42,10 @@ int main(int argc, char *argv[])
 		std::from_chars(argv[5], argv[5] + 1, diff_type);
 	}
 
-	auto [xtab_candia, candia_dists_raw] = read_candia_file(candia_filepath, 37);
+	auto read_candia_file_result = read_candia_file(candia_filepath, 37);
+	auto const& xtab_candia = read_candia_file_result.xtab;
+	auto const& candia_dists_raw = read_candia_file_result.dists_ntabbed;
+	[[maybe_unused]] auto const& grid_points = read_candia_file_result.grid_points;
 	auto [xtab_other, other_dists_raw] = read_other_file(other_filepath, 37);
 	if (!std::ranges::equal(xtab_candia, xtab_other)) {
 		log(LOG_ERROR_NOQUIT, "compare.cpp", "Two xtab arrays for the candia and other datafile are not equivalent:");

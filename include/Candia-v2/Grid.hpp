@@ -7,7 +7,7 @@
 
 #include "Candia-v2/Common.hpp"
 #include "Candia-v2/Expression.hpp"
-#include "Candia-v2/ArrayGrid.hpp"
+// #include "Candia-v2/ArrayGrid.hpp" // included via Expression.hpp
 
 #include <cmath>
 
@@ -31,7 +31,7 @@ namespace Candia2
 		virtual uint fill(std::vector<double>& points) = 0;
 		virtual std::span<mapping_function_type> getMappings(double x) = 0;
 
-		static void addXtab(std::span<double> const& xtab, std::vector<double>& points, std::vector<int>& ntab);
+		static void addXtab(std::vector<double> const& xtab, std::vector<double>& points, std::vector<int>& ntab);
 	};
 
 	/** @brief Fills a grid linearly with a particular number of points. */
@@ -48,7 +48,6 @@ namespace Candia2
 			: GridFillerBase(min),
 			  size{size_} {}
 		uint fill(std::vector<double>& points) override;
-
 		inline std::span<mapping_function_type> getMappings([[maybe_unused]] double x) override { return _mapping_span; }
 	};
 
@@ -188,14 +187,15 @@ namespace Candia2
 	{
     public:
 		using value_type = double; //!< alias for underlying grid type. not settable at this point
-		using grid_type = std::vector<value_type>; //!< alias for the underlying grid type
+		using grid_type = std::vector<double>; //!< alias for the underlying grid type
 		using gauleg_type = std::vector<value_type>; //!< alias for the type of the array of gauss-legendre weights/abscissae
 		using ntab_type = std::vector<int>; //!< alias for the type of the calulated ntab array
+		using xtab_type = std::vector<double>;
 	private:
 		std::reference_wrapper<GridFillerBase> _filler;
-		grid_type _points{}; //!< grid points
+		grid_type _points; //!< grid points
 		ntab_type _ntab{};     //!< stored indices for the tabulated grid points
-		grid_type _xtab{};     //!< stored values of the tabulated grid points
+		xtab_type _xtab{};     //!< stored values of the tabulated grid points
 
 		ConvIntArgs _convint_args; //!< contains misc convolution/interpolation options/args
 		gauleg_type _Xi{}; //!< list of split-up gauleg abscissae per interval
@@ -212,7 +212,7 @@ namespace Candia2
 				grid_type::size_type idx;
 
 				inline auto operator*() const {
-					return std::pair<grid_type::size_type, grid_type::value_type>{idx, v[idx]};
+					return std::pair<uint, grid_type::value_type>{idx, v[idx]};
 				}
 
 				inline Iterator& operator++() { ++idx; return *this; }
@@ -223,7 +223,7 @@ namespace Candia2
 			inline auto end() { return Iterator{data, data.size()}; }
 		};
 
-		inline auto enumerate() const {
+		inline auto enumerate() {
 			return EnumerateIterator{_points};
 		}
 		
@@ -235,7 +235,7 @@ namespace Candia2
 		 *  @param grid_filler an object that will fill the grid in a particular way
 		 *  @param gauleg_args arguments to setup/initialize how gauleg integration behaves
 		 */
-		Grid(grid_type const& xtab, GridFillerBase& grid_filler, ConvIntArgs const& gauleg_args);
+		Grid(xtab_type const& xtab, GridFillerBase& grid_filler, ConvIntArgs const& gauleg_args);
 		Grid(Grid const& other) = default;
 		Grid(Grid&& other) = default;
 		~Grid() = default;
@@ -244,22 +244,21 @@ namespace Candia2
 
 		inline GridFillerBase& filler() { return _filler.get(); }
 
-		inline grid_type& xtab() { return _xtab; }
-		inline grid_type const& xtab() const { return _xtab; }
+		inline xtab_type& xtab() { return _xtab; }
+		inline xtab_type const& xtab() const { return _xtab; }
 		inline ntab_type const& ntab() const { return _ntab; }
 		inline ntab_type& ntab() { return _ntab; }
 
 		inline grid_type const& points() const { return _points; }
-		inline value_type at(uint idx) const { return _points.at(idx); };
 		inline value_type operator[](uint idx) const { return _points[idx]; }
 
 		inline gauleg_type const& abscissae() const { return _Xi; }
 		inline gauleg_type const& weights() const { return _Wi; }
 
-		inline grid_type::const_iterator begin() const { return _points.begin(); }
-		inline grid_type::iterator begin() { return _points.begin(); }
-		inline grid_type::const_iterator end() const { return _points.end(); }
-		inline grid_type::iterator end() { return _points.end(); }
+		inline auto begin() const { return _points.begin(); }
+		inline auto begin() { return _points.begin(); }
+		inline auto end() const { return _points.end(); }
+		inline auto end() { return _points.end(); }
 
 		/**
 		 *  @brief Handles a convolution with simple mappings for y -> z

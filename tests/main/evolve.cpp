@@ -4,7 +4,7 @@ using namespace std;
 namespace fs = filesystem;
 
 #include "Candia-v2/Candia.hpp"
-// #include "Candia-v2/LHAPDFDistribution.hpp"
+#include "Candia-v2/Gnuplot.hpp"
 using namespace Candia2;
 using out_type = std::vector<ArrayGrid>;
 
@@ -27,9 +27,11 @@ static constexpr char const* DATAFILEDIR = "data";
 
 static void outputData(
 	out_type const& F, Grid::grid_type const& xtab, Grid const& grid,
-	uint order, uint num_grid_points, uint iterations, uint trunc_idx, double kr,
+	uint order, uint iterations, uint trunc_idx, double kr,
 	std::string filename="")
 {
+	uint num_grid_points = grid.size();
+	
 	// open the output file, with a filename descriptive of all the provided inputs
 	ostringstream outfile_ss{};
 	outfile_ss << ((order == 3) ? "n3lo" : (order == 2) ? "nnlo" : (order == 1) ? "nlo" : "lo");
@@ -60,9 +62,14 @@ static void outputData(
 		outfile << ix << ' ';
 	outfile << '\n';
 
+	outfile << setprecision(std::numeric_limits<double>::max_digits10);
+	for (const double x : grid)
+		outfile << x << ' ';
+	outfile << '\n';
+
 	// print them out
 	for (uint k=0; k<grid.size(); k++){
-		outfile << setw(15) << setprecision(8) << grid.at(k) << ' ';
+		outfile << setw(15) << setprecision(8) << grid[k] << ' ';
 		outfile << setprecision(std::numeric_limits<double>::max_digits10);	
 		for (uint j=0; j<DISTS; ++j)
 			outfile << F[j][k] << ' ';
@@ -124,5 +131,5 @@ int main(int argc, char *argv[]) {
 	log(LOG_INFO, "evolve.cpp", "Evolution took {}.", secs);
 
 	datafile_name += ".dat";
-	outputData(F, xtab, grid, order, grid.size(), iterations, trunc_idx, mur2_muf2, datafile_name);
+	outputData(F, xtab, grid, order, iterations, trunc_idx, mur2_muf2, datafile_name);
 }

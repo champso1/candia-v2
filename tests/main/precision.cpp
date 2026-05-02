@@ -28,8 +28,14 @@ int main(int argc, char* argv[])
 	file_exists(filepath2);
 	std::string title(argv[3]);
 
-    auto [xtab_candia1, candia_dists_raw1] = read_candia_file(filepath1, 13);
-	auto [xtab_candia2, candia_dists_raw2] = read_candia_file(filepath2, 13);
+	auto read_candia_file_result1 = read_candia_file(filepath1, 37);
+	auto const& xtab_candia1 = read_candia_file_result1.xtab;
+	auto const& candia_dists_raw1 = read_candia_file_result1.dists_ntabbed;
+	[[maybe_unused]] auto const& grid_points = read_candia_file_result1.grid_points;
+	
+	auto read_candia_file_result2 = read_candia_file(filepath1, 37);
+	auto const& xtab_candia2 = read_candia_file_result2.xtab;
+	auto const& candia_dists_raw2 = read_candia_file_result2.dists_ntabbed;
 
 	if (!std::ranges::equal(xtab_candia1, xtab_candia2))
 	{

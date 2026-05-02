@@ -9,7 +9,7 @@
 
 namespace Candia2
 {
-    Grid::Grid(grid_type const& xtab, GridFillerBase& grid_filler, ConvIntArgs const& convint_args)
+    Grid::Grid(xtab_type const& xtab, GridFillerBase& grid_filler, ConvIntArgs const& convint_args)
 		: _filler(grid_filler),
 		  _xtab{xtab},
 		  _convint_args{convint_args},
@@ -20,7 +20,7 @@ namespace Candia2
 			log(LOG_WARNING, "Grid", "xtab array was not sorted. will sort it and continue");
 			std::ranges::sort(_xtab);
 		}
-		
+
 		grid_filler.xtab = xtab;
 		grid_filler.fill(_points);
 		_ntab = grid_filler.ntab;

@@ -18,7 +18,6 @@ namespace Candia2
 	 *  rather than separate allocations for all
 	 *  and the accessor method (operator()) handles strides of various dimensions
 	 *  this should severely reduce cache-misses/page-faults for accessing adjacent elements,
-	 *  which should make things much faster
 	 *  the only negative would be that now a larger amount of contiguous memory is required,
 	 *  but this is only a few hundred MBs at N3LO for the highest precision,
 	 *  and if you're planning on doing that you would be doing it on a suitable machine anyway
@@ -29,6 +28,8 @@ namespace Candia2
 	{
 	public:
 		using value_type = T;
+	    using data_type = std::vector<value_type>;
+		using size_type = data_type::size_type;
 	private:
 		std::vector<value_type> _data{};
 		std::array<uint, D> _sizes{}, _strides{};
@@ -102,9 +103,45 @@ namespace Candia2
 		std::vector<value_type> _data{};
 	public:
 		ArrayGridBase() = default;
-		ArrayGridBase(uint size) : _data(size, 0.0) {}
+		virtual ~ArrayGridBase() = default;
+		explicit ArrayGridBase(uint size) : _data(size, 0.0) {}
+		ArrayGridBase(ArrayGridBase const& other)
+			: _data{other._data}
+		{}
+		ArrayGridBase(ArrayGridBase&& other)
+			: _data{other._data}
+		{
+			other._data.clear();
+		}
+		template <typename TIterator>
+		ArrayGridBase(TIterator begin, TIterator end)
+		{
+			_data = std::vector<value_type>(begin, end);
+		}
+
+		template <typename TContainer>
+		ArrayGridBase(TContainer const& container)
+			: _data(container)
+		{}
+
+		ArrayGridBase(std::span<value_type> view)
+			: _data(view.begin(), view.end())
+		{}
+
+		void operator=(ArrayGridBase const& other)
+		{
+			_data.resize(other._data.size());
+			std::ranges::copy(other._data, _data.begin());
+		}
+		void operator=(ArrayGridBase&& other)
+		{
+			_data.resize(other._data.size());
+			std::ranges::copy(other._data, _data.begin());
+			other._data.clear();
+		}
 
 		inline auto size() const { return _data.size(); }
+		inline auto empty() const { return _data.empty(); }
 
 		inline void resize(uint new_size)
 		{
@@ -128,7 +165,7 @@ namespace Candia2
 		value_type& operator()(uint idx) { return _data[idx]; }
 		value_type& operator[](uint idx) { return _data[idx]; }
 
-		std::span<double> view() { return std::span<double>(_data); }
+		std::span<value_type> view() { return std::span<double>(_data); }
 	};
 	
 

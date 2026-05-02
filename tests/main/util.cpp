@@ -62,13 +62,14 @@ void print_compare_types(std::string_view filename)
 	log(LOG_INFO, filename, "                    requires that the other datafile contains exactly the same info as candia");
 }
 
-std::pair<xtab_type, dist_type> read_candia_file(fs::path const &path, uint size)
+ReadCandiaFileResult read_candia_file(fs::path const &path, uint size)
 {
 	dist_type dists(size, std::vector<double>{});
 	std::ifstream file(path);
 	
 	std::vector<double> xtab{};
 	std::vector<int> ntab{};
+	std::vector<double> grid_points{};
 	double temp;
 	int temp2;
 	std::string line{};
@@ -84,6 +85,11 @@ std::pair<xtab_type, dist_type> read_candia_file(fs::path const &path, uint size
 	iss = std::istringstream(line);
 	while (iss >> temp2)
 		ntab.push_back(temp2);
+
+	std::getline(file, line);
+	iss = std::istringstream(line);
+	while (iss >> temp)
+		grid_points.push_back(temp);
 
 	while (std::getline(file, line)) {
 		iss = std::istringstream(line);
@@ -101,7 +107,7 @@ std::pair<xtab_type, dist_type> read_candia_file(fs::path const &path, uint size
 			dists_ntabbed[i][j] = dists[i][idx];
 		}
 	}
-	return {{xtab.begin(), xtab.end()-1}, dists_ntabbed};
+	return {xtab_type(xtab.begin(), xtab.end()-1), dists, dists_ntabbed, grid_points};
 }
 
 dist_type fix_dists(dist_type const& dists, int type)

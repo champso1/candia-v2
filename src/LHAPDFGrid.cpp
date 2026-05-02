@@ -44,24 +44,32 @@ namespace Candia2
 			std::vector<ArrayGrid> F = solver.evolve();
 
 			std::unordered_map<int, ArrayGrid> map{};
-			map[-5] = F[11];
-			map[-4] = F[10];
-			map[-3] = F[9];
-			map[-2] = F[8];
-			map[-1] = F[7];
-			map[1] = F[1];
-			map[2] = F[2];
-			map[3] = F[3];
-			map[4] = F[4];
-			map[5] = F[5];
-			map[21] = F[0];
+			auto map_emplacer = [&](int k, ArrayGridView v) {
+				auto emplace_res = map.emplace(k, ArrayGrid(v.size()));
+				if (!emplace_res.second)
+					log(LOG_ERROR, "LHAPDFGrid::evolve()", "map emplace failed");
+				auto it = emplace_res.first;
+				std::ranges::copy(v, it->second.begin());
+			};
+
+			map_emplacer(-5, F[11].view());
+			map_emplacer(-4, F[10].view());
+			map_emplacer(-3, F[9].view());
+			map_emplacer(-2, F[8].view());
+			map_emplacer(-1, F[7].view());
+			map_emplacer(1, F[1].view());
+			map_emplacer(2, F[2].view());
+			map_emplacer(3, F[3].view());
+			map_emplacer(4, F[4].view());
+			map_emplacer(5, F[5].view());
+			map_emplacer(21, F[0].view());
 
 			std::vector<ArrayGrid> subtraction_pdfs = solver.calculateSubtractionPDFs();
 			if (!subtraction_pdfs.empty()) {
-				map[FTILDE1] = subtraction_pdfs[0];
-				map[FTILDENLO] = subtraction_pdfs[1];
-				map[DELTAF1] = subtraction_pdfs[2];
-				map[DELTAFNLO] = subtraction_pdfs[3];
+				map_emplacer(FTILDE1, subtraction_pdfs[0].view());
+				map_emplacer(FTILDENLO, subtraction_pdfs[1].view());
+				map_emplacer(DELTAF1, subtraction_pdfs[2].view());
+				map_emplacer(DELTAFNLO, subtraction_pdfs[3].view());
 			}
 
 		    _all_pdfs.emplace_back(std::make_pair(q, map));
