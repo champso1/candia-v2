@@ -40,7 +40,8 @@ int main()
 	lhapdfgrid.write();
 
 	fs::path testpdfdir = fs::current_path()/"testpdf";
-	fs::path testpdfdir_dest = fs::path("/home/champson/.local/share/LHAPDF");
+	fs::path testpdfdir_dest = fs::path("/Users/champso1/software/LHAPDF-6.5.5/out/share/LHAPDF/testpdf");
+	log(LOG_INFO, "lhapdf-datafile.cpp", "{} --> {}", testpdfdir.string(), testpdfdir_dest.string());
     const auto copyoptions = fs::copy_options::recursive | fs::copy_options::overwrite_existing;
 	fs::copy(testpdfdir, testpdfdir_dest, copyoptions);
 
