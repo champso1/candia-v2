@@ -1,19 +1,13 @@
-#include <cstdlib>
-#include <filesystem>
-#include <fstream>
-#include <vector>
 #include <algorithm>
-#include <limits>
-#include <sstream>
-#include <iterator>
+#include <filesystem>
 using namespace std;
 namespace fs = filesystem;
-using uint = unsigned;
 
 #include "Candia-v2/Common.hpp"
 using namespace Candia2;
 
-static void processFile(fs::path const& p);
+[[maybe_unused]]
+static void process_file(fs::path const& p);
 
 int main(int argc, char *argv[])
 {
@@ -35,7 +29,7 @@ int main(int argc, char *argv[])
 }
 
 
-static void processFile(fs::path const& p)
+static void process_file(fs::path const& p)
 {
 	vector<double> X{};
 	vector<vector<double>> F{};

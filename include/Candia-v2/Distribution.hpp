@@ -3,8 +3,7 @@
  *  @brief Contains the @a Distribution class and its derivations that implement various initial evolution conditions
  */
 
-#ifndef __DISTRIBUTION_HPP
-#define __DISTRIBUTION_HPP
+#pragma once
 
 #include "Candia-v2/Common.hpp"
 
@@ -14,6 +13,19 @@
 
 namespace Candia2
 {
+	enum DistributionPDFIndices : uint
+	{
+		DIST_UNUSED1,
+		DIST_U,
+		DIST_D,
+		DIST_S,
+		DIST_C,
+		DIST_B,
+		DIST_T,
+		DIST_UNUSED2,
+		DIST_SIZE
+	};
+	
 	/**
 	 *  @brief Base class for handling initial evolution conditions
 	 */
@@ -24,30 +36,26 @@ namespace Candia2
 		using masses_type = std::array<value_type, 8>;
 		using accessor_type = std::function<value_type&(value_type,value_type)>;
 	protected:
-		value_type _Q0{}; //!< chosen initial energy to evaluate alpha_s at
+		value_type _Q0{}; //!< chosen initial energy to evaluate at
+		value_type _Qf{}; //!< chosen final   energy to evaluate to
 		value_type _alpha0{}; //!< value of alpha_s at chosen initial energy
 		uint _nfi{}; //!< initial number of massless flavors
+		uint _nff{}; //!< final   number of massless flavors
 		masses_type _masses{}; //!< chosen quark masses
 	public:
 		Distribution() = default; //!< default constructor for dists that manually setup values
-		/**
-		 *  @brief sets up some initial values for the distribution
-		 *  @param Q0 the initial evolution energy
-		 *  @param alpha0 the value of \f$\alpha_s\f$ at the initial evolution energy
-		 *  @param nfi the number of initial massless flavors this distribution supports
-		 *  @param masses array of on-shell quark masses
-		 */
-		Distribution(value_type Q0, value_type alpha0, uint nfi, masses_type const& masses)	
-			: _Q0{Q0}, _alpha0{alpha0}, _nfi{nfi}, _masses{masses}
-		{}
 		virtual ~Distribution() = default;
 
 		/** Getter for @a Q0 */
 		inline value_type Q0() const { return _Q0; }
+		/** Getter for @a Qf */
+		inline value_type Qf() const { return _Qf; }
 		/** Getter for @a alpha0 */
 		inline value_type alpha0() const { return _alpha0; }
 		/** Getter for @a nfi */
 		inline uint nfi() const { return _nfi; }
+		/** Getter for @a nff */
+		inline uint nff() const { return _nff; }
 		/** Getter for @a masses */
 		inline masses_type const& masses() const { return _masses; }
 		/** Getter for a mass in @a masses */
@@ -67,7 +75,7 @@ namespace Candia2
 		/** Retrieves the initial value of \f$xs(x)\f$ at @a x */
 		virtual value_type xs(value_type x)  const = 0;
 		/** Retrieves the initial value of \f$xc(x)\f$ at @a x */
-		virtual value_type xc(value_type x)  const { return 0.0; }
+		virtual value_type xc([[maybe_unused]] value_type x)  const { return 0.0; }
 		/** Retrieves the initial value of \f$x\bar{u}(x)\f$ at @a x */
 		virtual value_type xub(value_type x) const = 0;
 		/** Retrieves the initial value of \f$x\bar{d}(x)\f$ at @a x */
@@ -75,7 +83,7 @@ namespace Candia2
 		/** Retrieves the initial value of \f$x\bar{s}(x)\f$ at @a x */
 		virtual value_type xsb(value_type x) const = 0;
 		/** Retrieves the initial value of \f$x\bar{c}(x)\f$ at @a x */
-		virtual value_type xcb(value_type x) const { return 0.0; }
+		virtual value_type xcb([[maybe_unused]] value_type x) const { return 0.0; }
 
 		/**
 		 *  @brief Helper for filling the set of singlet coefficients
@@ -115,16 +123,25 @@ namespace Candia2
 	private:
 		/** array of mass points for this distribution */
 		static constexpr std::array<value_type,8> _leshouche_masses = {	
-		  // x    u    d            s                    c            b     t     x                    
+		//   x    u    d            s                    c            b     t     x
 			0.0, 0.0, 0.0, std::numbers::sqrt2, std::numbers::sqrt2, 4.5, 175.0, 0.0 };
 		// 'x' is a placeholder in the above array, not Bjorken-x
+		// also, as a note, the strange quark shouldn't have equal mass to the charm,
+		// but this distribution is used for benchmarking, in which we start the evolution just before the mass of the charm
+		// so that we perform the matching conditions here 
+		// this means the value of alpha_s should be effectively identical to if we were just starting at nf=4
+		// due to the layout of the code and the calculation of the alpha_s values pre/post quark-mass threshold,
+		// its easier to just set the mass of the strange to be identical and then just start at nf=3 without anything special
+		// this is because even though we start a full nf below the charm,
+		// no evolution is performed if the alpha_s values in the given range are identical, which they are, by construction
+		// so, just the quark matching ends up happening, which is what we want for the benchmarking
+		// in principle, the layout of the code should change to avoid little hacks like this, but it works!
 	public:
 		/**
 		 *  @brief initializes the base @a Distribution class with Q0=\f$\sqrt{2}\f$, alpha0=0.35, nfi=3, and masses= @a _leshouche_masses
+		 *  @param qf the chosen final energy to evolve to
 		 */
-		LesHouchesDistribution()
-			: Distribution(std::numbers::sqrt2, 0.35, 3, _leshouche_masses)
-		{}
+		LesHouchesDistribution(double qf);
 
 		inline value_type xuv(value_type x) const
 		{
@@ -170,6 +187,3 @@ namespace Candia2
 	};
 	
 } // namespace Candia2
-
-
-#endif // __DISTRIBUTION_HPP

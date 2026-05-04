@@ -1,5 +1,9 @@
-#ifndef __OPTIONS_HPP
-#define __OPTIONS_HPP
+/**
+ *  @file Options.hpp
+ *  @brief Contains the @a Options class which handles the description of options for a class in a consistent manner
+ */
+
+#pragma once
 
 #include <concepts>
 
@@ -14,5 +18,3 @@ namespace Candia2
         virtual options_type& getOptions() { return options; };
     };
 }
-
-#endif // __OPTIONS_HPP

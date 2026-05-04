@@ -1,0 +1,59 @@
+/**
+ *  @file LHAPDFGrid.hpp
+ *  @brief Contains the @a LHAPDFGrid class which runs the evolution many times to spit out an LHAPDF grid
+ */
+
+#pragma once
+
+#include "Candia-v2/Candia.hpp"
+
+namespace Candia2
+{
+	/**
+	 *  @brief performs the evolution enough times to fill an lhapdf grid
+	 *  the output is a pdf "set", consisting of one file only,
+	 *  that is compatible with LHAPDF and able to be loaded via its API
+	 */
+	class LHAPDFGrid final
+	{
+		std::string _name;
+		std::filesystem::path _infofile_in_path;
+
+	    uint _order{3};
+	    uint _iterations{10};
+	    uint _trunc_idx{10};
+	    double _mur2_muf2{1.0};
+
+		Distribution const& _dist;
+		Grid _grid;
+
+	    std::vector<std::pair<double, std::unordered_map<int,ArrayGrid>>> _all_pdfs{};
+		std::vector<double> _as_qs, _as_vals, _xvals;
+
+	public:
+		enum AdditionalSubtractionPDFs : int
+		{
+		    FTILDE1 = 9001,
+			FTILDENLO = 9002,
+			DELTAF1 = 9003,
+			DELTAFNLO = 9004,
+		};
+	public:
+		LHAPDFGrid(
+			std::string const& name, std::filesystem::path const& infofile_in_path,
+			Distribution const& dist, Grid const& grid,
+		    uint order, uint iterations, uint trunc_idx, double mur2_muf2)
+			: _name{name}, _infofile_in_path{infofile_in_path},
+			  _order{order}, _iterations{iterations}, _trunc_idx{trunc_idx}, _mur2_muf2{mur2_muf2},
+			  _dist{dist}, _grid{grid}
+		{
+			if (!std::filesystem::exists(infofile_in_path))
+				log(LOG_ERROR, "DGLAPSolverLHAPDF", "infofile_in_path is invalid ({})", infofile_in_path.string());
+		}
+		
+		void evolve(
+			double q0, double qf, double dq,
+			DGLAPSolver::options_type const& dglap_options);
+		void write();
+	};
+}

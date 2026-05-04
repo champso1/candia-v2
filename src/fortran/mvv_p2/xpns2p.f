@@ -26,7 +26,8 @@
 *    The N_f^2 part is exact and was first determined in N-space by 
 *    J.A. Gracey in Phys. Lett. B322 (1994) 141.
 *
-       FUNCTION P2NSPA (Y, NF)
+       FUNCTION P2NSPA (Y, NF) bind(c, name="p2nspa")
+       use iso_c_binding
        IMPLICIT REAL*8 (A - Z)
        INTEGER NF
 *
@@ -54,7 +55,8 @@
 *    exact, the rest has been fitted for x between 10^-6 and 1 - 10^-6.
 *    The N_f^2 part is exact (and identical to that of P2_NS+). 
 *
-       FUNCTION P2NSMA (Y, NF)
+       FUNCTION P2NSMA (Y, NF) bind(c, name="p2nsma")
+       use iso_c_binding
        IMPLICIT REAL*8 (A - Z)
        INTEGER NF
 *
@@ -81,7 +83,8 @@
 * ..This is the singular piece of both P2_NS+ and P2_NS-. It is exact 
 *    up to the truncation of the irrational coefficients.
 *
-       FUNCTION P2NSB (Y, NF)
+       FUNCTION P2NSB (Y, NF) bind(c, name="p2nsb")
+       use iso_c_binding
        IMPLICIT REAL*8 (A-Z)
        INTEGER NF
 *
@@ -98,7 +101,8 @@ c       My modification
 * ..This is the 'local' piece of P2_NS+. The coefficients of delta(1-x)
 *    have been partly shifted relative to the exact (truncated) values.
 *
-       FUNCTION P2NSPC (Y, NF)
+       FUNCTION P2NSPC (Y, NF) bind(c, name="p2nspc")
+       use iso_c_binding
        IMPLICIT REAL*8 (A - Z)
        INTEGER NF
 *
@@ -122,7 +126,8 @@ c       My modification
 * ..This is the 'local' piece of P2_NS-. The coefficients of delta(1-x) 
 *    have been partly shifted relative to the exact (truncated) values.
 *
-       FUNCTION P2NSMC (Y, NF)
+       FUNCTION P2NSMC (Y, NF) bind(c, name="p2nsmc")
+       use iso_c_binding
        IMPLICIT REAL*8 (A - Z)
        INTEGER NF
 *
@@ -144,7 +149,8 @@ c     My modification
 *
 * ..This is P2_NSS, the difference of P2_NSV and P2_NS-.
 *
-       FUNCTION P2NSSA (Y, NF)
+       FUNCTION P2NSSA (Y, NF) bind(c, name="p2nssa")
+       use iso_c_binding
 *
        IMPLICIT REAL*8 (A-Z)
        INTEGER NF

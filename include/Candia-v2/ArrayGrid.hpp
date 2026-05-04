@@ -3,99 +3,174 @@
  *  @brief Contains the @a ArrayGrid class which is nothing more than an array with some convenience methods
  */
 
-#ifndef __ARRAYGRID_HPP
-#define __ARRAYGRID_HPP
+#pragma once
 
-#include <concepts>
-#include <initializer_list>
+#include <vector>
+#include <array>
 
 #include "Candia-v2/Common.hpp"
 
 namespace Candia2
 {
 	/**
-	 *  @brief stores an array and provides some convenience methods
+	 *  @brief second iteration on the "arraygrid"
+	 *  this second version uses only 1 backing array for all dimensions,
+	 *  rather than separate allocations for all
+	 *  and the accessor method (operator()) handles strides of various dimensions
+	 *  this should severely reduce cache-misses/page-faults for accessing adjacent elements,
+	 *  the only negative would be that now a larger amount of contiguous memory is required,
+	 *  but this is only a few hundred MBs at N3LO for the highest precision,
+	 *  and if you're planning on doing that you would be doing it on a suitable machine anyway
+	 *  worst case the operating system would just complain, it shouldn't explode your machine
 	 */
-	class ArrayGrid final
+	template <typename T, uint D>
+	class ArrayGridBase final
 	{
 	public:
-		using value_type = double;
-		using size_type = std::size_t; //!< alias for a size type
-		using base_type = std::vector<value_type>; //!< alias for the underlying array type
-
+		using value_type = T;
+	    using data_type = std::vector<value_type>;
+		using size_type = data_type::size_type;
 	private:
-		base_type _base{}; //!< underlying array
+		std::vector<value_type> _data{};
+		std::array<uint, D> _sizes{}, _strides{};
 	public:
-		/** @brief default constructor */
-		ArrayGrid() {}
-		/**
-		 *  @brief default Initializes the array with zeros
-		 *  @param size Size of the array
-		 */
-		explicit ArrayGrid(size_type size) : _base(size, 0.0) {}
-		/**
-		 *  @brief default Initializes the array with a set of points
-		 *  @param points Another set of points
-		 */
-		explicit ArrayGrid(base_type const& points) : _base{points} {}
-		/**
-		 *  @brief default initializes the array with another @a ArrayGrid
-		 *  @param other The other @a ArrayGrid
-		 */
-		explicit ArrayGrid(ArrayGrid const& other) : _base(other._base) {}
-		explicit ArrayGrid(ArrayGrid&& other) = delete; //!< no move constructor
+		ArrayGridBase() = default;
+		ArrayGridBase(std::array<uint, D> const& sizes)
+			: _sizes{sizes}
+		{
+			uint current_stride = 1;
+			for (int i=D-1; i>=0; --i) {
+				_strides[i] = current_stride;
+				current_stride *= sizes[i];
+			}
+			_data.resize(current_stride);
+			std::ranges::fill(_data, double{0});
+		}
 
-		/**
-		 *  @brief Initializes using list-initialization
-		 *  @param l an initializer list of values to initialize the array with
-		 */
-		ArrayGrid(std::initializer_list<value_type> l) : _base(l) {}
+		template <typename... TArgs, uint... ints>
+		uint acquire_idx([[maybe_unused]] std::integer_sequence<uint, ints...> intseq, TArgs... args)
+		{
+			return ((_strides[ints]*args) + ...);
+		}
 
-		/** Copy assignment operator performs like the copy constructor */
-		inline void operator=(ArrayGrid const& other) { _base = other.base(); }
-		void operator=(ArrayGrid&& other) = delete; //!< no move assignment operator
+		inline auto size(uint idx) const { return _sizes[idx]; }
+		inline auto const& sizes() const { return _sizes; }
 
+		inline void resize(std::array<uint, D> const& new_sizes)
+		{
+			_data.clear();
+			uint current_stride = 1;
+			for (int i=D-1; i>=0; --i) {
+				_strides[i] = current_stride;
+				current_stride *= new_sizes[i];
+			}
+			_data.resize(current_stride);
+			std::ranges::fill(_data, double{0});
+			std::ranges::copy(new_sizes, _sizes.begin());
+		}
 
-		/** @brief returns the size of the array */
-		inline size_type size() const noexcept { return _base.size(); }
+		inline void clear()
+		{
+			_data.clear();
+			std::ranges::fill(_sizes, 0.0);
+			std::ranges::fill(_strides, 0.0);
+		}
 
-		/** getter for the underlying array */
-		inline base_type  const& base() const noexcept { return _base; }
-		/** Zeros the entire array and performs some cleanup. */
-		inline void zero() noexcept { for (double& x : _base) x = 0; }
+		auto begin() requires (D==1) { return _data.begin(); }
+		auto end()   requires (D==1) { return _data.end(); }
+		auto begin() const requires (D==1) { return _data.begin(); }
+		auto end()   const requires (D==1) { return _data.end(); }
 		
-		inline value_type operator[](size_type idx) const { return _base[idx]; }
-		inline value_type& operator[](size_type idx) { return _base[idx]; }
-
-		/** const begin iterator */
-		inline base_type::const_iterator begin() const { return _base.cbegin(); }
-		/** const end iterator */
-		inline base_type::const_iterator end() const { return _base.cend(); }
-		/** begin iterator */
-		inline base_type::iterator begin() { return _base.begin(); }
-		/** end iterator */
-		inline base_type::iterator end() { return _base.end(); }
+		template <typename... TArgs>
+		decltype(auto) operator()(TArgs... args)
+		{
+			constexpr auto num_args = sizeof...(args);
+			uint idx = acquire_idx(std::make_integer_sequence<uint, num_args>{}, std::forward<TArgs>(args)...);
+			if constexpr (sizeof...(args) == D-1)
+				return std::span<double>(_data.begin() + idx, _sizes.back());
+			else if constexpr (sizeof...(args) == D)
+				return _data[idx];
+			throw std::runtime_error("cannot access anything other than last dimension (span) or singular element");
+		}
 	};
 
-	/**
-	 *  @brief Templated class to ease in specifying nested @a ArrayGrid
-	 */
-	template <uint N>
-	struct MultiDimArrayGrid
+	template <typename T>
+	class ArrayGridBase<T, 1> final
 	{
-		typedef typename MultiDimArrayGrid<N-1>::type Nested;
-		typedef std::vector<Nested> type;
-	};
-	template<>
-	struct MultiDimArrayGrid<1>
-	{
-		typedef std::vector<ArrayGrid> type;
-	};
+	public:
+		using value_type = T;
+	private:
+		std::vector<value_type> _data{};
+	public:
+		ArrayGridBase() = default;
+		virtual ~ArrayGridBase() = default;
+		explicit ArrayGridBase(uint size) : _data(size, 0.0) {}
+		ArrayGridBase(ArrayGridBase const& other)
+			: _data{other._data}
+		{}
+		ArrayGridBase(ArrayGridBase&& other)
+			: _data{other._data}
+		{
+			other._data.clear();
+		}
+		template <typename TIterator>
+		ArrayGridBase(TIterator begin, TIterator end)
+		{
+			_data = std::vector<value_type>(begin, end);
+		}
 
-    template <uint N>
-	using MultiDimArrayGrid_t = MultiDimArrayGrid<N>::type;
+		template <typename TContainer>
+		ArrayGridBase(TContainer const& container)
+			: _data(container)
+		{}
 
+		ArrayGridBase(std::span<value_type> view)
+			: _data(view.begin(), view.end())
+		{}
+
+		void operator=(ArrayGridBase const& other)
+		{
+			_data.resize(other._data.size());
+			std::ranges::copy(other._data, _data.begin());
+		}
+		void operator=(ArrayGridBase&& other)
+		{
+			_data.resize(other._data.size());
+			std::ranges::copy(other._data, _data.begin());
+			other._data.clear();
+		}
+
+		inline auto size() const { return _data.size(); }
+		inline auto empty() const { return _data.empty(); }
+
+		inline void resize(uint new_size)
+		{
+			_data.clear();
+			_data.resize(new_size);
+			std::ranges::fill(_data, double{0});
+		}
+
+		inline void clear()
+		{
+			_data.clear();
+		}
+
+		auto begin() { return _data.begin(); }
+		auto end()   { return _data.end(); }
+		auto begin() const { return _data.begin(); }
+		auto end()   const { return _data.end(); }
+		
+	    value_type operator()(uint idx) const { return _data[idx]; }
+		value_type operator[](uint idx) const { return _data[idx]; }
+		value_type& operator()(uint idx) { return _data[idx]; }
+		value_type& operator[](uint idx) { return _data[idx]; }
+
+		std::span<value_type> view() { return std::span<double>(_data); }
+	};
 	
-}
 
-#endif // __ARRAYGRID_HPP
+	template <uint D>
+	using ArrayGridN = ArrayGridBase<double, D>;
+	using ArrayGrid = ArrayGridBase<double, 1>;
+    using ArrayGridView = std::span<double>;
+}

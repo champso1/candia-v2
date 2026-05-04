@@ -1,5 +1,6 @@
-#include "Candia-v2/SpecialFuncs.hpp"
+// SpecialFuncs.cpp
 
+#include "Candia-v2/SpecialFuncs.hpp"
 
 namespace Candia2
 {
@@ -13,7 +14,7 @@ namespace Candia2
 		double   HR1[3], HR2[3][3], HR3[3][3][3], HR4[3][3][3][3], HR5[3][3][3][3][3];
 		double   HI1[3], HI2[3][3], HI3[3][3][3], HI4[3][3][3][3], HI5[3][3][3][3][3];
 
-		hplog5_(&x, &nw,
+		hplog5(&x, &nw,
 			   HC1, *HC2, **HC3, ***HC4, ****HC5,
 			   HR1, *HR2, **HR3, ***HR4, ****HR5,
 			   HI1, *HI2, **HI3, ***HI4, ****HI5,
@@ -31,7 +32,7 @@ namespace Candia2
 		double   HR1[3], HR2[3][3], HR3[3][3][3], HR4[3][3][3][3], HR5[3][3][3][3][3];
 		double   HI1[3], HI2[3][3], HI3[3][3][3], HI4[3][3][3][3], HI5[3][3][3][3][3];
 
-		hplog5_(&x, &nw,
+		hplog5(&x, &nw,
 			   HC1, *HC2, **HC3, ***HC4, ****HC5,
 			   HR1, *HR2, **HR3, ***HR4, ****HR5,
 			   HI1, *HI2, **HI3, ***HI4, ****HI5,
@@ -50,7 +51,7 @@ namespace Candia2
 		double   HR1[3], HR2[3][3], HR3[3][3][3], HR4[3][3][3][3], HR5[3][3][3][3][3];
 		double   HI1[3], HI2[3][3], HI3[3][3][3], HI4[3][3][3][3], HI5[3][3][3][3][3];
 
-		hplog5_(&x, &nw,
+		hplog5(&x, &nw,
 			   HC1, *HC2, **HC3, ***HC4, ****HC5,
 			   HR1, *HR2, **HR3, ***HR4, ****HR5,
 			   HI1, *HI2, **HI3, ***HI4, ****HI5,
@@ -58,8 +59,5 @@ namespace Candia2
 
 		return HR3[2][2][1];
 	}
-
-
-
-}
+} // namespace Candia2
 

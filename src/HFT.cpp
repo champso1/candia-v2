@@ -1,6 +1,10 @@
+// HFT.cpp
+
 #include "Candia-v2/ArrayGrid.hpp"
 #include "Candia-v2/Candia.hpp"
-#include "Candia-v2/OperatorMatrixElements.hpp"
+
+#include <algorithm>
+#include <execution>
 
 namespace Candia2
 {
@@ -25,27 +29,29 @@ namespace Candia2
 		std::vector<ArrayGrid> arr_singlet(2, ArrayGrid(_grid.size()));
 
 		for (uint j=0; j<=1; ++j)
-			arr_singlet[j] = _S[0][j][0];
+			std::ranges::copy(_S(0,j,0), arr_singlet[j].begin());
 
-		auto arr_accessor = [&](uint j) -> ArrayGrid& {
+		auto arr_accessor = [&](uint j) -> ArrayGridView {
 			if (_order == 2) {
-				return getOptions().use_truncated_nonsinglet_sol ? _S_NS[0][j][0] : _C[j][0][0][0];
+				return getOptions().use_truncated_nonsinglet_sol ? _S_NS(0,j,0) : _C(j,0,0,0);
 			} else if (_order == 3) {
-				return getOptions().use_truncated_nonsinglet_sol ? _S_NS[0][j][0] : _D[j][0][0][0][0];
+				return getOptions().use_truncated_nonsinglet_sol ? _S_NS(0,j,0) : _D(j,0,0,0,0);
 			}
 			throw "unreachable";
 		};
 		
 		for (uint i=1; i<=_nf; i++) {
 			for (uint j=i; j<=i+6; j+=6)
-				arr[j] = arr_accessor(j);
+				std::ranges::copy(arr_accessor(j), arr[j].begin());
 		}
 
 		double as = _alpha_s.post(_nf+1);
 		log(LOG_INFO, "HFT", "Value of alpha_s post threshold: {}", as);
 
+		auto grid_idxs = std::ranges::views::iota(uint{0}, _grid.size()-1);
+		
 		if (_order == 2) {
-			for (uint k=0; k<_grid.size()-1;k++) {
+			std::for_each(std::execution::par_unseq, grid_idxs.begin(), grid_idxs.end(), [&](uint k) {
 				// q
 				for (uint j=1; j<=_nf; j++)
 					HFT_NNLO1(arr[j], k, arr_accessor(j));
@@ -55,7 +61,7 @@ namespace Candia2
 
 				HFT_NNLO2(arr_singlet[0], arr_singlet[1], k); // gluon
 				HFT_NNLO3(arr_singlet[0], arr_singlet[1], k, arr_accessor(_nf+1), arr_accessor(_nf+1+6)); // heavy flavor
-			}
+			});
 		} else if (_order == 3) {
 			if (!options.use_nnlo_matching_conditions_at_n3lo) {
 				log(LOG_INFO, "HFT", "Performing N3LO matching at N3LO");
@@ -67,27 +73,27 @@ namespace Candia2
 					}
 				}
 
-				auto& a3psqq = getExpression("A3psqq");
-				auto& a3sqg  = getExpression("A3sqg");
-				for (uint k=0; k<_grid.size()-1;k++) {
-					const double fac_n3lo = as*as*as/(64.0*PI_3);
+				auto& a3psqq = getExpression(ExprName::A3psqq);
+				auto& a3sqg  = getExpression(ExprName::A3sqg);
+				const double fac_n3lo = as*as*as/(64.0*PI_3);
+				std::for_each(std::execution::par_unseq, grid_idxs.begin(), grid_idxs.end(), [&](uint k) {
 					const double convSPa = _grid.convolution(arr_singlet[1], a3psqq, k);
 					const double convSPb = _grid.convolution(arr_singlet[0], a3sqg, k);
 					const double SP = fac_n3lo*(convSPa + convSPb)/static_cast<double>(_nf);
 
 					// q
 					for (uint j=1; j<=_nf; j++)
-						HFT_N3LO1(arr[j], arr[j+6], j, k, SP, arr_accessor(j));
+						HFT_N3LO1(arr[j], arr[j+6], k, SP, arr_accessor(j));
 					// qbar
 					for (uint j=1+6; j<=_nf+6; j++)
-						HFT_N3LO2(arr[j-6], arr[j], j, k, SP, arr_accessor(j));
+						HFT_N3LO2(arr[j-6], arr[j], k, SP, arr_accessor(j));
 
 					HFT_N3LO3(arr_singlet[0], arr_singlet[1], k); // gluon
 					HFT_N3LO4(arr_singlet[0], arr_singlet[1], qminus, k, arr_accessor(_nf+1), arr_accessor(_nf+1+6)); // heavy flavor
-				}
+				});
 			} else {
 				log(LOG_INFO, "HFT", "Performing NNLO matching at N3LO");
-				for (uint k=0; k<_grid.size()-1;k++) {
+				std::for_each(std::execution::par_unseq, grid_idxs.begin(), grid_idxs.end(), [&](uint k) {
 					// q
 					for (uint j=1; j<=_nf; j++)
 						HFT_NNLO1(arr[j], k, arr_accessor(j));
@@ -97,35 +103,35 @@ namespace Candia2
 
 					HFT_NNLO2(arr_singlet[0], arr_singlet[1], k); // gluon
 					HFT_NNLO3(arr_singlet[0], arr_singlet[1], k, arr_accessor(_nf+1), arr_accessor(_nf+1+6)); // heavy flavor
-				}
+				});
 			}
 		}
     }
 
-	void DGLAPSolver::HFT_NNLO1(ArrayGrid& c, uint k, ArrayGrid& q)
+	void DGLAPSolver::HFT_NNLO1(ArrayGridView c, uint k, ArrayGridView q)
     {
-		auto& a2ns = getExpression("A2ns");
+		auto& a2ns = getExpression(ExprName::A2ns);
         double const as = _alpha_s.post(_nf+1);
         double const conv = _grid.convolution(c, a2ns, k);
         
 	    q[k] += std::pow(as/(4.0*PI), 2) * conv;
     }
 
-    void DGLAPSolver::HFT_NNLO2(ArrayGrid& g, ArrayGrid& qp, uint k)
+    void DGLAPSolver::HFT_NNLO2(ArrayGridView g, ArrayGridView qp, uint k)
     {
-		auto& a2gq = getExpression("A2gq");
-		auto& a2gg = getExpression("A2gg");
+		auto& a2gq = getExpression(ExprName::A2gq);
+		auto& a2gg = getExpression(ExprName::A2gg);
         double const as = _alpha_s.post(_nf+1);
         double const conv1 = _grid.convolution(qp, a2gq, k);
         double const conv2 = _grid.convolution(g, a2gg, k);
 
-		_S[0][0][0][k] += std::pow(as/(4.0*PI), 2) * (conv1 + conv2);
+		_S(0,0,0,k) += std::pow(as/(4.0*PI), 2) * (conv1 + conv2);
     }
 
-    void DGLAPSolver::HFT_NNLO3(ArrayGrid& g, ArrayGrid& qp, uint k, ArrayGrid& qh, ArrayGrid& qhb)
+    void DGLAPSolver::HFT_NNLO3(ArrayGridView g, ArrayGridView qp, uint k, ArrayGridView qh, ArrayGridView qhb)
     {
-		auto& a2hq = getExpression("A2hq");
-		auto& a2hg = getExpression("A2hg");
+		auto& a2hq = getExpression(ExprName::A2hq);
+		auto& a2hg = getExpression(ExprName::A2hg);
         double const as = _alpha_s.post(_nf+1);
         double const conv1 = _grid.convolution(qp, a2hq, k);
         double const conv2 = _grid.convolution(g, a2hg, k);
@@ -136,23 +142,23 @@ namespace Candia2
     }
 
     // q
-	void DGLAPSolver::HFT_N3LO1(ArrayGrid& q, ArrayGrid& qb, uint j, uint k, double SP, ArrayGrid& qh)
+	void DGLAPSolver::HFT_N3LO1(ArrayGridView q, ArrayGridView qb, uint k, double SP, ArrayGridView qh)
 	{
 	    const double as = _alpha_s.post(_nf+1);
 		const double fac_nnlo = as*as/(16.0*PI_2);
 		const double fac_n3lo = as*as*as/(64.0*PI_3);
 
-		double const conv1a = _grid.convolution(q, getExpression("A2ns"), k);
-		double const conv1b = _grid.convolution(q, getExpression("A3nsp"), k);
+		double const conv1a = _grid.convolution(q, getExpression(ExprName::A2ns), k);
+		double const conv1b = _grid.convolution(q, getExpression(ExprName::A3nsp), k);
 
-		double const conv2a = _grid.convolution(qb, getExpression("A2ns"), k);
-		double const conv2b = _grid.convolution(qb, getExpression("A3nsp"), k);
+		double const conv2a = _grid.convolution(qb, getExpression(ExprName::A2ns), k);
+		double const conv2b = _grid.convolution(qb, getExpression(ExprName::A3nsp), k);
 
 		double const conv3a = conv1a;
-		double const conv3b = _grid.convolution(q, getExpression("A3nsm"), k);
+		double const conv3b = _grid.convolution(q, getExpression(ExprName::A3nsm), k);
 
 		double const conv4a = conv2a;
-		double const conv4b = _grid.convolution(qb, getExpression("A3nsm"), k);
+		double const conv4b = _grid.convolution(qb, getExpression(ExprName::A3nsm), k);
 
 		qh[k] += 0.5*(
 			((fac_nnlo*conv1a + fac_n3lo*conv1b) + (fac_nnlo*conv2a + fac_n3lo*conv2b)) +
@@ -161,23 +167,23 @@ namespace Candia2
 	}
 
     // qbar
-	void DGLAPSolver::HFT_N3LO2(ArrayGrid& q, ArrayGrid& qb, uint j, uint k, double SP, ArrayGrid& qhb)
+	void DGLAPSolver::HFT_N3LO2(ArrayGridView q, ArrayGridView qb, uint k, double SP, ArrayGridView qhb)
 	{
 		const double as = _alpha_s.post(_nf+1);
 		const double fac_nnlo = as*as/(16.0*PI_2);
 		const double fac_n3lo = as*as*as/(64.0*PI_3);
 
-		double const conv1a = _grid.convolution(q, getExpression("A2ns"), k);
-		double const conv1b = _grid.convolution(q, getExpression("A3nsp"), k);
+		double const conv1a = _grid.convolution(q, getExpression(ExprName::A2ns), k);
+		double const conv1b = _grid.convolution(q, getExpression(ExprName::A3nsp), k);
 
-		double const conv2a = _grid.convolution(qb, getExpression("A2ns"), k);
-		double const conv2b = _grid.convolution(qb, getExpression("A3nsp"), k);
+		double const conv2a = _grid.convolution(qb, getExpression(ExprName::A2ns), k);
+		double const conv2b = _grid.convolution(qb, getExpression(ExprName::A3nsp), k);
 
 		double const conv3a = conv1a;
-		double const conv3b = _grid.convolution(q, getExpression("A3nsm"), k);
+		double const conv3b = _grid.convolution(q, getExpression(ExprName::A3nsm), k);
 
 		double const conv4a = conv2a;
-		double const conv4b = _grid.convolution(qb, getExpression("A3nsm"), k);
+		double const conv4b = _grid.convolution(qb, getExpression(ExprName::A3nsm), k);
 
 		qhb[k] += 0.5*(
 			((fac_nnlo*conv1a + fac_n3lo*conv1b) + (fac_nnlo*conv2a + fac_n3lo*conv2b)) -
@@ -186,34 +192,34 @@ namespace Candia2
 	}
 
 	// gluon (index 0 in S array)
-	void DGLAPSolver::HFT_N3LO3(ArrayGrid& g, ArrayGrid& qp, uint k)
+	void DGLAPSolver::HFT_N3LO3(ArrayGridView g, ArrayGridView qp, uint k)
 	{
 		const double as = _alpha_s.post(_nf+1);
 		const double fac_nnlo = as*as/(16.0*PI_2);
 		const double fac_n3lo = as*as*as/(64.0*PI_3);
 	    
-		const double conv1a = _grid.convolution(qp, getExpression("A2gq"), k);
-		const double conv1b = _grid.convolution(qp, getExpression("A3gq"), k);
-		const double conv2a = _grid.convolution(g, getExpression("A2gg"), k);
-		const double conv2b = _grid.convolution(g, getExpression("A3gg"), k);
+		const double conv1a = _grid.convolution(qp, getExpression(ExprName::A2gq), k);
+		const double conv1b = _grid.convolution(qp, getExpression(ExprName::A3gq), k);
+		const double conv2a = _grid.convolution(g, getExpression(ExprName::A2gg), k);
+		const double conv2b = _grid.convolution(g, getExpression(ExprName::A3gg), k);
 		
-		_S[0][0][0][k] += (fac_nnlo*conv1a + fac_n3lo*conv1b) + (fac_nnlo*conv2a + fac_n3lo*conv2b);
+		_S(0,0,0,k) += (fac_nnlo*conv1a + fac_n3lo*conv1b) + (fac_nnlo*conv2a + fac_n3lo*conv2b);
 	}
 
 	// heavy flavor
-	void DGLAPSolver::HFT_N3LO4(ArrayGrid& g, ArrayGrid& qp, ArrayGrid& qminus, uint k, ArrayGrid& qh, ArrayGrid& qhb)
+	void DGLAPSolver::HFT_N3LO4(ArrayGridView g, ArrayGridView qp, ArrayGridView qminus, uint k, ArrayGridView qh, ArrayGridView qhb)
 	{
 		const double as = _alpha_s.post(_nf+1);
 		const double fac_nnlo = as*as/(16.0*PI_2);
 		const double fac_n3lo = as*as*as/(64.0*PI_3);
 
-	    const double conv1a = _grid.convolution(qp, getExpression("A2hq"), k);
-		const double conv1b = _grid.convolution(qp, getExpression("A3hq"), k);
-		const double conv2a = _grid.convolution(g, getExpression("A2hg"), k);
-		const double conv2b = _grid.convolution(g, getExpression("A3hg"), k);
+	    const double conv1a = _grid.convolution(qp, getExpression(ExprName::A2hq), k);
+		const double conv1b = _grid.convolution(qp, getExpression(ExprName::A3hq), k);
+		const double conv2a = _grid.convolution(g, getExpression(ExprName::A2hg), k);
+		const double conv2b = _grid.convolution(g, getExpression(ExprName::A3hg), k);
 		const double conv3  =
 			options.use_n3lo_heavyquark_asymmetry ?
-			_grid.convolution(qminus, getExpression("A3PSshq"), k)
+			_grid.convolution(qminus, getExpression(ExprName::A3PSshq), k)
 			: 0.0;
 
 		const double res = (fac_nnlo*conv1a + fac_n3lo*conv1b) + (fac_nnlo*conv2a + fac_n3lo*conv2b);

@@ -1,27 +1,25 @@
+// Candia.cpp
+
 #include "Candia-v2/Candia.hpp"
 #include "Candia-v2/Common.hpp"
 #include "Candia-v2/Distribution.hpp"
-#include "Candia-v2/ArrayGrid.hpp"
 #include "Candia-v2/Grid.hpp"
 #include "Candia-v2/SplittingFn.hpp"
 #include "Candia-v2/OperatorMatrixElements.hpp"
 
-#include <functional>
-#include <memory>
-#include <ranges>
-
 
 // PDF indices
 // 
-// 0      gluons         g
-// 1-6    quarks         u,d,s,c,b,t
-// 7-12   antiquarks     au,ad,as,ac,ab,at
-// 13-18  q_i^-          um,dm,sm,cm,bm,tm
-// 19-24  q_i^+          up,dp,sp,cp,bp,tp
+// 0      gluons
+// 1-6    quarks
+// 7-12   antiquarks
+// 13-18  q_i^-
+// 19-24  q_i^+
 // 25     q^(-)
-// 26-30  q_{NS,1i}^(-)  dd,sd,cd,bd,td
+// 26-30  q_{NS,1i}^(-)
 // 31     q^(+)
-// 32-36  q_{NS,1i}^(+)  ds,ss,cs,bs,ts
+// 32-36  q_{NS,1i}^(+)
+// 37-39  
 
 namespace
 {
@@ -56,112 +54,61 @@ namespace Candia2
 		  _alpha_s{alpha_s},
 		  _mur2_muf2{mur2_muf2}, _log_mur2_muf2{std::log(mur2_muf2)}, _log_muf2_mur2{-_log_mur2_muf2},
 		  _is_scale_difference{mur2_muf2 != 1.0},
-		  _iterations{iterations}, _trunc_idx{trunc_idx}
+		  _initial_dist{initial_dist},
+		  _iterations{iterations}, _trunc_idx{trunc_idx},
+		  _A({DISTS, 2, grid.size()}),
+		  _B({DISTS, 2, iterations, grid.size()}),
+		  _C({DISTS, 2, iterations, iterations, grid.size()}),
+		  _D({DISTS, 2, iterations, iterations, iterations, grid.size()}),
+		  _S({trunc_idx+1, 2, 2, grid.size()}),
+		  _S_NS{},
+		  _F(DISTS, ArrayGrid(grid.size()))
 	{
 		log(::CANDIA_OPENING_TEXT);
 
 		log(LOG_INFO, "DGLAP", "Evolving with log(mu_R / mu_F) = log({:.1}) = {:.4}.", _mur2_muf2, _log_mur2_muf2);
 
-		switch(_order) {
-			case 0: {
-				if (_trunc_idx != 0) {
-					_trunc_idx = 0; // LO has exact singlet solution, do not add additional terms
-					log(LOG_WARNING, "DGLAP", "Specified value of the truncation index ({}) will be set to zero.", _trunc_idx);
-				}
-
-				_A = std::vector<std::vector<ArrayGrid>>{
-					DISTS, std::vector<ArrayGrid>{
-						2, ArrayGrid(grid.size())
-					}
-				};
-			} break;
-			case 1: {
-				_B = MultiDimArrayGrid_t<3>{
-					DISTS, MultiDimArrayGrid_t<2>{
-						2, MultiDimArrayGrid_t<1>{
-							_iterations, ArrayGrid(grid.size())
-						}
-					}
-				};
-
-			} break;
-			case 2: {
-				_C = MultiDimArrayGrid_t<4>{
-					DISTS, MultiDimArrayGrid_t<3>{
-						2, MultiDimArrayGrid_t<2>{
-							_iterations, MultiDimArrayGrid_t<1>{
-								_iterations, ArrayGrid(grid.size())
-							}
-						}
-					}
-				};
-			} break;
-			case 3: {
-				_D = MultiDimArrayGrid_t<5>{
-					DISTS, MultiDimArrayGrid_t<4>{
-						2, MultiDimArrayGrid_t<3>{
-							_iterations, MultiDimArrayGrid_t<2>{
-								_iterations, MultiDimArrayGrid_t<1>{
-									_iterations, ArrayGrid(grid.size())
-								}
-							}
-						}
-					}
-				};
-
-				_r1[1] = -0.965105642503553;
-				_b[1] = -2.0 * 0.1629296392275606;
-				_c[1] = std::pow(0.1629296392275606, 2) + std::pow(0.9535744823175397, 2);
-
-				_r1[2] = -1.0315080774348302;
-				_b[2] = -2.0 * 0.18523659836580222;
-				_c[2] = std::pow(0.18523659836580222, 2) + std::pow(1.0299109343730084, 2);
-				
-				_r1[3] = -1.1120253073038324;
-				_b[3] = -2.0 * 0.2214224000789979;
-				_c[3] = std::pow(0.2214224000789979, 2) + std::pow(1.131077812338495, 2);
-
-				_r1[4] = -1.2090185772488318;
-				_b[4] = -2.0 * 0.2867586032664649;
-				_c[4] = std::pow(0.2867586032664649, 2) + std::pow(1.272794345339416, 2);
-				
-				_r1[5] = -1.3205899823870375;
-				_b[5] = -2.0 * 0.42477034063852415;
-				_c[5] = std::pow(0.42477034063852415, 2) + std::pow(1.4854822725151384, 2);
-				
-				_r1[6] = -1.4277979273114205;
-				_b[6] = -2.0 * 0.7964970177083996;
-				_c[6] = std::pow(0.7964970177083996, 2) + std::pow(1.816809978388145, 2);
-
-				auto func = [](std::array<double, 8> const& a) -> std::string {
-					auto view =
-						std::views::iota(1) | std::views::take(6)
-						| std::views::transform([&a](int i){ return a[i]; });
-					return vec_to_str(view);
-				};
-				log(LOG_DEBUG, "DGLAPSolver::DGLAPSolver()", "r1 array: {}", func(_r1));
-				log(LOG_DEBUG, "DGLAPSolver::DGLAPSolver()", "b  array: {}", func(_r1));
-				log(LOG_DEBUG, "DGLAPSolver::DGLAPSolver()", "c  array: {}", func(_r1));
-			} break;
-			default: {
-				log(LOG_INFO, "DGLAPSolver::DGLAPSolver()", "Found {} for the order, expected a value in range [0, 3].", order);
-			}
+		if (_order == 0 && _trunc_idx != 0) {
+			_trunc_idx = 0; // LO has exact singlet solution, do not add additional terms
+			log(LOG_WARNING, "DGLAP", "Specified value of the truncation index ({}) will be set to zero.", _trunc_idx);
 		}
-		_S = decltype(_S){
-			trunc_idx+1, std::vector<std::vector<ArrayGrid>>{
-				2, std::vector<ArrayGrid>{
-					2, ArrayGrid(_grid.size())
-				}
-			}
+
+		_r1[1] = -0.965105642503553;
+		_b[1] = -2.0 * 0.1629296392275606;
+		_c[1] = std::pow(0.1629296392275606, 2) + std::pow(0.9535744823175397, 2);
+
+		_r1[2] = -1.0315080774348302;
+		_b[2] = -2.0 * 0.18523659836580222;
+		_c[2] = std::pow(0.18523659836580222, 2) + std::pow(1.0299109343730084, 2);
+				
+		_r1[3] = -1.1120253073038324;
+		_b[3] = -2.0 * 0.2214224000789979;
+		_c[3] = std::pow(0.2214224000789979, 2) + std::pow(1.131077812338495, 2);
+
+		_r1[4] = -1.2090185772488318;
+		_b[4] = -2.0 * 0.2867586032664649;
+		_c[4] = std::pow(0.2867586032664649, 2) + std::pow(1.272794345339416, 2);
+				
+		_r1[5] = -1.3205899823870375;
+		_b[5] = -2.0 * 0.42477034063852415;
+		_c[5] = std::pow(0.42477034063852415, 2) + std::pow(1.4854822725151384, 2);
+				
+		_r1[6] = -1.4277979273114205;
+		_b[6] = -2.0 * 0.7964970177083996;
+		_c[6] = std::pow(0.7964970177083996, 2) + std::pow(1.816809978388145, 2);
+
+		auto func = [](std::array<double, 8> const& a) -> std::string {
+			auto view =
+				std::views::iota(1) | std::views::take(6)
+				| std::views::transform([&a](int i){ return a[i]; });
+			return vec_to_str(view);
 		};
-		log(LOG_INFO, "DGLAP", "Reserved space in coefficient arrays.");
-
-
-		_F = std::vector<ArrayGrid>{
-			DISTS, ArrayGrid(grid.size())
-		};
-
+		log(LOG_DEBUG, "DGLAPSolver::DGLAPSolver()", "r1 array: {}", func(_r1));
+		log(LOG_DEBUG, "DGLAPSolver::DGLAPSolver()", "b  array: {}", func(_r1));
+		log(LOG_DEBUG, "DGLAPSolver::DGLAPSolver()", "c  array: {}", func(_r1));
+	    
 		setInitialConditions(initial_dist);
+		log(LOG_INFO, "DGLAP", "Successfully filled coefficients with initial conditions.");
 	}
 
 	DGLAPSolver::~DGLAPSolver()
@@ -170,150 +117,123 @@ namespace Candia2
 		log(CANDIA_CLOSING_TEXT);
 	}
 
-	Expression& DGLAPSolver::getExpression(std::string_view name)
-	{
-		auto it = _expressions.find(name);
-		if (it == _expressions.end())
-			log(LOG_ERROR, "DGLAPSolver::getExpression()", "Expression '{}' does not exist.", name);
-		return *it->second;
-	}
-
-
 	void DGLAPSolver::setInitialConditions(Distribution const& dist)
 	{
 		log(LOG_INFO, "DGLAP", "Setting initial conditions... ");
 
 		dist.fillSingletCoeffs(
-			[&](uint j, uint k) -> ArrayGrid::value_type& {
-				return _S[0][j][0][k]; },
+			[&](uint j, uint k) -> double& {
+				return _S(0,j,0,k); },
 			_grid.points());
 		dist.fillNonSingletCoeffs(
-			[&](uint j, uint k) -> ArrayGrid::value_type& {
+			[&](uint j, uint k) -> double& {
 			switch (_order) {
-				case 0: return _A[j][0][k]; break;
-				case 1: return _B[j][0][0][k]; break;
-				case 2: return _C[j][0][0][0][k]; break;
-				case 3: return _D[j][0][0][0][0][k]; break;
-				default:
-					exit(EXIT_FAILURE); }},
+				case 0: return _A(j,0,k); break;
+				case 1: return _B(j,0,0,k); break;
+				case 2: return _C(j,0,0,0,k); break;
+				case 3: return _D(j,0,0,0,0,k); break;
+				default: throw std::runtime_error("unreachable");
+			}},
 			_grid.points());
 	}
 
 	void DGLAPSolver::loadAllExpressions()
     {
-        createExpression<P0ns>("P0ns");
-        createExpression<P0qq>("P0qq");
-        createExpression<P0qg>("P0qg");
-        createExpression<P0gq>("P0gq");
-        createExpression<P0gg>("P0gg");
+        createExpression<P0ns>(ExprName::P0ns);
+        createExpression<P0qq>(ExprName::P0qq);
+        createExpression<P0qg>(ExprName::P0qg);
+        createExpression<P0gq>(ExprName::P0gq);
+        createExpression<P0gg>(ExprName::P0gg);
     
-        if (_order >= 1) {
-		    createExpression<P1nsm>("P1nsm");
-            createExpression<P1nsp>("P1nsp");
-            createExpression<P1qq>("P1qq");
-            createExpression<P1qg>("P1qg");
-            createExpression<P1gq>("P1gq");
-            createExpression<P1gg>("P1gg");
-        }
-        if (_order >= 2) {
-		    if (options.use_fortran_nnlo_splitfuncs) {
-				log(LOG_DEBUG, "DGLAP", "Loading Fortran versions of P2 splitting functions");
-				createExpression<mvv_p2::P2nsm>("P2nsm");
-				createExpression<mvv_p2::P2nsp>("P2nsp");
-				createExpression<mvv_p2::P2nsv>("P2nsv");
-				createExpression<mvv_p2::P2qq>("P2qq");
-				createExpression<mvv_p2::P2qg>("P2qg");
-				createExpression<mvv_p2::P2gq>("P2gq");
-				createExpression<mvv_p2::P2gg>("P2gg");
-			} else {
-				log(LOG_DEBUG, "DGLAP", "Loading C++ versions of P2 splitting functions");
-				createExpression<P2nsm>("P2nsm");
-				createExpression<P2nsp>("P2nsp");
-				createExpression<P2nsv>("P2nsv");
-				createExpression<P2qq>("P2qq");
-				createExpression<P2qg>("P2qg");
-				createExpression<P2gq>("P2gq");
-				createExpression<P2gg>("P2gg");
-			}
+		createExpression<P1nsm>(ExprName::P1nsm);
+		createExpression<P1nsp>(ExprName::P1nsp);
+		createExpression<P1qq>(ExprName::P1qq);
+		createExpression<P1qg>(ExprName::P1qg);
+		createExpression<P1gq>(ExprName::P1gq);
+		createExpression<P1gg>(ExprName::P1gg);
+		if (options.use_fortran_nnlo_splitfuncs) {
+			log(LOG_DEBUG, "DGLAP", "Loading Fortran versions of P2 splitting functions");
+			createExpression<mvv_p2::P2nsm>(ExprName::P2nsm);
+			createExpression<mvv_p2::P2nsp>(ExprName::P2nsp);
+			createExpression<mvv_p2::P2nsv>(ExprName::P2nsv);
+			createExpression<mvv_p2::P2qq>(ExprName::P2qq);
+			createExpression<mvv_p2::P2qg>(ExprName::P2qg);
+			createExpression<mvv_p2::P2gq>(ExprName::P2gq);
+			createExpression<mvv_p2::P2gg>(ExprName::P2gg);
+		} else {
+			log(LOG_DEBUG, "DGLAP", "Loading C++ versions of P2 splitting functions");
+			createExpression<P2nsm>(ExprName::P2nsm);
+			createExpression<P2nsp>(ExprName::P2nsp);
+			createExpression<P2nsv>(ExprName::P2nsv);
+			createExpression<P2qq>(ExprName::P2qq);
+			createExpression<P2qg>(ExprName::P2qg);
+			createExpression<P2gq>(ExprName::P2gq);
+			createExpression<P2gg>(ExprName::P2gg);
+		}
 			
-            createExpression<A2ns>("A2ns");
-            createExpression<A2gq>("A2gq");
-            createExpression<A2gg>("A2gg");
-            createExpression<A2hq>("A2hq");
-            createExpression<A2hg>("A2hg");
-        }
-        if (_order >= 3) {
-			if (options.use_fortran_n3lo_splitfuncs) {
-				log(LOG_DEBUG, "DGLAP", "Loading Fortran versions of P3 splitting functions");
-				createExpression<mvv_p3::P3nsm>("P3nsm");
-				createExpression<mvv_p3::P3nsp>("P3nsp");
-				createExpression<mvv_p3::P3nsv>("P3nsv");
-				createExpression<mvv_p3::P3qq>("P3qq");
-				createExpression<mvv_p3::P3qg>("P3qg");
-				createExpression<mvv_p3::P3gq>("P3gq");
-				createExpression<mvv_p3::P3gg>("P3gg");
-			} else {
-				log(LOG_DEBUG, "DGLAP", "Loading C++ versions of P3 splitting functions");
-				createExpression<P3nsm>("P3nsm");
-				createExpression<P3nsp>("P3nsp");
-				createExpression<P3nsv>("P3nsv");
-				createExpression<P3qq>("P3qq");
-				createExpression<P3qg>("P3qg");
-				createExpression<P3gq>("P3gq");
-				createExpression<P3gg>("P3gg");
-			}
+		createExpression<A2ns>(ExprName::A2ns);
+		createExpression<A2gq>(ExprName::A2gq);
+		createExpression<A2gg>(ExprName::A2gg);
+		createExpression<A2hq>(ExprName::A2hq);
+		createExpression<A2hg>(ExprName::A2hg);
+		
+		if (options.use_fortran_n3lo_splitfuncs) {
+			log(LOG_DEBUG, "DGLAP", "Loading Fortran versions of P3 splitting functions");
+			createExpression<mvv_p3::P3nsm>(ExprName::P3nsm);
+			createExpression<mvv_p3::P3nsp>(ExprName::P3nsp);
+			createExpression<mvv_p3::P3nsv>(ExprName::P3nsv);
+			createExpression<mvv_p3::P3qq>(ExprName::P3qq);
+			createExpression<mvv_p3::P3qg>(ExprName::P3qg);
+			createExpression<mvv_p3::P3gq>(ExprName::P3gq);
+			createExpression<mvv_p3::P3gg>(ExprName::P3gg);
+		} else {
+			log(LOG_DEBUG, "DGLAP", "Loading C++ versions of P3 splitting functions");
+			createExpression<P3nsm>(ExprName::P3nsm);
+			createExpression<P3nsp>(ExprName::P3nsp);
+			createExpression<P3nsv>(ExprName::P3nsv);
+			createExpression<P3qq>(ExprName::P3qq);
+			createExpression<P3qg>(ExprName::P3qg);
+			createExpression<P3gq>(ExprName::P3gq);
+			createExpression<P3gg>(ExprName::P3gg);
+		}
 
-			uint imod = getOptions().n3lo_splitfunc_imod;
-			SplittingFunction::setN3LOApproxType(imod);
-			log(LOG_DEBUG, "DGLAP", "Setting N3LO approximation type (imod) = {}", imod);
+		uint imod = getOptions().n3lo_splitfunc_imod;
+		SplittingFunction::setN3LOApproxType(imod);
+		log(LOG_DEBUG, "DGLAP", "Setting N3LO approximation type (imod) = {}", imod);
 
-            createExpression<OpMatElemN3LO>("A3nsm", ome::AqqQNSEven);
-            createExpression<OpMatElemN3LO>("A3nsp", ome::AqqQNSOdd);
-            createExpression<OpMatElemN3LO>("A3gq", ome::AgqQ);
-            createExpression<OpMatElemN3LO>("A3gg", ome::AggQ);
-            createExpression<OpMatElemN3LO>("A3hq", ome::AQqPS);
-            createExpression<OpMatElemN3LO>("A3hg", ome::AQg);
-            createExpression<OpMatElemN3LO>("A3psqq", ome::AqqQPS);
-            createExpression<OpMatElemN3LO>("A3sqg", ome::AqgQ);
-			createExpression<OpMatElemN3LO>("A3PSshq", ome::AQqPSs);
-        }
-        
+		createExpression<OpMatElemN3LO>(ExprName::A3nsm, ome::AqqQNSEven);
+		createExpression<OpMatElemN3LO>(ExprName::A3nsp, ome::AqqQNSOdd);
+		createExpression<OpMatElemN3LO>(ExprName::A3gq, ome::AgqQ);
+		createExpression<OpMatElemN3LO>(ExprName::A3gg, ome::AggQ);
+		createExpression<OpMatElemN3LO>(ExprName::A3hq, ome::AQqPS);
+		createExpression<OpMatElemN3LO>(ExprName::A3hg, ome::AQg);
+		createExpression<OpMatElemN3LO>(ExprName::A3psqq, ome::AqqQPS);
+		createExpression<OpMatElemN3LO>(ExprName::A3sqg, ome::AqgQ);
+		createExpression<OpMatElemN3LO>(ExprName::A3PSshq, ome::AQqPSs);
     }
 
     void DGLAPSolver::setupCoefficients()
     {
-		auto get_dist = [&](uint j, uint k) -> double& {
-			if (options.use_truncated_nonsinglet_sol)
-				return _S_NS[0][j][0][k];
-			switch (_order) {
-				case 0: return _A[j][0][k]; break;
-				case 1: return _B[j][0][0][k]; break;
-				case 2: return _C[j][0][0][0][k]; break;
-				case 3: return _D[j][0][0][0][0][k]; break;
-				default: throw "unreachable";
-			}
-		};
-
-		for (uint k=0; k<_grid.size(); k++) {
+	    for (uint k=0; k<_grid.size(); k++) {
 			for (uint j=13; j<=18; j++)
-				get_dist(j, k) = get_dist(j-12, k)-get_dist(j-6, k);
+				getNonSingletCoeffValue(j, k) = getNonSingletCoeffValue(j-12, k)-getNonSingletCoeffValue(j-6, k);
 		
-			get_dist(25, k)=0.;
+			getNonSingletCoeffValue(25, k)=0.;
 			for (uint j=13; j<=18; j++)
-				get_dist(25, k) += get_dist(j, k);
+				getNonSingletCoeffValue(25, k) += getNonSingletCoeffValue(j, k);
 
 			for (uint j=26; j<=30; j++)
-				get_dist(j, k) = get_dist(13, k)-get_dist(j-12, k);
+				getNonSingletCoeffValue(j, k) = getNonSingletCoeffValue(13, k)-getNonSingletCoeffValue(j-12, k);
 
 			for (uint j=19; j<=24; j++)
-				get_dist(j, k) = get_dist(j-18, k)+get_dist(j-12, k);
+				getNonSingletCoeffValue(j, k) = getNonSingletCoeffValue(j-18, k)+getNonSingletCoeffValue(j-12, k);
 
-			_S[0][1][0][k] = 0.0;
+			_S(0,1,0,k) = 0.0;
 			for (uint j=19; j<=24; j++)
-				_S[0][1][0][k] += get_dist(j, k);
+				_S(0,1,0,k) += getNonSingletCoeffValue(j, k);
 		
 			for (uint j=32; j<=36; j++)
-				get_dist(j, k)=get_dist(19, k)-get_dist(j-12, k);
+				getNonSingletCoeffValue(j, k)=getNonSingletCoeffValue(19, k)-getNonSingletCoeffValue(j-12, k);
 		}
     }
 
@@ -325,97 +245,145 @@ namespace Candia2
         for (uint t=1; t<=_trunc_idx; ++t) {
 			for (uint j=0; j<=1; ++j) {
 				for (uint n=0; n<=1; ++n) 
-					_S[t][j][n].zero();
+					std::ranges::fill(_S(t,j,n), 0.0);
 			}
         }
 
 		if (options.use_truncated_nonsinglet_sol) {
 			for (uint t=1; t<=_trunc_idx; ++t) {
-				for (uint j=0; j<DISTS; ++j) {
+				for (uint j=0; j<_F.size(); ++j) {
 					for (uint n=0; n<=1; ++n) 
-						_S_NS[t][j][n].zero();
+						std::ranges::fill(_S_NS(t,j,n), 0.0);
 				}
 			}
 		}
 
 		for (uint j=0; j<=1; ++j)
-			resum[j*31] = resum_singlet[j*31];
+			std::ranges::copy(resum_singlet[j*31], resum[j*31].begin());
 		switch (_order) {
 			case 0:
 			case 1: {
 				for (uint j=13; j<=12+_nf; j++)
-					resum[j] = resum_ns[j];
+					std::ranges::copy(resum_ns[j], resum[j].begin());
 				for (uint j=32; j<=30+_nf; j++)
-					resum[j] = resum_ns[j];
+					std::ranges::copy(resum_ns[j], resum[j].begin());
 			} break;
 			case 2:
 			case 3: {
 				for (uint j=26; j<=24+_nf; ++j)
-					resum[j] = resum_ns[j];
+					std::ranges::copy(resum_ns[j], resum[j].begin());
 				for (uint j=32; j<=30+_nf; ++j)
-					resum[j] = resum_ns[j];
-				resum[25] = resum_ns[25];
+					std::ranges::copy(resum_ns[j], resum[j].begin());
+				std::ranges::copy(resum_ns[25], resum[25].begin());
 			} break;
 		}
 
         double Nf = static_cast<double>(_nf);
 		for (uint k=0; k<_grid.size()-1;k++) {
 			if (_order>=2) {
-				resum[13][k]=resum[25][k];
+				resum[13](k) = resum[25](k);
 				for (uint j=26; j<=24+_nf; j++)
-					resum[13][k] += resum[j][k];
-				resum[13][k] /= Nf;
+					resum[13](k) += resum[j](k);
+				resum[13](k) /= Nf;
 				for (uint j=14; j<=12+_nf; j++)
-					resum[j][k] = resum[13][k] - resum[j+12][k];
+					resum[j](k) = resum[13](k) - resum[j+12](k);
 			}
 
-			resum[19][k] = resum[31][k];
+			resum[19](k) = resum[31](k);
 			for (uint j=32; j<=30+_nf; j++)
-				resum[19][k] += resum[j][k];
-			resum[19][k] /= Nf;
+				resum[19](k) += resum[j](k);
+			resum[19](k) /= Nf;
 
 			for (uint j=20; j<=18+_nf; j++)
-				resum[j][k] = resum[19][k] - resum[j+12][k];
+				resum[j](k) = resum[19](k) - resum[j+12](k);
 
 			for (uint j=1; j<=_nf; j++) {
-				resum[j][k]   =0.5*(resum[j+18][k] + resum[j+12][k]);
-				resum[j+6][k] =0.5*(resum[j+18][k] - resum[j+12][k]);
+				resum[j](k)   =0.5*(resum[j+18](k) + resum[j+12](k));
+				resum[j+6](k) =0.5*(resum[j+18](k) - resum[j+12](k));
 			}
 
 			if (_order<2) {
-				resum[25][k]=0.0;
+				resum[25](k)=0.0;
 				for (uint j=13; j<=12+_nf; j++)
-					resum[25][k] += resum[j][k];
+					resum[25](k) += resum[j](k);
 
 				for (uint j=26; j<=24+_nf; j++)
-					resum[j][k] = resum[13][k] - resum[j-12][k];
+					resum[j](k) = resum[13](k) - resum[j-12](k);
 			}
 		}
     }
 
+	void DGLAPSolver::fixDistributionsForce(std::vector<ArrayGrid>& resum)
+	{
+		for (uint j=0; j<=1; ++j)
+			std::ranges::copy(getSingletCoeffArray(j), resum[j*31].begin());
+		switch (_order) {
+			case 0:
+			case 1: {
+				for (uint j=13; j<=12+_nf; j++)
+					std::ranges::copy(getNonSingletCoeffArray(j), resum[j].begin());
+				for (uint j=32; j<=30+_nf; j++)
+					std::ranges::copy(getNonSingletCoeffArray(j), resum[j].begin());
+			} break;
+			case 2:
+			case 3: {
+				for (uint j=26; j<=24+_nf; ++j)
+					std::ranges::copy(getNonSingletCoeffArray(j), resum[j].begin());
+				for (uint j=32; j<=30+_nf; ++j)
+					std::ranges::copy(getNonSingletCoeffArray(j), resum[j].begin());
+				std::ranges::copy(getNonSingletCoeffArray(25), resum[25].begin());
+			} break;
+		}
+
+        double Nf = static_cast<double>(_nf);
+		for (uint k=0; k<_grid.size()-1;k++) {
+			if (_order>=2) {
+				resum[13](k)=resum[25](k);
+				for (uint j=26; j<=24+_nf; j++)
+					resum[13](k) += resum[j](k);
+				resum[13](k) /= Nf;
+				for (uint j=14; j<=12+_nf; j++)
+					resum[j](k) = resum[13](k) - resum[j+12](k);
+			}
+
+			resum[19](k) = resum[31](k);
+			for (uint j=32; j<=30+_nf; j++)
+				resum[19](k) += resum[j](k);
+			resum[19](k) /= Nf;
+
+			for (uint j=20; j<=18+_nf; j++)
+				resum[j](k) = resum[19](k) - resum[j+12](k);
+
+			for (uint j=1; j<=_nf; j++) {
+				resum[j](k)   = 0.5*(resum[j+18](k) + resum[j+12](k));
+				resum[j+6](k) = 0.5*(resum[j+18](k) - resum[j+12](k));
+			}
+
+			if (_order<2) {
+				resum[25](k)=0.0;
+				for (uint j=13; j<=12+_nf; j++)
+					resum[25](k) += resum[j](k);
+
+				for (uint j=26; j<=24+_nf; j++)
+					resum[j](k) = resum[13](k) - resum[j-12](k);
+			}
+		}
+	}
+
 	void DGLAPSolver::setupTruncatedDistributions()
 	{
 		log(LOG_INFO, "Grid", "Using truncated ansatz for non-singlet sector.");
-		
-	    _S_NS = decltype(_S_NS){
-			_trunc_idx+1, std::vector<std::vector<ArrayGrid>>{
-				DISTS, std::vector<ArrayGrid>{
-					2, ArrayGrid(_grid.size())
-				}
-			}
-		};
 
-		auto coeff_accessor = [&](uint j) -> ArrayGrid const& {
+		_S_NS.resize({_trunc_idx+1, DISTS, 2, _grid.size()});
+
+		for (uint j=0; j<DISTS; ++j) {
 			switch (_order) {
-				case 0: return _A[j][0];
-				case 1: return _B[j][0][0];
-				case 2: return _C[j][0][0][0];
-				case 3: return _D[j][0][0][0][0];
-				default: throw "unreachable";
+				case 0: std::ranges::copy(_A(j,0), _S_NS(0,j,0).begin()); break;
+				case 1: std::ranges::copy(_B(j,0,0), _S_NS(0,j,0).begin()); break;
+				case 2: std::ranges::copy(_C(j,0,0,0), _S_NS(0,j,0).begin()); break;
+				case 3: std::ranges::copy(_D(j,0,0,0,0), _S_NS(0,j,0).begin()); break;
 			}
-		};
-		for (uint j=0; j<DISTS; ++j)
-			_S_NS[0][j][0] = coeff_accessor(j);
+		}
 		
 		_A.clear();
 		_B.clear();
@@ -425,15 +393,13 @@ namespace Candia2
 
 	std::vector<ArrayGrid> const& DGLAPSolver::evolve()
 	{
-		log(LOG_INFO, "DGLAP", "Evolving to {} flavors.", _alpha_s.nff());
+	    log(LOG_INFO, "DGLAP", "Evolving to {} flavors.", _alpha_s.nff());
 		using out_type = decltype(_F);
 		loadAllExpressions();
-		_grid.setupMappings();
 
 		if (options.use_truncated_nonsinglet_sol)
 			setupTruncatedDistributions();
 
-		//std::array<double,1> Qtab{_Qf};
 		out_type final_dists;
 
 		// since we now only store two iterations at once,
@@ -443,9 +409,11 @@ namespace Candia2
 		std::vector<ArrayGrid> resum_ns(DISTS, ArrayGrid(_grid.size()));
 		std::vector<ArrayGrid> resum_singlet(DISTS, ArrayGrid(_grid.size()));
 		std::vector<ArrayGrid> resum(DISTS, ArrayGrid(_grid.size()));
-			
+		
+		bool performed_evolution = false;
 		for (_nf=_alpha_s.nfi(); _nf<=_alpha_s.nff(); _nf++) {
 			log(LOG_INFO, "DGLAP", "Setting nf={}", _nf);
+			bool last_loop = _nf == _alpha_s.nff();
 
 			log(LOG_INFO, "DGLAP", "Setting up distributions for evolution.");
 			setupCoefficients();
@@ -462,12 +430,11 @@ namespace Candia2
 			log(LOG_DEBUG, "DGLAP", "Loading relevant splitting function / OME values into cache");
 			SplittingFunction::update(_nf, _alpha_s.beta0(), _log_muf2_mur2);
 			OpMatElem::update(-_log_mur2_muf2, _nf);
-			if (getOptions().cache_exprs) {
-				log(LOG_INFO, "DGLAP", "Loading all expression values into caches...");
-				_grid.useCachedExpressions();
-				for (auto& [_,expr] : _expressions)
-					expr->fill(_grid.points(), _grid.abscissae(), _grid.getMappings());
+			for (auto& expr : _expressions) {
+				expr->fill(_grid.points());
+				expr->preCalc();
 			}
+			
 			log(LOG_DEBUG, "DGLAP", "Retrieving values of alpha_s, and calculating all logarithm factors");
 			bool resum_tab = _alpha_s.resumTabulated();
 			bool resum_threshold = !resum_tab;
@@ -523,6 +490,7 @@ namespace Candia2
 			// only do evolution if alphas are different
 			// (i.e. energy scales are different)
 			if (_alpha0 != _alpha1) {
+				performed_evolution = true;
 				log(LOG_INFO, "DGLAP", "Starting singlet evolution and resummation...");
 #if ENABLE_THREADING
 				evolveSingletThreaded(resum_singlet, L1);
@@ -560,21 +528,21 @@ namespace Candia2
 					// from the temporary array
 					// back to the n=0 piece
 					for (uint j=0; j<DISTS; ++j) {
-						if (options.use_truncated_nonsinglet_sol) {
-							_S_NS[0][j][0] = resum[j];
-						} else {
-							switch (_order) {
-								case 0: _A[j][0] 		   = resum[j]; break;
-								case 1: _B[j][0][0] 	   = resum[j]; break;
-								case 2: _C[j][0][0][0]     = resum[j]; break;
-								case 3: _D[j][0][0][0][0]  = resum[j]; break;
-							}
-						}
+						std::ranges::copy(resum[j], getNonSingletCoeffArray(j).begin());
 					}
 					for (uint j=0; j<=1; ++j)
-						_S[0][j][0] = resum[j*31];
+						std::ranges::copy(resum[j*31], _S(0,j,0).begin());
 				}
-			} // if (alpha0 != alpha1)
+			} else { // if (alpha0 != alpha1)
+				// if we've done no evolutions or anything,
+				// we want to make sure we return correctly
+				// the initial distributions
+				if (last_loop && !performed_evolution) {
+					fixDistributionsForce(resum);
+					_F = std::move(resum);
+					break;
+				}
+			}
 
 			// +1 is the mass at the end of the current threshold,
 			// so if +2 is zero then there is no next threshold,
@@ -588,5 +556,54 @@ namespace Candia2
 		return _F;
 	} // evolve()
 
+
+	std::vector<ArrayGrid> DGLAPSolver::calculateSubtractionPDFs()
+	{
+		if (_order < 2) {
+			log(LOG_WARNING, "DGLAPSolver", "cannot create subtraction PDFs below NNLO");
+			return {};
+		}
+
+		double as = _alpha1/4.0/PI;
+		double as2 = as*as;
+		double mb = _initial_dist.masses(DIST_B);
+		double qf = _Qf;
+		double L = std::log(std::pow(qf/mb, 2.0));
+		
+		OpMatElemN3LO::update(-L, _nf);
+
+		auto zero_func = [](double,double){ return 0.0; };
+		
+		// auto& p1qg = getExpression("P1qg");
+	    auto a1qg_reg_func = [as](double lm, double nf, double x) {
+			auto trunced = ome::AQg_reg.truncate(1);
+			return trunced(as, lm, nf, x); };
+		OpMatElemCustom a1hg(a1qg_reg_func, zero_func, zero_func);
+
+		auto a2hq_reg_func = [as](double lm, double nf, double x) {
+			auto trunced = ome::AQqPS_reg.truncate(2);
+			return trunced(as, lm, nf, x); };
+		OpMatElemCustom a2hq(a2hq_reg_func, zero_func, zero_func);
+		
+		auto a2hg_reg_func = [as](double lm, double nf, double x) {
+			auto trunced = ome::AQg_reg.truncate(2);
+			return trunced(as, lm, nf, x); };
+		OpMatElemCustom a2hg(a2hg_reg_func, zero_func, zero_func);
+		
+
+		std::vector<ArrayGrid> subpdfs(4, ArrayGrid(_grid.size()));
+		for (uint k=0; k<_grid.size(); ++k) {
+			subpdfs[0](k) = as*_grid.convolution(_F[0], a1hg, k);
+		    double ftilde2 = as2*(
+				_grid.convolution(_F[31], a2hq, k) +
+				_grid.convolution(_F[0], a2hg, k)
+			);
+			subpdfs[1](k) = subpdfs[0](k) + ftilde2;
+			subpdfs[2](k) = std::abs(_F[5](k) - subpdfs[0](k));
+			subpdfs[3](k) = std::abs(_F[5](k) - subpdfs[1](k));
+		}
+
+		return subpdfs;
+	}
 	
 } // namespace Candia2

@@ -93,7 +93,7 @@ std::tuple<vec_type, std::vector<double>> read_datafile(fs::path const& path)
 		if (temp1 > 0.95)
 			break;
 		X.push_back(temp1);
-		for (int i=0; i<F.size(); ++i) {
+		for (uint i=0; i<F.size(); ++i) {
 			iss >> temp1;
 			F.at(i).push_back(temp1);
 		}

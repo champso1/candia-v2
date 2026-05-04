@@ -1,15 +1,7 @@
-#include <cstdlib>
-#include <charconv>
-#include <string>
-#include <vector>
-#include <filesystem>
-using uint = unsigned;
-
 #include "Candia-v2/Common.hpp"
 using namespace Candia2;
 
 #include "util.hpp"
-using value_type = double;
 
 static void usage()
 {
@@ -30,22 +22,26 @@ int main(int argc, char *argv[])
 	fs::path datafile_path(argv[1]);
 	file_exists(datafile_path);
 
-	int origin{}, type{}, format{};
-	if (argc != 2) {
-		std::from_chars(argv[2], argv[2] + 1, origin);
-		std::from_chars(argv[3], argv[3] + 1, format);
-		std::from_chars(argv[4], argv[4] + 1, type);
-	} else {
+	int origin{}, format{}, type{};
+	if (argc == 2) {
 		origin = 0;
 		format = 1;
 		type = 2;
+	} else {
+		std::from_chars(argv[2], argv[2] + 1, origin);
+		std::from_chars(argv[3], argv[3] + 1, format);
+		std::from_chars(argv[4], argv[4] + 1, type);
 	}
 
-	auto [xtab, dists_raw] =
-		(origin == 0) ?
-		read_candia_file<value_type>(datafile_path, 37)
-		: read_other_file<value_type>(datafile_path, 37);
-    auto dists = fix_dists(dists_raw, type);
+	xtab_type xtab{};
+	dist_type dists{};
+	if (origin == 0) {
+		auto read_candia_file_result = read_candia_file(datafile_path, 37);
+		xtab = read_candia_file_result.xtab;
+		dists = read_candia_file_result.dists_ntabbed;
+	} else {
+		auto [xtab, dists] = read_other_file(datafile_path, 37);
+	}
 
 	std::string basename = datafile_path.filename().string().substr(0, datafile_path.filename().string().rfind('.'));	
 	outputLatexTable(xtab, dists, basename, cols[type].get(), 1, format == 0);

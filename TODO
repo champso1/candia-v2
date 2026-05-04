@@ -1,0 +1,3 @@
+- Place the regular piece of expressions on some sort of interpolation grid for higher orders, probably even starting at NLO. preliminary tests of this reduce evolution time drastically, but the issue is the dense grid at large-x which throws off the interpolation quite a bit.
+- Add the new pieces from arXiv:2604.09534v2
+- In the LHAPDFGrid evolution, we could have a more dynamic `Distribution` that "inherits" its initial conditions from the output of the previous evolution at each quark mass threshold. This way, when evolving from say 3GeV to 10GeV, all evolutions with initial/final energies crossing the mass of the bottom ~4.5GeV won't have to first evolve to that threshold then to 10GeV (which would take twice as long).

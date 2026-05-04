@@ -3,15 +3,12 @@
  *  @brief Contains the @a DGLAPSolver class which handles the actual evolution of the distributions
  */
 
-#ifndef __CANDIA_HPP
-#define __CANDIA_HPP
+#pragma once
 
 #include <concepts>
-#include <functional>
 #include <memory>
 #include <utility>
 #include <vector>
-#include <string_view>
 
 #include "Candia-v2/Common.hpp"
 #include "Candia-v2/Grid.hpp"
@@ -37,8 +34,7 @@ namespace Candia2
 			APPROX_A = 1,
 			APPROX_B = 2,
 			APPROX_AVG = 3
-		} n3lo_splitfunc_imod{APPROX_AVG};
-		bool cache_exprs{false}; //!< whether to cache the splitting functions/OMEs rather than evaluating them every time
+		} n3lo_splitfunc_imod{APPROX_AVG}; //!< approximation to use for the N3LO splitting functions
 	};
 
 	/**
@@ -46,6 +42,8 @@ namespace Candia2
 	 */
 	class DGLAPSolver : public OptionsBase<DGLAPOptions>
 	{
+	public:
+		using options_type = DGLAPOptions;
 	private:
 		uint _order{}; //!< perturbative order
 		Grid _grid; //!< main @a Grid object
@@ -64,41 +62,113 @@ namespace Candia2
 		double _alpha0{}; //!< initial alpha_s in an interval
 		double _alpha1{}; //!< final alpha_s in an interval
 
+		inline std::vector<uint> getEvolutionIndices()
+		{
+			std::vector<uint> idxs{};
+			switch (_order) {
+				case 0:
+				case 1: {
+					for (uint j=13; j<=12+_nf; ++j)
+						idxs.emplace_back(j);
+					for (uint j=32; j<=30+_nf; ++j)
+						idxs.emplace_back(j);
+				}; break;
+				case 2:
+				case 3: {
+					for (uint j=26; j<=24+_nf; ++j)
+						idxs.emplace_back(j);
+					for (uint j=32; j<=30+_nf; ++j)
+						idxs.emplace_back(j);
+					idxs.emplace_back(25);
+				} break;
+				default: throw std::runtime_error("unreachable");
+			}
+			return idxs;
+		}
+
+		Distribution const& _initial_dist; //!< reference to initial distribution
+
 		uint _iterations{}; //!< number of singlet/non-singlet iterations
 		uint _trunc_idx{}; //!< number of additional singlet truncated iterations
 
-		MultiDimArrayGrid_t<2> _A{}; //!< LO coeffs
-		MultiDimArrayGrid_t<3> _B{}; //!< NLO coeffs
-		MultiDimArrayGrid_t<4> _C{}; //!< NNLO coeffs
-		MultiDimArrayGrid_t<5> _D{}; //!< N3LO coeffs
-	    MultiDimArrayGrid_t<3> _S{}; //!< singlet coeffs
-		MultiDimArrayGrid_t<3> _S_NS{}; //!< non-singlet coeffs (truncated)
-		std::vector<ArrayGrid> _F{}; //!< final distributions
+	    ArrayGridN<3> _A; //!< LO coeffs
+		ArrayGridN<4> _B; //!< NLO coeffs
+		ArrayGridN<5> _C; //!< NNLO coeffs
+		ArrayGridN<6> _D; //!< N3LO coeffs
+	    ArrayGridN<4> _S; //!< singlet coeffs
+		ArrayGridN<4> _S_NS; //!< non-singlet coeffs (truncated)
+		std::vector<ArrayGrid> _F; //!< final distributions
 
 		std::array<double,8> _r1{}; //!< real solution to N3LO quadratic
 		std::array<double,8> _b{};  //!< \f$-2*\mathrm{Re}[r_2]\f$
 		std::array<double,8> _c{};  //!< \f$|r_2|^2\f$
 
-		std::map<std::string_view, std::unique_ptr<Expression>> _expressions{}; //!< list of internal stores Expression objects
-		/**
-		 *  @brief Stores a unique pointer of the requested expression internally
-		 *  @param name The name to associate the expression with
-		 *  @param args Any arguments to pass to the constructor of the expression
-		 */
+		enum class ExprName : uint
+		{
+			P0ns=0, P0qq, P0qg, P0gq, P0gg,
+			P1nsm, P1nsp, P1qq, P1qg, P1gq, P1gg,
+			P2nsm, P2nsp, P2nsv, P2qq, P2qg, P2gq, P2gg,
+			P3nsm, P3nsp, P3nsv, P3qq, P3qg, P3gq, P3gg,
+			A2ns, A2hq, A2hg, A2gq, A2gg,
+		    A3nsm, A3nsp, A3gq, A3gg, A3hq, A3hg, A3psqq, A3sqg, A3PSshq,
+			Count
+		};
+
+		std::array<std::unique_ptr<Expression>, static_cast<uint>(ExprName::Count)> _expressions{};
 		template <typename TExpr, typename... TExprArgs>
 		requires (std::derived_from<TExpr, Expression>)
-		void createExpression(std::string_view name, TExprArgs&&... args)
+		inline void createExpression(ExprName name, TExprArgs&&... args)
 		{
-			std::unique_ptr<Expression> ptr = std::make_unique<TExpr>(std::forward<TExprArgs>(args)...);
-			_expressions.emplace(std::make_pair(name, std::move(ptr)));
+		    _expressions[static_cast<uint>(name)] = std::make_unique<TExpr>(std::forward<TExprArgs>(args)...);
 		}
-
+	public:
 		/**
 		 *  @brief returns the expression object with the given name
 		 *  @param name The name associated with the expression object
 		 */
-		Expression& getExpression(std::string_view name);
+		inline Expression& getExpression(ExprName name)
+		{
+			return *_expressions[static_cast<uint>(name)];
+		}
 
+	private:
+		inline double& getSingletCoeffValue(uint j, uint k) {
+			if (!options.use_truncated_nonsinglet_sol)
+				return _S(0,j,0,k);
+			else
+				return _S_NS(0,j,0,k);
+		}
+		inline ArrayGridView getSingletCoeffArray(uint j) {
+			if (!options.use_truncated_nonsinglet_sol)
+				return _S(0,j,0);
+			else
+				return _S_NS(0,j,0);
+		}
+		
+	    inline double& getNonSingletCoeffValue(uint j, uint k) {
+			if (options.use_truncated_nonsinglet_sol)
+				return _S_NS(0,j,0,k);
+			switch (_order) {
+				case 0: return _A(j,0,k); break;
+				case 1: return _B(j,0,0,k); break;
+				case 2: return _C(j,0,0,0,k); break;
+				case 3: return _D(j,0,0,0,0,k); break;
+				default: throw std::runtime_error("unreachable");
+			}
+		}
+
+		inline ArrayGridView getNonSingletCoeffArray(uint j) {
+			if (options.use_truncated_nonsinglet_sol)
+				return _S_NS(0,j,0);
+			switch (_order) {
+				case 0: return _A(j,0); break;
+				case 1: return _B(j,0,0); break;
+				case 2: return _C(j,0,0,0); break;
+				case 3: return _D(j,0,0,0,0); break;
+				default: throw std::runtime_error("unreachable");
+			}
+		}
+		
 		/** 
 		 *  @brief Helper function to create/load all expression objects for the provided order.
 		 */
@@ -126,13 +196,18 @@ namespace Candia2
 		/** getter for the @a AlphaS object */
 		inline AlphaS const& getAlphaS() const { return _alpha_s; }
 		/** getter for the @a Grid object */
-		inline Grid const& getGrid() const { return _grid; }
+		inline Grid& getGrid() { return _grid; }
 
 		/**
 		 *  @brief Performs the full evolution.
 		 */
 		std::vector<ArrayGrid> const& evolve();
 
+		/**
+		 *  @brief returns a vector of some subtraction PDFs as in EQ.27, Eq.38 in arXiv:2410.03876 [hep-ph]
+		 *  returns 3 total, for the b-quark, that being f(tilde)1, f(tilde)2, and f(tilde)NLO
+		 */
+		std::vector<ArrayGrid> calculateSubtractionPDFs();
 	private:
 		/**
 		 *  @brief Sets the initial values of the coefficients using the distribution
@@ -154,6 +229,8 @@ namespace Candia2
 			std::vector<ArrayGrid>& resum_singlet,
 			std::vector<ArrayGrid>& resum);
 
+		void fixDistributionsForce(std::vector<ArrayGrid>& resum);
+
 		/** @brief takes the default exact coefficients (A, B, ...) and sets up S to contain all necessary info */
 		void setupTruncatedDistributions();
 
@@ -167,9 +244,7 @@ namespace Candia2
 		 *  @param L3 The NNLO logarithmic coefficient (actually an arctan)
 		 *  @param L4 The N3LO logarithmic coefficient
 		 */
-		void evolveNonSinglet(
-			std::reference_wrapper<std::vector<ArrayGrid>> arr, 
-			double L1, double L2, double L3, double L4);
+		void evolveNonSinglet(std::reference_wrapper<std::vector<ArrayGrid>> arr, double L1, double L2, double L3, double L4);
 
 		/**
 		 *  @brief Evolves the non-singlet distributions with the truncated ansatz
@@ -177,41 +252,8 @@ namespace Candia2
 		 *  which will be different if resumming to the final energy vs a threshold one
 		 *  @param L1 The LO logarithmic coefficient
 		 */
-		void evolveNonSingletTrunc(std::vector<ArrayGrid>& arr, double L1);
+		void evolveNonSingletTrunc(std::reference_wrapper<std::vector<ArrayGrid>> arr, double L1);
 		
-
-#if ENABLE_THREADING
-		/**
-		 *  @brief Evolves the singlet distributions
-		 *  @param arr Reference to the array in which to place the resummed results,
-		 *  which will be different if resumming to the final energy vs a threshold one
-		 *  @param L1 the logarithmic coefficient
-		 */
-		void evolveSingletThreaded(
-			std::reference_wrapper<std::vector<ArrayGrid>> arr,
-			double L1);
-		/**
-		 *  @brief Evolves the non-singlet distributions
-		 *  @param arr Reference to the array in which to place the resummed results,
-		 *  which will be different if resumming to the final energy vs a threshold one
-		 *  @param L1 The LO logarithmic coefficient
-		 *  @param L2 The NLO logarithmic coefficient
-		 *  @param L3 The NNLO logarithmic coefficient (actually an arctan)
-		 *  @param L4 The N3LO logarithmic coefficient
-		 */
-		void evolveNonSingletThreaded(
-			std::reference_wrapper<std::vector<ArrayGrid>> arr, 
-			double L1, double L2, double L3, double L4);
-
-		/**
-		 *  @brief Evolves the non-singlet distributions with the truncated ansatz (threaded version)
-		 *  @param arr Reference to the array in which to place the resummed results,
-		 *  which will be different if resumming to the final energy vs a threshold one
-		 *  @param L1 The LO logarithmic coefficient
-		 */
-		void evolveNonSingletTruncThreaded(std::reference_wrapper<std::vector<ArrayGrid>> arr, double L1);
-#endif
-
 		/**
 		 *  @brief Performs the heavy-flavor matching for the quark/gluon distributions
 		 */
@@ -221,254 +263,74 @@ namespace Candia2
 		 *  @defgroup hfthelpers Helpers for Heavy Flavor Treatment
 		 *  @{
 		 */
-		/**
-		 *  @brief relation 1 for NNLO HFT
-		 *  @param c NNLO array grid (quark/anti-quark)
-		 *  @param k current grid index
-		 *  @param q quark array grid
-		 */
-		void HFT_NNLO1(ArrayGrid& c, uint k, ArrayGrid& q);
-		/**
-		 *  @brief relation 2 for NNLO HFT
-		 *  @param g gluon arraygrid
-		 *  @param qp q^(+) arraygrid
-		 *  @param k current grid index
-		 */
-		void HFT_NNLO2(ArrayGrid& g, ArrayGrid& qp, uint k);
-		/**
-		 *  @brief relation 3 for NNLO HFT
-		 *  @param g gluon arraygrid
-		 *  @param qp q^(+) arraygrid
-		 *  @param k current grid index
-		 *  @param qh heavy quark array grid
-		 *  @param qhb anti-heavy quark array grid
-		 */
-		void HFT_NNLO3(ArrayGrid& g, ArrayGrid& qp, uint k, ArrayGrid& qh, ArrayGrid& qhb);
+		void HFT_NNLO1(ArrayGridView c, uint k, ArrayGridView q);
+		void HFT_NNLO2(ArrayGridView g, ArrayGridView qp, uint k);
+		void HFT_NNLO3(ArrayGridView g, ArrayGridView qp, uint k, ArrayGridView qh, ArrayGridView qhb);
 
-		/**
-		 *  @brief relation 1 for N3LO HFT
-		 *  @param q quark arraygrid
-		 *  @param qb anti-quark arraygrid
-		 *  @param j distribution index
-		 *  @param k current grid index
-		 *  @param SP pre-calculated piece independent of @a j
-		 *  @param qh the output q array to place the results. not the heavy quark dist, but a suitable enough name
-		 */
-		void HFT_N3LO1(ArrayGrid& q, ArrayGrid& qb, uint j, uint k, double SP, ArrayGrid& qh);
-		/**
-		 *  @brief relation 2 for N3LO HFT
-		 *  @param q quark arraygrid
-		 *  @param qb anti-quark arraygrid
-		 *  @param j distribution index
-		 *  @param k current grid index
-		 *  @param SP pre-calculated piece independent of @a j
-		 *  @param qhb the output qbar array to place the results. not the heavy quark dist, but a suitable enough name
-		 */
-		void HFT_N3LO2(ArrayGrid& q, ArrayGrid& qb, uint j, uint k, double SP, ArrayGrid& qhb);
-		/**
-		 *  @brief relation 3 for N3LO HFT
-		 *  @param g gluon arraygrid
-		 *  @param qp q^(+) arraygrid
-		 *  @param k current grid index
-		 */
-		void HFT_N3LO3(ArrayGrid& g, ArrayGrid& qp, uint k);
-		/**
-		 *  @brief relation 4 for N3LO HFT
-		 *  @param g gluon arraygrid
-		 *  @param qp q^(+) arraygrid
-		 *  @param qminus q^(-) arraygrid
-		 *  @param k current grid index
-		 *  @param qh the heavy quark array to place the results
-		 *  @param qhb the heavy quark bar array to place the results
-		 */
-		void HFT_N3LO4(ArrayGrid& g, ArrayGrid& qp, ArrayGrid& qminus, uint k, ArrayGrid& qh, ArrayGrid& qhb);
+		void HFT_N3LO1(ArrayGridView q, ArrayGridView qb, uint k, double SP, ArrayGridView qh);
+		void HFT_N3LO2(ArrayGridView q, ArrayGridView qb, uint k, double SP, ArrayGridView qhb);
+		void HFT_N3LO3(ArrayGridView g, ArrayGridView qp, uint k);
+		void HFT_N3LO4(ArrayGridView g, ArrayGridView qp, ArrayGridView qminus, uint k, ArrayGridView qh, ArrayGridView qhb);
 		/** @} */
 
-#if ENABLE_THREADING
-
-		/**
-		 *  @defgroup singlethelpers Multi-Thread Singlet Helper Functions
-		 *  @{
-		 */
-		/**
-		 *  @brief Performs the NLO evolution of the coefficients
-		 *  @param t truncation index
-		 *  @param thread_idx a unique index passed to the function to ensure safe access to a gsl workspace
-		 *  @param min minimum grid index
-		 *  @param max maximum grid index
-		 */
-		void _mt_EvolveDistributions_S_NLO(uint t, int thread_idx, uint min, uint max);
-		/**
-		 *  @brief Performs the NNLO evolution of the coefficients
-		 *  @param t truncation index
-		 *  @param thread_idx a unique index passed to the function to ensure safe access to a gsl workspace
-		 *  @param min minimum grid index
-		 *  @param max maximum grid index
-		 */
-		void _mt_EvolveDistributions_S_NNLO(uint t, int thread_idx, uint min, uint max);
-		/**
-		 *  @brief Performs the N3LO evolution of the coefficients
-		 *  @param t truncation index
-		 *  @param thread_idx a unique index passed to the function to ensure safe access to a gsl workspace
-		 *  @param min minimum grid index
-		 *  @param max maximum grid index
-		 */
-		void _mt_EvolveDistributions_S_N3LO(uint t, int thread_idx, uint min, uint max);
-		/** @} */
 
 		/**
 		 *  @defgroup nonsinglethelpers Multi-Thread Non-Singlet Helper Functions
 		 *  @{
 		 */
-		/**
-		 *  @brief LO non-singlet multi-threaded helper routine
-		 *  @param arr reference to set of dists to place resummation results into
-		 *  @param j distribution index
-		 *  @param L1 log term
-		 */
 		void _mt_EvolveDistribution_NS_LO(
 			std::reference_wrapper<std::vector<ArrayGrid>> arr, 
 			uint j, double L1);
-		/**
-		 *  @brief NLO non-singlet multi-threaded helper routine
-		 *  @param arr reference to set of dists to place resummation results into
-		 *  @param j distribution index
-		 *  @param P1 the name of the NS piece of the P1 splitting function, e.g. the plus or minus piece
-		 
-		 *  @param L array of logarithm terms up to NLO
-		 */
 	    void _mt_EvolveDistribution_NS_NLO(
 			std::reference_wrapper<std::vector<ArrayGrid>> arr, 
-			uint j, std::string const& P1, std::array<double, 2> const& L);
-		/**
-		 *  @brief NNLO non-singlet multi-threaded helper routine
-		 *  @param arr reference to set of dists to place resummation results into
-		 *  @param j distribution index
-		 *  @param P array of names for the pieces of the NS splitting functions, e.g. the plus, minus, or valence pieces
-		 *  @param L array of logarithm terms up to NNLO
-		 */
+			uint j, ExprName P1, std::array<double, 2> const& L);
 	    void _mt_EvolveDistribution_NS_NNLO(
 			std::reference_wrapper<std::vector<ArrayGrid>> arr, 
-			uint j, std::array<std::string, 2> const& P, std::array<double, 3> const& L);
-		/**
-		 *  @brief N3LO non-singlet multi-threaded helper routine
-		 *  @param arr reference to set of dists to place resummation results into
-		 *  @param j distribution index
-		 *  @param P array of names for the pieces of the NS splitting functions, e.g. the plus, minus, or valence pieces
-		 *  @param L array of logarithm terms up to N3LO
-		 */
+			uint j, std::array<ExprName, 2> const& P, std::array<double, 3> const& L);
+
 	    void _mt_EvolveDistribution_NS_N3LO(
 			std::reference_wrapper<std::vector<ArrayGrid>> arr, 
-			uint j, std::array<std::string, 3> const& P, std::array<double, 4> const& L);
+			uint j, std::array<ExprName, 3> const& P, std::array<double, 4> const& L);
 		/** @} */
 
 		/**
 		 *  @defgroup nonsinglettrunchelpers Multi-Thread Non-Singlet Helper Functions (Truncated Ansatz)
 		 *  @{
 		 */
-		/**
-		 *  @brief LO non-singlet multi-threaded helper routine
-		 *  @param arr reference to set of dists to place resummation results into
-		 *  @param j distribution index
-		 *  @param L1 log term
-		 */
 		void _mt_EvolveDistribution_NST_LO(
 			std::reference_wrapper<std::vector<ArrayGrid>> arr,
 			uint j, double L1);
-		/**
-		 *  @brief NLO non-singlet multi-threaded helper routine
-		 *  @param arr reference to set of dists to place resummation results into
-		 *  @param j distribution index
-		 *  @param p1 the NLO splitting function
-		 *  @param L1 log term
-		 */
 	    void _mt_EvolveDistribution_NST_NLO(
 			std::reference_wrapper<std::vector<ArrayGrid>> arr,
-			uint j, std::string_view p1, double L1);
-		/**
-		 *  @brief NNLO non-singlet multi-threaded helper routine
-		 *  @param arr reference to set of dists to place resummation results into
-		 *  @param j distribution index
-		 *  @param p1 the NLO splitting function
-		 *  @param p2 the NNLO splitting function
-		 *  @param L1 log term
-		 */
+			uint j, ExprName p1, double L1);
 	    void _mt_EvolveDistribution_NST_NNLO(
 			std::reference_wrapper<std::vector<ArrayGrid>> arr,
-			uint j, std::string_view p1, std::string_view p2, double L1);
-		/**
-		 *  @brief N3LO non-singlet multi-threaded helper routine
-		 *  @param arr reference to set of dists to place resummation results into
-		 *  @param j distribution index
-		 *  @param p1 the NLO splitting function
-		 *  @param p2 the NNLO splitting function
-		 *  @param p3 the N3LO splitting function
-		 *  @param L1 log term
-		 */
+			uint j, ExprName p1, ExprName p2, double L1);
 	    void _mt_EvolveDistribution_NST_N3LO(
 			std::reference_wrapper<std::vector<ArrayGrid>> arr,
-			uint j, std::string_view p1, std::string_view p2, std::string_view p3, double L1);
+			uint j, ExprName p1, ExprName p2, ExprName p3, double L1);
 		/** @} */
 
 		/** @defgroup recrels Recursion Relations */
 
-#endif // ENABLE_THREADING
+
 		
 		/**
 		 *  @defgroup singletrecrels Singlet Recursion Relations
 		 *  @ingroup recrels
 		 *  @{
 		 */
-		/**
-		 *  @brief LO singlet recursion relation: \f$S^i_{n+1}(x) = -\frac{2}{\beta_0}[P \otimes S^i_n](x)\f$
-		 *  @param S arraygrid
-		 *  @param k grid index
-		 *  @param P LO splitting function
-		 */
-		double recrelS_1(
-			ArrayGrid& S,
-			uint k,
-			Expression& P);
-		/**
-		 *  @brief NLO singlet recursion relation
-		 *  @param S_i arraygrid corresponding to \f$S^i\f$
-		 *  @param S_im1 arraygrid corresponding to \f$S^{i-1}\f$
-		 *  @param k grid index
-		 *  @param P0 LO splitting function
-		 *  @param P1 NLO splitting function
-		 */
+		double recrelS_1(ArrayGridView S, uint k, Expression& P);
 		double recrelS_2(
-			ArrayGrid& S_i, ArrayGrid& S_im1,
+			ArrayGridView S_i, ArrayGridView S_im1,
 			uint k,
 			Expression& P0, Expression& P1);
-		/**
-		 *  @brief NNLO singlet recursion relation
-		 *  @param S_i arraygrid corresponding to \f$S^i\f$
-		 *  @param S_im1 arraygrid corresponding to \f$S^{i-1}\f$
-		 *  @param S_im2 arraygrid corresponding to \f$S^{i-2}\f$
-		 *  @param k grid index
-		 *  @param P0 LO splitting function
-		 *  @param P1 NLO splitting function
-		 *  @param P2 NNLO splitting function
-		 */
 		double recrelS_3(
-			ArrayGrid& S_i, ArrayGrid& S_im1, ArrayGrid& S_im2,
+			ArrayGridView S_i, ArrayGridView S_im1, ArrayGridView S_im2,
 			uint k,
 			Expression& P0, Expression& P1, Expression& P2);
-		/**
-		 *  @brief N3LO singlet recursion relation
-		 *  @param S_i arraygrid corresponding to \f$S^i\f$
-		 *  @param S_im1 arraygrid corresponding to \f$S^{i-1}\f$
-		 *  @param S_im2 arraygrid corresponding to \f$S^{i-2}\f$
-		 *  @param S_im3 arraygrid corresponding to \f$S^{i-3}\f$
-		 *  @param k grid index
-		 *  @param P0 LO splitting function
-		 *  @param P1 NLO splitting function
-		 *  @param P2 NNLO splitting function
-		 *  @param P3 N3LO splitting function
-		 */
 		double recrelS_4(
-			ArrayGrid& S_i, ArrayGrid& S_im1, ArrayGrid& S_im2, ArrayGrid& S_im3,
+			ArrayGridView S_i, ArrayGridView S_im1, ArrayGridView S_im2, ArrayGridView S_im3,
 			uint k,
 			Expression& P0, Expression& P1, Expression& P2, Expression& P3);
 		/** @} */
@@ -478,16 +340,7 @@ namespace Candia2
 		 *  @ingroup recrels
 		 *  @{
 		 */
-		/**
-		 *  @brief performs the LO recursion relation \f$A_{n+1}(x) = -\frac{2}{\beta_0}[P \otimes A_n](x)\f$
-		 *  @param A the LO arraygrid
-		 *  @param k the grid index
-		 *  @param P0 the LO splitting function
-		 */
-		double recrelLO(
-			ArrayGrid& A,
-			uint k,
-			Expression& P0);
+		double recrelLO(ArrayGridView A, uint k, Expression& P0);
 		/** @} */
 
 		/**
@@ -495,25 +348,12 @@ namespace Candia2
 		 *  @ingroup recrels
 		 *  @{
 		 */
-		/**
-		 *  @brief performs the NLO recursion relation equivalent to the LO one
-		 *  @param B the NLO arraygrid
-		 *  @param k the grid index
-		 *  @param P0 the LO splitting function
-		 */
 		double recrelNLO_1(
-			ArrayGrid& B,
+			ArrayGridView B,
 			uint k,
 			Expression& P0);
-		/**
-		 *  @brief performs the 2nd NLO recursion relation
-		 *  @param B the NLO arraygrid
-		 *  @param k the grid index
-		 *  @param P0 the LO splitting function
-		 *  @param P1 the NLO splitting function
-		 */
 		double recrelNLO_2(
-			ArrayGrid& B,
+			ArrayGridView B,
 			uint k,
 			Expression& P0, Expression& P1);
 		/** @} */
@@ -523,37 +363,16 @@ namespace Candia2
 		 *  @ingroup recrels
 		 *  @{
 		 */
-		/**
-		 *  @brief performs the NNLO recursion relation equivalent to the LO one
-		 *  @param C the NNLO arraygrid
-		 *  @param k the grid index
-		 *  @param P0 the LO splitting function
-		 */
 		double recrelNNLO_1(
-			ArrayGrid& C,
+			ArrayGridView C,
 			uint k,
 			Expression& P0);
-		/**
-		 *  @brief performs the 2nd NNLO recursion relation
-		 *  @param C the NNLO arraygrid
-		 *  @param k the grid index
-		 *  @param P0 the LO splitting function
-		 *  @param P1 the NLO splitting function
-		 *  @param P2 the NNLO splitting function
-		 */
 		double recrelNNLO_2(
-			ArrayGrid& C,
+			ArrayGridView C,
 			uint k,
 			Expression& P0, Expression& P1, Expression& P2);
-		/**
-		 *  @brief performs the 3rd NNLO recursion relation
-		 *  @param C the NNLO arraygrid
-		 *  @param k the grid index
-		 *  @param P0 the LO splitting function
-		 *  @param P1 the NLO splitting function
-		 */
 		double recrelNNLO_3(
-			ArrayGrid& C,
+			ArrayGridView C,
 			uint k,
 			Expression& P0, Expression& P1);
 		/** @} */
@@ -563,58 +382,22 @@ namespace Candia2
 		 *  @ingroup recrels
 		 *  @{
 		 */
-		/**
-		 *  @brief performs the N3LO recursion relation equivalent to the LO one
-		 *  @param D the NNLO arraygrid
-		 *  @param k the grid index
-		 *  @param P0 the LO splitting function
-		 */
 		double recrelN3LO_1(
-			ArrayGrid& D,
+			ArrayGridView D,
 			uint k,
 			Expression& P0);
-		/**
-		 *  @brief performs the 2nd N3LO recursion relation
-		 *  @param D the NNLO arraygrid
-		 *  @param k the grid index
-		 *  @param P0 the LO splitting function
-		 *  @param P1 the NLO splitting function
-		 *  @param P2 the NNLO splitting function
-		 *  @param P3 the N3LO splitting function
-		 */
 		double recrelN3LO_2(
-			ArrayGrid& D,
+			ArrayGridView D,
 			uint k,
 			Expression& P0, Expression& P1, Expression& P2, Expression& P3);
-		/**
-		 *  @brief performs the 3nd N3LO recursion relation
-		 *  @param D the NNLO arraygrid
-		 *  @param k the grid index
-		 *  @param P0 the LO splitting function
-		 *  @param P1 the NLO splitting function
-		 *  @param P2 the NNLO splitting function
-		 *  @param P3 the N3LO splitting function
-		 */
 		double recrelN3LO_3(
-			ArrayGrid& D,
+			ArrayGridView D,
 			uint k,
 			Expression& P0, Expression& P1, Expression& P2, Expression& P3);
-		/**
-		 *  @brief performs the 4th N3LO recursion relation
-		 *  @param D the NNLO arraygrid
-		 *  @param k the grid index
-		 *  @param P0 the LO splitting function
-		 *  @param P1 the NLO splitting function
-		 *  @param P2 the NNLO splitting function
-		 *  @param P3 the N3LO splitting function
-		 */
 		double recrelN3LO_4(
-			ArrayGrid& D,
+			ArrayGridView D,
 			uint k,
 			Expression& P0, Expression& P1, Expression& P2, Expression& P3);
 		/** @} */
 	};
 }
-
-
-#endif // __CANDIA_HPP

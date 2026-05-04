@@ -1,6 +1,5 @@
 .*
 !/.gitignore
-!/.clangd
 !/.clang-format
 
 GPATH
@@ -12,4 +11,4 @@ docs
 install
 bin
 /res
-build
+build*

@@ -1,21 +1,9 @@
-#include "Candia-v2/Grid.hpp"
-#include <iomanip>
-#include <iostream>
-#include <iterator>
-#include <limits>
-#include <sstream>
-#include <vector>
-#include <fstream>
-#include <numeric>
-#include <cstdlib>
 #include <chrono>
 #include <filesystem>
-#include <ranges>
 using namespace std;
 namespace fs = filesystem;
 
 #include "Candia-v2/Candia.hpp"
-#include "Candia-v2/Distribution.hpp"
 using namespace Candia2;
 using out_type = std::vector<ArrayGrid>;
 
@@ -38,9 +26,11 @@ static constexpr char const* DATAFILEDIR = "data";
 
 static void outputData(
 	out_type const& F, Grid::grid_type const& xtab, Grid const& grid,
-	uint order, uint num_grid_points, uint iterations, uint trunc_idx, double kr,
+	uint order, uint iterations, uint trunc_idx, double kr,
 	std::string filename="")
 {
+	uint num_grid_points = grid.size();
+	
 	// open the output file, with a filename descriptive of all the provided inputs
 	ostringstream outfile_ss{};
 	outfile_ss << ((order == 3) ? "n3lo" : (order == 2) ? "nnlo" : (order == 1) ? "nlo" : "lo");
@@ -71,9 +61,14 @@ static void outputData(
 		outfile << ix << ' ';
 	outfile << '\n';
 
+	outfile << setprecision(std::numeric_limits<double>::max_digits10);
+	for (const double x : grid)
+		outfile << x << ' ';
+	outfile << '\n';
+
 	// print them out
 	for (uint k=0; k<grid.size(); k++){
-		outfile << setw(15) << setprecision(8) << grid.at(k) << ' ';
+		outfile << setw(15) << setprecision(8) << grid[k] << ' ';
 		outfile << setprecision(std::numeric_limits<double>::max_digits10);	
 		for (uint j=0; j<DISTS; ++j)
 			outfile << F[j][k] << ' ';
@@ -107,51 +102,33 @@ int main(int argc, char *argv[]) {
 	std::ofstream log_output_file(log_path);
 
 	auto& log_options = getLogOptions();
-	log_options.show_debug_messages = true;
-	log_options.show_thread_output = true;
+	log_options.verbosity = LOG_DEBUG;
 	log_options.use_log_output_stream = true;
 	log_options.log_output_stream = log_output_file;
 	
 	vector<double> xtab{1e-5, 1e-4, 1e-3, 1e-2, 0.1, 0.3, 0.5, 0.7, 0.9, 1.0};
-	Grid grid(xtab,
-		make_grid_filler<GridFillerLogLinQuad>(1e-5, 101, 51, 26),
-		{ .default_gauss_points=70, .split_interval = true});
-	auto& grid_options = grid.getOptions();
-	grid_options.use_alt_mapping = true;
-	grid_options.use_gsl_conv_routine = false;
-	grid_options.use_gsl_interp_routine = true;
-	
-	LesHouchesDistribution dist{};
+	GridFillerLogLinQuad grid_filler(1e-5, 100, 50, 26);
+	Grid grid(xtab, grid_filler, {});
+
+	LesHouchesDistribution dist(Qf);
 	AlphaS alphas(order, dist.Q0(), Qf, dist.alpha0(), mur2_muf2);
-	alphas.setVFNS(dist.masses(), dist.nfi());
+	alphas.setVFNS(dist.masses(), dist.nfi(), dist.nff());
 	// alphas.setFFNS(4);
 
-	DGLAPSolver solver(order, grid, alphas, Qf, iterations, trunc_idx, dist, mur2_muf2);
+	DGLAPSolver solver(order, grid, alphas, Qf, iterations, trunc_idx, std::move(dist), mur2_muf2);
 	auto& dglap_options = solver.getOptions();
 	dglap_options.use_truncated_nonsinglet_sol = true;
 	dglap_options.disable_heavy_flavor_matching = false;
-	dglap_options.use_nnlo_matching_conditions_at_n3lo = true;
+	dglap_options.use_nnlo_matching_conditions_at_n3lo = false;
 	dglap_options.use_n3lo_heavyquark_asymmetry = true;
-	dglap_options.use_fortran_nnlo_splitfuncs = false;
-	dglap_options.use_fortran_n3lo_splitfuncs = true;
-	dglap_options.cache_exprs = true;
+	dglap_options.use_fortran_n3lo_splitfuncs = false;
 
 	auto t0 = chrono::high_resolution_clock::now();
-	auto F = solver.evolve();
+	auto F = solver.evolve();	
 	auto tf = chrono::high_resolution_clock::now();
 	chrono::duration<double, ratio<1>> secs = tf-t0;
 	log(LOG_INFO, "evolve.cpp", "Evolution took {}.", secs);
 
 	datafile_name += ".dat";
-	outputData(F, xtab, grid, order, grid.size(), iterations, trunc_idx, mur2_muf2, datafile_name);
-
-	if (grid.getOptions().use_gsl_conv_routine) {
-		auto const& gsl_conv_errors = solver.getGrid().getGSLConvolutionErrors();
-		fs::path gsl_conv_errors_log_path("gsl-conv-errors.dat");
-		std::ofstream gsl_conv_errors_log_file(gsl_conv_errors_log_path);
-		std::ranges::copy(
-			gsl_conv_errors | std::views::transform([](auto&& _t){
-				auto [x,out,res] = _t; return std::format("{} {} {}", x, out, res); }),
-			std::ostream_iterator<std::string>(gsl_conv_errors_log_file, "\n"));
-	}
+	outputData(F, xtab, grid, order, iterations, trunc_idx, mur2_muf2, datafile_name);
 }

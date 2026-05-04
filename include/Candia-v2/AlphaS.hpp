@@ -3,29 +3,21 @@
  *  @brief Contains the @a AlphaS class which handles the evolution of the QCD running coupling.
  */
 
-#ifndef __ALPHAS_HPP
-#define __ALPHAS_HPP
+#pragma once
 
 #include <array>
 #include <cmath>
 
 #include "Candia-v2/Common.hpp"
-#include "Candia-v2/Options.hpp"
 
 namespace Candia2
 {
-
-	struct AlphaSOptions final
-	{
-		bool use_broken_log_value{false}; //!< purely for debugging
-	};
-
 	class LHAPDFDistribution;
 
 	/**
 	 *  @brief Class to handle the evolution of the QCD running coupling
 	 */
-	class AlphaS : public OptionsBase<AlphaSOptions>
+	class AlphaS
 	{
 	private:
 		uint _order{}; //!< Perturbative order.
@@ -78,27 +70,35 @@ namespace Candia2
 		 *  @brief Sets \f$\alpha_s\f$ to evolve with a variable number of flavors, with thresholds determined by @a masses.
 		 *  @param masses The array of on-shell masses at which \f$\alpha_s\f$ will perform matching
 		 *  @param nfi The starting value of \f$n_f\f$, determined by the selected initial distribution.
+		 *  @param nff The final value of \f$n_f\f$, determined by the selected initial distribution the the chosen final energy
 		 */
-		void setVFNS(std::array<double, 8> const& masses, uint nfi);
+		void setVFNS(std::array<double, 8> const& masses, uint nfi, uint nff);
 
+		double Q0() const { return _Q0; }
+		double Qf() const { return _Qf; }
 		double masses(uint nf) const; //!< getter for the mass corresponding to @a nf
 		inline uint nfi() const { return _nfi; } //!< getter for the starting value of \f$n_f\f$
 		inline uint nff() const { return _nff; } //!< getter for final value of \f$n_f\f$, determined by final evolution energy
-	    
-		double betaFn(double alpha) const; //!< returns the value of the beta-function given \f$\alpha\f$ as @a alpha
 
-		/** @brief retrieves the stored value of \f$\beta_0\f$ */
+		/**
+		 *  @defgroup betafunction Beta Function and Beta Coefficients
+		 *  @{
+		 */
+		double betaFn(double alpha) const;
 		inline double beta0() const { return _beta0; };
-		/** @brief retrieves the stored value of \f$\beta_1\f$ */
 		inline double beta1() const { return _beta1; };
-		/** @brief retrieves the stored value of \f$\beta_2\f$ */
 		inline double beta2() const { return _beta2; };
-		/** @brief retrieves the stored value of \f$\beta_3\f$ */
 		inline double beta3() const { return _beta3; };
+		/** @} */
 
+		/**
+		 *  @defgroup thresholds Threshold Functions
+		 *  @{
+		 */
 		void calculateThresholdValues(); //!< given the mass array, calculates the value of \f$\alpha-s\f$ pre and post-threshold
 		double pre(uint nf) const; //!< returns the value of \f$\alpha_s\f$ before the threshold corresponding to \f$n_f\f$
 		double post(uint nf) const; //!< returns the value of \f$\alpha_s\f$ after the threshold corresponding to \f$n_f\f$
+		/** @} */
 
 		/** @brief evaluates \f$\alpha_s\f$ using the solution to the Cauchy problem.
 		 *
@@ -121,10 +121,13 @@ namespace Candia2
 		/** @brief Returns true if we are resumming to a threshold energy, false otherwise */
 		inline bool resumThreshold() const { return !resumTabulated(); }
 
+		/** @brief returns a vector of (q,alpha_s) pairs evaluated at the provided list of energies */
+		std::vector<std::pair<double,double>> getValues(std::vector<double> const& qvals);
+
 	private:
 		void assertNf() const; //!< asserts whether the current value of @a nf is valid
 		void assertScheme() const;  //!< asserts whether the user's choice(s) given the current scheme is(are) valid
-		// 
+
 		double postMatch(double alpha, uint nf); //!< calculates \f$\alpha_s\f$ post threshold given the value pre-threshold
 		double preMatch(double alpha, uint nf); //!< calculates \f$\alpha_s\f$ pre threshold given the value post-threshold
 
@@ -135,5 +138,3 @@ namespace Candia2
 	};
 
 } // class AlphaS
-
-#endif // __ALPHAS_HPP

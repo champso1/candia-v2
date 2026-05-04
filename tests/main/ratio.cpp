@@ -1,16 +1,6 @@
-#include <cstdlib>
-#include <string>
-#include <vector>
-#include <fstream>
-#include <filesystem>
-#include <limits>
-#include <ranges>
-#include <sstream>
-using namespace std;
-using uint = unsigned;
-namespace fs = filesystem;
-
 #include "Candia-v2/Common.hpp"
+using namespace std;
+namespace fs = filesystem;
 using namespace Candia2;
 
 static void usage()
@@ -21,6 +11,7 @@ static void usage()
 	exit(EXIT_FAILURE);
 }
 
+static
 tuple<
 	vector<vector<double>>, // all data
 	vector<vector<double>>, // selected distributions 
@@ -60,7 +51,7 @@ readDatafile(fs::path path)
 		iss = istringstream{line};
 		iss >> temp1;
 		X.push_back(temp1);
-		for (int i=0; i<F.size(); ++i) {
+		for (uint i=0; i<F.size(); ++i) {
 			iss >> temp1;
 			F.at(i).push_back(temp1);
 		}
@@ -69,7 +60,6 @@ readDatafile(fs::path path)
 	log(LOG_INFO, "ratio.cpp", "Assigning new distributions in accordance with the table... ");
 
 	vector<vector<double>> dists(9, vector<double>{});
-	double size = ntab.size();
 	for (uint ix=0; ix<F.at(0).size(); ++ix) {
 		dists[0].emplace_back(F[0].at(ix));
 		dists[1].emplace_back(F[1].at(ix));
@@ -134,9 +124,9 @@ int main(int argc, char *argv[])
 	}
 
 	ofstream outfile{"ratios.dat"};
-	for (int i=0; i<ratios.at(0).size()-1; ++i) {
+	for (uint i=0; i<ratios.at(0).size()-1; ++i) {
 		outfile << n3lo_xtab.at(i) << ' ';
-		for (int j=0; j<ratios.size(); ++j)
+		for (uint j=0; j<ratios.size(); ++j)
 			outfile << ratios.at(j).at(i) << ' ';
 		outfile << '\n';
 	}

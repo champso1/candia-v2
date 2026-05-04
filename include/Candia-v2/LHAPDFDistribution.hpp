@@ -1,5 +1,8 @@
-#ifndef __LHAPDFDISTRIBUTION_HPP
-#define __LHAPDFDISTRIBUTION_HPP
+/**
+ *  @file LHAPDFDistribution.hpp
+ *  @brief Contains the @a LHAPDFDistribution class which handles interfacing with LHAPDF to define initial conditions
+ */
+#pragma once
 
 #include "Candia-v2/Distribution.hpp"
 
@@ -57,5 +60,3 @@ namespace Candia2
 			std::vector<value_type> const& grid_points) const override;
 	};
 }
-
-#endif // __LHAPDFDISTRIBUTION_HPP

@@ -2,71 +2,58 @@
     "version": 8,
     "configurePresets": [
         {
-            "name": "clang-debug",
-            "displayName": "clang-debug",
-            "description": "Using compilers: C = clang, CXX = clang++",
-            "generator": "Ninja",
-            "binaryDir": "${sourceDir}/bin/${presetName}",
-            "cacheVariables": {
-                "CMAKE_INSTALL_PREFIX": "${sourceDir}/install/${presetName}",
-                "CMAKE_C_COMPILER": "clang",
-                "CMAKE_CXX_COMPILER": "clang++",
-                "CMAKE_BUILD_TYPE": "Debug"
-            }
-        },
-        {
-            "name": "clang-release",
-            "displayName": "clang-release",
-            "description": "Using compilers: C = clang, CXX = clang++",
-            "generator": "Ninja",
-            "binaryDir": "${sourceDir}/bin/${presetName}",
-            "cacheVariables": {
-                "CMAKE_INSTALL_PREFIX": "${sourceDir}/install/${presetName}",
-                "CMAKE_C_COMPILER": "clang",
-                "CMAKE_CXX_COMPILER": "clang++",
-                "CMAKE_BUILD_TYPE": "Release",
-                "ENABLE_THREADING": "ON"
-            }
-        },
-        {
-            "name": "clang-testing",
-            "displayName": "clang-testing",
+            "name": "clang",
+            "displayName": "clang",
             "description": "Using compilers: C = clang, CXX = clang++",
             "generator": "Ninja Multi-Config",
-            "binaryDir": "${sourceDir}/build",
+            "binaryDir": "${sourceDir}/bin/${presetName}",
             "cacheVariables": {
                 "CMAKE_INSTALL_PREFIX": "${sourceDir}/install/${presetName}",
                 "CMAKE_C_COMPILER": "clang",
                 "CMAKE_CXX_COMPILER": "clang++",
                 "CMAKE_CONFIGURATION_TYPES": "Release;Debug;RelWithDebInfo",
-                "ENABLE_THREADING": "YES",
-                "BUILD_DOCS": "YES",
-                "BUILD_MANUSCRIPTS": "YES",
-                "WITH_LHAPDF": "NO"
+				"CANDIA_BUILD_TESTS": "YES",
+                "CANDIA_BUILD_DOCS": "YES",
+                "CANDIA_BUILD_MANUSCRIPTS": "YES",
+                "CANDIA_WITH_LHAPDF": "YES",
+				"CANDIA_LHAPDF_DIR": "$env{HOME}/.local"
             }
-        }
-    ],
-    "buildPresets": [
-        {
-            "name": "ninja-release",
-            "description": "",
-            "displayName": "",
-            "configurePreset": "clang-testing",
-            "configuration": "Release"
         },
-        {
-            "name": "ninja-debug",
-            "description": "",
-            "displayName": "",
-            "configurePreset": "clang-testing",
-            "configuration": "Debug"
+		{
+            "name": "gcc",
+            "displayName": "gcc",
+            "description": "Using compilers: C = gcc, CXX = g++",
+            "generator": "Ninja Multi-Config",
+            "binaryDir": "${sourceDir}/bin/${presetName}",
+            "cacheVariables": {
+                "CMAKE_INSTALL_PREFIX": "${sourceDir}/install/${presetName}",
+                "CMAKE_C_COMPILER": "gcc",
+                "CMAKE_CXX_COMPILER": "g++",
+                "CMAKE_CONFIGURATION_TYPES": "Release;Debug;RelWithDebInfo",
+				"CANDIA_BUILD_TESTS": "YES",
+                "CANDIA_BUILD_DOCS": "YES",
+                "CANDIA_BUILD_MANUSCRIPTS": "YES",
+                "CANDIA_WITH_LHAPDF": "YES",
+				"CANDIA_LHAPDF_DIR": "$env{HOME}/.local"
+            }
         },
-        {
-            "name": "ninja-relwithdebinfo",
-            "description": "",
-            "displayName": "",
-            "configurePreset": "clang-testing",
-            "configuration": "RelWithDebInfo"
+		{
+            "name": "gcc-osx",
+            "displayName": "gcc-osx",
+            "description": "Using compilers: C = gcc, CXX = g++",
+            "generator": "Ninja Multi-Config",
+            "binaryDir": "${sourceDir}/bin/${presetName}",
+            "cacheVariables": {
+                "CMAKE_INSTALL_PREFIX": "${sourceDir}/install/${presetName}",
+                "CMAKE_C_COMPILER": "gcc-15",
+                "CMAKE_CXX_COMPILER": "g++-15",
+                "CMAKE_CONFIGURATION_TYPES": "Release;Debug;RelWithDebInfo",
+				"CANDIA_BUILD_TESTS": "YES",
+                "CANDIA_BUILD_DOCS": "YES",
+                "CANDIA_BUILD_MANUSCRIPTS": "YES",
+                "CANDIA_WITH_LHAPDF": "YES",
+				"CANDIA_LHAPDF_DIR": "$env{HOME}/software/LHAPDF-6.5.5/out"
+            }
         }
     ]
 }
