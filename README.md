@@ -71,9 +71,13 @@ The call to `enable_language` is required because `Candia-v2` uses some Fortran 
 
 CMake will need to know where to find the `candiaConfig.cmake` file, which can be achieved either by appending the installation prefix to the `CMAKE_PREFIX_PATH` variable or specifying the variable `candia_DIR` to point to `<candia-prefix>/lib/cmake/candia`.
 
+## Changelog
+
+We will now keep a Changelog file for each release/update to the main branch, found in [Changelog.md](Changelog.md). Some minor info about what changed per release can be found on the Releases page.
+
 ## Attributions and License
 
-This code is available under the GPLv3 license, distributed here as [LICENSE](LICENSE). We also are grateful for the code and routines provided for the NNLO and approximate N^3LO splitting functions, references to which are provided in the public GitHub repository [here](https://github.com/svenolafmoch/Conformal-EIC), licensed also under the GPLv3 license. We are also grateful for the 3-loop operator matrix elements, provided via the `libome` library. The original repository is [here](https://gitlab.com/libome/libome), and a fork used in `candia-v2` is given [here](https://github.com/champso1/libome-fork), also available under the GPLv3 license, with appropriate citations required for usage given in its CITATION file.
+This code is available under the GPLv3 license, distributed here as [LICENSE](LICENSE). We also are grateful for the code and routines provided for the NNLO and approximate N3LO splitting functions, references to which are provided in the public GitHub repository [here](https://github.com/svenolafmoch/Conformal-EIC), licensed also under the GPLv3 license. We are also grateful for the 3-loop operator matrix elements, provided via the `libome` library. The original repository is [here](https://gitlab.com/libome/libome), and a fork used in `candia-v2` is given [here](https://github.com/champso1/libome-fork), also available under the GPLv3 license, with appropriate citations required for usage given in its CITATION file.
 
 ## Contacts
 
