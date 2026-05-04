@@ -4,7 +4,6 @@ using namespace std;
 namespace fs = filesystem;
 
 #include "Candia-v2/Candia.hpp"
-#include "Candia-v2/Gnuplot.hpp"
 using namespace Candia2;
 using out_type = std::vector<ArrayGrid>;
 
