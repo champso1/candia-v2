@@ -12,6 +12,10 @@ if (NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
 	"Debug" "Release" "MinSizeRel" "RelWithDebInfo")
 endif()
 
+if (NOT CMAKE_INSTALL_PREFIX)
+  set(CMAKE_INSTALL_PREFIX ${CMAKE_SOURCE_DIR}/install)
+endif()
+
 # build all vendor projects first before touching candia
 add_subdirectory(vendor)
 
@@ -19,8 +23,7 @@ set(sources
   src/AlphaS.cpp
   src/Candia.cpp
   src/Distribution.cpp
-#  src/Evolution.cpp
-#  src/EvolutionThread.cpp
+  src/Evolution.cpp
   src/Expression.cpp
   src/Grid.cpp
   src/GridFillers.cpp
@@ -71,9 +74,9 @@ set(n3lo_splitfuncs_fortran_src
 add_library(n3lo_splitfuncs_fortran STATIC ${n3lo_splitfuncs_fortran_src})
 
 add_library(candia STATIC)
-if (MSVC)
-  target_compile_options(candia PUBLIC /W4)
-else()
+
+option(CANDIA_ENABLE_WARNINGS "Enable compilation with max warnings e.g. -Wall -Wextra and -Wpedantic")
+if (CANDIA_ENABLE_WARNINGS)
   target_compile_options(candia PUBLIC -Wall -Wextra -Wpedantic)
 endif()
 target_sources(candia PRIVATE ${sources})
@@ -84,20 +87,27 @@ target_sources(candia PUBLIC
   FILES ${headers})
 
 find_package(TBB REQUIRED)
+find_package(Threads REQUIRED)
 
-target_link_libraries(candia PRIVATE hplog nnlo_splitfuncs_fortran n3lo_splitfuncs_fortran ome)
-target_link_libraries(candia PUBLIC TBB::tbb)
+target_link_libraries(candia PRIVATE
+  hplog
+  nnlo_splitfuncs_fortran
+  n3lo_splitfuncs_fortran
+  ome
+  Threads::Threads
+  TBB::tbb)
 target_include_directories(candia PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:include>)
+
 add_subdirectory(examples)
 add_subdirectory(tests)
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/share/cmake")
 
-option(WITH_LHAPDF "Compile in LHAPDF interface" OFF)
-option(LHAPDF_ROOT_DIR "Path to the installation root/prefix of LHAPDF." "/usr")
-if (WITH_LHAPDF)
+option(CANDIA_WITH_LHAPDF "Compile in LHAPDF interface" OFF)
+option(CANDIA_LHAPDF_DIR "Path to the installation root/prefix of LHAPDF." "/usr/local")
+if (CANDIA_WITH_LHAPDF)
   find_package(LHAPDF REQUIRED)
   message("candia-v2: Compiling with LHAPDF support.")
   target_include_directories(candia PUBLIC ${LHAPDF_INCLUDE_DIR})
@@ -111,27 +121,16 @@ if (WITH_LHAPDF)
   target_sources(candia PRIVATE src/LHAPDFDistribution.cpp)
 endif()
 
-option(ENABLE_THREADING "Use Multi-Threading capabilities to perform the evolution." OFF)
-if(ENABLE_THREADING)
-  message("candia-v2: Compiling with threading support.")
-  find_package(Threads REQUIRED)
-  target_sources(candia PRIVATE src/EvolutionThread.cpp)
-  target_link_libraries(candia PRIVATE Threads::Threads)
-  target_compile_definitions(candia PRIVATE ENABLE_THREADING=1)
-else()
-  target_sources(candia PRIVATE src/Evolution.cpp)
-  target_compile_definitions(candia PRIVATE ENABLE_THREADING=0)
-endif()
 
-option(BUILD_MANUSCRIPTS "Use pdflatex/bibtex to compile the available manuscripts" OFF)
-if (BUILD_MANUSCRIPTS)
+option(CANDIA_BUILD_MANUSCRIPTS "Use pdflatex/bibtex to compile the available manuscripts" OFF)
+if (CANDIA_BUILD_MANUSCRIPTS)
   message("candia-v2: building manuscripts")
   add_subdirectory(manuscripts)
 endif()
 
 
-option(BUILD_DOCS "Build Doxygen documentation" OFF)
-if(BUILD_DOCS)
+option(CANDIA_BUILD_DOCS "Build Doxygen documentation" OFF)
+if(CANDIA_BUILD_DOCS)
   find_package(Doxygen)
   if (DOXYGEN_FOUND)
 	set(DOXYGEN_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/docs)
@@ -140,8 +139,9 @@ if(BUILD_DOCS)
 	doxygen_add_docs(doxygen
 	  ${headers} ${sources}
 	  ALL)
-  endif(DOXYGEN_FOUND)
-endif(BUILD_DOCS)
+  endif()
+endif()
+
 
 # ====================
 # INSTALLATION

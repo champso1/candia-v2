@@ -1,14 +1,26 @@
 # Candia-v2
 
-**NOTE: `Candia-v2` is still a work-in-progress. The code works correctly and basic functionality is present, but it is not perfectly optimized, nor is the code very clean or feature-rich. Work is in progress to expand and improve the code.**
 
-`Candia-v2` is a new and improved version of `Candia` (cfr. C. Hampson, M. Guzzi, arXiv:2512.22667; A. Cafarella, M. Guzzi, C. Coriano', Comp.Phys.Comm. 179 2008; A. Cafarella, M. Guzzi, C. Coriano', Nucl.Phys.B748 2006), a computer code to numerically solve DGLAP evolution for collinear PDFs in the x-space up to next-to-next-to-next-to leading order (N^3LO) accuracy in perturbative QCD. `Candia-v2` currently uses an approximate version of the 4-loop splitting functions as the calculation of their exact analytical form is still in progress. `Candia` was originally written in C and was only capable of evolution up to next-to-next-to (NNLO) accuracy in QCD. New information on the splitting functions and operator matrix elements as well as advancements to C++ led to the development of `Candia-v2`.
+`Candia-v2` is a new and improved version of `Candia` (cfr. C. Hampson, M. Guzzi, arXiv:2512.22667; A. Cafarella, M. Guzzi, C. Coriano', Comp.Phys.Comm. 179 2008; A. Cafarella, M. Guzzi, C. Coriano', Nucl.Phys.B748 2006), a computer code to numerically solve DGLAP evolution for collinear PDFs in the x-space up to next-to-next-to-next-to leading order (N3LO) accuracy in perturbative QCD. `Candia-v2` currently uses an approximate version of the 4-loop splitting functions as the calculation of their exact analytical form is still in progress. `Candia` was originally written in C and was only capable of evolution up to next-to-next-to (NNLO) accuracy in QCD. New information on the splitting functions and operator matrix elements as well as advancements to C++ led to the development of `Candia-v2`, which also brings significant optimizations.
 
 ## Building
 
 ### Prerequisites
 
-`Candia-v2` depends on `libome`, which is in this repository as a submodule. When cloning this repository, either pass the option `--recurse-submodules` to `git clone`, or after the repository is cloned, run `git submodule init` followed by `git submodule update`. `libome` itself depends on GSL, which means that `candia-v2` can only be built on UNIX-like systems. Windows is supported either via WSL, the MSYS2 suite, or Cygwin (the former two are tested, but Cygwin is not). Lastly, a compiler that supports the C++20 standard is required.
+- `libome`: fast interface to OMEs. included as a submodule to this repository
+- GSL: GNU Scientific Library
+- `tbb`: Intel Threading Building Blocks -- allows usage of C++ execution policies to parallelize/vectorize C++ algorithm loops
+- Compiler with C++20 support see [here](#compiler-and-system-support) for info about compiler/system choice
+- LHAPDF (optional): for interface to/from LHAPDF grids.
+- CMake and a build tool e.g. `Make` or `Ninja`
+- Doxygen (optional): for building the code documentation
+- LaTeX tools (optional): for building the manuscripts
+
+#### Compiler and System Support
+
+Windows is in general not supported except for Windows Subsystem for Linux. However, Intel provides a C/C++ and Fortran compiler and library suite which, coupled with [this platform-independent CMake-based GSL wrapper](https://github.com/ampl/GSL), allows one to use `Candia-v2` on Windows, just without the LHAPDF support. As far as we are aware, LHAPDF doesn't have a widely available fork/wrapper to port the Autotools-based system to something like CMake. Further, LHAPDF uses some POSIX syscalls which would require some manual intervention.
+
+MacOS is supported but LLVM's CLang or GCC are required, because as far as we are aware, Apple's CLang's `libc++` doesn't implement C++ execution policies. As a note, it was a bit challenging to link with LLVM's `libc++`, so we recommend just using GCC on MacOS.
 
 ### Compiling
 
@@ -17,22 +29,30 @@ Compiling follows the standard CMake procedure:
 ```bash
 mkdir build
 cd build
-cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=<path> -DENABLE_THREADING=ON
-make -j
+cmake .. <options>
+cmake --build .
+# optional: cmake --install .
 ```
 
-Specifying a release build will of course make the code run significantly faster. One can specify an installation prefix to install headers and binaries; if not specified, the default location is in a folder called `install` in the root of the project. Installed along with the binaries are some CMake-related files, notably a `candiaConfig.cmake` file -- see [here](#usage-from-other-cmake-projects) for what to do with it.
+Among standard CMake options like `-DCMAKE_BUILD_TYPE` or `-DCMAKE_INSTALL_PREFIX` are the following `Candia-v2` specific options (all of which are prefixed with `CANDIA_`):
+- `CANDIA_WITH_LHAPDF` (bool; default: OFF): compile LHAPDF support. 
+- `CANDIA_LHAPDF_DIR` (string; default: '/usr/local'): if LHAPDF is installed in a nonstandard location (i.e. not /usr/local), then specify its installation prefix here. this variable is ignored if `CANDIA_WITH_LHAPDF` is OFF.
+- `CANDIA_BUILD_DOCS` (bool; default: OFF): use Doxygen to build the code documentation
+- `CANDIA_BUILD_MANUSCRIPTS` (bool; default: OFF): use LaTeX to build the manuscripts
+- `CANDIA_BUILD_EXAMPLES` (bool; default: YES): build the two examples in the `examples/` directory
+- `CANDIA_BUILD_TESTS` (bool; default: OFF): build the "tests" in the `tests/` directory. These aren't traditional tests, but rather a more extensive set of C++ files to perform e.g. benchmarking. Basic functionality is already in the examples.
 
-The `ENABLE_THREADING` flag is, by default, off, and will not compile in any threading-relating libraries e.g. pthread on UNIX-like systems. As discussed in the paper, threading can massively increase the speed of the non-singlet evolution, and if your computer is capable, specifying this flag to be `ON` is recommended.
+Running `cmake --install <build-dir>` will perform standard installation to the chosen directory, and will also spit out a `candiaConfig.cmake` file -- see [here](#usage-from-other-cmake-projects) for what to do with it in other CMake projects.
+
 
 ## Usage
 
-Once `candia-v2` is built, there will be a directory named `examples` in which there are some executables, data files, and other auxiliary files that all demonstrate a lot of the basic functionality, the source files for which are in the `examples` directory in the root of the repository.
+Once built, there will be a directory named `examples` in which there are some executables, data files, and other auxiliary files that all demonstrate a lot of the basic functionality, the source files for which are in the `examples` directory in the root of the repository.
 
 - `evolve_dglap.cpp`: performs the evolution with the arguments passed in to the executable. Spits out a data file containing all of the resultant distributions.
 - `read_table.cpp`: accepts a data file on the command line and spits out a PDF file containing a table of the results built with LaTeX. Requires `pdflatex` to be available on the command line.
 
-Running the associated executables with no options will indicate how to use each one. `evolve_dglap.cpp` also contains comments on the code related to `candia-v2` (`read_table.cpp` contains just simple C++ code for file I/O and other non-`candia-v2` related stuff).
+Running the an executable with no arguments will indicate how to use each one. `evolve_dglap.cpp` will also contain comments on the library and what is going on.
 
 ## Usage from Other CMake Projects
 
@@ -42,7 +62,7 @@ As mentioned in [Compiling](#compiling), installing the project will provide a `
 add_executable(main ...)
 # ...
 find_package(candia REQUIRED)
-target_include_directories(main PRIVATE ${CANDIA_INCLUDE_DIR})
+target_include_directories(main PUBLIC ${CANDIA_INCLUDE_DIR})
 target_link_libraries(main PRIVATE ${CANDIA_LIBRARIES})
 ```
 

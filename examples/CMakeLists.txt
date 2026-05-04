@@ -1,5 +1,5 @@
-option(BUILD_EXAMPLES "Build the examples" YES)
-if (BUILD_EXAMPLES)
+option(CANDIA_BUILD_EXAMPLES "Build the examples" ON)
+if (CANDIA_BUILD_EXAMPLES)
   add_executable(evolve_dglap evolve_dglap.cpp)
   target_include_directories(evolve_dglap PUBLIC ${CMAKE_SOURCE_DIR}/include)
   target_link_libraries(evolve_dglap PUBLIC candia)

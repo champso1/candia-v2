@@ -1,6 +1,6 @@
 find_program(LHAPDF_CONFIG
   NAMES bin/lhapdf-config
-  HINTS ${LHAPDF_ROOT_DIR})
+  HINTS ${CANDIA_LHAPDF_DIR})
 if (LHAPDF_CONFIG)
   execute_process(
     COMMAND ${LHAPDF_CONFIG} --incdir

@@ -6,11 +6,9 @@
 #pragma once
 
 #include <concepts>
-#include <functional>
 #include <memory>
 #include <utility>
 #include <vector>
-#include <string_view>
 
 #include "Candia-v2/Common.hpp"
 #include "Candia-v2/Grid.hpp"
@@ -236,7 +234,7 @@ namespace Candia2
 		/** @brief takes the default exact coefficients (A, B, ...) and sets up S to contain all necessary info */
 		void setupTruncatedDistributions();
 
-		void evolveSinglet(std::vector<ArrayGrid>& arr, double L1);
+		void evolveSinglet(std::reference_wrapper<std::vector<ArrayGrid>> arr, double L1);
 		/**
 		 *  @brief Evolves the non-singlet distributions
 		 *  @param arr Reference to the array in which to place the resummed results,
@@ -246,7 +244,7 @@ namespace Candia2
 		 *  @param L3 The NNLO logarithmic coefficient (actually an arctan)
 		 *  @param L4 The N3LO logarithmic coefficient
 		 */
-		void evolveNonSinglet(std::vector<ArrayGrid>& arr, double L1, double L2, double L3, double L4);
+		void evolveNonSinglet(std::reference_wrapper<std::vector<ArrayGrid>> arr, double L1, double L2, double L3, double L4);
 
 		/**
 		 *  @brief Evolves the non-singlet distributions with the truncated ansatz
@@ -254,37 +252,8 @@ namespace Candia2
 		 *  which will be different if resumming to the final energy vs a threshold one
 		 *  @param L1 The LO logarithmic coefficient
 		 */
-		void evolveNonSingletTrunc(std::vector<ArrayGrid>& arr, double L1);
+		void evolveNonSingletTrunc(std::reference_wrapper<std::vector<ArrayGrid>> arr, double L1);
 		
-
-#if ENABLE_THREADING
-		/**
-		 *  @brief Evolves the singlet distributions
-		 *  @param arr Reference to the array in which to place the resummed results,
-		 *  which will be different if resumming to the final energy vs a threshold one
-		 *  @param L1 the logarithmic coefficient
-		 */
-		void evolveSingletThreaded(std::reference_wrapper<std::vector<ArrayGrid>> arr, double L1);
-		/**
-		 *  @brief Evolves the non-singlet distributions
-		 *  @param arr Reference to the array in which to place the resummed results,
-		 *  which will be different if resumming to the final energy vs a threshold one
-		 *  @param L1 The LO logarithmic coefficient
-		 *  @param L2 The NLO logarithmic coefficient
-		 *  @param L3 The NNLO logarithmic coefficient (actually an arctan)
-		 *  @param L4 The N3LO logarithmic coefficient
-		 */
-		void evolveNonSingletThreaded(std::reference_wrapper<std::vector<ArrayGrid>> arr, double L1, double L2, double L3, double L4);
-
-		/**
-		 *  @brief Evolves the non-singlet distributions with the truncated ansatz (threaded version)
-		 *  @param arr Reference to the array in which to place the resummed results,
-		 *  which will be different if resumming to the final energy vs a threshold one
-		 *  @param L1 The LO logarithmic coefficient
-		 */
-		void evolveNonSingletTruncThreaded(std::reference_wrapper<std::vector<ArrayGrid>> arr, double L1);
-#endif
-
 		/**
 		 *  @brief Performs the heavy-flavor matching for the quark/gluon distributions
 		 */
@@ -304,7 +273,7 @@ namespace Candia2
 		void HFT_N3LO4(ArrayGridView g, ArrayGridView qp, ArrayGridView qminus, uint k, ArrayGridView qh, ArrayGridView qhb);
 		/** @} */
 
-#if ENABLE_THREADING
+
 		/**
 		 *  @defgroup nonsinglethelpers Multi-Thread Non-Singlet Helper Functions
 		 *  @{
@@ -344,7 +313,7 @@ namespace Candia2
 
 		/** @defgroup recrels Recursion Relations */
 
-#endif // ENABLE_THREADING
+
 		
 		/**
 		 *  @defgroup singletrecrels Singlet Recursion Relations
