@@ -3,7 +3,7 @@
     "configurePresets": [
         {
             "name": "clang",
-            "displayName": "clang-testing",
+            "displayName": "clang",
             "description": "Using compilers: C = clang, CXX = clang++",
             "generator": "Ninja Multi-Config",
             "binaryDir": "${sourceDir}/bin/${presetName}",
@@ -21,7 +21,7 @@
         },
 		{
             "name": "gcc",
-            "displayName": "gcc-testing",
+            "displayName": "gcc",
             "description": "Using compilers: C = gcc, CXX = g++",
             "generator": "Ninja Multi-Config",
             "binaryDir": "${sourceDir}/bin/${presetName}",
@@ -35,6 +35,24 @@
                 "CANDIA_BUILD_MANUSCRIPTS": "YES",
                 "CANDIA_WITH_LHAPDF": "YES",
 				"CANDIA_LHAPDF_DIR": "$env{HOME}/.local"
+            }
+        },
+		{
+            "name": "gcc-osx",
+            "displayName": "gcc-osx",
+            "description": "Using compilers: C = gcc, CXX = g++",
+            "generator": "Ninja Multi-Config",
+            "binaryDir": "${sourceDir}/bin/${presetName}",
+            "cacheVariables": {
+                "CMAKE_INSTALL_PREFIX": "${sourceDir}/install/${presetName}",
+                "CMAKE_C_COMPILER": "gcc-15",
+                "CMAKE_CXX_COMPILER": "g++-15",
+                "CMAKE_CONFIGURATION_TYPES": "Release;Debug;RelWithDebInfo",
+				"CANDIA_BUILD_TESTS": "YES",
+                "CANDIA_BUILD_DOCS": "YES",
+                "CANDIA_BUILD_MANUSCRIPTS": "YES",
+                "CANDIA_WITH_LHAPDF": "YES",
+				"CANDIA_LHAPDF_DIR": "$env{HOME}/software/LHAPDF-6.5.5/out"
             }
         }
     ]

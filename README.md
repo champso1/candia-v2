@@ -20,7 +20,7 @@
 
 Windows is in general not supported except for Windows Subsystem for Linux. However, Intel provides a C/C++ and Fortran compiler and library suite which, coupled with [this platform-independent CMake-based GSL wrapper](https://github.com/ampl/GSL), allows one to use `Candia-v2` on Windows, just without the LHAPDF support. As far as we are aware, LHAPDF doesn't have a widely available fork/wrapper to port the Autotools-based system to something like CMake. Further, LHAPDF uses some POSIX syscalls which would require some manual intervention.
 
-MacOS is supported but LLVM's CLang or GCC are required, because as far as we are aware, Apple's CLang's `libc++` doesn't implement C++ execution policies. As a note, it was a bit challenging to link with LLVM's `libc++`, so we recommend just using GCC on MacOS.
+MacOS is supported but LLVM's CLang or GCC are required, because as far as we are aware, Apple's CLang's `libc++` doesn't implement C++ execution policies. As a note, it was a bit challenging to link with LLVM's `libc++`, so we recommend just using GCC on MacOS. Further, it is best to compile GSL and LHAPDF (if using the LHAPDF interface) using the same GCC version to avoid weird compile errors with `Candia-v2`.
 
 ### Compiling
 
@@ -59,12 +59,15 @@ Running the an executable with no arguments will indicate how to use each one. `
 As mentioned in [Compiling](#compiling), installing the project will provide a `candiaConfig.cmake` file. In a `CMakeLists.txt` file in another project, one needs only write
 
 ```cmake
+enable_language(Fortran)
 add_executable(main ...)
 # ...
 find_package(candia REQUIRED)
 target_include_directories(main PUBLIC ${CANDIA_INCLUDE_DIR})
 target_link_libraries(main PRIVATE ${CANDIA_LIBRARIES})
 ```
+
+The call to `enable_language` is required because `Candia-v2` uses some Fortran files to do e.g. harmonic polylogarithms, and this function call sets up the required compiler/linker flags.
 
 CMake will need to know where to find the `candiaConfig.cmake` file, which can be achieved either by appending the installation prefix to the `CMAKE_PREFIX_PATH` variable or specifying the variable `candia_DIR` to point to `<candia-prefix>/lib/cmake/candia`.
 
