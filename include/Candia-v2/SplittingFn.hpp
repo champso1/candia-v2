@@ -22,6 +22,7 @@ namespace Candia2
 		static double _beta0; //!< \f$\beta_0\f$ value for P0gg calculation
 		static double _log_muf2_mur2;    //!< log of mu_f/mu_r
 		static uint _imod; //!< approximation type for n3lo splitting functions
+		static double flagNLP; //!< random flag enclosed in exact p3 splitting functions
 	public:
 		SplittingFunction() = default; //!< default constructor
 		virtual ~SplittingFunction() = default; //!< default deconstructor
@@ -36,6 +37,9 @@ namespace Candia2
 			_beta0 = beta0;
 		    _log_muf2_mur2 = log_muf2_mur2;
 		}
+
+		/** @brief sets the random flag in the exact p3 splitting functions*/
+		inline static void setFlagNLP(bool flagNLP_) { flagNLP = flagNLP_ ? 1.0 : 0.0; }
 	};
 
 
@@ -603,7 +607,7 @@ namespace Candia2
 		};
 	} // namespace mvv_p2
 
-	/** @defgroup n3lo_splitfuncs_fortran Fortran Versions of P3 Splitting Functions */
+	/** @defgroup n3lo_splitfuncs_exact Fortran Versions of P3 Splitting Functions */
 	namespace mvv_p3
 	{
 		/**
@@ -812,6 +816,52 @@ namespace Candia2
 			}
 		};
 	} // namespace mvv_p3
+
+	/** @defgroup n3lo_splitfuncs_fortran Fortran Versions of P3 Splitting Functions */
+	namespace p3_exact
+	{
+		/**
+		 *  @ingroup n3lo_splitfuncs_exact
+		 *  @brief Implements \f$P_{\mathrm{NS}}^{+,(3)}\f$
+		 */
+		class P3nsp final: public SplittingFunction
+		{
+		public:
+			using SplittingFunction::SplittingFunction;
+		
+			double calcRegular(double x) const override;
+			double calcPlus() const override;
+			double calcDelta() const override;
+		};
+
+		/**
+		 *  @ingroup n3lo_splitfuncs_exact
+		 *  @brief Implements \f$P_{\mathrm{NS}}^{-,(3)}\f$
+		 */
+		class P3nsm final: public SplittingFunction
+		{
+		public:
+			using SplittingFunction::SplittingFunction;
+		
+			double calcRegular(double x) const override;
+			double calcPlus() const override;
+			double calcDelta() const override;
+		};
+
+		/**
+		 *  @ingroup n3lo_splitfuncs_exact
+		 *  @brief Implements \f$P_{\mathrm{NS}}^{V,(3)}\f$
+		 */
+		class P3nsv final: public SplittingFunction
+		{
+		public:
+			using SplittingFunction::SplittingFunction;
+		
+			double calcRegular(double x) const override;
+			double calcPlus() const override;
+			double calcDelta() const override;
+		};
+	}
 	
 } // namespace Candia2
 

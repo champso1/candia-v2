@@ -35,6 +35,8 @@ namespace Candia2
 			APPROX_B = 2,
 			APPROX_AVG = 3
 		} n3lo_splitfunc_imod{APPROX_AVG}; //!< approximation to use for the N3LO splitting functions
+		bool use_exact_p3ns{false}; //!< whether to use the exact expressions for the p3 non-singlet splitting functions
+		bool flagNLP{false}; //!< random flag in the p3 exact splitting functions
 	};
 
 	/**

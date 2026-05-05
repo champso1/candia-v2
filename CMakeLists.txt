@@ -34,7 +34,8 @@ set(sources
   src/OperatorMatrixElements.cpp
   src/RecRel.cpp
   src/SpecialFuncs.cpp
-  src/SplittingFns.cpp)
+  src/SplittingFns.cpp
+  src/SplittingFns_P3nsExact.cpp)
 
 set(headers
   include/Candia-v2/AlphaS.hpp

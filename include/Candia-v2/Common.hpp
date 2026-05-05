@@ -31,15 +31,27 @@ namespace Candia2
 	*  @defgroup constants Constants
 	*  @{
 	*/
-	constexpr double CF    = 4.0/3.0;
-	constexpr double NC    = 3.0;
-	constexpr double TR    = 0.5;
-	constexpr double MZ    = 91.1876;
-	constexpr double PI = std::numbers::pi;
-	constexpr double PI_2 = PI*PI;
-	constexpr double PI_3 = PI*PI*PI;
-	constexpr double Zeta2 = PI*PI/6.0;
-	constexpr double Zeta3 = 1.2020569031595942854;
+	constexpr double CF      = 4.0/3.0;
+	constexpr double CF2     = CF*CF;
+	constexpr double CF3     = CF2*CF;
+	constexpr double CF4     = CF3*CF;
+	constexpr double NC      = 3.0;
+	constexpr double NC2     = NC*NC;
+	constexpr double NC3     = NC2*NC;
+	constexpr double TR      = 0.5;
+	constexpr double MZ      = 91.1876;
+	constexpr double PI      = std::numbers::pi;
+	constexpr double PI_2    = PI*PI;
+	constexpr double PI_3    = PI_2*PI;
+	constexpr double PI_4    = PI_3*PI;
+	constexpr double PI_6    = PI_4*PI_2;
+	constexpr double Zeta2   = PI*PI/6.0;
+	constexpr double Zeta3   = 1.2020569031595942854;
+	constexpr double Zeta3_2 = Zeta3*Zeta3;
+	constexpr double Zeta4   = PI_4/90.0;
+	constexpr double Zeta5   = 1.0369277551433699263;
+	constexpr double Zeta6   = PI_6/945.0;
+	constexpr double Zeta7   = 1.0083492773819228268;
 	/** @} */
 
 	/**

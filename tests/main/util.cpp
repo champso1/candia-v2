@@ -308,11 +308,11 @@ void outputLatexTable(
 
 	auto format_val = [t=format,f=benchmark_format](double val) -> std::string {
 		switch (t) {
-			case 0: return percentToLatex(val);
-			case 1: return scientificToLatex(val, 4, f);
-			case 2: return percentToLatex2(val);
+			case 0: return percentToLatex(val); break;
+			case 1: return scientificToLatex(val, 4, f); break;
+			case 2: return percentToLatex2(val); break;
 		}
-		return "???"; // unreachable
+		throw std::runtime_error("unreachable");
 	};
 
 	log(LOG_INFO, "util.hpp", "Printing table information.");

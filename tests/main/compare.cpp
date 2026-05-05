@@ -1,3 +1,4 @@
+#include "Candia-v2/Common.hpp"
 #include "util.hpp"
 
 static void usage()
@@ -14,7 +15,7 @@ static void usage()
 	log(LOG_INFO, "compare.cpp", "");
 	log(LOG_INFO, "compare.cpp", "    <diff-type>: 0: percent error (i.e treating the other file as the base)");
 	log(LOG_INFO, "compare.cpp", "                 1: percent difference (i.e. treating neither file as the base)");
-	exit(EXIT_FAILURE);
+	throw std::runtime_error("invalid cli arguments");
 }
 
 static dist_type compute_diffs(
@@ -24,6 +25,7 @@ static dist_type compute_diffs(
 
 int main(int argc, char *argv[])
 {
+	getLogOptions().verbosity = LOG_INFO;
 	if (argc != 6 && argc != 3)
 		usage();
 

@@ -176,6 +176,9 @@ namespace Candia2
 		createExpression<A2gg>(ExprName::A2gg);
 		createExpression<A2hq>(ExprName::A2hq);
 		createExpression<A2hg>(ExprName::A2hg);
+
+		if (options.use_fortran_n3lo_splitfuncs && options.use_exact_p3ns)
+			log(LOG_ERROR, "DGLAP", "Cannot use both the Fortran P3s and the exact (the Fortran versions are approximate)");
 		
 		if (options.use_fortran_n3lo_splitfuncs) {
 			log(LOG_DEBUG, "DGLAP", "Loading Fortran versions of P3 splitting functions");
@@ -186,6 +189,15 @@ namespace Candia2
 			createExpression<mvv_p3::P3qg>(ExprName::P3qg);
 			createExpression<mvv_p3::P3gq>(ExprName::P3gq);
 			createExpression<mvv_p3::P3gg>(ExprName::P3gg);
+		} else if (options.use_exact_p3ns) {
+			log(LOG_DEBUG, "DGLAP", "Loading exact expressions for P3nsm, P3nsp and P3nsv");
+			createExpression<p3_exact::P3nsm>(ExprName::P3nsm);
+			createExpression<p3_exact::P3nsp>(ExprName::P3nsp);
+			createExpression<p3_exact::P3nsv>(ExprName::P3nsv);
+			createExpression<P3qq>(ExprName::P3qq);
+			createExpression<P3qg>(ExprName::P3qg);
+			createExpression<P3gq>(ExprName::P3gq);
+			createExpression<P3gg>(ExprName::P3gg);
 		} else {
 			log(LOG_DEBUG, "DGLAP", "Loading C++ versions of P3 splitting functions");
 			createExpression<P3nsm>(ExprName::P3nsm);
@@ -200,6 +212,13 @@ namespace Candia2
 		uint imod = getOptions().n3lo_splitfunc_imod;
 		SplittingFunction::setN3LOApproxType(imod);
 		log(LOG_DEBUG, "DGLAP", "Setting N3LO approximation type (imod) = {}", imod);
+
+		bool flagNLP = getOptions().flagNLP;
+		SplittingFunction::setFlagNLP(flagNLP);
+		if (flagNLP)
+			log(LOG_DEBUG, "DGLAP", "Using flagNLP");
+		else
+			log(LOG_DEBUG, "DGLAP", "Not using flagNLP");
 
 		createExpression<OpMatElemN3LO>(ExprName::A3nsm, ome::AqqQNSEven);
 		createExpression<OpMatElemN3LO>(ExprName::A3nsp, ome::AqqQNSOdd);

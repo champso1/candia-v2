@@ -34,15 +34,17 @@ int main(int argc, char *argv[])
 	}
 
 	xtab_type xtab{};
-	dist_type dists{};
+	dist_type dists_raw{};
 	if (origin == 0) {
 		auto read_candia_file_result = read_candia_file(datafile_path, 37);
 		xtab = read_candia_file_result.xtab;
-		dists = read_candia_file_result.dists_ntabbed;
+		dists_raw = read_candia_file_result.dists_ntabbed;
 	} else {
 		auto [xtab, dists] = read_other_file(datafile_path, 37);
 	}
 
+	auto dists = fix_dists(dists_raw, type);
+	
 	std::string basename = datafile_path.filename().string().substr(0, datafile_path.filename().string().rfind('.'));	
 	outputLatexTable(xtab, dists, basename, cols[type].get(), 1, format == 0);
 }

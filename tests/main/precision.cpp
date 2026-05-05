@@ -9,7 +9,7 @@ static void usage()
 	log(LOG_INFO, "precision.cpp", "    <candia-file-1>: path to the first candia datafile");
 	log(LOG_INFO, "precision.cpp", "    <candia-file-2>: path to the second datafile");
 	log(LOG_INFO, "precision.cpp", "    <title>: title to give to the outputted table pdf");
-	exit(EXIT_FAILURE);
+    throw std::runtime_error("invalid cli arguments");
 }
 
 static dist_type compute_diffs(
@@ -18,6 +18,7 @@ static dist_type compute_diffs(
 
 int main(int argc, char* argv[])
 {
+	getLogOptions().verbosity = LOG_INFO;
 	if (argc != 4)
 		usage();
 
@@ -31,14 +32,12 @@ int main(int argc, char* argv[])
 	auto read_candia_file_result1 = read_candia_file(filepath1, 37);
 	auto const& xtab_candia1 = read_candia_file_result1.xtab;
 	auto const& candia_dists_raw1 = read_candia_file_result1.dists_ntabbed;
-	[[maybe_unused]] auto const& grid_points = read_candia_file_result1.grid_points;
 	
-	auto read_candia_file_result2 = read_candia_file(filepath1, 37);
+	auto read_candia_file_result2 = read_candia_file(filepath2, 37);
 	auto const& xtab_candia2 = read_candia_file_result2.xtab;
 	auto const& candia_dists_raw2 = read_candia_file_result2.dists_ntabbed;
 
-	if (!std::ranges::equal(xtab_candia1, xtab_candia2))
-	{
+	if (!std::ranges::equal(xtab_candia1, xtab_candia2)) {
 		log(LOG_ERROR, "precision.cpp", "Two candia datafile xtabs are different. {} vs. {}",
 			vec_to_str(xtab_candia1), vec_to_str(xtab_candia2));
 	}
@@ -62,7 +61,7 @@ static dist_type compute_diffs(
 			return std::abs((candia1-candia2)/avg)*100.0;
 		};
 
-	dist_type diffs{candia_data1.size(), std::vector<double>(candia_data1.at(0).size(), 0.0)};
+	dist_type diffs(candia_data1.size(), std::vector<double>(candia_data1.at(0).size(), 0.0));
 	for (uint j=0; j<candia_data1.size(); ++j) {
 		for (uint k=0; k<candia_data1.at(0).size(); ++k) {
 			double candia1 = candia_data1.at(j).at(k);

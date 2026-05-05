@@ -5,10 +5,14 @@ using namespace Candia2;
 
 static void usage()
 {
-	log(LOG_INFO, "ratio.cpp", "USAGE: ratio <n3lo-file> <nnlo-file>");
-	log(LOG_INFO, "ratio.cpp", "    <n3lo-file>: path to n3lo data file");
-	log(LOG_INFO, "ratio.cpp", "    <nnlo-file>: path to nnlo data file");
-	exit(EXIT_FAILURE);
+    cout << "[ERROR] ratio.cpp: Invalid arguments.\n";
+	cout << "Usage:\n";
+	cout << "-------------------------------------------------------\n";
+	cout << "./ratio(.exe) <file1> <file2>\n";
+	cout << "    <file1>: the first file to compare.\n";
+	cout << "    <file2>: the second file to compare.\n";
+	cout << "-------------------------------------------------------\n\n";
+	throw std::runtime_error("invalid cli arguments");
 }
 
 static
@@ -77,6 +81,7 @@ readDatafile(fs::path path)
 
 int main(int argc, char *argv[])
 {
+	getLogOptions().verbosity = LOG_INFO;
 	if (argc != 3)
 		usage();
 
