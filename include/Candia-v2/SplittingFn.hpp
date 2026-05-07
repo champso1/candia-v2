@@ -21,14 +21,15 @@ namespace Candia2
 		static uint _nf;      //!< number of active/currently massless flavors
 		static double _beta0; //!< \f$\beta_0\f$ value for P0gg calculation
 		static double _log_muf2_mur2;    //!< log of mu_f/mu_r
-		static uint _imod; //!< approximation type for n3lo splitting functions
+		P3ApproxType _imod{P3ApproxType::ImodAvg}; //!< approximation type for n3lo splitting functions
 		static double flagNLP; //!< random flag enclosed in exact p3 splitting functions
 	public:
 		SplittingFunction() = default; //!< default constructor
 		virtual ~SplittingFunction() = default; //!< default deconstructor
 
-		/** @brief sets what aproximation type to use for the n3lo splitting functions */
-		inline static void setN3LOApproxType(uint imod){ _imod = imod; }
+		SplittingFunction(P3ApproxType imod) : _imod{imod}
+		{
+		}
 
 		/** updates the global value of nf and \f$\beta_0\f$ */
 		inline static void update(uint nf, double beta0, double log_muf2_mur2)
@@ -37,9 +38,6 @@ namespace Candia2
 			_beta0 = beta0;
 		    _log_muf2_mur2 = log_muf2_mur2;
 		}
-
-		/** @brief sets the random flag in the exact p3 splitting functions*/
-		inline static void setFlagNLP(bool flagNLP_) { flagNLP = flagNLP_ ? 1.0 : 0.0; }
 	};
 
 

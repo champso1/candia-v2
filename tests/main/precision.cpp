@@ -48,7 +48,7 @@ int main(int argc, char* argv[])
 	auto diffs = compute_diffs(candia_dists1, candia_dists2);
 
 	std::string latex_filename = std::format("diffs-candia-{}", title);
-	outputLatexTable(xtab_candia1, diffs, latex_filename, cols[type].get(), 2, false);
+	outputLatexTable(xtab_candia1, diffs, latex_filename, cols[type].get(), 0, false);
 }
 
 static dist_type compute_diffs(

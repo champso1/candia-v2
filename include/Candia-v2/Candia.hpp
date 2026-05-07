@@ -11,6 +11,7 @@
 #include <vector>
 
 #include "Candia-v2/Common.hpp"
+#include "Candia-v2/Expression.hpp"
 #include "Candia-v2/Grid.hpp"
 #include "Candia-v2/AlphaS.hpp"
 #include "Candia-v2/Distribution.hpp"
@@ -26,17 +27,13 @@ namespace Candia2
 	{
 		bool use_nnlo_matching_conditions_at_n3lo{false}; //!< switch for whether to use nnlo matching at n3lo (for benchmarking purposes)
 		bool disable_heavy_flavor_matching{false}; //!< switch for whether to use matching at all for the heavy flavors
+
 		bool use_n3lo_heavyquark_asymmetry{true}; //!< use new OME from arXiv:2512.13508
+
 		bool use_truncated_nonsinglet_sol{false}; //!< whether to use the truncated ansatz in the non-singlet sector, as opposed to the exact solution
+		 
 		bool use_fortran_nnlo_splitfuncs{false}; //!< whether to use the fortran versions for the nnlo splitting functions or the C++-translated ones
 		bool use_fortran_n3lo_splitfuncs{false}; //!< whether to use the fortran versions for the n3lo splitting functions or the C++-translated ones
-		enum : uint {
-			APPROX_A = 1,
-			APPROX_B = 2,
-			APPROX_AVG = 3
-		} n3lo_splitfunc_imod{APPROX_AVG}; //!< approximation to use for the N3LO splitting functions
-		bool use_exact_p3ns{false}; //!< whether to use the exact expressions for the p3 non-singlet splitting functions
-		bool flagNLP{false}; //!< random flag in the p3 exact splitting functions
 	};
 
 	/**
@@ -105,17 +102,6 @@ namespace Candia2
 		std::array<double,8> _b{};  //!< \f$-2*\mathrm{Re}[r_2]\f$
 		std::array<double,8> _c{};  //!< \f$|r_2|^2\f$
 
-		enum class ExprName : uint
-		{
-			P0ns=0, P0qq, P0qg, P0gq, P0gg,
-			P1nsm, P1nsp, P1qq, P1qg, P1gq, P1gg,
-			P2nsm, P2nsp, P2nsv, P2qq, P2qg, P2gq, P2gg,
-			P3nsm, P3nsp, P3nsv, P3qq, P3qg, P3gq, P3gg,
-			A2ns, A2hq, A2hg, A2gq, A2gg,
-		    A3nsm, A3nsp, A3gq, A3gg, A3hq, A3hg, A3psqq, A3sqg, A3PSshq,
-			Count
-		};
-
 		std::array<std::unique_ptr<Expression>, static_cast<uint>(ExprName::Count)> _expressions{};
 		template <typename TExpr, typename... TExprArgs>
 		requires (std::derived_from<TExpr, Expression>)
@@ -175,6 +161,42 @@ namespace Candia2
 		 *  @brief Helper function to create/load all expression objects for the provided order.
 		 */
 		void loadAllExpressions();
+
+
+	private:
+		std::array<P3ApproxType, static_cast<uint>(ExprName::Count)> _p3approx{
+			([](){
+				std::array<P3ApproxType, static_cast<uint>(ExprName::Count)> p3approx{};
+				std::ranges::fill(p3approx, P3ApproxType::ImodAvg);
+				return p3approx;
+			})()
+		};
+
+		std::array<bool, static_cast<uint>(ExprName::Count)> _p3exact{
+			([](){
+				std::array<bool, static_cast<uint>(ExprName::Count)> p3exact{};
+				std::ranges::fill(p3exact, false);
+				return p3exact;
+			})()
+		};
+
+	public:
+		inline void setP3ApproximationType(ExprName expr, P3ApproxType type)
+		{
+			_p3approx[static_cast<uint>(expr)] = type;
+		}
+
+		template <typename... TArgs>
+		void setP3ApproximationType2(TArgs&&... args)
+		{
+			((_p3approx[static_cast<uint>(args.first)] = args.second),...);
+		}	
+
+		template <typename...  TArgs>
+		void useP3Exact(TArgs&&... args)
+		{
+			((_p3exact[static_cast<uint>(args)] = true),...);
+		}
 
 	public:
 		/**

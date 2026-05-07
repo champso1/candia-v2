@@ -12,6 +12,24 @@
 
 namespace Candia2
 {
+	enum class ExprName : uint
+	{
+		P0ns=0, P0qq, P0qg, P0gq, P0gg,
+		P1nsm, P1nsp, P1qq, P1qg, P1gq, P1gg,
+		P2nsm, P2nsp, P2nsv, P2qq, P2qg, P2gq, P2gg,
+		P3nsm, P3nsp, P3nsv, P3qq, P3qg, P3gq, P3gg,
+		A2ns, A2hq, A2hg, A2gq, A2gg,
+		A3nsm, A3nsp, A3gq, A3gg, A3hq, A3hg, A3psqq, A3sqg, A3PSshq,
+		Count
+	};
+
+	enum class P3ApproxType : uint
+	{
+		Imod1,
+		Imod2,
+		ImodAvg,
+	};
+	
 	/**
 	 *  @brief Main base class that defines default behavior every "three-part" expression should have.
 	 */

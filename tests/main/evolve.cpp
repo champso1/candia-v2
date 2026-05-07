@@ -122,8 +122,10 @@ int main(int argc, char *argv[]) {
 	dglap_options.use_nnlo_matching_conditions_at_n3lo = false;
 	dglap_options.use_n3lo_heavyquark_asymmetry = true;
 	dglap_options.use_fortran_n3lo_splitfuncs = false;
-	dglap_options.use_exact_p3ns = false;
-	dglap_options.flagNLP = true;
+	
+	// solver.useP3Exact(ExprName::P3nsm);
+	solver.setP3ApproximationType2(
+		std::make_pair(ExprName::P3nsm, P3ApproxType::Imod1));
 
 	auto t0 = chrono::high_resolution_clock::now();
 	auto F = solver.evolve();	

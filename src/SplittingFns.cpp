@@ -12,8 +12,7 @@ namespace Candia2
 	uint SplittingFunction::_nf = 4;      //!< number of active/currently massless flavors
 	double SplittingFunction::_beta0; //!< \f$\beta_0\f$ value for P0gg calculation
 	double SplittingFunction::_log_muf2_mur2 = 0;    //!< log of mu_f/mu_r
-	uint SplittingFunction::_imod = 3; //!< approximation type for n3lo splitting functions
-
+	
 	double P0ns::calcRegular(double x) const
 	{
 		return CF*(-1.0-x);
@@ -602,9 +601,9 @@ namespace Candia2
 
 
 		double res{};
-		if (_imod == 1) {
+		if (_imod == P3ApproxType::Imod1) {
 			res = (p3nspai + p3npa01 + nf * p3npa11);
-		} else if (_imod == 2) {
+		} else if (_imod == P3ApproxType::Imod2) {
 			res = (p3nspai + p3npa02 + nf * p3npa12);
 		} else {
 			res = (p3nspai + 0.5 * ((p3npa01 + p3npa02) + nf * (p3npa11 + p3npa12)));
@@ -626,9 +625,9 @@ namespace Candia2
 		double a4ap2 = - 505.209 + 7.53662*nf;
 
 	    double plus{};
-		if (_imod == 1)
+		if (_imod == P3ApproxType::Imod1)
 			plus = a4qi + a4ap1;
-		else if (_imod == 2)
+		else if (_imod == P3ApproxType::Imod2)
 			plus = a4qi + a4ap2;
 		else {
 			plus = a4qi + 0.5*(a4ap1+a4ap2);
@@ -650,9 +649,9 @@ namespace Candia2
 		double b4ap2 = - 2394.47 + 269.028 * nf;
 
 	    double delta{};
-		if (_imod == 1)
+		if (_imod == P3ApproxType::Imod1)
 			delta = b4qi + b4ap1;
-		else if (_imod == 2)
+		else if (_imod == P3ApproxType::Imod2)
 			delta = b4qi + b4ap2;
 		else
 			delta = b4qi + 0.5 * ( b4ap1 + b4ap2 );
@@ -725,9 +724,9 @@ namespace Candia2
 		// Assembly
 		double p3nsmai = p3nsa0 + nf * p3nsa1 + nf2 * p3nsma2 + nf3 * p3nsa3;
 	    double res = std::numeric_limits<double>::max();
-		if (_imod == 1)
+		if (_imod == P3ApproxType::Imod1)
 			res = p3nsmai + p3nma01 + nf * p3nma11;
-		else if (_imod == 2)
+		else if (_imod == P3ApproxType::Imod2)
 			res = p3nsmai + p3nma02 + nf * p3nma12;
 		else
 			res = p3nsmai + 0.5*((p3nma01 + p3nma02) + nf*(p3nma11 + p3nma12));
@@ -749,9 +748,9 @@ namespace Candia2
 		double a4ap2 = - 502.481 + 7.82077 * nf;
 
 		double plus{};
-		if (_imod == 1)
+		if (_imod == P3ApproxType::Imod1)
 			plus = a4qi + a4ap1;
-		else if (_imod == 2)
+		else if (_imod == P3ApproxType::Imod2)
 			plus = a4qi + a4ap2;
 		else
 			plus = a4qi + 0.5*(a4ap1+a4ap2);
@@ -772,9 +771,9 @@ namespace Candia2
 		double b4ap2 = - 2380.255 + 270.518 * nf - 0.05 * nf;
 
 		double delta{};
-		if (_imod == 1)
+		if (_imod == P3ApproxType::Imod1)
 			delta = b4qi + b4ap1;
-		else if (_imod == 2)
+		else if (_imod == P3ApproxType::Imod2)
 			delta = b4qi + b4ap2;
 		else
 			delta = b4qi + 0.5*(b4ap1+b4ap2);
@@ -822,11 +821,11 @@ namespace Candia2
 				- 6.473971e+2 * dl - 6.641219e+1 * dl2 - 5.353347 * dl3 - 5.925926 * dl4
 				- 3.950617e-1 * dl5 + 1.970002e+1 * omx * dlm - 3.435474 * omx * dlm2;
 
-			if (_imod == 1)
-				res1 = nf * p3nsa11 + nf2 * p3nssa2;
-			else if (_imod == 2)
-				res1 = nf * p3nsa12 + nf2 * p3nssa2;
-			else
+			// if (_imod == P3ApproxType::Imod1)
+				// res1 = nf * p3nsa11 + nf2 * p3nssa2;
+			// else if (_imod == P3ApproxType::Imod2)
+				// res1 = nf * p3nsa12 + nf2 * p3nssa2;
+			// else
 				res1 = 0.5 * nf * ( p3nsa11 + p3nsa12 ) + nf2 * p3nssa2; // 
 		}
 
@@ -875,9 +874,9 @@ namespace Candia2
 
 			// Assembly
 			const double p3nsmai = p3nsa0 + nf * p3nsa1 + nf2 * p3nsma2 + nf3 * p3nsa3;			
-			if (_imod == 1)
+			if (_imod == P3ApproxType::Imod1)
 				res2 = p3nsmai + p3nma01 + nf * p3nma11;
-			else if (_imod == 2)
+			else if (_imod == P3ApproxType::Imod2)
 				res2 = p3nsmai + p3nma02 + nf * p3nma12;
 			else
 				res2 = p3nsmai + 0.5 * ( ( p3nma01 + p3nma02 ) + nf * ( p3nma11 + p3nma12 ) );
@@ -899,9 +898,9 @@ namespace Candia2
 		double a4ap2 = -502.481 + 7.82077*nf;
 
 	    double plus;
-		if (_imod == 1)
+		if (_imod == P3ApproxType::Imod1)
 			plus = a4qi + a4ap1;
-		else if (_imod == 2)
+		else if (_imod == P3ApproxType::Imod2)
 			plus = a4qi + a4ap2;
 		else
 			plus = a4qi + 0.5*(a4ap1+a4ap2);
@@ -923,9 +922,9 @@ namespace Candia2
 		double b4ap2 = - 2380.255 + 270.518*nf - 0.05*nf;
 
 	    double delta{};
-		if (_imod == 1)
+		if (_imod == P3ApproxType::Imod1)
 			delta = b4qi + b4ap1;
-		else if (_imod == 2)
+		else if (_imod == P3ApproxType::Imod2)
 			delta = b4qi + b4ap2;
 		else
 			delta = b4qi + 0.5*(b4ap1+b4ap2);
@@ -1051,9 +1050,9 @@ namespace Candia2
 		// We return (for now) one of the two error-band boundaries or the
 		// present best estimate, their average
 		double res = std::numeric_limits<double>::max()/16.0;
-		if (_imod == 1)
+		if (_imod == P3ApproxType::Imod1)
 			res = P3psApp1;
-		else if (_imod == 2)
+		else if (_imod == P3ApproxType::Imod2)
 			res = P3psApp2;
 		else
 			res = 0.5 * ( P3psApp1 + P3psApp2 );
@@ -1146,9 +1145,9 @@ namespace Candia2
 			// Assembly
 			double p3nspai = p3nsa0 + nf*p3nsa1 + nf2*p3nspa2 + nf3*p3nsa3;
 
-			if (_imod == 1) {
+			if (_imod == P3ApproxType::Imod1) {
 				res1 = (p3nspai + p3npa01 + nf * p3npa11);
-			} else if (_imod == 2) {
+			} else if (_imod == P3ApproxType::Imod2) {
 				res1 = (p3nspai + p3npa02 + nf * p3npa12);
 			} else {
 				res1 = (p3nspai + 0.5 * ((p3npa01 + p3npa02) + nf * (p3npa11 + p3npa12)));
@@ -1274,9 +1273,9 @@ namespace Candia2
 				log(LOG_ERROR, "P3qg::calcRegular()", "nf ({}) out of bounds, not between 3 and 6.", _nf);
 			}
 
-			if (_imod == 1) {
+			if (_imod == P3ApproxType::Imod1) {
 				res2 = p3psapp1;
-			} else if (_imod == 2) {
+			} else if (_imod == P3ApproxType::Imod2) {
 				res2 = p3psapp2;
 			} else {
 				res2 = 0.5 * (p3psapp1 + p3psapp2);
@@ -1299,9 +1298,9 @@ namespace Candia2
 		double a4ap2 = - 505.209 + 7.53662*nf;
 
 	    double plus{};
-		if (_imod == 1)
+		if (_imod == P3ApproxType::Imod1)
 			plus = a4qi + a4ap1;
-		else if (_imod == 2)
+		else if (_imod == P3ApproxType::Imod2)
 			plus = a4qi + a4ap2;
 		else
 			plus = a4qi + 0.5*(a4ap1+a4ap2);
@@ -1323,9 +1322,9 @@ namespace Candia2
 		double b4ap2 = - 2394.47 + 269.028*nf;
 
 	    double delta{};
-		if (_imod == 1)
+		if (_imod == P3ApproxType::Imod1)
 			delta = b4qi + b4ap1;
-		else if (_imod == 2)
+		else if (_imod == P3ApproxType::Imod2)
 			delta = b4qi + b4ap2;
 		else
 			delta = b4qi + 0.5*(b4ap1 + b4ap2);
@@ -1498,9 +1497,9 @@ namespace Candia2
 		}
 
 		double res{};
-		if (_imod == 1)
+		if (_imod == P3ApproxType::Imod1)
 			res = P3qgApp1;
-		else if (_imod == 2)
+		else if (_imod == P3ApproxType::Imod2)
 			res = P3qgApp2;
 		else
 			res = 0.5 * (P3qgApp1 + P3qgApp2);
@@ -1678,9 +1677,9 @@ namespace Candia2
 		}
 
 		double res{};
-		if (_imod == 1)
+		if (_imod == P3ApproxType::Imod1)
 			res = P3gqApp1;
-		else if (_imod == 2)
+		else if (_imod == P3ApproxType::Imod2)
 			res = P3gqApp2;
 		else
 			res = 0.5*(P3gqApp1 + P3gqApp2);
@@ -1840,9 +1839,9 @@ namespace Candia2
 		}
 
 		double res{};
-		if (_imod == 1)
+		if (_imod == P3ApproxType::Imod1)
 		    res = p3ggapp1;
-		if (_imod == 2)
+		if (_imod == P3ApproxType::Imod2)
 			res = p3ggapp2;
 		else
 			res = 0.5*(p3ggapp1 + p3ggapp2);

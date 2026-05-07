@@ -16,6 +16,7 @@ foreach(name ${names})
 endforeach()
 
 set(resources
+  plot-scripts
   hoppet-data
   tex-table
   benchmark-data

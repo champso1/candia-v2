@@ -31,7 +31,7 @@ enum CompareType
 inline std::vector<std::string> cols_all_flavors{"g", "xu", "xd", "xs", "xc", "xb", "x\\bar{u}", "x\\bar{d}", "x\\bar{s}", "x\\bar{c}", "x\\bar{b}"};
 inline std::vector<std::string> cols_special_combos{"xuv", "xdv", "xL_-", "xL_+", "xs_+", "xc_+", "xb_+", "xg"};
 inline std::vector<std::string> cols_special_combos_qm{"xu_v", "xd_v", "x\\bar{u}", "x\\bar{d}", "xL_+", "xs_+", "xc_+", "xb_+", "xg"};
-inline std::vector<std::string> cols_special_combos_ns_and_s{"xu_+", "xc_+", "xb_+", "xq_{NS,1d}^{(+)}", "xq_{NS,1c}^{(+)}", "xq_{NS,1b}^{(+)}", "xq^{(-)}", "xq^{(+)}", "xg"};
+inline std::vector<std::string> cols_special_combos_ns_and_s{"xq_{NS,1d}^{(-)}", "xq_{NS,1c}^{(-)}", "xq_{NS,1b}^{(-)}", "xq_{NS,1d}^{(+)}", "xq_{NS,1c}^{(+)}", "xq_{NS,1b}^{(+)}", "xq^{(-)}", "xq^{(+)}", "xg"};
 inline std::vector<std::string> cols_special_combos_ffns{"xuv", "xdv", "xL-", "xL+", "xs-", "xs+", "xc+", "xg"};
 inline std::vector<std::reference_wrapper<const std::vector<std::string>>> cols{
 	std::cref(cols_all_flavors),

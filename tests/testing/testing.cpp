@@ -7,7 +7,7 @@ int main()
 	getLogOptions().verbosity = LOG_INFO;
 	
 	auto compute_diff = [](double x, double y){ return 100.0*std::abs((x-y)/((x+y)/2.0));};
-	SplittingFunction::setN3LOApproxType(3);
+	// SplittingFunction::setN3LOApproxType(3);
 	SplittingFunction::update(4, 0, 0.0);
     
 	std::unique_ptr<SplittingFunction> p3nsm_approx = std::make_unique<P3nsm>();

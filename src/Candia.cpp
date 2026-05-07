@@ -3,6 +3,7 @@
 #include "Candia-v2/Candia.hpp"
 #include "Candia-v2/Common.hpp"
 #include "Candia-v2/Distribution.hpp"
+#include "Candia-v2/Expression.hpp"
 #include "Candia-v2/Grid.hpp"
 #include "Candia-v2/SplittingFn.hpp"
 #include "Candia-v2/OperatorMatrixElements.hpp"
@@ -19,7 +20,7 @@
 // 26-30  q_{NS,1i}^(-)
 // 31     q^(+)
 // 32-36  q_{NS,1i}^(+)
-// 37-39  
+
 
 namespace
 {
@@ -144,13 +145,20 @@ namespace Candia2
         createExpression<P0qg>(ExprName::P0qg);
         createExpression<P0gq>(ExprName::P0gq);
         createExpression<P0gg>(ExprName::P0gg);
-    
+
+		if (_order == 0)
+			return;
+		
 		createExpression<P1nsm>(ExprName::P1nsm);
 		createExpression<P1nsp>(ExprName::P1nsp);
 		createExpression<P1qq>(ExprName::P1qq);
 		createExpression<P1qg>(ExprName::P1qg);
 		createExpression<P1gq>(ExprName::P1gq);
 		createExpression<P1gg>(ExprName::P1gg);
+
+		if (_order <= 1)
+			return;
+		
 		if (options.use_fortran_nnlo_splitfuncs) {
 			log(LOG_DEBUG, "DGLAP", "Loading Fortran versions of P2 splitting functions");
 			createExpression<mvv_p2::P2nsm>(ExprName::P2nsm);
@@ -177,48 +185,45 @@ namespace Candia2
 		createExpression<A2hq>(ExprName::A2hq);
 		createExpression<A2hg>(ExprName::A2hg);
 
-		if (options.use_fortran_n3lo_splitfuncs && options.use_exact_p3ns)
+		if (_order <= 2)
+			return;
+
+		auto it = std::ranges::find(_p3exact, true);
+		bool using_exact_p3ns = it != _p3exact.end();
+		
+		if (options.use_fortran_n3lo_splitfuncs && using_exact_p3ns)
 			log(LOG_ERROR, "DGLAP", "Cannot use both the Fortran P3s and the exact (the Fortran versions are approximate)");
 		
 		if (options.use_fortran_n3lo_splitfuncs) {
 			log(LOG_DEBUG, "DGLAP", "Loading Fortran versions of P3 splitting functions");
-			createExpression<mvv_p3::P3nsm>(ExprName::P3nsm);
-			createExpression<mvv_p3::P3nsp>(ExprName::P3nsp);
-			createExpression<mvv_p3::P3nsv>(ExprName::P3nsv);
-			createExpression<mvv_p3::P3qq>(ExprName::P3qq);
-			createExpression<mvv_p3::P3qg>(ExprName::P3qg);
-			createExpression<mvv_p3::P3gq>(ExprName::P3gq);
-			createExpression<mvv_p3::P3gg>(ExprName::P3gg);
-		} else if (options.use_exact_p3ns) {
-			log(LOG_DEBUG, "DGLAP", "Loading exact expressions for P3nsm, P3nsp and P3nsv");
-			createExpression<p3_exact::P3nsm>(ExprName::P3nsm);
-			createExpression<p3_exact::P3nsp>(ExprName::P3nsp);
-			createExpression<p3_exact::P3nsv>(ExprName::P3nsv);
-			createExpression<P3qq>(ExprName::P3qq);
-			createExpression<P3qg>(ExprName::P3qg);
-			createExpression<P3gq>(ExprName::P3gq);
-			createExpression<P3gg>(ExprName::P3gg);
+			createExpression<mvv_p3::P3nsm>(ExprName::P3nsm, _p3approx[static_cast<uint>(ExprName::P3nsm)]);
+			createExpression<mvv_p3::P3nsp>(ExprName::P3nsp, _p3approx[static_cast<uint>(ExprName::P3nsp)]);
+			createExpression<mvv_p3::P3nsv>(ExprName::P3nsv, _p3approx[static_cast<uint>(ExprName::P3nsv)]);
+			createExpression<mvv_p3::P3qq>(ExprName::P3qq, _p3approx[static_cast<uint>(ExprName::P3qq)]);
+			createExpression<mvv_p3::P3qg>(ExprName::P3qg, _p3approx[static_cast<uint>(ExprName::P3qg)]);
+			createExpression<mvv_p3::P3gq>(ExprName::P3gq, _p3approx[static_cast<uint>(ExprName::P3gq)]);
+			createExpression<mvv_p3::P3gg>(ExprName::P3gg, _p3approx[static_cast<uint>(ExprName::P3gg)]);
 		} else {
-			log(LOG_DEBUG, "DGLAP", "Loading C++ versions of P3 splitting functions");
-			createExpression<P3nsm>(ExprName::P3nsm);
-			createExpression<P3nsp>(ExprName::P3nsp);
-			createExpression<P3nsv>(ExprName::P3nsv);
-			createExpression<P3qq>(ExprName::P3qq);
-			createExpression<P3qg>(ExprName::P3qg);
-			createExpression<P3gq>(ExprName::P3gq);
-			createExpression<P3gg>(ExprName::P3gg);
+			createExpression<P3qq>(ExprName::P3qq, _p3approx[static_cast<uint>(ExprName::P3qq)]);
+			createExpression<P3qg>(ExprName::P3qg, _p3approx[static_cast<uint>(ExprName::P3qg)]);
+			createExpression<P3gq>(ExprName::P3gq, _p3approx[static_cast<uint>(ExprName::P3gq)]);
+			createExpression<P3gg>(ExprName::P3gg, _p3approx[static_cast<uint>(ExprName::P3gg)]);
+
+			if (_p3exact[static_cast<uint>(ExprName::P3nsm)])
+				createExpression<p3_exact::P3nsm>(ExprName::P3nsm);
+			else
+				createExpression<P3nsm>(ExprName::P3nsm, _p3approx[static_cast<uint>(ExprName::P3nsm)]);
+
+			if (_p3exact[static_cast<uint>(ExprName::P3nsp)])
+				createExpression<p3_exact::P3nsp>(ExprName::P3nsp);
+			else
+				createExpression<P3nsp>(ExprName::P3nsp, _p3approx[static_cast<uint>(ExprName::P3nsp)]);
+
+			if (_p3exact[static_cast<uint>(ExprName::P3nsv)])
+				createExpression<p3_exact::P3nsv>(ExprName::P3nsv);
+			else
+				createExpression<P3nsv>(ExprName::P3nsv, _p3approx[static_cast<uint>(ExprName::P3nsv)]);
 		}
-
-		uint imod = getOptions().n3lo_splitfunc_imod;
-		SplittingFunction::setN3LOApproxType(imod);
-		log(LOG_DEBUG, "DGLAP", "Setting N3LO approximation type (imod) = {}", imod);
-
-		bool flagNLP = getOptions().flagNLP;
-		SplittingFunction::setFlagNLP(flagNLP);
-		if (flagNLP)
-			log(LOG_DEBUG, "DGLAP", "Using flagNLP");
-		else
-			log(LOG_DEBUG, "DGLAP", "Not using flagNLP");
 
 		createExpression<OpMatElemN3LO>(ExprName::A3nsm, ome::AqqQNSEven);
 		createExpression<OpMatElemN3LO>(ExprName::A3nsp, ome::AqqQNSOdd);

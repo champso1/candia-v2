@@ -1,0 +1,95 @@
+set terminal pdfcairo enhanced notransparent
+
+set border lw 2
+set size ratio 0.65
+set rmargin 0
+set lmargin 0
+
+array quarknames[6]
+quarknames[1] = "u"
+quarknames[2] = "d"
+quarknames[3] = "s"
+quarknames[4] = "c"
+quarknames[5] = "b"
+quarknames[6] = "t"
+
+get_title(i) = \
+    (i == 2) ? "xg(x)" : \
+    (i >= 3  && i <= 8)  ? sprintf("x{%s}(x)", quarknames[i-2]) : \
+    (i >= 9  && i <= 14) ? sprintf("x\\bar{%s}(x)", quarknames[i-8]) : \
+    (i >= 15 && i <= 20) ? sprintf("x{%s}^{-}(x)", quarknames[i-14]) : \
+    (i >= 21 && i <= 26) ? sprintf("x{%s}^{+}(x)", quarknames[i-20]) : \
+    (i == 27) ? "xq^{-}(x)" : \
+    (i >= 28 && i <= 32) ? sprintf("xq_{NS,1%s}^{-}(x)", quarknames[i-26]) : \
+    (i == 33) ? "xq^{+}(x)" : \
+    (i >= 34 && i <= 38) ? sprintf("xq_{NS,1%s}^{+}(x)", quarknames[i-32]) : "Unknown"
+
+# Define the mapping function for filenames
+get_name(i) = \
+    (i == 2) ? "gluon" : \
+    (i >= 3  && i <= 8)  ? sprintf("quark_%s", quarknames[i-2]) : \
+    (i >= 9  && i <= 14) ? sprintf("qbar_%s", quarknames[i-8]) : \
+    (i >= 15 && i <= 20) ? sprintf("q_minus_%s", quarknames[i-14]) : \
+    (i >= 21 && i <= 26) ? sprintf("q_plus_%s", quarknames[i-20]) : \
+    (i == 27) ? "q_total_minus" : \
+    (i >= 28 && i <= 32) ? sprintf("q_ns_minus_%s", quarknames[i-26]) : \
+    (i == 33) ? "q_total_plus" : \
+    (i >= 34 && i <= 38) ? sprintf("q_ns_plus_%s", quarknames[i-32]) : sprintf("col_%d", i)
+
+
+# Define input files
+file_central = "data/n3lo-exact.dat"
+file_lower   = "data/n3lo-p3nsv-imod1.dat"
+file_upper   = "data/n3lo-p3nsv-imod2.dat"
+
+# Define target columns
+total_cols = 38  # Total columns in the first file
+
+# Set plot style for the error band
+set style fill transparent solid 0.3 noborder
+
+x0 = 0.1
+f(x) = \
+    (x < 1e-4) ? (log10(x) + 5) : \
+    (x < 1e-3) ? (log10(x) + 4) + 1 : \
+    (x < 1e-2) ? (log10(x) + 3) + 2 : \
+    (x < 1e-1) ? (log10(x) + 2) + 3 : \
+    (x < 0.5)  ? 4 + (x - 0.1)/(0.4) : \
+                 5 + (x - 0.5)/(0.5)
+
+set xrange [f(1e-5):f(1.0)]
+set format y "%.0e"
+
+set xtics (\
+    "10@^{-5}" f(1e-5),\
+    "10@^{-4}" f(1e-4),\
+    "10@^{-3}" f(1e-3),\
+    "10@^{-2}" f(1e-2),\
+    "10@^{-1}" f(1e-1),\
+    "0.5"      f(0.5),\
+    "1.0"      f(1.0)\
+)
+set mxtics 10
+set grid
+set key offset 0,-0.4
+
+# Approx (1707.08315)
+# Exact (2604.09534)
+
+do for [idx=15:38] {
+    fname = get_name(idx)
+    ftitle = get_title(idx)
+    
+    set output sprintf("plots/p3nsv-%s.pdf", fname)
+    set title sprintf("Impact of exact P3_{NS}^{+} vs. approximations on %s", ftitle)
+    set xlabel "x" offset 0,0.7
+    set ylabel ftitle 
+    
+    plot \
+        sprintf("< paste '%s' '%s'", file_lower, file_upper) every ::3 using (f($1)):idx:(column(idx + total_cols)) with filledcurves lc rgb "blue" title "Approx (1707.08315)", \
+        file_lower   every ::3 using (f($1)):idx with lines lw 1.5 lc rgb "dark-blue" notitle, \
+        file_upper   every ::3 using (f($1)):idx with lines lw 1.5 lc rgb "dark-blue" notitle, \
+        file_central every ::3 using (f($1)):idx with lines lw 2   lc rgb "black" title "Exact (2604.09534)"
+}
+
+
