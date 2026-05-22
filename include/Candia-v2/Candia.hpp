@@ -336,8 +336,16 @@ namespace Candia2
 		/** @} */
 
 		/** @defgroup recrels Recursion Relations */
+		/** @defgroup recrelhelpers Recursion Relation Helpers */
 
-
+		/**
+		 *  @ingroup recrelhelpers
+		 *  @{
+		 */
+		double shift_p1(Expression& P1, Expression& P0, ArrayGridView A, uint k);
+		double shift_p2(Expression& P2, Expression& P1, Expression& P0, ArrayGridView A, uint k);
+		double shift_p3(Expression& P3, Expression& P2, Expression& P1, Expression& P0, ArrayGridView A, uint k);
+		/** @} */
 		
 		/**
 		 *  @defgroup singletrecrels Singlet Recursion Relations

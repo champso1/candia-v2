@@ -79,6 +79,7 @@ namespace Candia2
 			std::ranges::fill(_reg_cache, double{0});
 			for (auto [i, x] : enumerate)
 				_reg_cache[i] = calcRegular(x);
+			[[maybe_unused]] int ___x = 0;
 		}
 
 		/**

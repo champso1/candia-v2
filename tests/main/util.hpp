@@ -69,3 +69,9 @@ void outputLatexTable(
 	dist_type const& diffs, std::string const& filename,
 	std::vector<std::string> const& cols, int format, bool benchmark_format);
 
+void outputLatexTableScaleRatio(
+    xtab_type const& xtab,
+	std::array<std::reference_wrapper<dist_type>, 3> const& arrs,
+	std::string const& filename,
+	std::vector<std::string> const& cols, int format, bool benchmark_format);
+

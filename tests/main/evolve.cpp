@@ -87,17 +87,23 @@ int main(int argc, char *argv[]) {
 	const double Qf = 100.0;
 
 	std::string datafile_name{};
-	if (argc == 6)
+	if (argc == 6) {
 		datafile_name = argv[5];
+	}
 
-	ostringstream logfile_ss{};
-	logfile_ss << ((order == 3) ? "n3lo" : (order == 2) ? "nnlo" : (order == 1) ? "nlo" : "lo");
-	logfile_ss << "-i" << iterations << "-t" << trunc_idx << "-r" << setprecision(2) << mur2_muf2 << ".log";
+	ostringstream fileprefix{};
+	fileprefix << ((order == 3) ? "n3lo" : (order == 2) ? "nnlo" : (order == 1) ? "nlo" : "lo");
+	fileprefix << "-i" << iterations << "-t" << trunc_idx << "-r" << setprecision(2) << mur2_muf2;
+
+	if (argc == 5)
+		datafile_name = fileprefix.str() + ".dat";
+
 	if (!fs::exists("log")) {
 		if (!fs::create_directory("log"))
 			log(LOG_ERROR, "evolve.cpp", "Failed to create log output directory");
 	}
-	fs::path log_path = fs::current_path()/"log"/(datafile_name.empty() ? logfile_ss.str() : datafile_name);
+	std::string logfile = fileprefix.str() + ".log";
+	fs::path log_path = fs::current_path()/"log"/logfile;
 	log_path.replace_extension(".log");
 	std::ofstream log_output_file(log_path);
 
@@ -133,6 +139,5 @@ int main(int argc, char *argv[]) {
 	chrono::duration<double, ratio<1>> secs = tf-t0;
 	log(LOG_INFO, "evolve.cpp", "Evolution took {}.", secs);
 
-	datafile_name += ".dat";
 	outputData(F, xtab, grid, order, iterations, trunc_idx, mur2_muf2, datafile_name);
 }

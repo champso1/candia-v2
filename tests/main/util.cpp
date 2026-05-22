@@ -360,3 +360,139 @@ void outputLatexTable(
 	for (fs::directory_entry const& e : dir_view)
 		fs::remove(e.path());
 }
+
+void outputLatexTableScaleRatio(
+    xtab_type const& xtab,
+	std::array<std::reference_wrapper<dist_type>, 3> const& arrs,
+	std::string const& filename,
+	std::vector<std::string> const& cols, int format, bool benchmark_format)
+{
+	fs::path tex_table_dir = fs::current_path()/TEX_TABLE_DIR;
+	
+	fs::path tex_table_base = tex_table_dir/TEX_TABLE_TEMPLATE;
+	fs::path tex_subtable = tex_table_dir/TEX_SUBTABLE_TEMPLATE;
+    fs::path tex_table_footer = tex_table_dir/TEX_FOOTER_TEMPLATE;
+	if (!exists(tex_table_base) || !exists(tex_subtable) || !exists(tex_table_footer))
+		log(LOG_ERROR, "util.hpp", "Failed to open the tex template files.");
+	
+	std::string ncols = std::format("{}", cols.size()+1);
+	std::string::size_type pos;
+	std::string table_text{};
+	
+	std::string main_table = read_file(tex_table_base);
+	pos = main_table.find("^R^");
+	std::string col_def{};
+	for (uint i=0; i<cols.size(); ++i)
+		col_def += TEX_TABLE_COL_DEF;
+	main_table.replace(pos, 3, col_def);
+	pos = main_table.find("^COLS^");
+	while (pos != std::string::npos) {
+		main_table.replace(pos, 6, ncols);
+		pos = main_table.find("^COLS^", pos);
+	}
+	for (std::string const& col : cols | std::views::take(cols.size()-1)) {
+		std::string line(TEX_TABLE_COL_LINE);
+		pos = line.find("^COL^");
+		line.replace(pos, 5, col);
+		main_table += line;
+	}
+	std::string line_final(TEX_TABLE_COL_LINE_FINAL);
+	pos = line_final.find("^COL^");
+	line_final.replace(pos, 5, cols.back());
+	main_table += line_final;
+	
+	table_text += main_table;
+
+	constexpr auto get_mu_str = [&](double mu) -> std::string {
+		if (mu == 0.5)
+			return std::string("0.5");
+		else if (mu == 2.0)
+			return std::string("2.0");
+		else
+			return std::string("1.0");
+	};
+
+	auto format_val = [t=format,f=benchmark_format](double val) -> std::string {
+		switch (t) {
+			case 0: return percentToLatex(val); break;
+			case 1: return scientificToLatex(val, 4, f); break;
+			case 2: return percentToLatex2(val); break;
+		}
+		throw std::runtime_error("unreachable");
+	};
+	
+	auto do_subtable = [&](double mu, dist_type const& dist) -> void {
+		std::string sub_table = read_file(tex_subtable);
+		pos = sub_table.find("^KR^");
+		sub_table.replace(pos, 4, get_mu_str(mu));
+		pos = sub_table.find("^COLS^");
+		while (pos != std::string::npos) {
+			sub_table.replace(pos, 6, ncols);
+			pos = sub_table.find("^COLS^", pos);
+		}
+		std::string amps{};
+		for (uint i=0; i<cols.size(); ++i)
+			amps += " &";
+		pos = sub_table.find("^AMPS^");
+		sub_table.replace(pos, 6, amps);
+	
+		table_text += sub_table;
+	
+		for (uint i=0; i<dist.at(0).size(); ++i) {
+			double x = xtab.at(i);
+			table_text += scientificToLatex(x, 1, benchmark_format) + " & ";
+				
+			for (uint j=0; j<dist.size()-1; ++j)
+				table_text += format_val(dist.at(j).at(i)) + " & ";
+			table_text += format_val(dist.back().at(i));
+			
+			table_text += " \\\\\n";
+		}
+	};
+
+	std::array<double, 3> mus{1.0, 0.5, 2.0};
+	for (uint i=0; i<3; ++i)
+		do_subtable(mus[i], arrs[i]);
+
+	std::ifstream table_footer_s(tex_table_footer);
+	std::string table_footer{std::istreambuf_iterator<char>(table_footer_s), std::istreambuf_iterator<char>{}};
+	table_text += table_footer;
+
+	fs::path latex_build_dir = fs::current_path()/"latex";
+	if (!fs::exists(latex_build_dir)) {
+		if (!fs::create_directory(latex_build_dir))
+			log(LOG_ERROR, "util.hpp", "Failed to create latex build directory.");
+		log(LOG_INFO, "util.hpp", "'latex' directory created.");
+	} else {
+	    log(LOG_INFO, "util.hpp", "'latex' directory exists. Continuing.");
+	}
+
+	std::string title = filename + ".tex";
+	fs::path latex_file_path = latex_build_dir/title;
+	std::ofstream latex_file(latex_file_path);
+	latex_file << table_text;
+	latex_file.close();
+
+	std::string command = "pdflatex -interaction=batchmode -output-directory latex " + title;
+	system(command.c_str());
+	log(LOG_INFO, "util.hpp", "Cleaning up auxilliary files...");
+
+	auto output_dir = (format == 0 || format == 2) ? "diffs" : "tables";
+	fs::path output_dir_path = fs::current_path()/fs::path(output_dir);
+	if (!fs::exists(output_dir_path)) {
+		if (!fs::create_directory(output_dir_path))
+			log(LOG_ERROR, "util.hpp", "Failed to create output directory '{}'.", output_dir_path.string());
+	}
+	fs::path pdf_path(fs::current_path()/fs::path("latex")/fs::path(filename + ".pdf"));
+	log(LOG_INFO, "util.hpp", "{}  ->  {}", pdf_path.string(), output_dir_path.string());
+	fs::copy(pdf_path, output_dir_path, fs::copy_options::overwrite_existing);
+	auto dir_view =
+		fs::directory_iterator{fs::current_path()/"latex"}
+		| std::ranges::views::filter([&filename](fs::directory_entry const& e) -> bool {
+			if (e.path().has_extension() && e.path().extension().string() != ".tex" && e.path().filename().string().starts_with(filename))
+				return true;
+			return false;
+		});
+	for (fs::directory_entry const& e : dir_view)
+		fs::remove(e.path());
+}
