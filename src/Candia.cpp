@@ -146,9 +146,6 @@ namespace Candia2
         createExpression<P0gq>(ExprName::P0gq);
         createExpression<P0gg>(ExprName::P0gg);
 
-		if (_order == 0)
-			return;
-		
 		createExpression<P1nsm>(ExprName::P1nsm);
 		createExpression<P1nsp>(ExprName::P1nsp);
 		createExpression<P1qq>(ExprName::P1qq);
@@ -156,9 +153,6 @@ namespace Candia2
 		createExpression<P1gq>(ExprName::P1gq);
 		createExpression<P1gg>(ExprName::P1gg);
 
-		if (_order <= 1)
-			return;
-		
 		if (options.use_fortran_nnlo_splitfuncs) {
 			log(LOG_DEBUG, "DGLAP", "Loading Fortran versions of P2 splitting functions");
 			createExpression<mvv_p2::P2nsm>(ExprName::P2nsm);
@@ -184,10 +178,7 @@ namespace Candia2
 		createExpression<A2gg>(ExprName::A2gg);
 		createExpression<A2hq>(ExprName::A2hq);
 		createExpression<A2hg>(ExprName::A2hg);
-
-		if (_order <= 2)
-			return;
-
+		
 		auto it = std::ranges::find(_p3exact, true);
 		bool using_exact_p3ns = it != _p3exact.end();
 		
