@@ -37,7 +37,11 @@ namespace Candia2
 		 *  @param Q0 the initial evolution energy
 		 *  @param Qf the final evolution energy
 		 */
-		LHAPDFDistribution(lhapdf_pdf_ptr_type lhapdf_pdf, value_type Q0, value_type Qf);
+		inline LHAPDFDistribution(lhapdf_pdf_ptr_type lhapdf_pdf, value_type q0, value_type qf)
+			: _pdf{std::move(lhapdf_pdf)}
+		{
+			setup(q0, qf);
+		}
 
 		/** Getter for underlying pdf */
 		inline LHAPDF::PDF const& pdf() const { return *_pdf; }
@@ -58,5 +62,7 @@ namespace Candia2
 		void fillNonSingletCoeffs(
 			accessor_type const& accessor,
 			std::vector<value_type> const& grid_points) const override;
+
+		virtual void setup(double q0, double qf) override;
 	};
 }

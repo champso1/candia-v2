@@ -148,7 +148,6 @@ namespace Candia2
 		auto L = _L;
 		auto L2 = L*L;
 		auto L3 = L2*L;
-		log(LOG_DEBUG, "AlphaS::preMatch()", "Using L={}", L);
 
 		if (_order >= 1)
 			res += -a*a*(1.0/6.0)*L/PI;
@@ -176,7 +175,6 @@ namespace Candia2
 		auto L = _L;
 		auto L2 = L*L;
 		auto L3 = L2*L;
-		log(LOG_DEBUG, "AlphaS::postMatch()", "Using L={}", L);
 
 	    if (_order >= 1)
 			res += a*a*(1.0/6.0)*L/PI;
@@ -196,7 +194,7 @@ namespace Candia2
 	void AlphaS::calculateThresholdValues()
 	{
 	    double mur_muf = std::sqrt(_mur2_muf2);
-		log(LOG_DEBUG, "AlphaS::calculateThresholdValues()", "Using mur/muf={}", mur_muf);
+		log(LOG_INFO, "AlphaS::calculateThresholdValues()", "Using mur/muf={}", mur_muf);
 		
 		update(_nfi);
 		_post[_nfi] = _alpha0;
@@ -207,7 +205,7 @@ namespace Candia2
 			_pre[nf]  = evaluate(mur_muf*_masses[nf-1], mur_muf*_masses[nf], _post[nf-1]);
 			_post[nf] = postMatch(_pre[nf], nf);
 		}
-		log(LOG_DEBUG, "AlphaS", "Computed alpha_s threshold values for VFNS. They are:");
+		log(LOG_INFO, "AlphaS", "Computed alpha_s threshold values for VFNS. They are:");
 
 		for (uint nf=_nfi; nf<=_nff+1; nf++)
 			log(LOG_DEBUG, "AlphaS", "{} {:14.9} {:14.9} {:14.9}", nf, _masses[nf], _pre[nf], _post[nf]);
@@ -236,8 +234,6 @@ namespace Candia2
 		double k1{}, k2{}, k3{}, k4{};
 		double a = alpha0;
 
-		log(LOG_DEBUG, "AlphaS::evaluate()", "for Qi={} -> Qf={}, as0={}, h={}", Qi, Qf, alpha0, h);
-		
 		for (uint i=0; i<steps; i++) {
 			k1 = h*betaFn(a);
 			k2 = h*betaFn(a + k1/2.0);
@@ -273,20 +269,16 @@ namespace Candia2
 		
 
 		std::vector<std::pair<double,double>> vals{};
-		log(LOG_DEBUG, "AlphaS", "nfi={}, nff={}", _nfi, _nff);
 	    for (uint i=_nfi; i<=_nff; ++i) {
 			double q0 = _masses[i];
 			double qf = _masses[i+1];
 		    double a0 = _post[i];
-			log(LOG_DEBUG, "AlphaS", "(i={}) q0={}, qf={}, a0={}", i, q0, qf, a0);
-
 			for (double q : qvals_sorted) {
 				bool found = false;
 				if (q >= q0 && q < qf) {
 					vals.emplace_back(std::make_pair(q, evaluate(q0, q, a0)));
 					found = true;
 				}
-				log(LOG_DEBUG, "AlphaS", "  q={}, found? '{}'", q, found == true ? "yes" : "no");
 			}
 		}
 		if (vals.empty())
