@@ -11,11 +11,12 @@ static void usage()
 	log(LOG_INFO, "read.cpp", "    <format>: 0=benchmark format (0.1 -> 1.0^{{-1}}");
 	log(LOG_INFO, "read.cpp", "              1=normal format (0.1 -> 1e-1)");
 	print_compare_types("read.cpp");
-	exit(EXIT_FAILURE);
+	throw std::runtime_error("invalid cli arguments");
 }
 
 int main(int argc, char *argv[])
 {
+	getLogOptions().verbosity = LOG_INFO;
 	if (argc != 5 && argc != 2)
 		usage();
 
