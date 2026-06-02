@@ -181,22 +181,17 @@ namespace Candia2
 		};
 
 	public:
-		inline void setP3ApproximationType(ExprName expr, P3ApproxType type)
+		inline void setP3ApproximationType(std::pair<ExprName,P3ApproxType> type)
 		{
-			_p3approx[static_cast<uint>(expr)] = type;
+			_p3approx[static_cast<uint>(type.first)] = type.second;
 		}
 
-		template <typename... TArgs>
-		void setP3ApproximationType2(TArgs&&... args)
+		inline void useP3Exact(std::vector<uint> const& exprs)
 		{
-			((_p3approx[static_cast<uint>(args.first)] = args.second),...);
-		}	
-
-		template <typename...  TArgs>
-		void useP3Exact(TArgs&&... args)
-		{
-			((_p3exact[static_cast<uint>(args)] = true),...);
+			for (auto expr : exprs)
+				_p3exact[static_cast<uint>(expr)] = true;
 		}
+		
 
 	public:
 		/**
@@ -336,8 +331,16 @@ namespace Candia2
 		/** @} */
 
 		/** @defgroup recrels Recursion Relations */
+		/** @defgroup recrelhelpers Recursion Relation Helpers */
 
-
+		/**
+		 *  @ingroup recrelhelpers
+		 *  @{
+		 */
+		double shift_p1(Expression& P1, Expression& P0, ArrayGridView A, uint k);
+		double shift_p2(Expression& P2, Expression& P1, Expression& P0, ArrayGridView A, uint k);
+		double shift_p3(Expression& P3, Expression& P2, Expression& P1, Expression& P0, ArrayGridView A, uint k);
+		/** @} */
 		
 		/**
 		 *  @defgroup singletrecrels Singlet Recursion Relations

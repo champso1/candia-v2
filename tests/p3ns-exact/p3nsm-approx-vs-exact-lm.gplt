@@ -1,0 +1,51 @@
+# Approx (1707.08315)
+# Exact (2604.09534)
+
+set terminal pdfcairo enhanced
+set border lw 2
+set size ratio 0.65
+set rmargin 0
+set lmargin 0
+
+infile = "p3nsm-exact-vs-approx-lm.dat"
+outfile = "p3nsm-exact-vs-approx-lm.pdf"
+set output outfile
+
+set style fill transparent solid 0.15 noborder
+
+x0 = 0.1
+f(x) = \
+    (x < 1e-4) ? (log10(x) + 5) : \
+    (x < 1e-3) ? (log10(x) + 4) + 1 : \
+    (x < 1e-2) ? (log10(x) + 3) + 2 : \
+    (x < 1e-1) ? (log10(x) + 2) + 3 : \
+    (x < 0.5)  ? 4 + (x - 0.1)/(0.4) : \
+                 5 + (x - 0.5)/(0.5)
+set xtics (\
+    "10@^{-5}" f(1e-5),\
+    "10@^{-4}" f(1e-4),\
+    "10@^{-3}" f(1e-3),\
+    "10@^{-2}" f(1e-2),\
+    "10@^{-1}" f(1e-1),\
+    "0.5"      f(0.5),\
+    "1.0"      f(1.0)\
+)
+set mxtics 10
+
+#set logscale x
+set xrange [f(1e-5):f(1.0)]
+set yrange [0.93:1.05]
+#set format x "10^{%T}"
+set grid
+set key right top
+
+set title "Ratio of approximate vs. exact P@_{/*0.8 NS}^{/*0.8 (3)-} on xL-(x) evolution"
+set xlabel "x" offset 0,0.7
+set ylabel "xL-(x) Ratio"
+
+plot \
+	 infile using (f($1)):2 with lines lw 2 lc rgb "black" title "Exact (2604.09534)", \
+	 ''     using (f($1)):3 with lines lw 2 dt 2 lc rgb "dark-blue" title "Approx (1707.08315)", \
+	 ''     using (f($1)):4:5 with filledcurves lc rgb "blue" notitle, \
+	 ''     using (f($1)):4 with lines lw 1 lc rgb "dark-blue" notitle, \
+	 ''     using (f($1)):5 with lines lw 1 lc rgb "dark-blue" notitle

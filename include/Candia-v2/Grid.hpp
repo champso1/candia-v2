@@ -261,7 +261,7 @@ namespace Candia2
 		inline auto end() { return _points.end(); }
 
 		/**
-		 *  @brief Handles a convolution with simple mappings for y -> z
+		 *  @brief Handles a convolution between a splitting function or OME with simple mappings for y -> z
 		 *  @param k grid index
 		 *  @param x x-value at the grid index
 		 *  @param yandjaccessor a @a YandJAccessor to retrieve y and the jacobian given x and z (the mapped value, a gauleg abscissa)
@@ -275,6 +275,20 @@ namespace Candia2
 			uint k, value_type x, auto&& yandjaccessor,
 			Expression& E, std::span<double> A,
 			value_type eplus1,
+			gauleg_type const& X, gauleg_type const& W);
+
+		/**
+		 *  @brief Handles a convolution betweewn two arrays with simple mappings for y -> z
+		 *  @param tau the other factor in the convolution (since not necessarily a grid point)
+		 *  @param yandjaccessor a @a YandJAccessor to retrieve y and the jacobian given x and z (the mapped value, a gauleg abscissa)
+		 *  @param A1 array1 to convolute
+		 *  @param A2 array2 to convolute
+		 *  @param X the list of gauleg abscissae
+		 *  @param W the list of gauleg weights
+		 */
+		double mappingFunctionBase(
+		    double tau, auto&& yandjaccessor,
+		    std::span<double> A1, std::span<double> A2,
 			gauleg_type const& X, gauleg_type const& W);
 
 		/**
@@ -295,6 +309,15 @@ namespace Candia2
 		 *  @param k the grid index to perform the convolution at
 		 */
 		value_type convolution(std::span<double> A, Expression& E, uint k);
+
+		/**
+		 *  @brief Performs a convolution between two arrays
+		 *  @param A1 array1
+		 *  @param A2 array2
+		 *  @param q energy (squared)
+		 *  @param tau the other factor used in the convolution
+		 */
+		value_type convolution(std::span<double> A1, std::span<double> A2, double tau);
 	private:
 	    /** Initializes the set of gauss-legendre weights and abscissae */
 		void initGauLeg(value_type x1, value_type x2, gauleg_type& Xi, gauleg_type& Wi);

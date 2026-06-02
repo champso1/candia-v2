@@ -1,10 +1,11 @@
-set(names "evolve" "read" "compare" "ratio" "precision" "plot")
+set(names "evolve" "read" "compare" "ratio" "precision" "plot" "scaleratio")
 add_executable(compare compare.cpp util.cpp)
 add_executable(evolve evolve.cpp)
 add_executable(plot plot.cpp)
 add_executable(precision precision.cpp util.cpp)
 add_executable(ratio ratio.cpp)
 add_executable(read read.cpp util.cpp)
+add_executable(scaleratio scaleratio.cpp util.cpp)
 foreach(name ${names})
   target_include_directories(${name} PRIVATE ${CMAKE_SOURCE_DIR}/include)
   target_link_libraries(${name} PRIVATE candia)
@@ -24,4 +25,4 @@ set(resources
 )
 file(COPY ${resources} DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 
-add_custom_target(tests_main DEPENDS evolve read compare ratio precision)
+add_custom_target(tests_main DEPENDS evolve read compare ratio precision scaleratio)

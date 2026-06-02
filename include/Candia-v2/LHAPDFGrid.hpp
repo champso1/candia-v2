@@ -24,7 +24,7 @@ namespace Candia2
 	    uint _trunc_idx{10};
 	    double _mur2_muf2{1.0};
 
-		Distribution const& _dist;
+		Distribution& _dist;
 		Grid _grid;
 
 	    std::vector<std::pair<double, std::unordered_map<int,ArrayGrid>>> _all_pdfs{};
@@ -41,7 +41,7 @@ namespace Candia2
 	public:
 		LHAPDFGrid(
 			std::string const& name, std::filesystem::path const& infofile_in_path,
-			Distribution const& dist, Grid const& grid,
+			Distribution& dist, Grid const& grid,
 		    uint order, uint iterations, uint trunc_idx, double mur2_muf2)
 			: _name{name}, _infofile_in_path{infofile_in_path},
 			  _order{order}, _iterations{iterations}, _trunc_idx{trunc_idx}, _mur2_muf2{mur2_muf2},
@@ -53,6 +53,9 @@ namespace Candia2
 		
 		void evolve(
 			double q0, double qf, double dq,
+			DGLAPSolver::options_type const& dglap_options);
+		void evolve(
+		    std::vector<double> const& qvals,
 			DGLAPSolver::options_type const& dglap_options);
 		void write();
 	};

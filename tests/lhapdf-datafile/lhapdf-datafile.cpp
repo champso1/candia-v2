@@ -44,14 +44,4 @@ int main()
 	log(LOG_INFO, "lhapdf-datafile.cpp", "{} --> {}", testpdfdir.string(), testpdfdir_dest.string());
     const auto copyoptions = fs::copy_options::recursive | fs::copy_options::overwrite_existing;
 	fs::copy(testpdfdir, testpdfdir_dest, copyoptions);
-
-	setVerbosity(0);
-	PDF const* pdf = mkPDF("testpdf", 0);
-	double Q = 100.0;
-	double Q2 = Q*Q;
-	double x = 0.1;
-	uint pid = 21;
-	double xfq = pdf->xfxQ2(pid, x, Q2);
-	log(LOG_INFO, "lhapdf-datafile.cpp", "xf_q(Q={},x={}) = {}", Q, x, xfq);
-	delete pdf;
 }

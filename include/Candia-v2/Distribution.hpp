@@ -102,6 +102,13 @@ namespace Candia2
 			accessor_type const& accessor,
 			std::vector<value_type> const& grid_points) const = 0;
 
+		/**
+		 *  @brief (re)calcs nf and alphas and other initial/final values given the new set of energies
+		 *  @brief Q0 new initial energy scale
+		 *  @brief Qf new final energy scale
+		 */
+		virtual void setup(double Q0, double Qf) = 0;
+
 		/** Returns the \f$xq^{(+)}\f$ distribution */
 		inline virtual value_type xqplus(value_type x) const
 		{ 
@@ -141,7 +148,10 @@ namespace Candia2
 		 *  @brief initializes the base @a Distribution class with Q0=\f$\sqrt{2}\f$, alpha0=0.35, nfi=3, and masses= @a _leshouche_masses
 		 *  @param qf the chosen final energy to evolve to
 		 */
-		LesHouchesDistribution(double qf);
+		explicit inline LesHouchesDistribution(double qf)
+		{
+			setup(std::numbers::sqrt2, qf);
+		}
 
 		inline value_type xuv(value_type x) const
 		{
@@ -184,6 +194,8 @@ namespace Candia2
 	    void fillNonSingletCoeffs(
 			accessor_type const& accessor,
 			std::vector<value_type> const& grid_points) const override;
+
+		virtual void setup(double Q0, double Qf) override;
 	};
 	
 } // namespace Candia2

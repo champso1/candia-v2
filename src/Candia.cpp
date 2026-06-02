@@ -178,7 +178,6 @@ namespace Candia2
 		createExpression<A2gg>(ExprName::A2gg);
 		createExpression<A2hq>(ExprName::A2hq);
 		createExpression<A2hg>(ExprName::A2hg);
-		
 		auto it = std::ranges::find(_p3exact, true);
 		bool using_exact_p3ns = it != _p3exact.end();
 		

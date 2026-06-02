@@ -31,8 +31,8 @@
                 "CMAKE_CXX_COMPILER": "g++",
                 "CMAKE_CONFIGURATION_TYPES": "Release;Debug;RelWithDebInfo",
 				"CANDIA_BUILD_TESTS": "YES",
-                "CANDIA_BUILD_DOCS": "YES",
-                "CANDIA_BUILD_MANUSCRIPTS": "YES",
+                "CANDIA_BUILD_DOCS": "NO",
+                "CANDIA_BUILD_MANUSCRIPTS": "NO",
                 "CANDIA_WITH_LHAPDF": "YES",
 				"CANDIA_LHAPDF_DIR": "$env{HOME}/.local"
             }

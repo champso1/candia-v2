@@ -3,7 +3,48 @@
 #include "Candia-v2/Candia.hpp"
 
 namespace Candia2
-{	
+{
+
+	double DGLAPSolver::shift_p1(Expression& P1, Expression& P0, ArrayGridView A, uint k)
+	{
+		double conv1 = _grid.convolution(A, P1, k);
+		double conv2 = _grid.convolution(A, P0, k);
+		return conv1 - (_alpha_s.beta0()/2.0)*conv2;
+	}
+	double DGLAPSolver::shift_p2(Expression& P2, Expression& P1, Expression& P0, ArrayGridView A, uint k)
+	{
+		double conv1 = _grid.convolution(A, P2, k);
+		double conv2 = _grid.convolution(A, P1, k);
+		double conv3 = _grid.convolution(A, P0, k);
+
+		const double L = _log_muf2_mur2;
+		const double b0 = _alpha_s.beta0();
+		const double b1 = _alpha_s.beta1();
+		
+		return
+			conv1
+			- b0*L*conv2
+			+ 0.25*(b0*b0*L*L - b1*L)*conv3;
+	}
+	double DGLAPSolver::shift_p3(Expression& P3, Expression& P2, Expression& P1, Expression& P0, ArrayGridView A, uint k)
+	{
+		double conv1 = _grid.convolution(A, P3, k);
+		double conv2 = _grid.convolution(A, P2, k);
+		double conv3 = _grid.convolution(A, P1, k);
+		double conv4 = _grid.convolution(A, P0, k);
+
+		const double L = _log_muf2_mur2;
+		const double b0 = _alpha_s.beta0();
+		const double b1 = _alpha_s.beta1();
+		const double b2 = _alpha_s.beta2();
+		
+		return
+			conv1
+			- 1.5*b0*L*conv2
+			+ (0.75*b0*b0*L*L - 0.5*b1*L)*conv3
+			+ 0.125*(-b0*b0*b0*L*L*L + 2.5*b0*b1*L*L - b2*L)*conv4;
+	}
+	
 	double DGLAPSolver::recrelS_1(
 		ArrayGridView S,
 		uint k,
@@ -21,21 +62,24 @@ namespace Candia2
 		Expression& P1)
 	{
 		double conv1 = _grid.convolution(S_i, P0, k);
-		double conv2 = _grid.convolution(S_im1, P1, k);
 		
-		double res = conv1 * (2.0/_alpha_s.beta0());
-		res += conv2 / (PI*_alpha_s.beta0());
+		double fac1 = 2.0/_alpha_s.beta0();
+		double fac2 = 1.0/(PI*_alpha_s.beta0());
+		
+		double res = fac1*conv1;
 
 		if (_is_scale_difference) {
-		    double convL = _grid.convolution(S_im1, P0, k);
-			res -= _log_muf2_mur2*convL/(2.0*PI);
+			res += fac2*shift_p1(P1, P0, S_im1, k);
+		} else {
+			double conv2 = _grid.convolution(S_im1, P1, k);
+			res += fac2*conv2;
 		}
-		
+	    
 		return -res;
 	}
 
 	double DGLAPSolver::recrelS_3(
-		ArrayGridView S_i, // C
+		ArrayGridView S_i,   // C
 		ArrayGridView S_im1, // B
 		ArrayGridView S_im2, // A
 		uint k,
@@ -47,27 +91,22 @@ namespace Candia2
 		// S2 -> S_im1
 		// S3 -> S_im2
 		double conv1 = _grid.convolution(S_i, P0, k);
-		double conv2 = _grid.convolution(S_im1, P1, k);
-		double conv3 = _grid.convolution(S_im2, P2, k);
 
-		double res = conv1 * (2.0/_alpha_s.beta0());
-		res += conv2 / (PI*_alpha_s.beta0());
-		res += conv3 / (2.0*PI_2*_alpha_s.beta0());
+		double fac1 = 2.0/_alpha_s.beta0();
+		double fac2 = 1.0/(PI*_alpha_s.beta0());
+		double fac3 = 1.0/(2.0*PI_2*_alpha_s.beta0());;
+		
+		double res = fac1*conv1;
 
 		if (_is_scale_difference) {
-			double L = _log_muf2_mur2;
-			double beta1 = _alpha_s.beta1();
-			double beta0 = _alpha_s.beta0();
-
-			double convL1 =  _grid.convolution(S_im1, P0, k);
-			res -= L*convL1/(2.0*PI);
-
-			double convL2a =  _grid.convolution(S_im2, P1, k);
-			double convL2b =  _grid.convolution(S_im2, P0, k);
-			res -= L*convL2a/(2.0*PI_2);
-			res += convL2b * (beta0*L*L - (beta1/beta0)*L)/(8.0*PI_2);
-		}
-		
+			res += fac2*shift_p1(P1, P0, S_im1, k);
+			res += fac3*shift_p2(P2, P1, P0, S_im2, k);
+		} else {
+			double conv2 = _grid.convolution(S_im1, P1, k);
+			double conv3 = _grid.convolution(S_im2, P2, k);
+			res += fac2*conv2;
+			res += fac3*conv3;
+		}		
 		
 		return -res;
 	}
@@ -84,43 +123,25 @@ namespace Candia2
 		Expression& P3)
 	{
 		double conv1 = _grid.convolution(S_i, P0, k);
-		double conv2 = _grid.convolution(S_im1, P1, k);
-		double conv3 = _grid.convolution(S_im2, P2, k);
-		double conv4 = _grid.convolution(S_im3, P3, k);
 
-		double beta0 = _alpha_s.beta0();
-		double fac1 = 2.0/beta0;
-		double fac2 = 1.0/(PI*beta0);
-		double fac3 = 1.0/(2.0*PI_2*beta0);
-		double fac4 = 1.0/(4.0*PI_3*beta0);
+		double fac1 = 2.0/_alpha_s.beta0();
+		double fac2 = 1.0/(PI*_alpha_s.beta0());
+		double fac3 = 1.0/(2.0*PI_2*_alpha_s.beta0());
+		double fac4 = 1.0/(4.0*PI_3*_alpha_s.beta0());
 
-		double res = conv1 * fac1;
-		res += conv2 * fac2;
-		res += conv3 * fac3;
-		res += conv4 * fac4;
+		double res = fac1*conv1;
 
 		if (_is_scale_difference) {
-			const double beta0 = _alpha_s.beta0();
-			const double beta1 = _alpha_s.beta1();
-			const double beta2 = _alpha_s.beta2();
-			const double L = _log_muf2_mur2;
-			const double L2 = L*L;
-			const double L3 = L2*L;
-			
-		    double convL1 =  _grid.convolution(S_im1, P0, k);
-			res -= L*convL1/(2.0*PI);
-
-			double convL2a = _grid.convolution(S_im2, P1, k);
-			double convL2b = _grid.convolution(S_im2, P0, k);
-			res -= L*convL2a/(2.0*PI_2);
-			res += convL2b * (beta0*L2 - (beta1/beta0)*L)/(8.0*PI_2);
-
-			double convL3a = _grid.convolution(S_im3, P2, k);
-			double convL3b = _grid.convolution(S_im3, P1, k);
-			double convL3c = _grid.convolution(S_im3, P0, k);
-			res -= (3.0*L)/(8.0*PI_3) * convL3a;
-			res += (3.0*beta0*L2 - (beta1/beta0)*L)/(16.0*PI_3) * convL3b;
-			res += (-beta0*beta0*L3 + (5.0/2.0)*beta1*L2 - (beta2/beta0)*L)/(32.0*PI_3) * convL3c;
+			res += fac2*shift_p1(P1, P0, S_im1, k);
+			res += fac3*shift_p2(P2, P1, P0, S_im2, k);
+			res += fac4*shift_p3(P3, P2, P1, P0, S_im3, k);
+		} else {
+			double conv2 = _grid.convolution(S_im1, P1, k);
+			double conv3 = _grid.convolution(S_im2, P2, k);
+			double conv4 = _grid.convolution(S_im3, P3, k);
+			res += fac2*conv2;
+			res += fac3*conv3;
+			res += fac4*conv4;
 		}
 		
 		return -res;
@@ -152,14 +173,17 @@ namespace Candia2
 		Expression& P0,
 		Expression& P1)
 	{
-		double conv = _grid.convolution(B, P1, k);
-		double res = -(4.0/_alpha_s.beta1())*conv;
+
+		double fac = -4.0/_alpha_s.beta1();
+		double res = 0.0;
 
 		if (_is_scale_difference) {
-			double convL = _grid.convolution(B, P0, k);
-			res += (2.0*_log_muf2_mur2*_alpha_s.beta0()/_alpha_s.beta1()) * convL;
+			res += fac*shift_p1(P1, P0, B, k);
+		} else {
+		    double conv = _grid.convolution(B, P1, k);
+			res += fac*conv;
 		}
-		
+
 		return res;
 	}
 
@@ -179,21 +203,14 @@ namespace Candia2
 		Expression& P1,
 		Expression& P2)
 	{
-		double conv = _grid.convolution(C, P2, k);
-		double res = -4.0/_alpha_s.beta2() * conv;
+		double fac = -4.0/_alpha_s.beta2();
+		double res = 0.0;
 
-		
 		if (_is_scale_difference) {
-			const double L = _log_muf2_mur2;
-			const double beta0 = _alpha_s.beta0();
-			const double beta1 = _alpha_s.beta1();
-			const double beta2 = _alpha_s.beta2();
-			
-			double convL1 = _grid.convolution(C, P1, k);
-			double convL2 = _grid.convolution(C, P0, k);
-
-			res += L*4.0*(beta0/beta2) * convL1;
-			res += ((beta1*L - beta0*beta0*L*L)/beta2) * convL2;
+			res += fac*shift_p2(P2, P1, P0, C, k);
+		} else {
+			double conv = _grid.convolution(C, P2, k);
+			res += fac*conv;
 		}
 			
 	    return res;
@@ -204,12 +221,14 @@ namespace Candia2
 		Expression& P0,
 		Expression& P1)
 	{
-		double conv = _grid.convolution(C, P1, k);
-		double res = -8.0 * conv;
+		double fac = -8.0;
+		double res = 0.0;
 
 		if (_is_scale_difference) {
-			double convL = _grid.convolution(C, P0, k);
-			res += _log_muf2_mur2*4.0*_alpha_s.beta0() * convL;
+		    res += fac*shift_p1(P1, P0, C, k);
+		} else {
+			double conv = _grid.convolution(C, P1, k);
+			res += fac*conv;
 		}
 		
 		return res;
@@ -237,31 +256,23 @@ namespace Candia2
 		const double b = _b[_nf];
 		const double c = _c[_nf];
 
-		double conv0 = _grid.convolution(D, P0, k);
-		double conv1 = _grid.convolution(D, P1, k);
-		double conv2 = _grid.convolution(D, P2, k);
-		double conv3 = _grid.convolution(D, P3, k);
+		double fac1 = 32.0*PI_2;
+		double fac2 = 16.0*PI*r1;
+		double fac3 = -8*(c + b*r1);
 
-		const double fac1 = 32.0*PI_2;
-		const double fac2 = 16.0*PI*r1;
-		const double fac3 = -8*(c + b*r1);
-
-		double res = fac1*conv1 + fac2*conv2 + fac3*conv3;
+		double res = 0.0;
 
 		if (_is_scale_difference) {
-			const double beta0 = _alpha_s.beta0();
-			const double beta1 = _alpha_s.beta1();
-			const double beta2 = _alpha_s.beta2();
-			const double L = _log_mur2_muf2;
-
-			res -= (fac1*beta0*L/2.0) * conv0;
-
-			res -= (fac2*beta0*L) * conv1;
-			res += ((fac2/4.0)*(beta0*beta0*L*L - beta1*L)) * conv0;
-
-			res -= ((3.0/2.0)*fac3*beta0*L) * conv2;
-			res += (-fac3*((3.0/4.0)*beta0*beta0*L*L - (1.0/2.0)*beta1*L)) * conv1;
-			res += ((fac3/8.0)*(-beta0*beta0*beta0*L*L*L + (5.0/2.0)*beta1*beta2*L*L - beta2*L)) * conv0;
+			res += fac1*shift_p1(P1, P0, D, k);
+			res += fac2*shift_p2(P2, P1, P0, D, k);
+			res += fac3*shift_p3(P3, P2, P1, P0, D, k);
+		} else {
+			double conv1 = _grid.convolution(D, P1, k);
+			double conv2 = _grid.convolution(D, P2, k);
+			double conv3 = _grid.convolution(D, P3, k);
+			res += fac1*conv1;
+			res += fac2*conv2;
+			res += fac3*conv3;
 		}
 		
 		return res;
@@ -275,33 +286,28 @@ namespace Candia2
 		Expression& P3)
 	{
 		const double r1 = _r1[_nf];
-		// const double b = _b[_nf];
-		// const double c = _c[_nf];
+		[[maybe_unused]] const double b = _b[_nf];
+		[[maybe_unused]] const double c = _c[_nf];
 
 		double conv0 =  _grid.convolution(D, P0, k);
-		double conv1 =  _grid.convolution(D, P1, k);
-		double conv2 =  _grid.convolution(D, P2, k);
-		double conv3 =  _grid.convolution(D, P3, k);
 
-		const double fac1 = -64*PI_2;
-		const double fac2 = -32*PI*r1;
-		const double fac3 = -16*r1*r1;
-		double res = fac1*conv1 + fac2*conv2 + fac3*conv3;
+		double fac1 = -64*PI_2;
+		double fac2 = -32*PI*r1;
+		double fac3 = -16*r1*r1;
+		
+		double res = 0.0;
 		
 		if (_is_scale_difference) {
-			const double beta0 = _alpha_s.beta0();
-			const double beta1 = _alpha_s.beta1();
-			const double beta2 = _alpha_s.beta2();
-			const double L = _log_mur2_muf2;
-
-			res -= (fac1*beta0*L/2.0) * conv0;
-
-			res -= (fac2*beta0*L) * conv1;
-			res += ((fac2/4.0)*(beta0*beta0*L*L - beta1*L)) * conv0;
-
-			res -= ((3.0/2.0)*fac3*beta0*L) * conv2;
-			res += (-fac3*((3.0/4.0)*beta0*beta0*L*L - (1.0/2.0)*beta1*L)) * conv1;
-			res += ((fac3/8.0)*(-beta0*beta0*beta0*L*L*L + (5.0/2.0)*beta1*beta2*L*L - beta2*L)) * conv0;
+			res += fac1*shift_p1(P1, P0, D, k);
+			res += fac2*shift_p2(P2, P1, P0, D, k);
+			res += fac3*shift_p3(P3, P2, P1, P0, D, k);
+		} else {
+			double conv1 = _grid.convolution(D, P1, k);
+			double conv2 = _grid.convolution(D, P2, k);
+			double conv3 = _grid.convolution(D, P3, k);
+			res += fac1*conv1;
+			res += fac2*conv2;
+			res += fac3*conv3;
 		}
 			
 	    return res;
@@ -319,29 +325,23 @@ namespace Candia2
 		const double c = _c[_nf];
 
 		double conv0 = _grid.convolution(D, P0, k);
-		double conv1 = _grid.convolution(D, P1, k);
-		double conv2 = _grid.convolution(D, P2, k);
-		double conv3 = _grid.convolution(D, P3, k);
 
-		const double fac1 = 128*PI_2*(b+r1);
-		const double fac2 = -64*PI*c;
-		const double fac3 = -32*c*r1;
-		double res = fac1*conv1 + fac2*conv2 + fac3*conv3;
+		double fac1 = 128*PI_2*(b+r1);
+		double fac2 = -64*PI*c;
+		double fac3 = -32*c*r1;
+		double res = 0.0;
 
 		if (_is_scale_difference) {
-			const double beta0 = _alpha_s.beta0();
-			const double beta1 = _alpha_s.beta1();
-			const double beta2 = _alpha_s.beta2();
-			const double L = _log_mur2_muf2;
-
-			res -= (fac1*beta0*L/2.0) * conv0;
-
-			res -= (fac2*beta0*L) * conv1;
-			res += ((fac2/4.0)*(beta0*beta0*L*L - beta1*L)) * conv0;
-
-			res -= ((3.0/2.0)*fac3*beta0*L) * conv2;
-			res += (-fac3*((3.0/4.0)*beta0*beta0*L*L - (1.0/2.0)*beta1*L)) * conv1;
-			res += ((fac3/8.0)*(-beta0*beta0*beta0*L*L*L + (5.0/2.0)*beta1*beta2*L*L - beta2*L)) * conv0;
+			res += fac1*shift_p1(P1, P0, D, k);
+			res += fac2*shift_p2(P2, P1, P0, D, k);
+			res += fac3*shift_p3(P3, P2, P1, P0, D, k);
+		} else {
+			double conv1 = _grid.convolution(D, P1, k);
+			double conv2 = _grid.convolution(D, P2, k);
+			double conv3 = _grid.convolution(D, P3, k);
+			res += fac1*conv1;
+			res += fac2*conv2;
+			res += fac3*conv3;
 		}
 		
 	    return res;
