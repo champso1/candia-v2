@@ -1,0 +1,32 @@
+# Approx (1707.08315)
+# Exact (2604.09534)
+
+set terminal pdfcairo enhanced
+set border lw 2
+set size ratio 0.65
+set rmargin 0
+set lmargin 0
+
+infile = "p3nsp-exact-vs-approx-qns.dat"
+outfile = "p3nsp-exact-vs-approx-qns.pdf"
+set output outfile
+
+set style fill transparent solid 0.15 noborder
+
+set logscale x
+set xrange [1e-5:1.0]
+set yrange [0.97:1.005]
+set format x "10^{%T}"
+set grid
+set key right center
+
+set title "Ratio of approximate vs. exact P@^{/*0.8 (3)+}_{/*0.8 NS} on xq@^{/*0.8 (+)}_{/*0.8 NS,ud}(x) evolution"
+set xlabel "x" offset 0,0.7
+set ylabel "xq@^{/*0.8 (+)}_{/*0.8 NS,ud}(x) (Ratio)"
+
+plot \
+	 infile using 1:2 with lines lw 2 lc rgb "black" title "Exact (2604.09534)", \
+	 ''     using 1:3 with lines lw 2 dt 2 lc rgb "dark-blue" title "Approx (1707.08315)", \
+	 ''     using 1:4:5 with filledcurves lc rgb "blue" notitle, \
+	 ''     using 1:4 with lines lw 1 lc rgb "dark-blue" notitle, \
+	 ''     using 1:5 with lines lw 1 lc rgb "dark-blue" notitle
