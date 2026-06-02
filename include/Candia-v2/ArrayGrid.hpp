@@ -165,6 +165,8 @@ namespace Candia2
 		value_type& operator()(uint idx) { return _data[idx]; }
 		value_type& operator[](uint idx) { return _data[idx]; }
 
+		auto const& data() const { return _data; }
+		auto& data() { return _data; }
 		std::span<value_type> view() { return std::span<double>(_data); }
 	};
 	
