@@ -143,7 +143,7 @@ namespace Candia2
 		return y;
 	}
 
-	Grid::value_type Grid::mappingFunctionBase(
+	double Grid::mappingFunctionBase(
 		uint k, value_type x, auto&& yandjaccessor,
 		[[maybe_unused]] Expression& E, std::span<double> A,
 		value_type plus,
@@ -167,8 +167,26 @@ namespace Candia2
 		}
 		return out;
 	}
+	double Grid::mappingFunctionBase(
+	    double tau, auto&& yandjaccessor,
+		std::span<double> A1, std::span<double> A2,
+		gauleg_type const& X, gauleg_type const& W)
+	{
+		double out = 0.0;
+		for (uint i=0; i<X.size(); i++) {
+			double z = X[i];
+			double w = W[i];
+			auto [x, J] = yandjaccessor(tau, z);
+			double a = tau/x;
+			double interp_a1 = interpolate(A1, x);
+			double interp_a2 = interpolate(A2, a);
 
-	Grid::value_type Grid::convolution(std::span<double> A, Expression &E, uint k)
+			out += w*J * (1/x) * interp_a1*interp_a2;
+		}
+		return out;
+	}
+
+	double Grid::convolution(std::span<double> A, Expression &E, uint k)
 	{
 		double x = _points[k];
 		double plus = E.plus();
@@ -178,6 +196,16 @@ namespace Candia2
 		auto mappings = _filler.get().getMappings(x);
 		for (auto& mapping : mappings)
 			res += mappingFunctionBase(k, x, mapping, E, A, plus, _Xi, _Wi);
+		
+		return res;
+	}
+
+	double Grid::convolution(std::span<double> A1, std::span<double> A2, double tau)
+	{
+		auto mappings = _filler.get().getMappings(tau);
+		double res = 0.0;
+		for (auto& mapping : mappings)
+			res += mappingFunctionBase(tau, mapping, A1, A2, _Xi, _Wi);
 		
 		return res;
 	}

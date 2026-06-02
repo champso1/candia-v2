@@ -146,6 +146,7 @@ namespace Candia2
 	std::span<GridFillerBase::mapping_function_type> GridFillerLog::_mapping_span(_mappings.begin(), _mappings.end());
 
 	
+	
 	uint GridFillerLogLin::fill(std::vector<double>& points)
 	{
 		double log_min = std::log10(min);
