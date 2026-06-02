@@ -7,34 +7,30 @@
 namespace Candia2
 {
 	void LHAPDFGrid::evolve(
-		double q0, double qf, double dq,
+		std::vector<double> const& qvals,
 		DGLAPSolver::options_type const& dglap_options)
 	{
-	    double nsize = (qf-q0)/dq;
-		int size = std::trunc(nsize) + 1;
-		
-		auto as_qs_view =
-			std::views::iota(0, size)
-			| std::views::transform([q0,dq](int x) -> double { return q0 + dq*x; });
-		auto as_qs = std::vector<double>(as_qs_view.begin(), as_qs_view.end());
-		as_qs.emplace_back(qf); // may be necessary
-	    
+		double q0 = qvals.front();
+		double qf = qvals.back();
 		AlphaS alphas_all(_order, q0, qf, _dist.alpha0(), _mur2_muf2);
 		alphas_all.setVFNS(_dist.masses(), _dist.nfi(), _dist.nff());
-		std::vector<std::pair<double,double>> as_qvals = alphas_all.getValues(as_qs);
+		std::vector<std::pair<double,double>> as_qvals = alphas_all.getValues(qvals);
 		std::vector<double> as_vals(as_qvals.size());
 		std::ranges::transform(
 			as_qvals, std::ranges::begin(as_vals),
 			[](std::pair<double,double> const& p) -> double { return p.second; });
-		_as_qs = std::move(as_qs);
+		_as_qs = std::move(qvals);
 		_as_vals = std::move(as_vals);
 
 		_xvals = _grid.points();
 
 		log(LOG_INFO, "DGLAPSolverLHAPDF", "Energy values: {}", vec_to_str(_as_qs));
 		for (double q : _as_qs) {
+			log(LOG_INFO, "DGLAPSolverLHAPDF", "==============================");
 			log(LOG_INFO, "DGLAPSolverLHAPDF", "Performing the evolution from {} to {}", q0, q);
-			
+			log(LOG_INFO, "DGLAPSolverLHAPDF", "==============================");
+
+			_dist.setup(q0, q);
 			AlphaS alphas(_order, q0, q, _dist.alpha0(), _mur2_muf2);
 			alphas.setVFNS(_dist.masses(), _dist.nfi(), _dist.nff());
 			// alphas.setFFNS(4);
@@ -76,6 +72,22 @@ namespace Candia2
 		}
 		
 		log(LOG_INFO, "DGLAPSolverLHAPDF", "Finished running.");
+	}
+	
+	void LHAPDFGrid::evolve(
+		double q0, double qf, double dq,
+		DGLAPSolver::options_type const& dglap_options)
+	{
+	    double nsize = (qf-q0)/dq;
+		uint size = std::trunc(nsize) + 1;
+		std::vector<double> qvals(size);
+		auto as_qs_view =
+			std::views::iota(uint{0}, size)
+			| std::views::transform([q0,dq](uint x) -> double { return q0 + dq*x; });
+	    std::vector<double> as_qs(as_qs_view.begin(), as_qs_view.end());
+	    if (std::ranges::find(as_qs, qf) == as_qs.end())
+			as_qs.emplace_back(qf);
+		evolve(as_qs, dglap_options);
 	}
 
 	void LHAPDFGrid::write()
