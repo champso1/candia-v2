@@ -181,22 +181,17 @@ namespace Candia2
 		};
 
 	public:
-		inline void setP3ApproximationType(ExprName expr, P3ApproxType type)
+		inline void setP3ApproximationType(std::pair<ExprName,P3ApproxType> type)
 		{
-			_p3approx[static_cast<uint>(expr)] = type;
+			_p3approx[static_cast<uint>(type.first)] = type.second;
 		}
 
-		template <typename... TArgs>
-		void setP3ApproximationType2(TArgs&&... args)
+		inline void useP3Exact(std::vector<uint> const& exprs)
 		{
-			((_p3approx[static_cast<uint>(args.first)] = args.second),...);
-		}	
-
-		template <typename...  TArgs>
-		void useP3Exact(TArgs&&... args)
-		{
-			((_p3exact[static_cast<uint>(args)] = true),...);
+			for (auto expr : exprs)
+				_p3exact[static_cast<uint>(expr)] = true;
 		}
+		
 
 	public:
 		/**
