@@ -120,12 +120,12 @@ int main(int argc, char *argv[]) {
 	Grid grid(xtab, grid_filler, {});
 
 	LesHouchesDistribution dist(Qf);
-	LHAPDFDistribution CT25NNLO(make_lhapdf_pdf("CT25NNLO"), 1.3, 100.0);
-	AlphaS alphas(order, CT25NNLO.Q0(), Qf, CT25NNLO.alpha0(), mur2_muf2);
-	alphas.setVFNS(CT25NNLO.masses(), CT25NNLO.nfi(), CT25NNLO.nff());
+	// LHAPDFDistribution dist(make_lhapdf_pdf("CT25NNLO"), 1.3, 100.0);
+	AlphaS alphas(order, dist.Q0(), Qf, dist.alpha0(), mur2_muf2);
+	alphas.setVFNS(dist.masses(), dist.nfi(), dist.nff());
 	// alphas.setFFNS(4);
 
-	DGLAPSolver solver(order, grid, alphas, Qf, iterations, trunc_idx, std::move(CT25NNLO), mur2_muf2);
+	DGLAPSolver solver(order, grid, alphas, Qf, iterations, trunc_idx, std::move(dist), mur2_muf2);
 	auto& dglap_options = solver.getOptions();
 	dglap_options.use_truncated_nonsinglet_sol = true;
 	dglap_options.disable_heavy_flavor_matching = false;
@@ -133,8 +133,12 @@ int main(int argc, char *argv[]) {
 	dglap_options.use_n3lo_heavyquark_asymmetry = true;
 	dglap_options.use_fortran_n3lo_splitfuncs = false;
 
-	// solver.useP3Exact(std::vector<uint>{static_cast<uint>(ExprName::P3nsp)});
-	solver.setP3ApproximationType(std::make_pair(ExprName::P3nsp, P3ApproxType::Imod2));
+	solver.useP3Exact({
+			static_cast<uint>(ExprName::P3nsp),
+			static_cast<uint>(ExprName::P3nsm),
+			static_cast<uint>(ExprName::P3nsv)
+		});
+	// solver.setP3ApproximationType(std::make_pair(ExprName::P3nsp, P3ApproxType::Imod2));
 	
 	auto t0 = chrono::high_resolution_clock::now();
 	auto F = solver.evolve();	
