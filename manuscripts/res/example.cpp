@@ -12,14 +12,15 @@ int main()
   const double mur2_muf2 = 1.0;
 
   std::vector<double> xtab{
-    1e-5, 1e-4, 1e-3, 1e-2, 0.1, 0.3, 0.5, 0.7, 0.9};
-  Grid grid(xtab, make_grid_filler<GridFillerLog>(), {});
+	1e-5, 1e-4, 1e-3, 1e-2, 0.1, 0.3, 0.5, 0.7, 0.9, 1.0};
+  GridFillerLogLinQuad grid_filler{};
+  Grid grid(xtab, grid_filler, {});
 
-  LesHouchesDistribution dist{};
+  LesHouchesDistribution dist(Qf);
   AlphaS alphas(
-	  order,
-	  dist.Q0(), Qf, dist.alpha0(),
-	  mur2_muf2);
+	order,
+	dist.Q0(), Qf, dist.alpha0(),
+	mur2_muf2);
   alphas.setVFNS(dist.masses(), dist.nfi());
   // alphas.setFFNS(4);
 
