@@ -14,11 +14,12 @@ static void usage()
 	cout << "[ERROR] evolve.cpp: Invalid arguments.\n";
 	cout << "Usage:\n";
 	cout << "-------------------------------------------------------\n";
-	cout << "./evolve(.exe) <order> <iterations> <trunc_idx> <mur2_muf2> [title]\n";
+	cout << "./evolve(.exe) <order> <iterations> <trunc_idx> <mur2_muf2> <use_trunc> [title]\n";
 	cout << "    <order>: perturbative order to perform the calculation.\n";
 	cout << "    <iterations>: number of total iterations to perform.\n";
 	cout << "    <trunc_idx>: number of truncation iterations to perform (for each main iteration!)\n";
 	cout << "    <mur2_muf2>: ratio of mu_R^2 / mu_F^2.\n";
+	cout << "    <use_trunc>: 0=use exact, 1=use truncated";
 	cout << "    [title]: optional -- gives a title for the resulting datafile and logfile\n";
 	cout << "-------------------------------------------------------\n\n";
 	throw std::runtime_error("invalid cli arguments");
@@ -79,18 +80,19 @@ static void outputData(
 }
 
 int main(int argc, char *argv[]) {
-	if (argc != 5 && argc != 6)
+	if (argc != 6 && argc != 7)
 		usage();
 
 	const uint order = stoi(argv[1]);
 	const uint iterations = stoi(argv[2]);
 	const uint trunc_idx = stoi(argv[3]);
 	const double mur2_muf2 = stold(argv[4]);
+	const bool use_trunc = stoi(argv[5]) == 1;
 	const double Qf = 100.0;
 
 	std::string datafile_name{};
-	if (argc == 6) {
-		datafile_name = argv[5];
+	if (argc == 7) {
+		datafile_name = argv[6];
 		datafile_name += ".dat";
 	}
 
@@ -98,7 +100,7 @@ int main(int argc, char *argv[]) {
 	fileprefix << ((order == 3) ? "n3lo" : (order == 2) ? "nnlo" : (order == 1) ? "nlo" : "lo");
 	fileprefix << "-i" << iterations << "-t" << trunc_idx << "-r" << setprecision(2) << mur2_muf2;
 
-	if (argc == 5)
+	if (argc == 6)
 		datafile_name = fileprefix.str() + ".dat";
 
 	if (!fs::exists("log")) {
@@ -127,7 +129,7 @@ int main(int argc, char *argv[]) {
 
 	DGLAPSolver solver(order, grid, alphas, Qf, iterations, trunc_idx, std::move(dist), mur2_muf2);
 	auto& dglap_options = solver.getOptions();
-	dglap_options.use_truncated_nonsinglet_sol = true;
+	dglap_options.use_truncated_nonsinglet_sol = use_trunc;
 	dglap_options.disable_heavy_flavor_matching = false;
 	dglap_options.use_nnlo_matching_conditions_at_n3lo = false;
 	dglap_options.use_n3lo_heavyquark_asymmetry = true;
@@ -138,7 +140,6 @@ int main(int argc, char *argv[]) {
 			static_cast<uint>(ExprName::P3nsm),
 			static_cast<uint>(ExprName::P3nsv)
 		});
-	// solver.setP3ApproximationType(std::make_pair(ExprName::P3nsp, P3ApproxType::Imod2));
 	
 	auto t0 = chrono::high_resolution_clock::now();
 	auto F = solver.evolve();	
