@@ -42,6 +42,7 @@
 \usepackage{xparse}
 \usepackage{bm}
 \usepackage{soul}
+\usepackage{import}
 
 \ExplSyntaxOn
 \NewDocumentCommand{\comm}{mm}
@@ -185,418 +186,196 @@ We present \texttt{Candia-v2}, an open-source software package that generalizes 
 
 
 
+
+
+
+
+
 \section{Introduction}
 \label{sec:intro}
 In this manuscript, we present the public release of the \texttt{Candia-v2} evolution package, which solves the Dokshitzer-Gribov-Lipatov-Altarelli-Parisi (DGLAP)~\cite{Gribov:1972rt,Gribov:1972ri,Lipatov:1974qm,Dokshitzer:1977sg,Altarelli:1977zs} integro-differential equations governing the factorization-scale evolution of collinear parton distribution functions (PDFs) of the proton up to next-to-next-to-next-to-leading order (N$^3$LO) in perturbative QCD. 
 %
 \texttt{Candia-v2} implements the $x$-space algorithm documented in Refs.~\cite{Hampson:2025pvi,Cafarella:2005zj,Guzzi:2006wx,Cafarella:2008du} based on efficient logarithmic expansions of the DGLAP solution, whose coefficients are determined recursively directly in $x$-space. The algorithm provides insight into the analytical structure of DGLAP solutions which are expressed in terms of power series. The new version of the code is publicly available at \url{https://github.com/champso1/candia-v2}~\cite{candiav2}.
 
-The package incorporates the most recent results on the 4-loop DGLAP splitting functions as well as the 3-loop operator matrix elements (OMEs) that control the N$^3$LO part of the evolution and the heavy-quark matching conditions respectively. In particular, \texttt{Candia-v2} uses the recent exact calculation for the 4-loop non-singlet (NS) splitting functions presented in Ref.~\cite{Gehrmann:2026qbl} while the singlet (S) sector uses the approximations documented in Refs.~\cite{Davies:2022ofz,Moch:2021qrk,Falcioni:2023luc,Falcioni:2023vqq,Moch:2023tdj,Falcioni:2024xyt,Falcioni:2024qpd,Falcioni:2025hfz} (FHMRUVV). The OMEs are evaluated through the fast interface of the \texttt{libome} library~\cite{Ablinger:2025joi}, which provides users with access to the exact results recently derived in Refs.~\cite{Ablinger:2025nnq,Ablinger:2025joi,Ablinger:2024qxg,Ablinger:2024xtt,Ablinger:2023ahe,Bierenbaum:2022biv,Ablinger:2022wbb,Behring:2021asx,Ablinger:2020snj,Ablinger:2019etw,Ablinger:2018brx,Ablinger:2017xml,Ablinger:2017err,Ablinger:2014tla,Ablinger:2014uka,Behring:2014eya,transitionAqg,Ablinger:2012qm,Blumlein:2012vq,Blumlein:2011mi,Ablinger:2010ty,Bierenbaum:2009zt,Bierenbaum:2008yu,Bierenbaum:2007qe,Bierenbaum:2007dm}.
+The package incorporates the most recent results on the 4-loop DGLAP splitting functions as well as the 3-loop operator matrix elements (OMEs) that control the N$^3$LO part of the evolution and the heavy-quark matching conditions respectively. In particular, \texttt{Candia-v2} uses the recent exact calculation for the 4-loop non-singlet (NS) splitting functions presented in Ref.~\cite{Gehrmann:2026qbl} (properties and implications are studied in Ref.~\cite{Moch:2026qsw}) while the singlet (S) sector uses the approximations documented in Refs.~\cite{Davies:2022ofz,Moch:2021qrk,Falcioni:2023luc,Falcioni:2023vqq,Moch:2023tdj,Falcioni:2024xyt,Falcioni:2024qpd,Falcioni:2025hfz} (FHMRUVV). The OMEs are evaluated through the fast interface of the \texttt{libome} library~\cite{Ablinger:2025joi}, which provides users with access to the exact results recently derived in Refs.~\cite{Ablinger:2025nnq,Ablinger:2025joi,Ablinger:2024qxg,Ablinger:2024xtt,Ablinger:2023ahe,Bierenbaum:2022biv,Ablinger:2022wbb,Behring:2021asx,Ablinger:2020snj,Ablinger:2019etw,Ablinger:2018brx,Ablinger:2017xml,Ablinger:2017err,Ablinger:2014tla,Ablinger:2014uka,Behring:2014eya,transitionAqg,Ablinger:2012qm,Blumlein:2012vq,Blumlein:2011mi,Ablinger:2010ty,Bierenbaum:2009zt,Bierenbaum:2008yu,Bierenbaum:2007qe,Bierenbaum:2007dm}.   
+ 
+The ongoing Run 3 of the Large Hadron Collider (LHC) is expected to deliver approximately (300~fb$^{-1}$) of integrated luminosity, and the future high-luminosity LHC (HL-LHC) program aims to increase this amount by about one order of magnitude for both the ATLAS and CMS experiments. In parallel, the Electron-Ion Collider (EIC) will provide high-precision measurements of hadronic structure over a complementary kinematic range~\cite{AbdulKhalek:2021gbh}. These experimental advances require theoretical predictions for hadronic cross sections with comparable accuracy. This, in turn, motivates the development of precise and efficient PDF-evolution tools, such as (\texttt{Candia-v2}), capable of implementing the most recent perturbative QCD ingredients.
 
-Accurate parton evolution is an essential ingredient in the theoretical interpretation of present and future collider data. Over the years, a variety of numerical and semi-analytic strategies have been developed to solve the DGLAP equations, including methods based on Mellin-space techniques, recursive solutions, interpolation grids, Runge-Kutta integration, and parton-branching formulations~\cite{Furmanski:1981cw,Rossi:1983xz,DaLuzVieira:1990xk,Kumano:1992vd,Pascaud:1994vx,Miyama:1995bd,Pascaud:1996ci,Kosower:1997hg,Hirai:1997gb,Blumlein:1997em,Coriano:1998wj,Santorelli:1998yt,Ratcliffe:2000kp,Weinzierl:2002mv,Cafarella:2005zj,Jadach:2005bf,Guzzi:2006wx,Jadach:2007qa,Simonelli:2024vyh}. Several of these approaches have been implemented in fast evolution programs, some of which are publicly available. Representative examples include \texttt{partonevolution}~\cite{Weinzierl:2002mv}, based on Mellin inversion along an optimized contour; \texttt{Pegasus}~\cite{Vogt:2004ns}, which uses the $U$-matrix method in Mellin space; \texttt{Candia}~\cite{Cafarella:2008du,candiav1}, which implements logarithmic recursion relations directly in $x$-space; \texttt{Hoppet}~\cite{Salam:2008qg,Karlberg:2026kte}, based on $x$-space Runge-Kutta evolution; and \texttt{QCDNum}~\cite{Botje:2010ay}, which employs polynomial-spline interpolation in $x$-space. More recent developments include \texttt{Apfel}~\cite{Bertone:2013vaa,Bertone:2017gds}, which combines Runge-Kutta evolution with high-order $x$-space interpolation; {\linebreak} \texttt{ChiliPDF}~\cite{Diehl:2021gvs}, based on global Chebyshev interpolation in Mellin space; \texttt{EKO}~\cite{Candido:2022tld}, which implements the evolution-kernel-operator formalism in Mellin space; and \texttt{uPDFevolv}~\cite{Hautmann:2014uua,Jung:2024uwc}, which follows the parton-branching approach. 
+Accurate parton evolution is an essential ingredient in the theoretical interpretation of present and future collider data. Over the years, a variety of numerical and semi-analytic strategies have been developed to solve the DGLAP equations, including methods based on Mellin-space techniques, recursive solutions, interpolation grids, Runge-Kutta integration, and parton-branching formulations~\cite{Furmanski:1981cw,Rossi:1983xz,DaLuzVieira:1990xk,Kumano:1992vd,Pascaud:1994vx,Miyama:1995bd,Pascaud:1996ci,Kosower:1997hg,Hirai:1997gb,Blumlein:1997em,Coriano:1998wj,Santorelli:1998yt,Ratcliffe:2000kp,Weinzierl:2002mv,Cafarella:2005zj,Jadach:2005bf,Guzzi:2006wx,Jadach:2007qa,Simonelli:2024vyh}. Several of these approaches have been implemented in fast evolution programs, some of which are publicly available. Representative examples include \texttt{partonevolution}~\cite{Weinzierl:2002mv}, based on Mellin inversion along an optimized contour; \texttt{Pegasus}~\cite{Vogt:2004ns}, which uses the $U$-matrix method in Mellin space; \texttt{Candia}~\cite{Cafarella:2008du,candiav1}, which implements logarithmic recursion relations directly in $x$-space; \texttt{Hoppet}~\cite{Salam:2008qg,Karlberg:2026kte}, based on $x$-space Runge-Kutta evolution; and \texttt{QCDNum}~\cite{Botje:2010ay}, which employs polynomial-spline interpolation in $x$-space. More recent developments include \texttt{Apfel}~\cite{Bertone:2013vaa,Bertone:2017gds}, which combines Runge-Kutta evolution with high-order $x$-space interpolation; \linebreak \texttt{ChiliPDF}~\cite{Diehl:2021gvs}, based on global Chebyshev interpolation in Mellin space; \texttt{EKO}~\cite{Candido:2022tld}, which implements the evolution-kernel-operator formalism in Mellin space; and \texttt{uPDFevolv}~\cite{Hautmann:2014uua,Jung:2024uwc}, which follows the parton-branching approach. 
 A recent comparison of QCD evolution at approximate N$^3$LO accuracy was presented in Ref.~\cite{Cooper-Sarkar:2024crx}.
+%
+Global PDF analyses at approximate N$^3$LO (aN$^3$LO) in QCD have recently been documented in Refs.~\cite{NNPDF:2024nan,McGowan:2022nag} while the inclusion of QED corrections with a photon PDF at NLO accuracy is documented in Refs.~\cite{Cridge:2023ryv,Ball:2025xgq}.
 
-\section{The Algorithm}
+The manuscript is organized as follows.
+In Sec.~\ref{sec:program-description} we briefly illustrate the algorithm for the N$^3$LO evolution,...  
 
-\subsection{Notation and Definitions}
 
-We start by summarizing the notations and definitions that we will be using in the description of the program.
-The general mathematical structure of the DGLAP equation is
-% 
-\begin{equation}
-  \frac{\partial}{\partial\ln \mu_F^{2}}f(x,\mu_F^{2}) = P(x,\alpha_{s}(\mu_F^{2})) \otimes f(x,\mu_F^{2})
-  \label{eq:DGLAP}
+
+
+\section{Brief description of the algorithm}
+\label{sec:program-description}
+
+In this section we give a short description of the \texttt{Candia} algorithm at N$^3$LO in QCD and set up the notation. For more details we refer the reader to Ref.~\cite{Hampson:2025pvi} and references therein, where all formal aspects of the algorithm are discussed.   
+
+The DGLAP integro-differential equations can be written as
+\begin{equation}    
+\frac{\partial}{\partial\ln Q^{2}}f_i(x,Q^{2}) = \sum_{j=q,\bar{q},g} {\cal P}_{ij}(x,\alpha_{s}(Q^2)) \otimes f_j(x,Q^{2})
+\label{DGLAP}
 \end{equation}
-% 
-where the convolution product is defined by
-% 
+where $f_i(x,Q^2)$ is the PDF for parton $i=q,\bar{q}, g$ in the proton computed at the longitudinal momentum fraction $x$ and energy scale $Q^2$. ${\cal P}_{ij}$ represents the DGLAP splitting functions which is a matrix in the singlet sector and a scalar function in the NS sector.  
+%
+The convolution product is defined as
+%
 \begin{equation}
   \left[a \otimes b\right](x) = \int_{x}^{1}\frac{\dd y}{y}a\left(\frac{x}{y}\right)b(y) = \int_{x}^{1}\frac{\dd y}{y}a(y)b\left(\frac{x}{y}\right)
 \end{equation}
-% 
-and the perturbative expansion of the kernels and of the beta function up to NNLO are respectively
-% 
+%
+and the general perturbative expansion of the splitting functions is 
 \begin{equation}
-  P(x,\alpha_{s}) = \left(\frac{\alpha_{s}}{2\pi}\right)P^{(0)}(x)
-  + \left(\frac{\alpha_{s}}{2\pi}\right)^{2}P^{(1)}(x)
-  + \left(\frac{\alpha_{s}}{2\pi}\right)^{3}P^{(2)}(x)
-  + O(\alpha_{s}^{4})
-  \label{eq:kernel_expansion}
+{\mathcal P}(x,\alpha_s(Q^2)) = \sum_{n=0}^{\infty} \left(\frac{\alpha_s(Q^2)}{2\pi}\right)^{n+1} P^{(n)}(x)
 \end{equation}
-% 
-and
-% 
-\begin{equation}
-  \beta(\alpha_{s}) = \frac{\textrm{d}\alpha_{s}(\mu_R^{2})}{\textrm{d}\ln\mu_R^{2}} =
-  - \frac{\beta_{0}}{4\pi}\alpha_{s}^{2}
-  - \frac{\beta_{1}}{16\pi^{2}}\alpha_{s}^{3}
-  -\frac{\beta_{2}}{64\pi^{3}}\alpha_{s}^{4}
-  +O(\alpha_{s}^{5})
-  \label{eq:beta_exp}
-\end{equation}
-% 
-where
-% 
-\begin{eqnarray}
-  \beta_{0} & = & \frac{11}{3}N_{C}-\frac{4}{3}T_{f} \label{eq:beta0} \\
-  \beta_{1} & = & \frac{34}{3}N_{C}^{2}-\frac{20}{3}N_{C}T_{f}-4C_{F}T_{f} \label{eq:beta1} \\
-  \beta_{2} & = & \frac{2857}{54}N_{C}^{3}+2C_{F}^{2}T_{f}-\frac{205}{9}C_{F}N_{C}T_{f}-\frac{1415}{27}N_{C}^{2}T_{f}+\frac{44}{9}C_{F}T_{f}^{2}+\frac{158}{27}N_{C}T_{f}^{2} \label{eq:beta2}
-\end{eqnarray}
-% 
-and
-% 
-\begin{equation}
-  N_{C}=3, \qquad C_{F}=\frac{N_{C}^{2}-1}{2N_{C}}=\frac{4}{3}, \qquad T_{f}=T_{R}n_{f}=\frac{1}{2}n_{f}.
-\end{equation}
-% 
-$N_{C}$ is the number of colors and $n_{f}$ is the number of active flavors, selected by the mass condition $m_{q}\leq \mu_F$, for a given factorization scale $\mu_F$.
-We also denote with $\mu_R$ the renormalization scale.
+%
+where $P^{(0)}(x)$ was first computed in Refs.~\cite{Gross:1973id,Politzer:1974fr,Altarelli:1977zs}, $P^{(1)}(x)$ in Refs.~\cite{Floratos:1977au,Floratos:1978ny,Gonzalez-Arroyo:1979guc,Gonzalez-Arroyo:1979qht,Curci:1980uw,Furmanski:1980cm,Floratos:1981hs,Hamberg:1991qt}, and $P^{(2)}(x)$ was presented in Refs.~\cite{Moch:2004pa,Vogt:2004mw}. The calculation of $P^{(3)}(x)$ for the NS sector has been recently published in Ref.~\cite{Gehrmann:2026qbl}, and the calculation for the singlet sector is currently in progress~\cite{Gracey:1994nn,Davies:2016jie,Moch:2017uml,Gehrmann:2023cqm,Falcioni:2023tzp,Gehrmann:2023iah,Kniehl:2025ttz}.  
 
-The evolution (DGLAP) kernels are distributions whose general form is given by
-% 
+The renormalization scale ($\mu_R$) evolution of the QCD strong coupling is described by the renormalization group equations (RGEs)  
+%
 \begin{equation}
-  P(x) = P_{1}(x) + \frac{P_{2}(x)}{(1-x)_{+}} + P_{3}\delta(1-x),\label{eq:general_kernel}
+\frac{\ddp \alpha_s(\mu_R)}{\ddp \ln \mu_R^2} = \beta(\alpha_s) = -\sum_{n=0}^{\infty} \frac{\beta_n}{(4\pi)^{n+1}} \alpha_s^{n+2},
+\label{eq:1-basics-betafn}
 \end{equation}
-% 
-with a regular part $P_{1}(x)$, a ``plus-distribution'' part $P_{2}(x)/(1-x)_{+}$, and a delta-function term $P_{3}\delta(1-x)$.
-Given a continuous and differentiable function $\alpha(x)$ defined in the $[0,1)$ interval, but singular at $x=1$, the action of the plus-distribution $[\alpha(x)]_{+}$ is defined by
-% 
-\begin{equation}
-  \int_{0}^{1}f(x)[\alpha(x)]_{+}{\dd x} = \int_{0}^{1}\left(f(x)-f(1)\right)\alpha(x){\dd x},
-\end{equation}
-% 
-where $f(x)$ is a regular test function.
-Alternatively, an operative definition (that assumes full mathematical meaning only when integrated) is the following
-% 
-\begin{equation}
-  [\alpha(x)]_{+} = \alpha(x)-\delta(1-x)\int_{0}^{1}\alpha(y){\dd y}.\label{eq:def_plus}
-\end{equation}
-
-The Parton Distribution Functions (PDFs) appear in the evolution, in general, multiplied by a factor of $x$.
-Eq.~(\ref{eq:DGLAP}) for $\bar{f}(x)\equiv xf(x)$ would then read
-% 
-\begin{equation}
-  \frac{\partial}{\partial\ln \mu_F^{2}}\bar{f}(x,\mu_F^{2})
-  = x\left[P(x,\alpha_{s}(\mu_F^{2}))\otimes f(x,\mu_F^{2})\right].
-\end{equation}
-% 
-We are now going to compute the convolution products that we actually evaluate in the program, keeping in mind the general form of the kernel (Eq.~\ref{eq:general_kernel}).
-The treatment of the delta-function part is trivial
-\begin{equation}
-  x\left[P_{3}\delta(1-x) \otimes f(x)\right]
-  = xP_{3}\int_{x}^{1}\frac{\dd y}{y}\delta(1-y)f\left(\frac{x}{y}\right)
-  = P_{3}\bar{f}(x),
-  \label{eq:conv_3}
-\end{equation}
-% 
-while for the regular part we get
-% 
-\begin{equation}
-  x\left[P_{1}(x) \otimes f(x)\right]
-  = x\int_{x}^{1}\frac{\dd y}{y}P_{1}\left(\frac{x}{y}\right)f(y)
-  = \int_{x}^{1}\frac{\dd y}{y}\frac{x}{y}P_{1}\left(\frac{x}{y}\right)\bar{f}(y).
-  \label{eq:conv_1}
-\end{equation}
-% 
-Since the functions that we have to integrate are strongly varying or even singular at low $x$, to enhance the numerical accuracy we introduce a new integration variable $z$ defined by $y=x^z$, and Eq.~(\ref{eq:conv_1}) is mapped into
-% 
-\begin{equation}
-  x\left[P_{1}(x)\otimes f(x)\right] = -{\ln x}\int_{0}^{1}{\dd z}\, x^{1-z}P_{1}(x^{1-z})\bar{f}(x^z).
-  \label{eq:conv_1_mapped}
-\end{equation}
-% 
-Finally, for the plus-distribution part we get, after some algebraic manipulations, the relation
-% 
-\begin{equation}
-  x\left[\frac{P_{2}(x)}{(1-x)_{+}}\otimes f(x)\right]
-  = \int_{x}^{1}{\dd y}\frac{P_{2}(y)\bar{f}(x/y) - P_{2}(1)\bar{f}(x)}{1-y} + P_2(1)\bar{f}(x)\ln(1-x)
-  \label{eq:conv_2}
-\end{equation}
-% 
-that, with the mapping $y=x^z$, becomes
-% 
-\begin{equation}
-  x\left[ \frac{P_{2}(x)}{(1-x)_{+}}\otimes f(x)\right]
-  = -\ln x\int_{0}^{1}{\dd z} \, x^z\frac{P_{2}(x^z)\bar{f}(x^{1-z})-P_{2}(1)\bar{f}(x)}{1-x^z}+P_2(1)\bar{f}(x)\ln(1-x).
-  \label{eq:conv_2_mapped}
-\end{equation}
-
-\subsection{Singlet and Non-Singlet Structure}
-\label{sec:s-and-ns-structure}
-
-We start by defining the combinations
-% 
+%
+where the $\beta_n$ coefficients of the QCD $\beta$-function~\cite{Gross:1973id,Politzer:1974fr}  are known up to four loops~\cite{vanRitbergen:1997va,Czakon:2004bu} and we report them below
+%
 \begin{align}
-  q_{i}^{(\pm)} &= q_{i}\pm\overline{q}_{i} \\
-  q^{(\pm)} &= \sum_{i=1}^{n_{f}}q_{i}^{(\pm)}.
+\beta_{0}  &= \frac{11}{3}N_{C}-\frac{4}{3}T_{f} \\
+\beta_{1}  &=  \frac{34}{3}N_{C}^{2}-\frac{20}{3}N_{C}T_{f}-4C_{F}T_{f}   
+\\
+\beta_{2}  &= 
+\frac{2857}{54}N_{C}^{3}+2C_{F}^{2}T_{f}-\frac{205}{9}C_{F}N_{C}T_{f}-\frac{1415}{27}N_{C}^{2}T_{f} \nonumber\\
+&+\frac{44}{9}C_{F}T_{f}^{2}+\frac{158}{27}N_{C}T_{f}^{2} 
+\\
+\beta_3 &=   \left( \frac{149753}{6} + 3564 \zeta_3 \right)
+        - \left( \frac{1078361}{162} + \frac{6508}{27} \zeta_3 \right) n_f
+  \nonumber \\ 
+       &+ \left( \frac{50065}{162} + \frac{6472}{81} \zeta_3 \right) n_f^2
+       +  \frac{1093}{729}  n_f^3\,,
+\label{eq:beta3}
 \end{align}
-% 
-From a mathematical point of view, the distributions belonging to the non-singlet sector evolve with a decoupled DGLAP equation of form (\ref{eq:DGLAP}), while the singlet combinations mix with the gluon distribution.
-The singlet DGLAP matrix equation is
-% 
-\begin{equation}
-  \frac{\ddp}{\ddp {\ln \mu_F^2}} \begin{pmatrix} q^{(+)}(x,\mu_F^2) \\ g(x,\mu_F^2)\end{pmatrix}
-  = \begin{pmatrix}P_{qq}(x, \alpha_s(\mu_F^2)) & P_{qg}(x, \alpha_s(\mu_F^2)) \\ P_{gq}(x, \alpha_s(\mu_F^2)) & P_{gg}(x, \alpha_s(\mu_F^2))\end{pmatrix}
-  \otimes \begin{pmatrix} q^{(+)}(x,\mu_F^2) \\ g(x,\mu_F^2),\end{pmatrix}
-\end{equation}
-% 
-or, in vectorial notation
-% 
-\begin{equation}
-  \frac{\ddp}{\ddp {\ln \mu_F^2}}\vv{s}(x,\mu_F^{2}) = \mat{P}(x,\alpha_{s}(\mu_F^{2})) \otimes \vv{s}(x,\mu_F^{2}).
-\end{equation}
+%
+where $\beta_3$ is from Ref.~\cite{vanRitbergen:1997va} and the
+fundamental color factors (Casimir operators and normalization constants in QCD) are defined as
 
-The general structure of the non-singlet splitting functions is given by
-% 
 \begin{equation}
-  P_{q_{i}q_{k}} = P_{\overline{q}_{i}\overline{q}_{k}} = \delta_{ik}P_{qq}^{V}+P_{qq}^{S},
+N_{C}=3,\qquad C_{F}=\frac{N_{C}^{2}-1}{2N_{C}}=\frac{4}{3},\qquad
+T_{f}=T_{R}n_{f}=\frac{1}{2}n_{f}.
 \end{equation}
-% 
-\begin{equation}
-  P_{q_{i}\overline{q}_{k}} = P_{\overline{q}_{i}q_{k}} = \delta_{ik}P_{q\bar{q}}^{V}+P_{q\bar{q}}^{S}.
-\end{equation}
-% 
-where $V$ and $S$ are usually referred to as the ``valence'' and ``sea'' contributions.
-This leads to three types of non-singlet distributions which evolve independently: the flavor asymmetries
-% 
-\begin{equation}
-  q_{NS,ik}^{(\pm)}=q_{i}^{(\pm)}-q_{k}^{(\pm)}\,,
-\end{equation}
-% 
-governed by the combinations
-% 
-\begin{equation}
-  P_{NS}^{\pm} = P_{qq}^{V} \pm P_{q\bar{q}}^{V}\,,
-\end{equation}
-% 
-and the sum of the valence distributions of all flavors $q^{(-)}$ which evolves with
-% 
-\begin{equation}
-  P_{NS}^{V} = P_{qq}^{V}-P_{q\bar{q}}^{V}+n_{f}\left(P_{qq}^{S} - P_{q\bar{q}}^{S}\right) \equiv P_{NS}^{-}+P_{NS}^{S}.
-  \label{eq:PNSv}
-\end{equation}
-% 
-Notice that the quark-quark splitting function $P_{qq}$ can be expressed as
-% 
-\begin{equation}
-  P_{qq} = P_{NS}^{+}+n_{f}\left(P_{qq}^{S}+P_{q\bar{q}}^{S}\right) \equiv P_{NS}^{+}+P_{ps}.
-  \label{eq:Pqq}
-\end{equation}
-% 
-with $ps$ denoting the so-called ``pure singlet'' terms.
-We remark that the non-singlet contribution is the most relevant one in  Eq.~(\ref{eq:Pqq}) at large $x$, where the \emph{pure singlet} term $P_{ps}=P_{qq}^{S}+P_{q\bar{q}}^{S}$ is very small.
-At small $x$, on the other hand, the latter contribution takes over, as $xP_{ps}$ does not vanish for $x\rightarrow0$, unlike $xP_{NS}^{+}$. 
-The gluon-quark and quark-gluon entries are given by
-% 
-\begin{equation}
-  P_{qg} = n_{f}P_{q_{i}g},
-\end{equation}
-% 
-\begin{equation}
-  P_{gq} = P_{gq_{i}}
-\end{equation}
-% 
-in terms of the flavor-independent splitting functions $P_{q_{i}g}=P_{\bar{q}_{i}g}$ and $P_{gq_{i}}=P_{g\bar{q}_{i}}$.
-With the exception of the first order part of $P_{qg}$, neither of the quantities $xP_{qg}$, $xP_{gq}$ and $xP_{gg}$ vanish for $x\rightarrow0$.
+$N_{C}$ is the number of colors, and $n_{f}$ is the number of active flavors according to the condition $m_{q}\leq \mu_F$ for a given factorization scale
+$\mu_F$, where $m_q$ is the mass of the $q$ quark. Note that in $\beta_3$ these coefficients have been already substituted in with $N_C=3$. 
 
-In the expansion in powers of $\alpha_{s}$ of the evolution equations, the flavor-diagonal (valence) quantity $P_{qq}^{V}$ is of order $\alpha_{s}$, while $P_{q\bar{q}}^{V}$ and the flavor-independent (sea) contributions $P_{qq}^{S}$ and $P_{q\bar{q}}^{S}$ are of order $\alpha_{s}^{2}$.
-A non-vanishing difference $P_{qq}^{S}-P_{q\bar{q}}^{S}$ is present at order $\alpha_s^3$.
+\subsection{The Non-Singlet Sector}
+\label{subsec:ns-sector}
 
-The next step is to choose a proper basis of non-singlet distributions that allows us to reconstruct, through linear combinations, the distribution of each parton.
-The singlet evolution gives us 2 distributions, $g$ and $q^{(+)}$, so we need to evolve $2n_{f}-1$ independent non-singlet distributions.
-At N$^3$LO and NNLO we choose
-% 
-\begin{enumerate}
-\item $q^{(-)}$, evolving with $P_{NS}^{V}$;
-\item $q_{NS,1i}^{(-)}=q_{1}^{(-)}-q_{i}^{(-)}$ (for 
-  $2\leq i\leq n_{f}$), evolving with $P_{NS}^{-}$;
-\item $q_{NS,1i}^{(+)}=q_{1}^{(+)}-q_{i}^{(+)}$ (for 
-  $2\leq i\leq n_{f}$), evolving with $P_{NS}^{+}$,
-\end{enumerate}
-% 
-and use simple relations such as
-% 
+After a change of variable, the evolution of the NS sector is represented by the following scalar equations
+%
 \begin{equation}
-  q_{i}^{(\pm)}=\frac{1}{n_{f}}\left(q^{(\pm)}+\sum_{k=1,k\neq i}^{n_{f}}q_{NS,ik}^{(\pm)}\right)
-  \label{eq:comb_linNS}
+\frac{\partial}{\partial\alpha_s}f_i(x,\alpha_s) = \frac{P_{i}(x,\alpha_{s})}{\beta(\alpha_s)} \otimes f_i(x,\alpha_s)
+\label{NS-DGLAP}
 \end{equation}
-% 
-to perform the reconstructions of the various flavors.
-Choosing $i=1$ in (\ref{eq:comb_linNS}), we compute $q_{1}^{(-)}$ from the evolved non-singlets of type 1 and 2 and $q_{1}^{(+)}$ from the evolved singlet $q^{(+)}$ and non-singlet of type 3.
-Then from the non-singlets 2 and 3 we compute respectively $q_{i}^{(-)}$ and $q_{i}^{(+)}$ for each $i$ such that $2\leq i\leq n_{f}$, and finally $q_{i}$ and $\bar{q}_{i}$.
-
-Moving from NNLO to NLO things simplify, as we have $P_{qq}^{S,(1)}=P_{q\bar{q}}^{S,(1)}$.
-This implies (see Eq.~(\ref{eq:PNSv})) that $P_{NS}^{V,(1)}=P_{NS}^{-,(1)}$, i.e.~the non-singlets $q^{(-)}$ and $q_{NS,ik}^{(-)}$ evolve with the same kernel, and the same does each linear combination thereof, in particular $q_{i}^{(-)}$ for each flavor $i$.
-The basis of the $2n_{f}-1$ non-singlet distributions that we choose to evolve at NLO is
-% 
-\begin{enumerate}
-\item $q_{i}^{(-)}$ (for each $i\leq n_{f}$), evolving with $P_{NS}^{-,(1)}$,
-\item $q_{NS,1i}^{(+)}=q_{1}^{(+)}-q_{i}^{(+)}$ (for each $i$ such that
-  $2\leq i\leq n_{f}$), evolving with $P_{NS}^{+,(1)}$,
-\end{enumerate}
-% 
-and the same we do at LO, where we have in addition $P_{NS}^{+,(0)}=P_{NS}^{-,(0)}$, being $P_{q\bar{q}}^{V,(0)}=0$.
-
-\subsection{Recursion Relations for the Exact Solution (Non-Singlet Sector)}
-\label{sec:recrels-exact}
-
-The proof of equivalence between the logarithmic expansions implemented in \textsc{Candia} and the alternative approach based on the use of Mellin moments, as used in reference \cite{Vogt:2004ns}, is easily established at leading order.
-For this we recall the definition of the Mellin transform of a given function $a(x)$,
-% 
+%
+where $\alpha_s(\mu_F^2)\equiv\alpha_s$ is the strong coupling evaluated at the factorization scale $\mu_F$ and index $i$ refers to the three independent non-singlet flavor combinations, namely NS$^{+}$, NS$^{-}$ and $\textrm{NS}^{V}\equiv\textrm{NS}^{S}+\textrm{NS}^{-}$ for the ``valence''. These flavor combinations are obtained from
 \begin{equation}
-  a(N)=\int_{0}^{1}a(x)x^{N-1}{\dd x},
+q_{i}^{(\pm)}=q_{i}\pm\overline{q}_{i}\,,
+~~~~~~q^{(\pm)}=\sum_{i=1}^{n_{f}}q_{i}^{(\pm)},
+\label{Flav-comb}
 \end{equation}
-% 
-that maps convolution products into ordinary products
-% 
+%
+from which the NS flavor asymmetries are given as
 \begin{equation}
-  \left[a\otimes b\right](N)=a(N)b(N).
+q_{\mathrm{NS},ik}^{(\pm)} = q_i^{(\pm)} -q_k^{(\pm)}.
 \end{equation}
-% 
-Traditional algorithms based on Mellin space solve the equations algebraically in $N$ and then perform a numerical inversion using  a saddle path evaluation of the complex contour.
-This technique is completely bypassed in our approach.
-One of the advantage of \texttt{Candia} is that a given initial condition for the PDFs, usually formulated in $x$-space, {\em does not} need to be fitted to a given functional form in moment space, which is instead typical of a given numerical implementation of the Mellin algorithm.
-In fact, the functional form in moment space in some cases may even not be general enough, and may not allow the evolution of quite singular distributions at small $x$. 
-From our experience, we have found that fitting special initial conditions in $x$-space forces the user, in codes based in Mellin space, to modify the evolution code by himself, with dubious results.
-\texttt{Candia}, by eliminating this unappealing feature of algorithms based in Mellin space, allows any initial condition to be considered and removes the initial numerical error due to the fit of the initial condition to the pre-assigned functional form
-in moment space.
-
-Having clarified this point, we introduce a single evolution scale $Q$,  leaving to the next sections the discussion of the separation between the factorization and renormalization scales.
-Switching to $\alpha_{s}$ as the independent variable, the DGLAP equation (\ref{eq:DGLAP}) is rewritten in the form
-% 
-\begin{equation}
-  \frac{\ddp f(N,\alpha_{s})}{\ddp \alpha_{s}}
-  =\frac{P(N,\alpha_{s})}{\beta(\alpha_{s})}f(N,\alpha_{s}).
-  \label{eq:DGLAP_Mellin}
-\end{equation}
-
-\subsubsection{Leading Order}
-\label{sec:exact-lo}
-
-Inserting in Eq.~(\ref{eq:DGLAP_Mellin}) the perturbative expansions of $P(N,\alpha_{s})$ and $\beta(\alpha_{s})$ (Equations (\ref{eq:kernel_expansion}) and (\ref{eq:beta_exp})) arrested at LO, we get
-% 
-\begin{equation}
-  \frac{\ddp f(N,\alpha_{s})}{\ddp \alpha_{s}}
-  = -\frac{\left(\frac{\alpha_{s}}{2\pi}\right)P^{(0)}(N)}{\frac{\beta_{0}}{4\pi}\alpha_{s}^{2}}f(N,\alpha_{s}),
-\end{equation}
-% 
-which is solved by
-% 
-\begin{equation}
-  f(N,\alpha_s)
-  = f(N,\alpha_{0})\left(\frac{\alpha_s}{\alpha_{0}}\right)^{-\frac{2P^{(0)}(N)}{\beta_{0}}}
-  = f(N,\alpha_{0})\exp\left(-\frac{2P^{(0)}(N)}{\beta_{0}}\ln\frac{\alpha_s}{\alpha_{0}}\right)
-\end{equation}
-% 
-where we have set $\alpha_s\equiv\alpha_s(Q^{2})$ and $\alpha_{0}\equiv\alpha_s(Q_{0}^{2})$.
-Performing a Taylor expansion of the exponential we get
-% 
-\begin{equation}
-  f(N,\alpha)
-  = f(N,\alpha_{0})\sum_{n=0}^{\infty}\left(\frac{1}{n!}\left(-\frac{2P^{(0)}(N)}{\beta_{0}}\right)^{n}\ln^{n}\frac{\alpha}{\alpha_{0}}\right).
-\end{equation}
-% 
-The $x$-space logarithmic ansatz, that parallels this solution is
-% 
-\begin{equation}
-  f(x,Q^{2}) = \sum_{n=0}^{\infty}\frac{A_{n}(x)}{n!}\ln^{n}\frac{\alpha_s(Q^{2})}{\alpha_s(Q_{0}^{2})},
-  \label{eq:LOansatz}
-\end{equation}
-% 
-where the $A_{n}(x)$'s  are unknown functions. Setting $Q=Q_{0}$ in (\ref{eq:LOansatz}), we get the initial condition
-% 
-\begin{equation}
-  f(x,Q_{0}^{2})=A_{0}(x).
-\end{equation}
-
-Inserting our ansatz (\ref{eq:LOansatz}) into the DGLAP equation (\ref{eq:DGLAP}) and using the expansion of the kernels and of the beta function (\ref{eq:kernel_expansion}, \ref{eq:beta_exp}) arrested at the first term, after some algebra we derive the recursion relation
-% 
-\begin{equation}
-  A_{n+1}(x)=-\frac{2}{\beta_{0}}\left[ P^{(0)}\otimes A_{n}\right](x).
-  \label{An_recurrence}
-\end{equation}
-
-\subsubsection{Next-to Leading Order (NLO) and Next-to-next-to Leading Order (NNLO)}
-\label{sec:exact-nlo}
-
-The same strategy applied to leading order will apply to next to leading order: we first model an $x$-space ansatz that mirrors the solution in Mellin space.
-We then insert the ansatz into the Eq.~\ref{eq:DGLAP} and compare like powers of $\alpha_s$ to determine a set of recursion relations.
-The exact process by which this is done was documented thoroughly in Refs.~\cite{DUMMY,DUMMY}, so we will only quote the results here.
-
-At NLO, we have the following ansatz:
-% 
-\begin{equation}
-  f(x, Q^2) = \sum_{s=0}^{\infty} \sum_{n=0}^{s} \frac{B^s_n(x)}{n!(s-n)!}L^nM^{s-n},
-\end{equation}
-% 
-where
+% \begin{equation}
+% q_{\mathrm{NS},ik}^{(\pm)} = (q_i \pm \bar{q}_i) - (q_k \pm \bar{q}_k), \quad\text{and}\quad q^{(-)} = \sum_{i=1}^{n_{f}}(q_i - \bar{q}_i),
+% \end{equation}
+%
+The $q_{\mathrm{NS}}^{(\pm)}$ and the $q^{(-)}$ PDF combinations independently evolve with the splitting functions below
 \begin{align}
-  L &= \ln \frac{\alpha_s}{\alpha_0}, \\
-  M &= \ln \frac{4\pi\beta_0 + \alpha_s\beta_1}{4\pi\beta_0 + \alpha_0\beta_1}.
+P_{\mathrm{NS}}^{(\pm)} &= P_{qq}^V \pm P_{q\bar{q}}^V, \\
+P_{\mathrm{NS}}^V &= P_{qq}^V - P_{q\bar{q}}^V + n_f(P_{qq}^S - P_{q\bar{q}}^S) \equiv P_{\mathrm{NS}}^- + P_{\mathrm{NS}}^S.
+\label{NS-splittings}
 \end{align}
-% 
-Here, we find two recursion relations:
-% 
-\begin{align}
-  B^s_n(x) &= -\frac{2}{\beta_0} \left[ P^{(0)} \otimes B^{s-1}_{n-1} \right](x), \label{eq:nlo-resum-1}\tag{\theequation{a}} \\
-  B^s_n(x) &= -B^s_{n+1} - \frac{4}{\beta_1} \left[ P^{(1)} \otimes B^{s-1}_n \right](x). \label{eq:nlo-resum-2}\tag{\theequation{b}}
-\end{align}
-% 
-For an arbitrary coefficient $B^s_n$, there now exist two possible relations one can use.
-However, while it may seem that either can be used, each relation requires that particular other coefficients are known beforehand, with the constraint that the initial condition $B^0_0(x)$ is the starting point for the evaluation.
-Therefore, there is only one procedure that can be followed for a given index $s$, which is:
-% 
-\begin{enumerate}
-\item All $B^s_n(x)$ with $n\neq0$ are computed with Eq.~\eqref{eq:nlo-resum-1},
-\item $B^s_0(x)$ is computed with Eq.~\eqref{eq:nlo-resum-2}.
-\end{enumerate}
+%
 
-At NNLO, we have the ansatz
-% 
+
+\subsection{The Singlet Sector}
+\label{sec:s-sector}
+In the singlet sector, the DGLAP equation is a matrix equation that mixes the gluon and quark distributions. This is given by
+%
 \begin{equation}
-  f(x, Q^2) = \sum_{s=0}^{\infty}\sum_{t=0}^{s}\sum_{n=0}^{t} \frac{C^s_{t,n}(x)}{n!(t-n)!(s-t)!} L^{n}M^{t-n}T^{s-t}, \label{eq:NNLOansatz}
+\frac{\ddp}{\ddp \alpha_s} \begin{pmatrix} q^{(+)}(x,\alpha_s) \\ g(x,\alpha_s)\end{pmatrix}
+  = \frac{1}{\beta(\alpha_s)}\begin{pmatrix}P_{qq}(x, \alpha_s) & P_{qg}(x, \alpha_s) \\ P_{gq}(x, \alpha_s) & P_{gg}(x, \alpha_s)\end{pmatrix}
+  \otimes \begin{pmatrix} q^{(+)}(x,\alpha_s) \\ g(x,\alpha_s)\end{pmatrix}.
 \end{equation}
-% 
-with
-% 
-\begin{align}
-  L &= \ln\frac{\alpha_s}{\alpha_{0}}\label{eq:L_NNLO}\\
-  M &= \ln\frac{16\pi^{2}\beta_{0}+4\pi\alpha_s\beta_{1}+\alpha_s^{2}\beta_{2}}{16\pi^{2}\beta_{0}
-      +4\pi\alpha_{0}\beta_{1}+\alpha_{0}^{2}\beta_{2}}\label{eq:M_NNLO}\\
-  T &= \frac{1}{\sqrt{4\beta_{0}\beta_{2}-\beta_{1}^{2}}}\arctan\frac{2\pi(\alpha_s-\alpha_{0})\sqrt{
-      4\beta_{0}\beta_{2}-\beta_{1}^{2}}}{2\pi(8\pi\beta_{0}+(\alpha_s+\alpha_{0})\beta_{1}
-      )+\alpha_s\alpha_{0}\beta_{2}}\label{eq:T_NNLO}\\
-\end{align}
-% 
-Notice that, however, if $\beta_0\beta_2 - \beta_1^2 < 0$, which occurs for $n_f=6$, we must analytically continue the arctangent:
-% 
+%
+The quark-quark splitting function $P_{qq}$ is written as
+%
 \begin{equation}
-  T=\frac{1}{\sqrt{\beta_{1}^{2}-4\beta_{0}\beta_{2}}}\textrm{arctanh}\frac{2\pi(\alpha_s-\alpha_{0}
-    )\sqrt{\beta_{1}^{2}-4\beta_{0}\beta_{2}}}{2\pi(8\pi\beta_{0}+(\alpha_s+\alpha_{0})\beta_{1}
-    )+\alpha_s\alpha_{0}\beta_{2}}.
+P_{qq}=P_{NS}^{+}+n_{f}\left(P_{qq}^{S}+P_{q\bar{q}}^{S}\right)\equiv P_{NS}^{+}+P_{ps}\,,
+\label{Pqq-expr}
 \end{equation}
+%
+where $P_{ps}$ denotes the pure-singlet term. Similarly, the singlet quark--gluon and gluon--quark splitting functions are written as $P_{qg}=n_f P_{q_i g}$ and $P_{gq}=P_{gq_i}$, with the flavor-independent relations $P_{q_i g}=P_{\bar q_i g}$ and $P_{gq_i}=P_{g\bar q}$.
 
-We then find the recursion relations
-% 
+
+
+
+
+\subsection{$N^3LO$ recursion relations for the exact solution (NS Sector)}
+\label{sec:ns-exact}
+
+In Mellin-space, in which convolution products are mapped onto algebraic products ($[a\otimes b](N)=a(N)b(N)$), the NS DGLAP equations become purely algebraic with exact solutions. Motivated by this, we introduce the following $x$-space ansatz at the generic scale $\mu$:
+%
+\begin{equation}
+f^{\mathrm{N}^m\mathrm{LO}}(x,\mu^2) =
+\prod_{i=0}^m \left[
+\left(\sum_{n=0}^\infty \frac{a_i(x)^n}{n!}L_i^n\right)_{\otimes}
+\;
+\right]
+f(x,\mu_0^2),
+\end{equation}
+where $m=3$ in the N$^3$LO case, and the functions $L_0,\dots, L_3$ are logarithmic contributions containing only $\alpha_s(\mu^2)\equiv\alpha_s$, $\alpha_s(\mu_0^2)\equiv\alpha_0$, and the $\beta_n$ coefficients. These are inherited from the Mellin-space solution and are given by 
+
 \begin{align}
-  C_{t,n}^{s}(x) &= -\frac{2}{\beta_{0}}\left[P^{(0)}\otimes
-                   C_{t-1,n-1}^{s-1}\right](x)\label{eq:nnlo-resum-1}\tag{\theequation{a}}\\
-  C_{t,n}^{s}(x) &= -\frac{1}{2}C_{t,n+1}^{s}(x)-\frac{4}{\beta_{2}}\left[P^{(2)}\otimes
-                   C_{t-1,n}^{s-1}\right](x)\label{eq:nnlo-resum-2}\tag{\theequation{b}}\\
-  C_{t,n}^{s}(x) &= -2\beta_{1}\left(C_{t+1,n}^{s}(x)+C_{t+1,n+1}^{s}(x)\right)-8\left[P^{(1)}\otimes
-                   C_{t,n}^{s-1}\right](x),\label{eq:nnlo-resum-3}\tag{\theequation{c}}
+L_0 &= \log \left(\frac{\alpha_s}{\alpha_0}\right), 
+\\
+L_1 &= \log \left(\frac{\alpha_s^2 + \bar{b}\alpha_s + \bar{c}}{\alpha_0^2 + \bar{b}\alpha_0 + \bar{c}}\right), 
+\\
+L_2 &= \log \left(\frac{\alpha_s - r_1}{\alpha_0 - r_1}\right). 
+\\
+L_3 &= \frac{1}{\sqrt{-\bar{b}^2+4\bar{c}}}\arctan\left( \frac{(\alpha_s - \alpha_0)\sqrt{-\bar{b}^2+4\bar{c}}}{2\alpha_s\alpha_0 + \bar{b}(\alpha_s+\alpha_0) + 2\bar{c}} \right),
 \end{align}
-% 
-which are used in the following procedure to compute all of the coefficients at a given value of $s$:
-% 
-\begin{enumerate}
-\item All $C^s_{t,n}(x)$ with $n\neq0$ are computed using Eq.~\eqref{eq:nnlo-resum-1},
-\item $C^s_{s,0}(x)$ is computed using Eq.~\eqref{eq:nnlo-resum-2},
-\item All $C^s_{t,0}(x)$ with $t \neq s$ are computed using Eq.~\eqref{eq:nnlo-resum-3}, in decreasing order of $t$.
-\end{enumerate}
+%
+where we have defined $\bar{b} \equiv -2\mathrm{Re}[r_2] = -2\mathrm{Re}[r_3]$ and $\bar{c} = |r_2|^2 = |r_3|^3$ and $r_1$, $r_2$, and $r_3$ are the non-trivial roots of the 4-loop QCD $\beta$-function appearing in the denominator of Eq.~(\ref{NS-DGLAP}) (see Sec.~III of Ref.~\cite{Hampson:2025pvi} for details). We report their $n_f$ dependent numerical values in Table~\ref{n3lo-roots} for completeness.
+%
+\begin{table}[ht]
+\centering
+\begin{tabular}{|c|c|c|}
+\hline
+$n_f$ & $r_1$ & $r_2 = r_3^*$ \\ \hline
+1 & -0.96511 & 0.162930 - 0.95357i \\ \hline
+2 & -1.03151 & 0.185237 - 1.02991i \\ \hline
+3 & -1.11203 & 0.221422 - 1.13108i \\ \hline
+4 & -1.20902 & 0.286759 - 1.27279i \\ \hline
+5 & -1.32059 & 0.424770 - 1.48548i \\ \hline
+6 & -1.42780 & 0.796497 - 1.81681i \\ \hline
+\end{tabular}
+\caption{Numerical values of the roots of the cubic polynomial in the denominator of Eq.~(\ref{NS-DGLAP}).}
+\label{n3lo-roots}
+\end{table}
 
-\subsubsection{Next-to-next-to-next-to Leading Order (\texorpdfstring{N$^3$LO}{N3LO})}
-\label{sec:n3lo}
+
+
+
+
 
 At N$^3$LO, the procedure is again the same, so we will omit the details.
 We note, however, that the previous orders all had relatively simple forms for the zeros of the QCD $\beta$-function.
@@ -608,21 +387,21 @@ With this in mind, we find the following $x$-space ansatz:
 \begin{equation}
   f^{\mathrm{N}^3\mathrm{LO}}(x,\mu^2) = \sum_{s=0}^\infty\sum_{t=0}^s\sum_{m=0}^t\sum_{n=0}^m \frac{D^s_{t,m,n}(x)}{n!(m-n)!(t-m)!(s-t)!}L^n M^{m-n}Q^{t-m}W^{s-t},
 \end{equation}
-% 
+%
 with
-% 
+%
 \begin{align}
-  L &= \log \left(\frac{\alpha_s}{\alpha_0}\right), 
-  \\
-  M &= \log \left(\frac{\alpha_s^2 + \bar{b}\alpha_s + \bar{c}}{\alpha_0^2 + \bar{b}\alpha_0 + \bar{c}}\right), 
-  \\
-  Q &= \log \left(\frac{\alpha_s - r_1}{\alpha_0 - r_1}\right). 
-  \\
-  W &= \frac{1}{\sqrt{-\bar{b}^2+4\bar{c}}}\arctan\left( \frac{(\alpha_s - \alpha_0)\sqrt{-\bar{b}^2+4\bar{c}}}{2\alpha_s\alpha_0 + \bar{b}(\alpha_s+\alpha_0) + 2\bar{c}} \right),
+L &= \log \left(\frac{\alpha_s}{\alpha_0}\right), 
+\\
+M &= \log \left(\frac{\alpha_s^2 + \bar{b}\alpha_s + \bar{c}}{\alpha_0^2 + \bar{b}\alpha_0 + \bar{c}}\right), 
+\\
+Q &= \log \left(\frac{\alpha_s - r_1}{\alpha_0 - r_1}\right). 
+\\
+W &= \frac{1}{\sqrt{-\bar{b}^2+4\bar{c}}}\arctan\left( \frac{(\alpha_s - \alpha_0)\sqrt{-\bar{b}^2+4\bar{c}}}{2\alpha_s\alpha_0 + \bar{b}(\alpha_s+\alpha_0) + 2\bar{c}} \right),
 \end{align}
-% 
+%
 where we have defined $\bar{b} \equiv -2\mathrm{Re}[r_2] = -2\mathrm{Re}[r_3]$ and $\bar{c} = |r_2|^2 = |r_3|^3$. Following again the same procedure nets us the following set of four recursion relations:
-% 
+%
 \begin{align}
   D^s_{t,m,n} &= Z_{11} \otimes D^{s-1}_{t-1,m-1,n-1}, \label{eq:n3lo-resum-1}\tag{\theequation{a}}\\
   D^s_{t,m,n} &= Z_{21}\otimes D^s_{t,m,n+1} + Z_{22} \otimes D^{s-1}_{t-1,m-1,n}, 
@@ -631,7 +410,7 @@ where we have defined $\bar{b} \equiv -2\mathrm{Re}[r_2] = -2\mathrm{Re}[r_3]$ a
                 \label{eq:n3lo-resum-3}\tag{\theequation{c}}\\
   D^s_{t,m,n} &= Z_{41} \otimes D^s_{t+1,m+1,n+1} + Z_{42} \otimes D^s_{t+1,m+1,n} + Z_{43} \otimes D^{s-1}_{t,m,n},\label{eq:n3lo-resum-4}\tag{\theequation{d}}
 \end{align}
-% 
+%
 using
 \begin{align}
   Z_{11}(x) &= R_0(x) = -\frac{2}{\beta_0} P^{(0)}(x),  
@@ -668,83 +447,89 @@ Finally, we have the following procedure for determining all $D^s_{t,m,n}$ coeff
 In this section, we present recursion relations for the DGLAP truncated solutions expanded at arbitrary order in pQCD for both the singlet and NS sectors. The proof of existence of a valid logarithmic ansatz in $x$-space that reproduces such truncated solutions including the $P^{(1)}(x)$ and $P^{(2)}(x)$ splitting functions in NLO and NNLO DGLAP respectively, and proof of their equivalence to the solutions obtained with the $U$-matrix approach in Mellin space, has been given in Refs.~\cite{Cafarella:2005zj,Cafarella:2008du,Guzzi:2006wx}. Here we present the new recursion relations at arbitrary orders including $P^{(3)}(x)$. 
 
 An expansion of the ${\cal \hat P}(x,\alpha_s)/\beta(\alpha_s)$ ratio in the DGLAP singlet equation at order ${\cal O}(\alpha_s^k)$ gives 
-% 
+%
 \begin{eqnarray}
-  \frac{\partial{{\bf f}(x,\alpha_s)}}{\partial\alpha_s}=
-  \frac{1}{\alpha_s}\left[{\bf R}_0+\alpha_s {\bf R}_1 +\alpha_s^2
-  {\bf R}_2+\alpha_s^3
-  {\bf R}_3 + \dots + \alpha_s^k {\bf R}_k \right]\otimes {\bf f}(x,\alpha_s),
-  \label{N3LOsinglet}
+\frac{\partial{{\bf f}(x,\alpha_s)}}{\partial\alpha_s}=
+\frac{1}{\alpha_s}\left[{\bf R}_0+\alpha_s {\bf R}_1 +\alpha_s^2
+{\bf R}_2+\alpha_s^3
+{\bf R}_3 + \dots + \alpha_s^k {\bf R}_k \right]\otimes {\bf f}(x,\alpha_s),
+\label{N3LOsinglet}
 \end{eqnarray}
-% 
+%
 where bold-face characters are used for the vector notation. The ${\bf R}_k$ matrix operators are defined order by order as
-% 
+%
 \begin{eqnarray}
-  {\bf R}_0(x)&=-\frac{2}{\beta_0}{\bf P}^{(0)}(x),
-                ~~~~
-                {\bf R}_1(x)=-\frac{1}{\pi}\left(\frac{\beta_1}{4\beta_0}{\bf R}_0(x) +
-                \frac{{\bf P}^{(1)}(x)}{\beta_0}\right),
-  \\
-  {\bf R}_2(x)&=-\frac{1}{\pi}\left(\frac{{\bf P}^{(2)}(x)}{2\pi\beta_0}
-                +\frac{{\bf R}_1(x) \beta_1}{4\beta_0}+\frac{{\bf R}_0(x) \beta_2}{16\pi\beta_0}\right), 
-                \nonumber\\
-  {\bf R}_3(x) &= -\frac{1}{\pi}\left(\frac{{\bf P}^{(3)}(x)}{4\pi^2\beta_0} +\frac{{\bf R}^{(2)}(x)\beta_1}{4\beta_0} + \frac{{\bf R}^{(1)}(x)\beta_2}{16\pi\beta_0}+\frac{{\bf R}^{(0)}(x)\beta_3}{64\pi^2\beta_0}\right),
-                 \dots
+{\bf R}_0(x)&=-\frac{2}{\beta_0}{\bf P}^{(0)}(x),
+~~~~
+{\bf R}_1(x)=-\frac{1}{\pi}\left(\frac{\beta_1}{4\beta_0}{\bf R}_0(x) +
+\frac{{\bf P}^{(1)}(x)}{\beta_0}\right),
+\\
+{\bf R}_2(x)&=-\frac{1}{\pi}\left(\frac{{\bf P}^{(2)}(x)}{2\pi\beta_0}
++\frac{{\bf R}_1(x) \beta_1}{4\beta_0}+\frac{{\bf R}_0(x) \beta_2}{16\pi\beta_0}\right), 
+\nonumber\\
+{\bf R}_3(x) &= -\frac{1}{\pi}\left(\frac{{\bf P}^{(3)}(x)}{4\pi^2\beta_0} +\frac{{\bf R}^{(2)}(x)\beta_1}{4\beta_0} + \frac{{\bf R}^{(1)}(x)\beta_2}{16\pi\beta_0}+\frac{{\bf R}^{(0)}(x)\beta_3}{64\pi^2\beta_0}\right),
+\dots
 \end{eqnarray}
-% 
+%
 
 The logarithmic ansatz for the truncated solution in the $x$-space that matches the algebraic solution in Mellin space at the arbitrary order $\kappa$ in $\alpha_s$ is given by
-% 
+%
 \begin{equation}
-  \vv{f}(x,\alpha_s) = \sum_{n=0}^\infty \left\{ \left[ \sum_{i=0}^\kappa \alpha_s^i \frac{\vv{S}^i_n(x)}{n!} \right] \ln^n \frac{\alpha_s}{\alpha_0} \right\},
-  \label{log-ansatz}
+\vv{f}(x,\alpha_s) = \sum_{n=0}^\infty \left\{ \left[ \sum_{i=0}^\kappa \alpha_s^i \frac{\vv{S}^i_n(x)}{n!} \right] \ln^n \frac{\alpha_s}{\alpha_0} \right\},
+\label{log-ansatz}
 \end{equation}
-% 
+%
 where $\kappa\geq k$ represent the truncation index that defines the $\alpha_s$ accuracy of the singlet solution or the NS one, in the case of scalar equations. The $\vv{S}_n^i(x)$ coefficients  are determined by $x$-space recursion relations obtained by substituting Eq.~(\ref{log-ansatz}) in Eq.~(\ref{N3LOsinglet}) and equating each power of $\alpha_s$ on both sides of the equation. For consistency, here we report the recursion relations obtained at arbitrary order in $\alpha_s$ for the LO DGLAP case where only ${\bf P}^{(0)}$ appears, at NLO where ${\bf P}^{(0)}$ and ${\bf P}^{(1)}$ only appear, at NNLO with ${\bf P}^{(0)}$, ${\bf P}^{(1)}$ and ${\bf P}^{(2)}$ only, and finally at N$^3$LO with ${\bf P}^{(0)}$, ${\bf P}^{(1)}$, ${\bf P}^{(2)}$, and ${\bf P}^{(3)}$.
 
 At LO (first power in $\alpha_s$), the solution can be given in closed form through the recursion relation below
-% 
+%
 \begin{equation}
-  \label{eq:lo-singlet-sol}
-  \vv{S}^0_{n+1} = - \frac{2}{\beta_0} \left[ \mat{P}^{(0)} \otimes \vv{S}^0_n \right](x).
+\label{eq:lo-singlet-sol}
+\vv{S}^0_{n+1} = - \frac{2}{\beta_0} \left[ \mat{P}^{(0)} \otimes \vv{S}^0_n \right](x).
 \end{equation}
 
 At NLO, where the $\mat{P}^{(0)}$ and $\mat{P}^{(1)}$ kernels appear, the $\bf S$ coefficients relative to the $i$-th ($i = 1,\dots,\kappa$) truncated solution are obtained through the recursion relation below  
 
 \begin{align}
-  \vv{S}^i_{n+1}(x) = &-\frac{\beta_1}{4\pi\beta_0}\vv{S}^{i-1}_{n+1}(x) - i\vv{S}^i_n(x) - (i-1)\frac{\beta_1}{4\pi\beta_0}\vv{S}^{i-1}_n(x) \nonumber\\
-                      &-\frac{2}{\beta_0}[\vv{P}^{(0)} \otimes \vv{S}^i_n](x) - \frac{1}{\pi\beta_0}[\vv{P}^{(1)} \otimes \vv{S}^{i-1}_n](x)\,,
-                        \label{eq:nlo-singlet-i-sol}
+\vv{S}^i_{n+1}(x) = &-\frac{\beta_1}{4\pi\beta_0}\vv{S}^{i-1}_{n+1}(x) - i\vv{S}^i_n(x) - (i-1)\frac{\beta_1}{4\pi\beta_0}\vv{S}^{i-1}_n(x) \nonumber\\
+&-\frac{2}{\beta_0}[\vv{P}^{(0)} \otimes \vv{S}^i_n](x) - \frac{1}{\pi\beta_0}[\vv{P}^{(1)} \otimes \vv{S}^{i-1}_n](x)\,,
+\label{eq:nlo-singlet-i-sol}
 \end{align}
 
 while at NNLO, with ${\bf P}^{(0)}$, ${\bf P}^{(1)}$ and ${\bf P}^{(2)}$ only, we have 
 
 \begin{align}
-  \vv{S}_{n+1}^i(x) = & -\frac{\beta_1}{4\pi\beta_0}\vv{S}_{n+1}^{i-1}(x)-\frac{\beta_2}{16\pi^2\beta_0}\vv{S}_{n+1} ^{i-2}(x) \nonumber\\
-                      & -i\vv{S}_n^i(x)-(i-1)\frac{\beta_1}{4\pi\beta_0}\vv{S}_n^{i-1}(x)-(i-2)\frac{\beta_2}{ 16\pi^2\beta_0}\vv{S}_n^{i-2}(x) \nonumber\\
-                      & -\frac{2}{\beta_0}[\vv{P}^{(0)}\otimes\vv{S}_n^i](x)
-                        -\frac{1}{\pi\beta_0}[\vv{P}^{(1)}\otimes\vv{S}_n^{i-1}](x)
-                        -\frac{1}{2\pi^2\beta_0}[\vv{P}^{(2)}\otimes\vv{S}_n^{i-2}](x)
-                        \label{eq:nnlo-singlet-sol}\,.
+\vv{S}_{n+1}^i(x) = & -\frac{\beta_1}{4\pi\beta_0}\vv{S}_{n+1}^{i-1}(x)-\frac{\beta_2}{16\pi^2\beta_0}\vv{S}_{n+1} ^{i-2}(x) \nonumber\\
+& -i\vv{S}_n^i(x)-(i-1)\frac{\beta_1}{4\pi\beta_0}\vv{S}_n^{i-1}(x)-(i-2)\frac{\beta_2}{ 16\pi^2\beta_0}\vv{S}_n^{i-2}(x) \nonumber\\
+& -\frac{2}{\beta_0}[\vv{P}^{(0)}\otimes\vv{S}_n^i](x)
+-\frac{1}{\pi\beta_0}[\vv{P}^{(1)}\otimes\vv{S}_n^{i-1}](x)
+-\frac{1}{2\pi^2\beta_0}[\vv{P}^{(2)}\otimes\vv{S}_n^{i-2}](x)
+\label{eq:nnlo-singlet-sol}\,.
 \end{align}
 
 At N$^3$LO, the recursion relation for the ${\bf S}$ coefficients is given by
 
 \begin{align}
   \vv{S}_{n+1}^i(x) = &-\frac{\beta_1}{4\pi\beta_0}\vv{S}_{n+1}^{i-1}(x)
-                        -\frac{\beta_2}{16\pi^2\beta_0}\vv{S}_{n+1} ^{i-2}(x)
-                        -\frac{\beta_3}{64\pi^3\beta_0}\vv{S}^{i-3}_{n+1}(x) \nonumber\\
-                      &-i\vv{S}_n^i(x)-(i-1)\frac{\beta_1}{4\pi\beta_0}\vv{S}_n^{i-1}(x)
-                        -(i-2)\frac{\beta_2}{16\pi^2\beta_0}\vv{S}_n^{i-2}(x) 
-                        -(i-3)\frac{\beta_3}{64\pi^3\beta_0}\vv{S}_n^{i-3}(x) \nonumber\\
-                      &-\frac{2}{\beta_0}[\vv{P}^{(0)}\otimes\vv{S}_n^i](x)
-                        -\frac{1}{\pi\beta_0}[\vv{P}^{(1)}\otimes\vv{S}_n^{i-1}](x)
-                        -\frac{1}{2\pi^2\beta_0}[\vv{P}^{(2)}\otimes\vv{S}_n^{i-2}](x) \nonumber\\
-                      &-\frac{1}{4\pi^3\beta_0}[\vv{P}^{(3)}\otimes\vv{S}_n^{i-3}](x).
-                        \label{eq:singlet-n3lo}
+-\frac{\beta_2}{16\pi^2\beta_0}\vv{S}_{n+1} ^{i-2}(x)
+-\frac{\beta_3}{64\pi^3\beta_0}\vv{S}^{i-3}_{n+1}(x) \nonumber\\
+&-i\vv{S}_n^i(x)-(i-1)\frac{\beta_1}{4\pi\beta_0}\vv{S}_n^{i-1}(x)
+-(i-2)\frac{\beta_2}{16\pi^2\beta_0}\vv{S}_n^{i-2}(x) 
+-(i-3)\frac{\beta_3}{64\pi^3\beta_0}\vv{S}_n^{i-3}(x) \nonumber\\
+&-\frac{2}{\beta_0}[\vv{P}^{(0)}\otimes\vv{S}_n^i](x)
+-\frac{1}{\pi\beta_0}[\vv{P}^{(1)}\otimes\vv{S}_n^{i-1}](x)
+-\frac{1}{2\pi^2\beta_0}[\vv{P}^{(2)}\otimes\vv{S}_n^{i-2}](x) \nonumber\\
+&-\frac{1}{4\pi^3\beta_0}[\vv{P}^{(3)}\otimes\vv{S}_n^{i-3}](x).
+\label{eq:singlet-n3lo}
 \end{align}
-% 
+%
 These recursion relations generate truncated solutions at arbitrary order $\kappa$ that are equivalent those obtained using the $U$-matrix method~\cite{Blumlein:1997em,Vogt:2004ns,Cafarella:2005zj}.  
+
+\subsection{Results}
+\label{sec:results}
+
+\import{./res/tables}{scaleratio.tex}
+
 
 \section{Description of the Program}
 \label{sec:prog-desc}
@@ -838,7 +623,7 @@ The initial conditions are handled by the \mintinline{cpp}{Distribution} class, 
 
 Assuming the correct flags were set up in the CMake configuration, there will be the option to interface the input and/or output with LHAPDF. To handle the former case, there is the option to specify the initial distribution as an LHAPDF PDF via the \mintinline{cpp}{LHAPDFDistribution} class, which simple takes an LHAPDF PDF, as well as the particular desired initial and final energies. It can be used in an identical fashion (since it is also a derived class of \mintinline{cpp}{Distribution}) to the \mintinline{cpp}{LesHouchesDistribution} seen in Listing~\ref{lst:ex-prog}.
 
-The latter is only relevant for producing PDFs for a variety of energy values to produce a full interpolation grid over both $Q$ and $x$. For this purpose, there is the \mintinline{cpp}{LHAPDFGrid} class which is simply a wrapper over \mintinline{cpp}{DGLAPSolver}, accepts the desired energy range that the PDF should be evaluated at, and simply performs the evolution for all of the values. It then spits out a single PDF in the format documented in \todo{comm}{link to LHAPDF paper?}, which, if placed in the correct folder for your LHAPDF installation, is ready to use just like any other PDF set.
+The latter is only relevant for producing PDFs for a variety of energy values to produce a full interpolation grid over both $Q$ and $x$. For this purpose, there is the \mintinline{cpp}{LHAPDFGrid} class which is simply a wrapper over \mintinline{cpp}{DGLAPSolver}, accepts the desired energy range that the PDF should be evaluated at, and simply performs the evolution for all of the values. It then spits out a single PDF in the format documented in \comm{todo}{link to LHAPDF paper?}, which, if placed in the correct folder for your LHAPDF installation, is ready to use just like any other PDF set.
 
 \subsection{Major Fixes and Optimizations from \texorpdfstring{\texttt{Candia-v1}}{Candia-v1}}
 \label{subsec:optims}
@@ -852,6 +637,8 @@ Apart from the bug fixes, there are several major improvements in \texttt{Candia
 The second major optimization is that, in both the singlet and non-singlet sectors, the ``outer'' iteration corresponding to $n$ and $s$ respectively, require information only from the previous iteration. This means we need only allocate enough memory for two such iterations, whereas \texttt{Candia} allocated memory for all iterations. This becomes especially valuable for higher orders in the exact solution as it leads to exponentially less memory usage.
 
 Lastly, due to the method by which we perform the convolutions, we do not care about the $x$-dependent pieces of the $P_2$ and $P_3$ pieces, corresponding to the coefficients of the plus distribution and delta function, respectively. Because of this, we need only recalculate them when $n_f$ changes, which is only a handful of times per program invocation, as opposed to the otherwise millions of times if they are included inside a convolution loop. By caching these along with the terms from $P_1$ that are $x$-independent, we drastically reduce the number of calculations required during the program.
+
+
 
 \bibliographystyle{elsarticle-num}
 \bibliography{sources}
