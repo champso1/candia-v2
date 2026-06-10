@@ -57,7 +57,7 @@ namespace Candia2
 		 *  @param mur2_muf2 The ratio of the renormalization scale \f$\mu_R^2\f$ to the factorization scale \f$\mu_F^2\f$.
 		 */
 	    AlphaS(uint order, double Q0, double Qf, double alpha0, double mur2_muf2)
-			: _order{order}, _Q0{Q0}, _Qf{Qf}, _alpha0{alpha0}, _mur2_muf2{mur2_muf2}, _L{std::log(mur2_muf2)}, _scheme{UNSET}
+			: _order{order}, _Q0{Q0}, _Qf{Qf}, _alpha0{alpha0}, _mur2_muf2{mur2_muf2}, _L{-std::log(mur2_muf2)}, _scheme{UNSET}
 		{}
 
 		/**

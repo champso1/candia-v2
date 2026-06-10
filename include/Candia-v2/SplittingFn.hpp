@@ -37,6 +37,9 @@ namespace Candia2
 			_nf = nf;
 			_beta0 = beta0;
 		    _log_muf2_mur2 = log_muf2_mur2;
+			log(LOG_DEBUG, "SplittingFunction::update()",
+				"Setting nf={}, beta0={}, log_muf2_mur2={}",
+				_nf, _beta0, _log_muf2_mur2);
 		}
 	};
 

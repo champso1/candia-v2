@@ -24,11 +24,11 @@ namespace Candia2
 
 		_xvals = _grid.points();
 
-		log(LOG_INFO, "DGLAPSolverLHAPDF", "Energy values: {}", vec_to_str(_as_qs));
+		log(LOG_DEBUG, "DGLAPSolverLHAPDF", "Energy values: {}", vec_to_str(_as_qs));
 		for (double q : _as_qs) {
-			log(LOG_INFO, "DGLAPSolverLHAPDF", "==============================");
-			log(LOG_INFO, "DGLAPSolverLHAPDF", "Performing the evolution from {} to {}", q0, q);
-			log(LOG_INFO, "DGLAPSolverLHAPDF", "==============================");
+			log(LOG_DEBUG, "DGLAPSolverLHAPDF", "==============================");
+			log(LOG_DEBUG, "DGLAPSolverLHAPDF", "Performing the evolution from {} to {}", q0, q);
+			log(LOG_DEBUG, "DGLAPSolverLHAPDF", "==============================");
 
 			_dist.setup(q0, q);
 			AlphaS alphas(_order, q0, q, _dist.alpha0(), _mur2_muf2);
@@ -92,7 +92,7 @@ namespace Candia2
 
 	void LHAPDFGrid::write()
 	{
-		log(LOG_INFO, "DGLAPSolverLHAPDF", "Spitting out the stuff...");
+		log(LOG_DEBUG, "DGLAPSolverLHAPDF", "Spitting out the stuff...");
 		std::filesystem::path pdfdir_path = std::filesystem::current_path()/_name;
 		if (!std::filesystem::exists(pdfdir_path)) {
 			if (!std::filesystem::create_directory(pdfdir_path))
@@ -121,7 +121,10 @@ namespace Candia2
 
 		auto pids =
 			_all_pdfs[0].second
-			| std::views::transform([](std::pair<const int, ArrayGrid> const& p) -> int { return p.first; });
+			| std::views::transform(
+				[](std::pair<const int, ArrayGrid> const& p) -> int {
+					return p.first;
+				});
 
 		perform_replace(infofile_in_contents, pids_replace_str, vec_to_str2(pids));
 		perform_replace(infofile_in_contents, order_replace_str, std::to_string(_order));
@@ -142,7 +145,7 @@ namespace Candia2
 		datafile << "   " << vec_to_str2(_as_qs, " ") << '\n';
 		datafile << " " << vec_to_str2(pids, " ") << '\n';
 
-		// the type is
+		// TODO: what the fuck is this nonsense
 	    // std::vector<std::pair<double, std::map<int,ArrayGrid>>>
 		datafile << std::setprecision(10) << std::scientific;
 		for (uint ix=0; ix<_xvals.size(); ++ix) {

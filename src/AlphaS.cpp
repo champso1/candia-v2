@@ -194,7 +194,7 @@ namespace Candia2
 	void AlphaS::calculateThresholdValues()
 	{
 	    double mur_muf = std::sqrt(_mur2_muf2);
-		log(LOG_INFO, "AlphaS::calculateThresholdValues()", "Using mur/muf={}", mur_muf);
+		log(LOG_DEBUG, "AlphaS::calculateThresholdValues()", "Using mur/muf={}", mur_muf);
 		
 		update(_nfi);
 		_post[_nfi] = _alpha0;
@@ -205,7 +205,7 @@ namespace Candia2
 			_pre[nf]  = evaluate(mur_muf*_masses[nf-1], mur_muf*_masses[nf], _post[nf-1]);
 			_post[nf] = postMatch(_pre[nf], nf);
 		}
-		log(LOG_INFO, "AlphaS", "Computed alpha_s threshold values for VFNS. They are:");
+		log(LOG_DEBUG, "AlphaS", "Computed alpha_s threshold values for VFNS. They are:");
 
 		for (uint nf=_nfi; nf<=_nff+1; nf++)
 			log(LOG_DEBUG, "AlphaS", "{} {:14.9} {:14.9} {:14.9}", nf, _masses[nf], _pre[nf], _post[nf]);
@@ -229,7 +229,7 @@ namespace Candia2
 		}
 
 		// otherwise, 4th order runge-kutta
-		const static uint steps = 1000;
+		constexpr uint steps = 1000;
 		double h = 2.0*std::log(Qf/Qi) / static_cast<double>(steps);
 		double k1{}, k2{}, k3{}, k4{};
 		double a = alpha0;
@@ -276,7 +276,7 @@ namespace Candia2
 			for (double q : qvals_sorted) {
 				bool found = false;
 				if (q >= q0 && q < qf) {
-					vals.emplace_back(std::make_pair(q, evaluate(q0, q, a0)));
+					vals.emplace_back(q, evaluate(q0, q, a0));
 					found = true;
 				}
 			}

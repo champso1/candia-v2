@@ -15,7 +15,7 @@ namespace Candia2
 			return;
 		}
 		
-		log(LOG_INFO, "HFT", "Treating heavy flavors: {}th quark mass threshold (mass {})", _nf+1, _alpha_s.masses(_nf+1));
+		log(LOG_DEBUG, "HFT", "Treating heavy flavors: {}th quark mass threshold (mass {})", _nf+1, _alpha_s.masses(_nf+1));
 		// Copy of pre-threshold distributions
 		// the nf+1 dists are defined in terms of the nf dists,
 		// so we need this copy since we would otherwise be overwriting
@@ -23,7 +23,7 @@ namespace Candia2
 		// we just store them in the s=1 array, and modify the s=0 array
 		// (which are the initial conditions for the next set of iterations
 		// at the next nf
-		log(LOG_INFO, "HFT", "Creating copy of pre-threshold distributions... ");
+		log(LOG_DEBUG, "HFT", "Creating copy of pre-threshold distributions... ");
         
         std::vector<ArrayGrid> arr(13, ArrayGrid(_grid.size()));
 		std::vector<ArrayGrid> arr_singlet(2, ArrayGrid(_grid.size()));
@@ -46,7 +46,7 @@ namespace Candia2
 		}
 
 		double as = _alpha_s.post(_nf+1);
-		log(LOG_INFO, "HFT", "Value of alpha_s post threshold: {}", as);
+		log(LOG_DEBUG, "HFT", "Value of alpha_s post threshold: {}", as);
 
 		auto grid_idxs = std::ranges::views::iota(uint{0}, _grid.size()-1);
 		
@@ -64,7 +64,7 @@ namespace Candia2
 			});
 		} else if (_order == 3) {
 			if (!options.use_nnlo_matching_conditions_at_n3lo) {
-				log(LOG_INFO, "HFT", "Performing N3LO matching at N3LO");
+				log(LOG_DEBUG, "HFT", "Performing N3LO matching at N3LO");
 				ArrayGrid qminus(_grid.size());
 				for (uint k=0; k<_grid.size(); ++k) {
 					qminus[k] = 0.0;
@@ -92,7 +92,7 @@ namespace Candia2
 					HFT_N3LO4(arr_singlet[0], arr_singlet[1], qminus, k, arr_accessor(_nf+1), arr_accessor(_nf+1+6)); // heavy flavor
 				});
 			} else {
-				log(LOG_INFO, "HFT", "Performing NNLO matching at N3LO");
+				log(LOG_DEBUG, "HFT", "Performing NNLO matching at N3LO");
 				std::for_each(std::execution::par_unseq, grid_idxs.begin(), grid_idxs.end(), [&](uint k) {
 					// q
 					for (uint j=1; j<=_nf; j++)

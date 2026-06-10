@@ -370,7 +370,7 @@ namespace Candia2
 	{
 		switch (_order) {
 			case 0: { // LO
-				log(LOG_INFO, "NonSingletLO", "Performing LO non-singlet evolution threaded.");
+				log(LOG_DEBUG, "NonSingletLO", "Performing LO non-singlet evolution threaded.");
 
 				std::vector<uint> idxs{};
 				for (uint j=13; j<=12+_nf; ++j)
@@ -391,10 +391,10 @@ namespace Candia2
 			    for (std::thread & t : threads)
 					t.join();
 
-				log(LOG_INFO, "NonSingletLO", "Finished performing threaded LO non-singlet evolution.");
+				log(LOG_DEBUG, "NonSingletLO", "Finished performing threaded LO non-singlet evolution.");
 			} break;
 			case 1: { // NLO
-				log(LOG_INFO, "NonSingletNLO", "Performing NLO non-singlet evolution threaded.");
+				log(LOG_DEBUG, "NonSingletNLO", "Performing NLO non-singlet evolution threaded.");
 
 				std::vector<uint> idxs{};
 				for (uint j=13; j<=12+_nf; ++j)
@@ -416,10 +416,10 @@ namespace Candia2
 				for (std::thread& t : threads)
 					t.join();
 
-				log(LOG_INFO, "NonSingletNLO", "Finished performing threaded NLO non-singlet evolution.");
+				log(LOG_DEBUG, "NonSingletNLO", "Finished performing threaded NLO non-singlet evolution.");
 			} break;
 			case 2: { // NNLO
-				log(LOG_INFO, "NonSingletNNLO", "Performing NNLO non-singlet evolution threaded.");
+				log(LOG_DEBUG, "NonSingletNNLO", "Performing NNLO non-singlet evolution threaded.");
 
 				std::vector<uint> idxs{};
 				for (uint j=26; j<=24+_nf; ++j)
@@ -448,10 +448,10 @@ namespace Candia2
 				for (std::thread & t : threads)
 					t.join();
 
-				log(LOG_INFO, "NonSingletNNLO", "Finished performing threaded NNLO non-singlet evolution.");
+				log(LOG_DEBUG, "NonSingletNNLO", "Finished performing threaded NNLO non-singlet evolution.");
 			} break;
 			case 3: { // N3LO
-				log(LOG_INFO, "NonSingletN3LO", "Performing N3LO non-singlet evolution threaded.");
+				log(LOG_DEBUG, "NonSingletN3LO", "Performing N3LO non-singlet evolution threaded.");
 
 				std::vector<uint> idxs{};
 				for (uint j=26; j<=24+_nf; ++j)
@@ -480,7 +480,7 @@ namespace Candia2
 				for (std::thread& t : threads)
 					t.join();
 
-				log(LOG_INFO, "NonSingletN3LO", "Finished performing threaded N3LO non-singlet evolution.");
+				log(LOG_DEBUG, "NonSingletN3LO", "Finished performing threaded N3LO non-singlet evolution.");
 			} break;
 		}
 	}
@@ -747,10 +747,10 @@ namespace Candia2
 
 	void DGLAPSolver::evolveNonSingletTrunc(std::reference_wrapper<std::vector<ArrayGrid>> arr, double L1)
 	{
-		log(LOG_INFO, "DGLAP", "Using the truncated ansatz for the non-singlet sector");
+		log(LOG_DEBUG, "DGLAP", "Using the truncated ansatz for the non-singlet sector");
         switch (_order) {
             case 0: {
-				log(LOG_INFO, "NonSingletLO (trunc)", "Performing LO non-singlet evolution threaded.");
+				log(LOG_DEBUG, "NonSingletLO (trunc)", "Performing LO non-singlet evolution threaded.");
 				
 				std::vector<uint> idxs{};
 				for (uint j=13; j<=12+_nf; ++j)
@@ -771,10 +771,10 @@ namespace Candia2
 				for (std::thread& t : threads)
 					t.join();
 				
-				log(LOG_INFO, "NonSingletLO (trunc)", "Finished performing LO non-singlet evolution threaded.");
+				log(LOG_DEBUG, "NonSingletLO (trunc)", "Finished performing LO non-singlet evolution threaded.");
             }; break;
 			case 1: {
-				log(LOG_INFO, "NonSingletNLO (trunc)", "Performing NLO non-singlet evolution threaded.");
+				log(LOG_DEBUG, "NonSingletNLO (trunc)", "Performing NLO non-singlet evolution threaded.");
 
 				std::vector<uint> idxs{};
 				for (uint j=13; j<=12+_nf; ++j)
@@ -795,10 +795,10 @@ namespace Candia2
 				for (std::thread & t : threads)
 					t.join();
 				
-				log(LOG_INFO, "NonSingletNLO (trunc)", "Finished performing NLO non-singlet evolution threaded.");
+				log(LOG_DEBUG, "NonSingletNLO (trunc)", "Finished performing NLO non-singlet evolution threaded.");
 			}; break;
 			case 2: {
-				log(LOG_INFO, "NonSingletNNLO (trunc)", "Performing NNLO non-singlet evolution threaded.");
+				log(LOG_DEBUG, "NonSingletNNLO (trunc)", "Performing NNLO non-singlet evolution threaded.");
 
 				std::vector<uint> idxs{};
 				for (uint j=26; j<=24+_nf; j++)
@@ -821,10 +821,10 @@ namespace Candia2
 				for (std::thread & t : threads)
 					t.join();
 				
-				log(LOG_INFO, "NonSingletNNLO (trunc)", "Finished performing NNLO non-singlet evolution threaded.");
+				log(LOG_DEBUG, "NonSingletNNLO (trunc)", "Finished performing NNLO non-singlet evolution threaded.");
 			}; break;
 			case 3: {
-				log(LOG_INFO, "NonSingletN3LO (trunc)", "Performing N3LO non-singlet evolution threaded.");
+				log(LOG_DEBUG, "NonSingletN3LO (trunc)", "Performing N3LO non-singlet evolution threaded.");
 
 				std::vector<uint> idxs{};
 				for (uint j=26; j<=24+_nf; j++)
@@ -847,7 +847,7 @@ namespace Candia2
 				for (std::thread & t : threads)
 					t.join();
 				
-				log(LOG_INFO, "NonSingletN3LO (trunc)", "Finished performing N3LO non-singlet evolution threaded.");
+				log(LOG_DEBUG, "NonSingletN3LO (trunc)", "Finished performing N3LO non-singlet evolution threaded.");
 			}; break;
         }
 	}

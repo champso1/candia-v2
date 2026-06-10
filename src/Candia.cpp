@@ -67,7 +67,7 @@ namespace Candia2
 	{
 		log(::CANDIA_OPENING_TEXT);
 
-		log(LOG_INFO, "DGLAP", "Evolving with log(mu_R / mu_F) = log({:.1}) = {:.4}.", _mur2_muf2, _log_mur2_muf2);
+		log(LOG_DEBUG, "DGLAP", "Evolving with log(mu_R / mu_F) = log({:.1}) = {:.4}.", _mur2_muf2, _log_mur2_muf2);
 
 		if (_order == 0 && _trunc_idx != 0) {
 			_trunc_idx = 0; // LO has exact singlet solution, do not add additional terms
@@ -109,7 +109,7 @@ namespace Candia2
 		log(LOG_DEBUG, "DGLAPSolver::DGLAPSolver()", "c  array: {}", func(_r1));
 	    
 		setInitialConditions(initial_dist);
-		log(LOG_INFO, "DGLAP", "Successfully filled coefficients with initial conditions.");
+		log(LOG_DEBUG, "DGLAP", "Successfully filled coefficients with initial conditions.");
 	}
 
 	DGLAPSolver::~DGLAPSolver()
@@ -120,7 +120,7 @@ namespace Candia2
 
 	void DGLAPSolver::setInitialConditions(Distribution const& dist)
 	{
-		log(LOG_INFO, "DGLAP", "Setting initial conditions... ");
+		log(LOG_DEBUG, "DGLAP", "Setting initial conditions... ");
 
 		dist.fillSingletCoeffs(
 			[&](uint j, uint k) -> double& {
@@ -386,7 +386,7 @@ namespace Candia2
 
 	void DGLAPSolver::setupTruncatedDistributions()
 	{
-		log(LOG_INFO, "Grid", "Using truncated ansatz for non-singlet sector.");
+		log(LOG_DEBUG, "Grid", "Using truncated ansatz for non-singlet sector.");
 
 		_S_NS.resize({_trunc_idx+1, DISTS, 2, _grid.size()});
 
@@ -426,16 +426,16 @@ namespace Candia2
 		
 		bool performed_evolution = false;
 		for (_nf=_alpha_s.nfi(); _nf<=_alpha_s.nff(); _nf++) {
-			log(LOG_INFO, "DGLAP", "Setting nf={}", _nf);
+			log(LOG_DEBUG, "DGLAP", "Setting nf={}", _nf);
 			bool last_loop = _nf == _alpha_s.nff();
 
-			log(LOG_INFO, "DGLAP", "Setting up distributions for evolution.");
+			log(LOG_DEBUG, "DGLAP", "Setting up distributions for evolution.");
 			setupCoefficients();
-			log(LOG_INFO, "DGLAP", "Finished setting up distributions for evolution.");
+			log(LOG_DEBUG, "DGLAP", "Finished setting up distributions for evolution.");
 
 			// if the next mass is zero, we are already done
 			if (_alpha_s.masses(_nf+1) == 0.0) {
-				log(LOG_INFO, "DGLAP", "Next mass is zero. Quitting...");
+				log(LOG_WARNING, "DGLAP", "Next mass is zero. Quitting...");
 				break;
 			}
 
@@ -479,7 +479,7 @@ namespace Candia2
 						          /(2.*PI*(8.*PI*beta0+(_alpha1+_alpha0)*beta1)+_alpha1*_alpha0*beta2)
 					)/std::sqrt(aux);
 				} else {
-					log(LOG_INFO, "DGLAP", "Encountered argument of square root that is <0. Doing analytic continuation.");
+					log(LOG_WARNING, "DGLAP", "Encountered argument of square root that is <0. Doing analytic continuation.");
 					L3 = std::atanh(2.*PI*(_alpha1-_alpha0)*std::sqrt(-aux)
 						           /(2.*PI*(8.*PI*beta0+(_alpha1+_alpha0)*beta1)+_alpha1*_alpha0*beta2)
 					)/std::sqrt(-aux);
@@ -498,22 +498,22 @@ namespace Candia2
 			for (auto [x, xname] : coeffs)
 				log(LOG_DEBUG, "DGLAP::evolve()", "  - {} = {: }", xname, x);
 			
-			log(LOG_INFO, "DGLAP", "Doing {} resummation", (resum_tab ? "tabulated" : "threshold" ));
-			log(LOG_INFO, "DGLAP", "AlphaS: {} --> {}", _alpha0, _alpha1);
+			log(LOG_DEBUG, "DGLAP", "Doing {} resummation", (resum_tab ? "tabulated" : "threshold" ));
+			log(LOG_DEBUG, "DGLAP", "AlphaS: {} --> {}", _alpha0, _alpha1);
 
 			// only do evolution if alphas are different
 			// (i.e. energy scales are different)
 			if (_alpha0 != _alpha1) {
 				performed_evolution = true;
-				log(LOG_INFO, "DGLAP", "Starting singlet evolution and resummation...");
+				log(LOG_DEBUG, "DGLAP", "Starting singlet evolution and resummation...");
 #if ENABLE_THREADING
 				evolveSingletThreaded(resum_singlet, L1);
 #else
 			    evolveSinglet(resum_singlet, L1);
 #endif
-				log(LOG_INFO, "DGLAP", "Finished singlet evolution and resummation.");
+				log(LOG_DEBUG, "DGLAP", "Finished singlet evolution and resummation.");
 
-				log(LOG_INFO, "DGLAP", "Starting non-singlet evolution and resummation...");
+				log(LOG_DEBUG, "DGLAP", "Starting non-singlet evolution and resummation...");
 #if ENABLE_THREADING
 				options.use_truncated_nonsinglet_sol ?
 					evolveNonSingletTruncThreaded(resum_ns, L1) :
@@ -523,20 +523,20 @@ namespace Candia2
 					evolveNonSingletTrunc(resum_ns, L1) :
 					evolveNonSinglet(resum_ns, L1, L2, L3, L4);
 #endif
-				log(LOG_INFO, "DGLAP", "Finished non-singlet evolution and resummation.");
+				log(LOG_DEBUG, "DGLAP", "Finished non-singlet evolution and resummation.");
 
-				log(LOG_INFO, "DGLAP", "Fixing distributions...");
+				log(LOG_DEBUG, "DGLAP", "Fixing distributions...");
 				fixDistributions(resum_ns, resum_singlet, resum);
-				log(LOG_INFO, "DGLAP", "Finished fixing distributions.");
+				log(LOG_DEBUG, "DGLAP", "Finished fixing distributions.");
 
 				// if we just resummed to a tabulated value,
 				// _F contains our final distributions
 				// we can just copy
 				if (resum_tab) {
-					log(LOG_INFO, "DGLAP", "Moving distributions into output array.");
+					log(LOG_DEBUG, "DGLAP", "Moving distributions into output array.");
 					_F = std::move(resum);
 				} else if (resum_threshold) {
-					log(LOG_INFO, "DGLAP", "Moving distributions into the initial conditions of the next iteration.");
+					log(LOG_DEBUG, "DGLAP", "Moving distributions into the initial conditions of the next iteration.");
 					// if we just resummed to a threshold energy,
 					// then we need to recopy the resultant distributions
 					// from the temporary array

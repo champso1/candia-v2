@@ -28,7 +28,7 @@ namespace Candia2
 		/** Updates the internally stored value of @a lm and @a nf */
 		inline static void update(double lm, uint nf)
 		{
-			log(LOG_INFO, "OME", "Setting L_M = {}, nf = {}", lm, nf);
+			log(LOG_DEBUG, "OME", "Setting L_M = {}, nf = {}", lm, nf);
 			_lm = lm;
 			_nf = nf;
 		}

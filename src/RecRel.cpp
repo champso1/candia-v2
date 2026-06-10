@@ -7,9 +7,15 @@ namespace Candia2
 
 	double DGLAPSolver::shift_p1(Expression& P1, Expression& P0, ArrayGridView A, uint k)
 	{
+		const double L = _log_muf2_mur2;
+		const double b0 = _alpha_s.beta0();
+		constexpr double HALF = 0.5;
+		
 		double conv1 = _grid.convolution(A, P1, k);
 		double conv2 = _grid.convolution(A, P0, k);
-		return conv1 - (_alpha_s.beta0()/2.0)*conv2;
+		return
+			conv1
+			- b0*HALF*L*conv2;
 	}
 	double DGLAPSolver::shift_p2(Expression& P2, Expression& P1, Expression& P0, ArrayGridView A, uint k)
 	{
