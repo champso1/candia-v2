@@ -41,6 +41,7 @@ namespace Candia2
 	constexpr double TR      = 0.5;
 	constexpr double MZ      = 91.1876;
 	constexpr double PI      = std::numbers::pi;
+	constexpr double TWOPI   = 2.0*PI;
 	constexpr double PI_2    = PI*PI;
 	constexpr double PI_3    = PI_2*PI;
 	constexpr double PI_4    = PI_3*PI;
