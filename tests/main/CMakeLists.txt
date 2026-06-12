@@ -16,7 +16,11 @@ foreach(name ${names})
     FILES util.hpp)
 endforeach()
 
+find_package(yaml-cpp REQUIRED)
+target_link_libraries(evolve PRIVATE yaml-cpp::yaml-cpp)
+
 set(resources
+  evolve.config.yaml.in
   plot-scripts
   hoppet-data
   tex-table
