@@ -18,10 +18,12 @@ set style line 1 lc rgb '#1f77b4' dt 1 lw 2 # Solid Blue
 set style line 2 lc rgb '#d62728' dt 2 lw 2 # Dashed Red
 set style line 3 lc rgb '#2ca02c' dt 3 lw 2 # Dotted Green
 set style line 4 lc rgb '#ff7f0e' dt 4 lw 2 # Dash-Dot Orange
+set style line 5 lc rgb 'purple' dt 5 lw 2  # Dash-Dot Purple
 
 # Plotting the data from output.dat
-# Column mapping: 1:x, 2:fb, 3:ftilde1, 4:ftilde2,  5:ftilde3, 
+# Column mapping: 1:x, 2:fb, 3:ftilde1, 4:ftilde2,  5:ftilde3, 6:ftildeNNLO, 7:ftildeN3LO, 8:deltaf1, 9:deltaf2, 10:deltaf3, 11:deltafNNLO, 12:deltafN3LO
 plot ARG1 u 1:2 w lines ls 1 title "f_b", \
 	 ''   u 1:3 w lines ls 2 title "f̃_b^{(1)}", \
- 	 ''   u 1:6 w lines ls 3 title "f̃_b^{(NNLO)}", \
- 	 ''   u 1:7 w lines ls 4 title "f̃_b^{(N3LO)}"
+ 	 ''   u 1:6 w lines ls 3 title "f̃_b^{(NLO)}", \
+ 	 ''   u 1:9 w lines ls 4 title "{/Symbol d}f_b^{(1)}", \
+ 	 ''   u 1:11 w lines ls 5 title "{/Symbol d}f_b^{(NLO)}", \
