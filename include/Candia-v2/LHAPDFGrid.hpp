@@ -33,10 +33,16 @@ namespace Candia2
 	public:
 		enum AdditionalSubtractionPDFs : int
 		{
-		    FTILDE1 = 9001,
-			FTILDENLO = 9002,
-			DELTAF1 = 9003,
-			DELTAFNLO = 9004,
+		    FTILDE1    = 9001,
+			FTILDE2    = 9002,
+			FTILDE3    = 9003,
+			FTILDENNLO = 9004, // ft1 + ft2
+			FTILDEN3LO = 9005, // ft1 + ft2 + ft3
+			DELTAF1    = 9006, // fb - ft1
+			DELTAF2    = 9007, // fb - ft2
+			DELTAF3    = 9008, // fb - ft3
+			DELTAFNNLO = 9009, // fb - ftNNLO
+			DELTAFN3LO = 9010  // fb - ftN3LO
 		};
 	public:
 		LHAPDFGrid(

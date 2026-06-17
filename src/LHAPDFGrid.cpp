@@ -1,6 +1,7 @@
 // LHAPDFGrid.cpp
 
 #include "Candia-v2/LHAPDFGrid.hpp"
+#include "Candia-v2/Common.hpp"
 
 #include <algorithm>
 
@@ -25,11 +26,20 @@ namespace Candia2
 		_xvals = _grid.points();
 
 		log(LOG_DEBUG, "DGLAPSolverLHAPDF", "Energy values: {}", vec_to_str(_as_qs));
-		for (double q : _as_qs) {
-			log(LOG_DEBUG, "DGLAPSolverLHAPDF", "==============================");
-			log(LOG_DEBUG, "DGLAPSolverLHAPDF", "Performing the evolution from {} to {}", q0, q);
-			log(LOG_DEBUG, "DGLAPSolverLHAPDF", "==============================");
 
+		auto enumerate =
+			std::views::iota(uint{0}, _as_qs.size())
+			| std::views::transform(
+				[&](uint i){
+					return std::make_pair(i, _as_qs[i]);
+				});
+
+		startLogIterations();
+		for (auto[i, q] : enumerate) {
+			getLogOptions().verbosity = LOG_INFO;
+			logIterations(i, _as_qs.size()-1, "Evolutions");
+			getLogOptions().verbosity = LOG_WARNING;
+			
 			_dist.setup(q0, q);
 			AlphaS alphas(_order, q0, q, _dist.alpha0(), _mur2_muf2);
 			alphas.setVFNS(_dist.masses(), _dist.nfi(), _dist.nff());
@@ -63,15 +73,21 @@ namespace Candia2
 			std::vector<ArrayGrid> subtraction_pdfs = solver.calculateSubtractionPDFs();
 			if (!subtraction_pdfs.empty()) {
 				map_emplacer(FTILDE1, subtraction_pdfs[0].view());
-				map_emplacer(FTILDENLO, subtraction_pdfs[1].view());
-				map_emplacer(DELTAF1, subtraction_pdfs[2].view());
-				map_emplacer(DELTAFNLO, subtraction_pdfs[3].view());
+				map_emplacer(FTILDE2, subtraction_pdfs[1].view());
+				map_emplacer(FTILDE3, subtraction_pdfs[2].view());
+				map_emplacer(FTILDENNLO, subtraction_pdfs[3].view());
+				map_emplacer(FTILDEN3LO, subtraction_pdfs[4].view());
+				map_emplacer(DELTAF1, subtraction_pdfs[5].view());
+				map_emplacer(DELTAF2, subtraction_pdfs[6].view());
+				map_emplacer(DELTAF3, subtraction_pdfs[7].view());
 			}
 
 		    _all_pdfs.emplace_back(std::make_pair(q, map));
 		}
-		
-		log(LOG_INFO, "DGLAPSolverLHAPDF", "Finished running.");
+
+		getLogOptions().verbosity = LOG_INFO;
+		endLogIterations();
+		getLogOptions().verbosity = LOG_WARNING;
 	}
 	
 	void LHAPDFGrid::evolve(

@@ -578,8 +578,10 @@ namespace Candia2
 			return {};
 		}
 
-		double as = _alpha1/4.0/PI;
+		// double as = _alpha1/4.0/PI;
+		double as = _alpha1;
 		double as2 = as*as;
+		double as3 = as2*as;
 		double mb = _initial_dist.masses(DIST_B);
 		double qf = _Qf;
 		double L = std::log(std::pow(qf/mb, 2.0));
@@ -588,7 +590,6 @@ namespace Candia2
 
 		auto zero_func = [](double,double){ return 0.0; };
 		
-		// auto& p1qg = getExpression("P1qg");
 	    auto a1qg_reg_func = [as](double lm, double nf, double x) {
 			auto trunced = ome::AQg_reg.truncate(1);
 			return trunced(as, lm, nf, x); };
@@ -603,18 +604,42 @@ namespace Candia2
 			auto trunced = ome::AQg_reg.truncate(2);
 			return trunced(as, lm, nf, x); };
 		OpMatElemCustom a2hg(a2hg_reg_func, zero_func, zero_func);
+
+		auto a3hq_reg_func = [as](double lm, double nf, double x) {
+			auto trunced = ome::AQqPS_reg.truncate(3);
+			return trunced(as, lm, nf, x); };
+		OpMatElemCustom a3hq(a3hq_reg_func, zero_func, zero_func);
+		
+		auto a3hg_reg_func = [as](double lm, double nf, double x) {
+			auto trunced = ome::AQg_reg.truncate(3);
+			return trunced(as, lm, nf, x); };
+		OpMatElemCustom a3hg(a3hg_reg_func, zero_func, zero_func);
 		
 
-		std::vector<ArrayGrid> subpdfs(4, ArrayGrid(_grid.size()));
+		std::vector<ArrayGrid> subpdfs(10, ArrayGrid(_grid.size()));
 		for (uint k=0; k<_grid.size(); ++k) {
-			subpdfs[0](k) = as*_grid.convolution(_F[0], a1hg, k);
+			double ftilde1 = as*_grid.convolution(_F[0], a1hg, k);
 		    double ftilde2 = as2*(
 				_grid.convolution(_F[31], a2hq, k) +
 				_grid.convolution(_F[0], a2hg, k)
 			);
-			subpdfs[1](k) = subpdfs[0](k) + ftilde2;
-			subpdfs[2](k) = std::abs(_F[5](k) - subpdfs[0](k));
-			subpdfs[3](k) = std::abs(_F[5](k) - subpdfs[1](k));
+			double ftilde3 = as3*(
+				_grid.convolution(_F[31], a3hq, k) +
+				_grid.convolution(_F[0], a3hg, k)
+			);
+
+			subpdfs[0][k] = ftilde1;
+			subpdfs[1][k] = ftilde2;
+			subpdfs[2][k] = ftilde3;
+			
+			subpdfs[3][k] = ftilde1 + ftilde2;
+			subpdfs[4][k] = ftilde1 + ftilde2 + ftilde3;
+			
+			subpdfs[5][k] = std::abs(_F[5][k] - ftilde1);
+			subpdfs[6][k] = std::abs(_F[5][k] - ftilde2);
+			subpdfs[7][k] = std::abs(_F[5][k] - ftilde3);
+			subpdfs[8][k]  = std::abs(_F[5][k] - subpdfs[3][k]);
+			subpdfs[9][k]  = std::abs(_F[5][k] - subpdfs[4][k]);
 		}
 
 		return subpdfs;
