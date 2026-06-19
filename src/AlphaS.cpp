@@ -197,12 +197,12 @@ namespace Candia2
 		log(LOG_DEBUG, "AlphaS::calculateThresholdValues()", "Using mur/muf={}", mur_muf);
 		
 		update(_nfi);
-		_post[_nfi] = _alpha0;
+		_post[_nfi] = evaluate(_masses[_nfi], mur_muf*_masses[_nfi], _alpha0);
 		_pre[_nfi] = preMatch(_post[_nfi], _nfi);
 		
 		for (uint nf=_nfi+1; nf<=_nff+1; nf++) {
 			update(nf-1);
-			_pre[nf]  = evaluate(mur_muf*_masses[nf-1], mur_muf*_masses[nf], _post[nf-1]);
+			_pre[nf]  = evaluate(_masses[nf-1], _masses[nf], _post[nf-1]);
 			_post[nf] = postMatch(_pre[nf], nf);
 		}
 		log(LOG_DEBUG, "AlphaS", "Computed alpha_s threshold values for VFNS. They are:");
@@ -215,6 +215,7 @@ namespace Candia2
 	
 	double AlphaS::evaluate(double Qi, double Qf, double alpha0) const
 	{
+		log(LOG_DEBUG, "AlphaS::evaluate()", "Qi={}, Qf={}, a0={}", Qi, Qf, alpha0);
 		// if the before/after energies are identical, there is nothing to evaluate
 		if (Qi == Qf)
 			return alpha0;
@@ -243,6 +244,7 @@ namespace Candia2
 			a += (k1/6.0) + (k2/3.0) + (k3/3.0) + (k4/6.0);
 		}
 
+		log(LOG_DEBUG, "AlphaS::evaluate()", "  - res={}", a);
 		return a;
 	}
 	

@@ -36,7 +36,7 @@ int main(int argc, char *argv[])
 	int format{}, type{}, diff_type{};
 	if (argc == 3) {
 		format = 1;
-		type = 2;
+		type = 1;
 		diff_type = 1;
 	} else {
 		std::from_chars(argv[3], argv[3] + 1, format);

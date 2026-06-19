@@ -23,6 +23,7 @@ set(resources
   evolve.config.yaml.in
   plot-scripts
   hoppet-data
+  pegasus-data
   tex-table
   benchmark-data
   backup.sh

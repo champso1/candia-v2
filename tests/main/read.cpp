@@ -27,7 +27,7 @@ int main(int argc, char *argv[])
 	if (argc == 2) {
 		origin = 0;
 		format = 1;
-		type = 2;
+		type = 1;
 	} else {
 		std::from_chars(argv[2], argv[2] + 1, origin);
 		std::from_chars(argv[3], argv[3] + 1, format);
