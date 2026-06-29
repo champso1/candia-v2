@@ -173,8 +173,8 @@ int main(int argc, char *argv[]) {
 	GridFillerLogLinQuad grid_filler(1e-5, 100, 50, 30);
 	Grid grid(xtab, grid_filler, {});
 
-	LesHouchesDistribution dist(Qf);
-	// LHAPDFDistribution dist(make_lhapdf_pdf("CT25NNLO"), 1.3, 100.0);
+	// LesHouchesDistribution dist(Qf);
+	LHAPDFDistribution dist(make_lhapdf_pdf("CT18NNLO"), 1.295, 100.0);
 	AlphaS alphas(order, dist.Q0(), Qf, dist.alpha0(), mur2_muf2);
 	alphas.setVFNS(dist.masses(), dist.nfi(), dist.nff());
 	// alphas.setFFNS(4);

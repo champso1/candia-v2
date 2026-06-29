@@ -24,6 +24,7 @@ set(resources
   plot-scripts
   hoppet-data
   pegasus-data
+  eko-data
   tex-table
   benchmark-data
   backup.sh
