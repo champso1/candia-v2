@@ -1,0 +1,14 @@
+* CODE [1/7]
+** TODO Place the regular piece of expressions on some sort of interpolation grid for higher orders, probably even starting at NLO. preliminary tests of this reduce evolution time drastically, but the issue is the dense grid at large-x which throws off the interpolation quite a bit.
+** TODO In the LHAPDFGrid evolution, we could have a more dynamic `Distribution` that "inherits" its initial conditions from the output of the previous evolution at each quark mass threshold. This way, when evolving from say 3GeV to 10GeV, all evolutions with initial/final energies crossing the mass of the bottom ~4.5GeV won't have to first evolve to that threshold then to 10GeV (which would take twice as long).
+** TODO In the non-singlet sector at N3LO, the new, more readable way I do the fac/ren scale difference case will double calculate some convolutions. should find a way to keep it nicely readable while also not doubling (or worse) convolutions
+** DONE should remove most if not all stuff from LOG_INFO and move to LOG_DEBUG; the only stuff that should really be there is the evolution progress bars
+** TODO I don't like the GridFillers. None but LogLinQuad are useful.
+** TODO try to replace pretty much all std::pow calls inside of splitting functions or other frequently called functions
+** TODO directly use the value of alphas at the reference scale to calculate the other values rather than the pdf-provided interpolation grid
+
+* PAPER [0/4]
+** TODO add plot of the gluon pdf progression
+** TODO add plot containing charm pdf, nnlo & n3lo subtraction and residual pdfs (5 total curves)
+** TODO add section in paper detailing, in some way, some of the internals of the code e.g. classes and their methods, possibly a graphic
+** TODO look into generating a graphic to visualize the recursion relation progression

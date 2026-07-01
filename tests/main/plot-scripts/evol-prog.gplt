@@ -1,0 +1,37 @@
+set terminal pdfcairo enhanced notransparent
+
+set border lw 2
+set size ratio 0.65
+set rmargin 0
+set lmargin 0
+
+file_lo   = "data/lo-forplot.dat"
+file_nlo  = "data/nlo-forplot.dat"
+file_nnlo = "data/nnlo-forplot.dat"
+file_n3lo = "data/n3lo-forplot.dat"
+
+set output "plots/evol-prog.pdf"
+set title "Evolution progression of the gluon PDF"
+set xlabel "x" offset 0,0.7
+set ylabel "xg(x)"
+
+set style fill transparent solid 0.3 noborder
+
+set logscale x
+set yrange [0.0:250.0]
+set xrange [1e-5:1.0]
+set format x "%.0e"
+
+set grid
+set key offset 0,-0.4
+
+set style line 1 lc rgb 'black'  dt 1 lw 2 # Solid Blue
+set style line 2 lc rgb 'red'    dt 2 lw 2 # Dashed Red
+set style line 3 lc rgb 'green'  dt 3 lw 2 # Dotted Green
+set style line 4 lc rgb 'orange' dt 4 lw 2 # Dash-Dot Orange
+set style line 5 lc rgb 'purple' dt 5 lw 2  # Dash-Dot Purple
+
+plot file_lo   every ::3 using 1:2 with lines ls 5 title "LO", \
+     file_nlo  every ::3 using 1:2 with lines ls 2 title "NLO", \
+     file_nnlo every ::3 using 1:2 with lines ls 3 title "NNLO", \
+	 file_n3lo every ::3 using 1:2 with lines ls 4 title "N^{3}LO"
