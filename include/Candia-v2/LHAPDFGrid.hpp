@@ -33,16 +33,26 @@ namespace Candia2
 	public:
 		enum AdditionalSubtractionPDFs : int
 		{
-		    FTILDE1    = 9001,
-			FTILDE2    = 9002,
-			FTILDE3    = 9003,
-			FTILDENNLO = 9004, // ft1 + ft2
-			FTILDEN3LO = 9005, // ft1 + ft2 + ft3
-			DELTAF1    = 9006, // fb - ft1
-			DELTAF2    = 9007, // fb - ft2
-			DELTAF3    = 9008, // fb - ft3
-			DELTAFNNLO = 9009, // fb - ftNNLO
-			DELTAFN3LO = 9010  // fb - ftN3LO
+		    C_FTILDE1    = 9001,
+			C_FTILDE2    = 9002,
+			C_FTILDE3    = 9003,
+			C_FTILDENNLO = 9004, // ft1 + ft2
+			C_FTILDEN3LO = 9005, // ft1 + ft2 + ft3
+			C_DELTAF1    = 9006, // fc - ft1
+			C_DELTAF2    = 9007, // fc - ft2
+			C_DELTAF3    = 9008, // fc - ft3
+			C_DELTAFNNLO = 9009, // fc - ftNNLO
+			C_DELTAFN3LO = 9010, // fc - ftN3LO
+			B_FTILDE1    = 9101,
+			B_FTILDE2    = 9102,
+			B_FTILDE3    = 9103,
+			B_FTILDENNLO = 9104, // ft1 + ft2
+			B_FTILDEN3LO = 9105, // ft1 + ft2 + ft3
+			B_DELTAF1    = 9106, // fb - ft1
+			B_DELTAF2    = 9107, // fb - ft2
+			B_DELTAF3    = 9108, // fb - ft3
+			B_DELTAFNNLO = 9109, // fb - ftNNLO
+			B_DELTAFN3LO = 9110  // fb - ftN3LO
 		};
 	public:
 		LHAPDFGrid(

@@ -25,7 +25,7 @@ namespace Candia2
 
 		_xvals = _grid.points();
 
-		log(LOG_DEBUG, "DGLAPSolverLHAPDF", "Energy values: {}", vec_to_str(_as_qs));
+		log(LOG_DEBUG, "LHAPDFGrid", "Energy values: {}", vec_to_str(_as_qs));
 
 		auto enumerate =
 			std::views::iota(uint{0}, _as_qs.size())
@@ -72,17 +72,29 @@ namespace Candia2
 
 			std::vector<ArrayGrid> subtraction_pdfs = solver.calculateSubtractionPDFs();
 			if (!subtraction_pdfs.empty()) {
-				map_emplacer(FTILDE1, subtraction_pdfs[0].view());
-				map_emplacer(FTILDE2, subtraction_pdfs[1].view());
-				map_emplacer(FTILDE3, subtraction_pdfs[2].view());
-				map_emplacer(FTILDENNLO, subtraction_pdfs[3].view());
-				map_emplacer(FTILDEN3LO, subtraction_pdfs[4].view());
-				map_emplacer(DELTAF1, subtraction_pdfs[5].view());
-				map_emplacer(DELTAF2, subtraction_pdfs[6].view());
-				map_emplacer(DELTAF3, subtraction_pdfs[7].view());
+				map_emplacer(C_FTILDE1, subtraction_pdfs[0].view());
+				map_emplacer(C_FTILDE2, subtraction_pdfs[1].view());
+				map_emplacer(C_FTILDE3, subtraction_pdfs[2].view());
+				map_emplacer(C_FTILDENNLO, subtraction_pdfs[3].view());
+				map_emplacer(C_FTILDEN3LO, subtraction_pdfs[4].view());
+				map_emplacer(C_DELTAF1, subtraction_pdfs[5].view());
+				map_emplacer(C_DELTAF2, subtraction_pdfs[6].view());
+				map_emplacer(C_DELTAF3, subtraction_pdfs[7].view());
+				map_emplacer(C_DELTAFNNLO, subtraction_pdfs[8].view());
+				map_emplacer(C_DELTAFN3LO, subtraction_pdfs[9].view());
+				map_emplacer(B_FTILDE1, subtraction_pdfs[10].view());
+				map_emplacer(B_FTILDE2, subtraction_pdfs[11].view());
+				map_emplacer(B_FTILDE3, subtraction_pdfs[12].view());
+				map_emplacer(B_FTILDENNLO, subtraction_pdfs[13].view());
+				map_emplacer(B_FTILDEN3LO, subtraction_pdfs[14].view());
+				map_emplacer(B_DELTAF1, subtraction_pdfs[15].view());
+				map_emplacer(B_DELTAF2, subtraction_pdfs[16].view());
+				map_emplacer(B_DELTAF3, subtraction_pdfs[17].view());
+				map_emplacer(B_DELTAFNNLO, subtraction_pdfs[18].view());
+				map_emplacer(B_DELTAFN3LO, subtraction_pdfs[19].view());
 			}
 
-		    _all_pdfs.emplace_back(std::make_pair(q, map));
+		    _all_pdfs.emplace_back(q, map);
 		}
 
 		getLogOptions().verbosity = LOG_INFO;
@@ -108,11 +120,11 @@ namespace Candia2
 
 	void LHAPDFGrid::write()
 	{
-		log(LOG_DEBUG, "DGLAPSolverLHAPDF", "Spitting out the stuff...");
+		log(LOG_DEBUG, "LHAPDFGrid", "Spitting out the stuff...");
 		std::filesystem::path pdfdir_path = std::filesystem::current_path()/_name;
 		if (!std::filesystem::exists(pdfdir_path)) {
 			if (!std::filesystem::create_directory(pdfdir_path))
-				log(LOG_ERROR, "DGLAPSolverLHAPDF", "Failed to create the pdf outpout directory: '{}'", pdfdir_path.string());
+				log(LOG_ERROR, "LHAPDFGrid", "Failed to create the pdf outpout directory: '{}'", pdfdir_path.string());
 		}
 		
 		std::string infofile_name = std::format("{}.info", _name);

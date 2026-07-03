@@ -16,11 +16,10 @@ int main()
 	getLogOptions().verbosity = LOG_WARNING;
 
 	LesHouchesDistribution dist(100.0);
-	std::vector<double> xtab{1e-5, 1e-4, 1e-3, 1e-2, 0.1, 0.3, 0.5, 0.7, 0.9, 1.0};
-	GridFillerLogLinQuad grid_filler(1e-5, 100, 50, 25);
-	Grid grid(xtab, grid_filler, {});
+	std::vector<double> xtab;
+	Grid grid({1e-5, 1e-4, 1e-3, 1e-2, 0.1, 0.3, 0.5, 0.7, 0.9, 1.0});
 	DGLAPOptions dglap_options{};
-	dglap_options.use_truncated_nonsinglet_sol = false;
+	dglap_options.use_truncated_nonsinglet_sol = true;
 	dglap_options.disable_heavy_flavor_matching = false;
 	dglap_options.use_nnlo_matching_conditions_at_n3lo = false;
 	dglap_options.use_n3lo_heavyquark_asymmetry = true;
@@ -29,7 +28,7 @@ int main()
 	LHAPDFGrid lhapdfgrid(
 		"testpdf", fs::current_path()/"infofile.in",
 		dist, grid,
-		3, 10, 10, 1);
+		3, 13, 10, 1);
 	
 	lhapdfgrid.evolve(std::numbers::sqrt2, 110.0, 5.0, dglap_options);
 
