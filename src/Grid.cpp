@@ -6,12 +6,13 @@
 #include <algorithm>
 #include <cmath>
 #include <limits>
+#include <set>
 
 namespace Candia2
 {
-    Grid::Grid(xtab_type const& xtab, GridFillerBase& grid_filler, ConvIntArgs const& convint_args)
-		: _filler(grid_filler),
-		  _xtab{xtab},
+    Grid::Grid(xtab_type const& xtab, GridFillerArgs const& gridfiller_args, ConvIntArgs const& convint_args)
+		: _xtab{xtab},
+		  _gridfiller_args{gridfiller_args},
 		  _convint_args{convint_args},
 		  _Xi(convint_args.num_gauss_points, 0.0),
 		  _Wi(convint_args.num_gauss_points, 0.0)
@@ -21,11 +22,77 @@ namespace Candia2
 			std::ranges::sort(_xtab);
 		}
 
-		grid_filler.xtab = xtab;
-		grid_filler.fill(_points);
-		_ntab = grid_filler.ntab;
+		fillPoints();
+		initGauLeg(gridfiller_args.min, 1.0, _Xi, _Wi);
+		setupMappings();
+	}
 
-		initGauLeg(grid_filler.min, 1.0, _Xi, _Wi);
+	void Grid::addXtab()
+	{
+		// if the number of specified points and the grid filler algorithm align just right,
+		// we get an added xtab value of like 0.5 with also a 0.5000000000002 or something
+		// which fucks up the interpolation algorithm
+		// this just brute force checks all of the values in filled points array
+		// and just removes anything that is < 1e-7 from the xtab array point
+		// probably a better way to do it but who cares
+		for (double x : _xtab) {
+			auto val1 = std::ranges::lower_bound(_points, x);
+			if (std::abs(*val1 - x) < 1e-7)
+				_points.erase(val1);
+			auto val2 = std::ranges::upper_bound(_points, x);
+			if (std::abs(*val2 - x) < 1e-7)
+				_points.erase(val2);
+		}
+		
+		std::set<double> points_set(_points.begin(), _points.end());
+		points_set.insert(_xtab.begin(), _xtab.end());
+		_points = std::vector<double>(points_set.begin(), points_set.end());
+		
+		_ntab.clear();
+		for (double x : _xtab) {
+			if (auto it = std::find(_points.begin(), _points.end(), x); it != _points.end()) {
+				_ntab.emplace_back(std::distance(_points.begin(), it));
+				continue;
+			}
+		}
+	}
+
+	void Grid::fillPoints()
+	{
+		double log_min = std::log10(_gridfiller_args.min);
+		double log_max = std::log10(_gridfiller_args.pivot1);
+		uint num_log_intervals = std::round(log_max-log_min);
+		double dlog = (log_max-log_min)/static_cast<double>(num_log_intervals);
+		uint log_interval_size = _gridfiller_args.log_size/num_log_intervals;
+
+		_points.clear();
+		for (uint i=0; i<num_log_intervals; ++i) {
+			double l0 = log_min + i*dlog;
+			double l1 = l0 + dlog;
+			for (uint k=0; k<log_interval_size; ++k) {
+				double l = l0 + (l1-l0)*k/static_cast<double>(log_interval_size);
+				_points.emplace_back(std::pow(10, l));
+			}
+		}
+
+		double lin_min = _gridfiller_args.pivot1;
+		double lin_max = _gridfiller_args.pivot2;
+		
+		for (uint k=0; k<_gridfiller_args.lin_size; ++k) {
+		    double x = lin_min + (lin_max-lin_min)*k/static_cast<double>(_gridfiller_args.lin_size);
+			_points.emplace_back(x);
+		}
+
+		double quad_min = _gridfiller_args.pivot2;
+		double quad_max = 1.0;
+
+		for (uint k=0; k<_gridfiller_args.quad_size; ++k) {
+			double f = 1.0 - k/static_cast<double>(_gridfiller_args.quad_size);
+		    double x = quad_max - (quad_max-quad_min)*f*f;
+			_points.emplace_back(x);
+		}
+		
+	    addXtab();
 	}
 
 	void Grid::initGauLeg(value_type x1, value_type x2, gauleg_type& Xi, gauleg_type& Wi)
@@ -75,6 +142,34 @@ namespace Candia2
 			Wi[i-1] = 2.0*xl/((1.0 - z*z)*pp*pp);
 			Wi[n-i] = Wi[i-1];
 		}
+	}
+
+	void Grid::setupMappings()
+	{
+		double pivot1 = _gridfiller_args.pivot1;
+		double pivot2 = _gridfiller_args.pivot2;
+		_mappings = {
+			[=](double x, double z) {
+				auto a = pivot1/x;
+				return std::make_pair(x*std::pow(a, z), x*std::pow(a, z)*std::log(a));},
+			[=]([[maybe_unused]] double x, double z) { return std::make_pair(pivot1+(pivot2-pivot1)*z, pivot2-pivot1); },
+			[=]([[maybe_unused]] double x, double z) { return std::make_pair(1.0-(1.0-pivot2)*(1.0-z)*(1.0-z), 2.0*(1.0-pivot2)*(1.0-z)); },
+			[=](double x, double z) { return std::make_pair(x+(pivot2-x)*z, pivot2-x); },
+			[=]([[maybe_unused]] double x, double z) { return std::make_pair(1.0-(1.0-pivot2)*(1.0-z)*(1.0-z), 2.0*(1.0-pivot2)*(1.0-z)); },
+			[=](double x, double z) { return std::make_pair(1.0-(1.0-x)*(1.0-z)*(1.0-z), 2.0*(1.0-x)*(1.0-z)); },
+		};
+	}
+
+    std::span<Grid::mapping_function_type> Grid::getMappings(double x)
+	{
+		if (x < 0) // sanity check
+			return std::span(_mappings.begin(), _mappings.end());
+		else if (x > 0 && x < _gridfiller_args.pivot1)
+			return std::span(_mappings.begin(), _mappings.begin()+3);
+		else if (x >= _gridfiller_args.pivot1 && x < _gridfiller_args.pivot2)
+			return std::span(_mappings.begin()+3, _mappings.begin()+3+2);
+		else
+			return std::span(_mappings.begin()+3+2, _mappings.end());
 	}
 
 	constexpr auto NN = 2*INTERP_POINTS;
@@ -145,7 +240,7 @@ namespace Candia2
 
 	double Grid::mappingFunctionBase(
 		uint k, value_type x, auto&& yandjaccessor,
-		[[maybe_unused]] Expression& E, std::span<double> A,
+		Expression& E, std::span<double> A,
 		value_type plus,
 		gauleg_type const& X, gauleg_type const& W)
 	{
@@ -193,7 +288,7 @@ namespace Candia2
 		double delta = E.delta();
 		double res = (plus*std::log1p(-x) + delta) * A[k];
 
-		auto mappings = _filler.get().getMappings(x);
+		auto mappings = getMappings(x);
 		for (auto& mapping : mappings)
 			res += mappingFunctionBase(k, x, mapping, E, A, plus, _Xi, _Wi);
 		
@@ -202,7 +297,7 @@ namespace Candia2
 
 	double Grid::convolution(std::span<double> A1, std::span<double> A2, double tau)
 	{
-		auto mappings = _filler.get().getMappings(tau);
+		auto mappings = getMappings(tau);
 		double res = 0.0;
 		for (auto& mapping : mappings)
 			res += mappingFunctionBase(tau, mapping, A1, A2, _Xi, _Wi);

@@ -50,9 +50,7 @@ int main()
 		return trunced(as, lm, nf, x); };
 	OpMatElemCustom a3hg(a3hg_reg_func, zero_func, zero_func);
 
-	std::vector<double> xtab{1e-5, 1e-4, 1e-3, 1e-2, 0.1, 0.3, 0.5, 0.7, 0.9, 1.0};
-	GridFillerLogLinQuad grid_filler(1e-5, 100, 50, 30);
-	Grid grid(xtab, grid_filler, {});
+	Grid grid({1e-5, 1e-4, 1e-3, 1e-2, 0.1, 0.3, 0.5, 0.7, 0.9, 1.0});
 
 	ArrayGrid g(grid.size()-1), b(grid.size()-1);
 	for (uint k=0; k<grid.size()-1; ++k) {

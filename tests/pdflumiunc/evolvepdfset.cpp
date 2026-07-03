@@ -22,9 +22,7 @@ int main()
 	
 	getLogOptions().verbosity = LOG_DEBUG;
 	LHAPDFDistribution dist(make_lhapdf_pdf("CT25NNLO"), q0, qf);
-	std::vector<double> xtab{1e-5, 1e-4, 1e-3, 1e-2, 0.1, 0.3, 0.5, 0.7, 0.9, 1.0};
-	GridFillerLogLin grid_filler(1e-5, 100, 100, 0.1);
-	Grid grid(xtab, grid_filler, {});
+	Grid grid({1e-5, 1e-4, 1e-3, 1e-2, 0.1, 0.3, 0.5, 0.7, 0.9, 1.0});
 	DGLAPOptions dglap_options{};
 	dglap_options.use_truncated_nonsinglet_sol = true;
 	dglap_options.disable_heavy_flavor_matching = false;

@@ -168,13 +168,12 @@ int main(int argc, char *argv[]) {
 	log_options.verbosity = debug ? LOG_DEBUG : LOG_INFO;
 	log_options.use_log_output_stream = true;
 	log_options.log_output_stream = log_output_file;
-	
-	vector<double> xtab{1e-5, 1e-4, 1e-3, 1e-2, 0.1, 0.3, 0.5, 0.7, 0.9, 1.0};
-	GridFillerLogLinQuad grid_filler(1e-5, 100, 50, 30);
-	Grid grid(xtab, grid_filler, {});
 
-	// LesHouchesDistribution dist(Qf);
-	LHAPDFDistribution dist(make_lhapdf_pdf("CT18NNLO"), 1.295, 100.0);
+	std::vector<double> xtab{1e-5, 1e-4, 1e-3, 1e-2, 0.1, 0.3, 0.5, 0.7, 0.9, 1.0};
+	Grid grid(xtab);
+
+	LesHouchesDistribution dist(Qf);
+	// LHAPDFDistribution dist(make_lhapdf_pdf("CT18NNLO"), 1.295, 100.0);
 	AlphaS alphas(order, dist.Q0(), Qf, dist.alpha0(), mur2_muf2);
 	alphas.setVFNS(dist.masses(), dist.nfi(), dist.nff());
 	// alphas.setFFNS(4);

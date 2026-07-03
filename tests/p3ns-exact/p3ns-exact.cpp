@@ -29,9 +29,8 @@ int main()
 		auto& log_options = getLogOptions();
 		log_options.verbosity = LOG_INFO;
 	
-		vector<double> xtab{1e-5, 1e-4, 1e-3, 1e-2, 0.1, 0.3, 0.5, 0.7, 0.9, 1.0};
-		GridFillerLogLinQuad grid_filler(1e-5, 100, 50, 30);
-		Grid grid(xtab, grid_filler, {});
+		vector<double> xtab;
+		Grid grid({1e-5, 1e-4, 1e-3, 1e-2, 0.1, 0.3, 0.5, 0.7, 0.9, 1.0});
 
 		LesHouchesDistribution dist(Qf);
 		AlphaS alphas(order, dist.Q0(), Qf, dist.alpha0(), mur2_muf2);
@@ -54,9 +53,8 @@ int main()
 		return F;
 	};
 
-	vector<double> xtab{1e-5, 1e-4, 1e-3, 1e-2, 0.1, 0.3, 0.5, 0.7, 0.9, 1.0};
-	GridFillerLogLinQuad grid_filler(1e-5, 100, 50, 30);
-	Grid grid(xtab, grid_filler, {});
+	vector<double> xtab;
+	Grid grid({1e-5, 1e-4, 1e-3, 1e-2, 0.1, 0.3, 0.5, 0.7, 0.9, 1.0});
 
 	std::vector<ArrayGrid> p3nsm_exact = run({static_cast<uint>(ExprName::P3nsm)}, {});
 	std::vector<ArrayGrid> p3nsm_approx_central = run({}, {});

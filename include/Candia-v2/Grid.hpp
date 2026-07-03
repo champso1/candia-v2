@@ -7,172 +7,18 @@
 
 #include "Candia-v2/Common.hpp"
 #include "Candia-v2/Expression.hpp"
-// #include "Candia-v2/ArrayGrid.hpp" // included via Expression.hpp
-
-#include <cmath>
 
 namespace Candia2
 {
-    /** @brief Base class for types of grid fillers. */
-	struct GridFillerBase
+	/** @brief Struct for grouping the paramaters related to convolution/integration */
+	struct GridFillerArgs final
 	{
-		using mapping_function_type = std::function<std::pair<double,double>(double,double)>;
-		
-		std::vector<double> xtab{};
-		std::vector<int> ntab{};
-		double min{1e-5};
-
-		GridFillerBase() = default;
-		GridFillerBase(double min_)
-			: min{min_}
-		{}
-		virtual ~GridFillerBase() = default;
-		
-		virtual uint fill(std::vector<double>& points) = 0;
-		virtual std::span<mapping_function_type> getMappings(double x) = 0;
-
-		static void addXtab(std::vector<double> const& xtab, std::vector<double>& points, std::vector<int>& ntab);
-	};
-
-	/** @brief Fills a grid linearly with a particular number of points. */
-	struct GridFillerLin final : public GridFillerBase
-	{
-	private:
-		static std::vector<mapping_function_type> _mappings;
-		static std::span<mapping_function_type> _mapping_span;
-	public:
-		uint size{601};
-		
-		GridFillerLin() = default;
-		GridFillerLin(double min, uint size_)
-			: GridFillerBase(min),
-			  size{size_} {}
-		uint fill(std::vector<double>& points) override;
-		inline std::span<mapping_function_type> getMappings([[maybe_unused]] double x) override { return _mapping_span; }
-	};
-
-	/** @brief Fills a grid logarithmically with a particular number of points. */
-	struct GridFillerLog final : public GridFillerBase
-	{
-	private:
-		static std::vector<mapping_function_type> _mappings;
-		static std::span<mapping_function_type> _mapping_span;
-	public:
-		uint size{501};
-		
-		GridFillerLog() = default;
-		GridFillerLog(double min, uint size_)
-			: GridFillerBase(min),
-			  size{size_} {}
-		uint fill(std::vector<double>& points) override;
-		inline std::span<mapping_function_type> getMappings([[maybe_unused]] double x) override { return _mapping_span; }
-	};
-
-	/** @brief Fills a grid logarithmically in the lower interval and linearly in the upper interval. */
-	struct GridFillerLogLin final : public GridFillerBase
-	{
-	public:
-		uint log_size{151};
-		uint lin_size{151};
-		double pivot{0.1};
-	private:
-		std::vector<mapping_function_type> _mappings;
-		void setupMappings()
-		{
-			_mappings = {
-				[&](double x, double z) {
-					auto a = pivot/x;
-					return std::make_pair(x*std::pow(a, z), x*std::pow(a, z)*std::log(a));
-				},
-				[&]([[maybe_unused]] double x, double z) { return std::make_pair(pivot+(1.0-pivot)*z, 1.0-pivot); },
-				[](double x, double z) { return std::make_pair(x+(1.0-x)*z, 1.0-x); },
-			};
-		}
-	public:
-		GridFillerLogLin()
-		{
-			setupMappings();
-		}
-		GridFillerLogLin(double min, uint log_size_, uint lin_size_, double pivot_)
-			: GridFillerBase(min),
-			  log_size{log_size_}, lin_size{lin_size_}, pivot{pivot_}
-		{
-			setupMappings();
-		}
-		uint fill(std::vector<double>& points) override;
-		
-		inline std::span<mapping_function_type> getMappings(double x) override
-		{
-			if (x < 0)
-				return std::span(_mappings.begin(), _mappings.end());
-			else if (x > 0 && x < pivot)
-				return std::span(_mappings.begin(), _mappings.begin()+2);
-			else
-				return std::span(_mappings.begin()+2, _mappings.end());
-		}
-	};
-
-	/**
-	 *  @brief Fills a grid logarithmically in the lower interval, linearly in a middle interval,
-	 *  and quadratically in the upper interval, packing points at x->1.
-	 */
-	
-	struct GridFillerLogLinQuad final : public GridFillerBase
-	{
-	public:
+		double min{1.0e-5};
 		uint log_size{101};
 		uint lin_size{51};
 		uint quad_size{26};
 		double pivot1{0.1}, pivot2{0.9};
-	private:
-		std::vector<mapping_function_type> _mappings;
-		void setupMappings()
-		{
-			_mappings = {
-				[&](double x, double z) {
-					auto a = pivot1/x;
-					return std::make_pair(x*std::pow(a, z), x*std::pow(a, z)*std::log(a));},
-				[&]([[maybe_unused]] double x, double z) { return std::make_pair(pivot1+(pivot2-pivot1)*z, pivot2-pivot1); },
-				[&]([[maybe_unused]] double x, double z) { return std::make_pair(1.0-(1.0-pivot2)*(1.0-z)*(1.0-z), 2.0*(1.0-pivot2)*(1.0-z)); },
-				[&](double x, double z) { return std::make_pair(x+(pivot2-x)*z, pivot2-x); },
-				[&]([[maybe_unused]] double x, double z) { return std::make_pair(1.0-(1.0-pivot2)*(1.0-z)*(1.0-z), 2.0*(1.0-pivot2)*(1.0-z)); },
-				[](double x, double z) { return std::make_pair(1.0-(1.0-x)*(1.0-z)*(1.0-z), 2.0*(1.0-x)*(1.0-z)); },
-			};
-		}
-	public:
-		GridFillerLogLinQuad()
-		{
-			setupMappings();
-		}
-		GridFillerLogLinQuad(double min, uint log_size_, uint lin_size_, uint quad_size_)
-			: GridFillerBase(min),
-			  log_size{log_size_}, lin_size{lin_size_}, quad_size{quad_size_}
-		{
-			setupMappings();
-		}
-		uint fill(std::vector<double>& points) override;
-
-		inline std::span<mapping_function_type> getMappings(double x) override
-		{
-			if (x < 0)
-				return std::span(_mappings.begin(), _mappings.end());
-			else if (x > 0 && x < pivot1)
-				return std::span(_mappings.begin(), _mappings.begin()+3);
-			else if (x >= pivot1 && x < pivot2)
-				return std::span(_mappings.begin()+3, _mappings.begin()+3+2);
-			else
-				return std::span(_mappings.begin()+3+2, _mappings.end());
-		}
 	};
-
-	/** @brief helper function to create a grid filler object for the @a Grid constructor */
-    template <typename TGridFiller, typename... TGridFillerArgs>
-	inline std::unique_ptr<GridFillerBase> make_grid_filler(TGridFillerArgs&&... args)
-	{
-		return std::make_unique<TGridFiller>(std::forward<TGridFillerArgs>(args)...);
-	}
-
-
 
 	/** @brief Struct for grouping the paramaters related to convolution/integration */
 	struct ConvIntArgs final
@@ -192,14 +38,21 @@ namespace Candia2
 		using ntab_type = std::vector<int>; //!< alias for the type of the calulated ntab array
 		using xtab_type = std::vector<double>;
 	private:
-		std::reference_wrapper<GridFillerBase> _filler;
 		grid_type _points; //!< grid points
 		ntab_type _ntab{};     //!< stored indices for the tabulated grid points
 		xtab_type _xtab{};     //!< stored values of the tabulated grid points
-
+		GridFillerArgs _gridfiller_args; //!< contains options related to filling the grid points
 		ConvIntArgs _convint_args; //!< contains misc convolution/interpolation options/args
 		gauleg_type _Xi{}; //!< list of split-up gauleg abscissae per interval
 		gauleg_type _Wi{}; //!< list of split-up gauleg weights per interval
+
+		// mapping info
+	private:
+		using mapping_function_type = std::function<std::pair<double,double>(double,double)>;
+		std::vector<mapping_function_type> _mappings;
+		void setupMappings();
+		std::span<mapping_function_type> getMappings(double x);
+		
 	public:
 		/** @brief provides a facility like python's enumerate() to return an index and value at once */
 		struct EnumerateIterator final
@@ -235,14 +88,12 @@ namespace Candia2
 		 *  @param grid_filler an object that will fill the grid in a particular way
 		 *  @param gauleg_args arguments to setup/initialize how gauleg integration behaves
 		 */
-		Grid(xtab_type const& xtab, GridFillerBase& grid_filler, ConvIntArgs const& gauleg_args);
+		Grid(xtab_type const& xtab, GridFillerArgs const& grid_filler={}, ConvIntArgs const& gauleg_args={});
 		Grid(Grid const& other) = default;
 		Grid(Grid&& other) = default;
 		~Grid() = default;
 
 		inline uint size() const { return _points.size(); }
-
-		inline GridFillerBase& filler() { return _filler.get(); }
 
 		inline xtab_type& xtab() { return _xtab; }
 		inline xtab_type const& xtab() const { return _xtab; }
@@ -319,7 +170,11 @@ namespace Candia2
 		 */
 		value_type convolution(std::span<double> A1, std::span<double> A2, double tau);
 	private:
-	    /** Initializes the set of gauss-legendre weights and abscissae */
+		/** @brief adds the xtab array to the set of points, also filling in ntab */
+		void addXtab();
+		/** @brief fills the grid points in  */
+		void fillPoints();
+	    /** @brief Initializes the set of gauss-legendre weights and abscissae */
 		void initGauLeg(value_type x1, value_type x2, gauleg_type& Xi, gauleg_type& Wi);
 	};
 }

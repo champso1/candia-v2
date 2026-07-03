@@ -106,9 +106,8 @@ int main(int argc, char *argv[]) {
 	log_options.use_log_output_stream = true;
 	log_options.log_output_stream = log_output_file;
 	
-	vector<double> xtab{1e-5, 1e-4, 1e-3, 1e-2, 0.1, 0.3, 0.5, 0.7, 0.9, 1.0};
-	GridFillerLogLinQuad grid_filler{};
-	Grid grid(xtab, grid_filler, {});
+	vector<double> xtab;
+	Grid grid({1e-5, 1e-4, 1e-3, 1e-2, 0.1, 0.3, 0.5, 0.7, 0.9, 1.0});
 	
 	LesHouchesDistribution dist(Qf);
 	AlphaS alphas(order, dist.Q0(), Qf, dist.alpha0(), kr);
