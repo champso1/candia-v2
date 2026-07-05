@@ -19,7 +19,7 @@ set xlabel "x" offset 0,0.7
 set style line 1 lc rgb 'blue'        dt 1 lw 1 # Solid Blue
 set style line 2 lc rgb 'red'         dt 2 lw 1 # Dashed Red
 set style line 3 lc rgb 'dark-green'  dt 3 lw 1 # Dotted Dark Green
-set style line 4 lc rgb 'purple'      dt 4 lw 1 # Dash-Dot Purple
+set style line 4 lc rgb 'black'      dt 4 lw 1 # Dash-Dot Purple
 
 set yrange [0:2.5]
 set xrange [1e-5:1e-1]
@@ -41,3 +41,58 @@ plot file_lo   using 1:15 with lines ls 2 title "LO", \
      file_nlo  using 1:15 with lines ls 3 title "NLO", \
      file_nnlo using 1:15 with lines ls 4 title "NNLO", \
 	 file_n3lo using 1:15 with lines ls 1 title "N^{3}LO"
+
+set xrange [1e-5:1]
+set yrange [0:0.95]
+set ylabel "xq^{(-)}(x)"
+set output "plots/evol-prog-qm.pdf"
+set title "xq^{(-)} PDF using Candia-v2 Evolution at Q=100 GeV"
+plot file_lo   using 1:27 with lines ls 2 title "LO", \
+     file_nlo  using 1:27 with lines ls 3 title "NLO", \
+     file_nnlo using 1:27 with lines ls 4 title "NNLO", \
+	 file_n3lo using 1:27 with lines ls 1 title "N^{3}LO"
+
+set xrange [1e-5:1]
+set yrange [0:10]
+set ylabel "xb^{(+)}(x)"
+set output "plots/evol-prog-bp.pdf"
+set title "b+ PDF using Candia-v2 Evolution at Q=100 GeV"
+plot file_lo   using 1:25 with lines ls 2 title "LO", \
+     file_nlo  using 1:25 with lines ls 3 title "NLO", \
+     file_nnlo using 1:25 with lines ls 4 title "NNLO", \
+	 file_n3lo using 1:25 with lines ls 1 title "N^{3}LO"
+
+set key right top offset -0.5,0
+set xrange [1e-5:1]
+set yrange [-8e-4:8e-4]
+set ylabel "xs^{(-)}(x)"
+#set format y "%.0e"
+set output "plots/evol-prog-sm.pdf"
+set title "s- PDF using Candia-v2 Evolution at Q=100 GeV"
+plot file_lo   using 1:17 with lines ls 2 title "LO", \
+     file_nlo  using 1:17 with lines ls 3 title "NLO", \
+     file_nnlo using 1:17 with lines ls 4 title "NNLO", \
+	 file_n3lo using 1:17 with lines ls 1 title "N^{3}LO"
+
+set key right top offset -0.5,0
+set xrange [1e-5:1]
+set yrange [-8e-4:8e-4]
+set ylabel "xc^{(-)}(x)"
+#set format y "%.0e"
+set output "plots/evol-prog-cm.pdf"
+set title "c- PDF using Candia-v2 Evolution at Q=100 GeV"
+plot file_lo   using 1:18 with lines ls 2 title "LO", \
+     file_nlo  using 1:18 with lines ls 3 title "NLO", \
+     file_nnlo using 1:18 with lines ls 4 title "NNLO", \
+	 file_n3lo using 1:18 with lines ls 1 title "N^{3}LO"
+
+set key right top offset -0.5,0
+set xrange [1e-5:1]
+set yrange [-2.5e-4:1.5e-4]
+set ylabel "xb^{(-)}(x)"
+set output "plots/evol-prog-bm.pdf"
+set title "b- PDF using Candia-v2 Evolution at Q=100 GeV"
+plot file_lo   using 1:19 with lines ls 2 title "LO", \
+     file_nlo  using 1:19 with lines ls 3 title "NLO", \
+     file_nnlo using 1:19 with lines ls 4 title "NNLO", \
+	 file_n3lo using 1:19 with lines ls 1 title "N^{3}LO"

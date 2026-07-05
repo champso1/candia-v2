@@ -567,48 +567,49 @@ namespace Candia2
 			return {};
 		}
 
-		// double as = _alpha1/4.0/PI;
-		double as = _alpha1;
+		double as = _alpha1/(4.0*PI);
 		double as2 = as*as;
 		double as3 = as2*as;
 		double mc = _initial_dist.masses(DIST_C);
+		double mc2 = mc*mc;
 		double mb = _initial_dist.masses(DIST_B);
+		double mb2 = mb*mb;
 		double qf = _Qf;
+		double qf2 = _Qf*_Qf;
+		
 
 		auto zero_func = [](double,double){ return 0.0; };
 	    auto a1qg_reg_func = [as](double lm, double nf, double x) {
-			auto trunced = ome::AQg_reg.truncate(1);
-			return trunced(as, lm, nf, x); };
+			auto ome_reg = ome::AQg_reg[1];
+			return ome_reg(lm, nf, x); };
 		OpMatElemCustom a1hg(a1qg_reg_func, zero_func, zero_func);
 
 		auto a2hq_reg_func = [as](double lm, double nf, double x) {
-			auto trunced = ome::AQqPS_reg.truncate(2);
-			return trunced(as, lm, nf, x); };
+			auto ome_reg = ome::AQqPS_reg[2];
+			return ome_reg(lm, nf, x); };
 		OpMatElemCustom a2hq(a2hq_reg_func, zero_func, zero_func);
 		
 		auto a2hg_reg_func = [as](double lm, double nf, double x) {
-			auto trunced = ome::AQg_reg.truncate(2);
-			return trunced(as, lm, nf, x); };
+			auto ome_reg = ome::AQg_reg[2];
+			return ome_reg(lm, nf, x); };
 		OpMatElemCustom a2hg(a2hg_reg_func, zero_func, zero_func);
 
 		auto a3hq_reg_func = [as](double lm, double nf, double x) {
-			auto trunced = ome::AQqPS_reg.truncate(3);
-			return trunced(as, lm, nf, x); };
+			auto ome_reg = ome::AQqPS_reg[3];
+			return ome_reg(lm, nf, x); };
 		OpMatElemCustom a3hq(a3hq_reg_func, zero_func, zero_func);
 		
 		auto a3hg_reg_func = [as](double lm, double nf, double x) {
-			auto trunced = ome::AQg_reg.truncate(3);
-			return trunced(as, lm, nf, x); };
+			auto ome_reg = ome::AQg_reg[3];
+			return ome_reg(lm, nf, x); };
 		OpMatElemCustom a3hg(a3hg_reg_func, zero_func, zero_func);
 
 
 		std::vector<ArrayGrid> subpdfs(20, ArrayGrid(_grid.size()));
 		// charm
-		{
-			uint offset = 0;
-			
-			double L = std::log(std::pow(qf/mc, 2.0));
-			OpMatElemN3LO::update(-L, _nf);
+		if (mc2 >= qf2) {
+			double L = std::log(mc2/qf2);
+			OpMatElemN3LO::update(L, _nf);
 			
 			for (uint k=0; k<_grid.size(); ++k) {
 				double ftilde1 = as*_grid.convolution(_F[0], a1hg, k);
@@ -621,26 +622,25 @@ namespace Candia2
 					_grid.convolution(_F[0], a3hg, k)
 				);
 
-				subpdfs[offset+0][k] = ftilde1;
-				subpdfs[offset+1][k] = ftilde2;
-				subpdfs[offset+2][k] = ftilde3;
+				subpdfs[0][k] = ftilde1;
+				subpdfs[1][k] = ftilde2;
+				subpdfs[2][k] = ftilde3;
 			
-				subpdfs[offset+3][k] = ftilde1 + ftilde2;
-				subpdfs[offset+4][k] = ftilde1 + ftilde2 + ftilde3;
+				subpdfs[3][k] = ftilde1 + ftilde2;
+				subpdfs[4][k] = ftilde1 + ftilde2 + ftilde3;
 			
-				subpdfs[offset+5][k] = std::abs(_F[5][k] - ftilde1);
-				subpdfs[offset+6][k] = std::abs(_F[5][k] - ftilde2);
-				subpdfs[offset+7][k] = std::abs(_F[5][k] - ftilde3);
-				subpdfs[offset+8][k]  = std::abs(_F[5][k] - subpdfs[3][k]);
-				subpdfs[offset+9][k]  = std::abs(_F[5][k] - subpdfs[4][k]);
+				subpdfs[5][k] = _F[5][k] - ftilde1;
+				subpdfs[6][k] = _F[5][k] - ftilde2;
+				subpdfs[7][k] = _F[5][k] - ftilde3;
+				
+				subpdfs[8][k] = _F[5][k] - subpdfs[3][k];
+				subpdfs[9][k] = _F[5][k] - subpdfs[4][k];
 			}
 		}
 		// bottom
-		{
-		    double L = std::log(std::pow(qf/mb, 2.0));
-			OpMatElemN3LO::update(-L, _nf);
-			
-			uint offset = 10;
+		if (mb2 >= qf2) {
+		    double L = std::log(mb2/qf2);
+			OpMatElemN3LO::update(L, _nf);
 			
 			for (uint k=0; k<_grid.size(); ++k) {
 				double ftilde1 = as*_grid.convolution(_F[0], a1hg, k);
@@ -653,18 +653,18 @@ namespace Candia2
 					_grid.convolution(_F[0], a3hg, k)
 				);
 
-				subpdfs[offset+0][k] = ftilde1;
-				subpdfs[offset+1][k] = ftilde2;
-				subpdfs[offset+2][k] = ftilde3;
+				subpdfs[10][k] = ftilde1;
+				subpdfs[11][k] = ftilde2;
+				subpdfs[12][k] = ftilde3;
 			
-				subpdfs[offset+3][k] = ftilde1 + ftilde2;
-				subpdfs[offset+4][k] = ftilde1 + ftilde2 + ftilde3;
+				subpdfs[13][k] = ftilde1 + ftilde2;
+				subpdfs[14][k] = ftilde1 + ftilde2 + ftilde3;
 			
-				subpdfs[offset+5][k] = std::abs(_F[5][k] - ftilde1);
-				subpdfs[offset+6][k] = std::abs(_F[5][k] - ftilde2);
-				subpdfs[offset+7][k] = std::abs(_F[5][k] - ftilde3);
-				subpdfs[offset+8][k]  = std::abs(_F[5][k] - subpdfs[3][k]);
-				subpdfs[offset+9][k]  = std::abs(_F[5][k] - subpdfs[4][k]);
+				subpdfs[15][k] = _F[5][k] - ftilde1;
+				subpdfs[16][k] = _F[5][k] - ftilde2;
+				subpdfs[17][k] = _F[5][k] - ftilde3;
+				subpdfs[18][k]  = _F[5][k] - subpdfs[3][k];
+				subpdfs[19][k]  = _F[5][k] - subpdfs[4][k];
 			}
 		}
 

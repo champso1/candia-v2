@@ -15,7 +15,8 @@ int main()
 {
 	getLogOptions().verbosity = LOG_WARNING;
 
-	LesHouchesDistribution dist(100.0);
+	double qf = 100.0;
+	LesHouchesDistribution dist(qf);
 	std::vector<double> xtab;
 	Grid grid({1e-5, 1e-4, 1e-3, 1e-2, 0.1, 0.3, 0.5, 0.7, 0.9, 1.0});
 	DGLAPOptions dglap_options{};
@@ -28,9 +29,9 @@ int main()
 	LHAPDFGrid lhapdfgrid(
 		"testpdf", fs::current_path()/"infofile.in",
 		dist, grid,
-		3, 13, 10, 1);
+		3, 10, 10, 1);
 	
-	lhapdfgrid.evolve(std::numbers::sqrt2, 110.0, 5.0, dglap_options);
+	lhapdfgrid.evolve(dist.Q0(), dist.Qf(), 5.0, dglap_options);
 
 	getLogOptions().verbosity = LOG_INFO;
 	lhapdfgrid.write();
