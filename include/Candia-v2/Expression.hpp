@@ -28,6 +28,7 @@ namespace Candia2
 		Imod1,
 		Imod2,
 		ImodAvg,
+		Exact
 	};
 	
 	/**
@@ -38,8 +39,7 @@ namespace Candia2
 	public:
 		using cache_type = ArrayGrid; //!< alias for cache
 		using array_type = std::vector<double>; //!< alias for passed-in grid array
-		using mapping_type = std::function<std::pair<double,double>(double,double)>; //!< alias for mappings
-		
+
 	protected:
 		cache_type _reg_cache{}; //!< stores the values of the regular part of the expression
 		double _plus_cache; //!< stores the value of the plus part of the expression
@@ -86,7 +86,6 @@ namespace Candia2
 		 *  @defgroup pieceretrievers Expression Retrievers
 		 *  @{
 		 */
-		inline virtual ArrayGridView regular() { return _reg_cache.view(); }
 		inline virtual double plus() { return _plus_cache; }
 		inline virtual double delta() { return _delta_cache; }
 		/** @} */

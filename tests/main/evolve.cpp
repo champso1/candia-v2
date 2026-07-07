@@ -180,20 +180,13 @@ int main(int argc, char *argv[]) {
 
 	DGLAPSolver solver(order, grid, alphas, Qf, iterations, trunc_idx, std::move(dist), mur2_muf2);
 	auto& dglap_options = solver.getOptions();
-	dglap_options.use_truncated_nonsinglet_sol = use_trunc;
 	dglap_options.disable_heavy_flavor_matching = false;
 	dglap_options.use_nnlo_matching_conditions_at_n3lo = false;
 	dglap_options.use_n3lo_heavyquark_asymmetry = true;
 	dglap_options.use_fortran_n3lo_splitfuncs = false;
 
-	solver.useP3Exact({
-			static_cast<uint>(ExprName::P3nsp),
-			static_cast<uint>(ExprName::P3nsm),
-			static_cast<uint>(ExprName::P3nsv)
-		});
-	
 	auto t0 = chrono::high_resolution_clock::now();
-	auto F = solver.evolve();	
+	auto F = use_trunc ? solver.evolveTrunc() : solver.evolve();
 	auto tf = chrono::high_resolution_clock::now();
 	chrono::duration<double, ratio<1>> secs = tf-t0;
 	log(LOG_INFO, "evolve.cpp", "Evolution took {}.", secs);

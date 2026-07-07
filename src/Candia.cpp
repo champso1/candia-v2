@@ -178,41 +178,48 @@ namespace Candia2
 		createExpression<A2gg>(ExprName::A2gg);
 		createExpression<A2hq>(ExprName::A2hq);
 		createExpression<A2hg>(ExprName::A2hg);
-		auto it = std::ranges::find(_p3exact, true);
-		bool using_exact_p3ns = it != _p3exact.end();
+		auto it = std::ranges::find(_p3_approx_types, P3ApproxType::Exact);
+		bool using_exact_p3ns = it != _p3_approx_types.end();
 		
 		if (options.use_fortran_n3lo_splitfuncs && using_exact_p3ns)
 			log(LOG_ERROR, "DGLAP", "Cannot use both the Fortran P3s and the exact (the Fortran versions are approximate)");
 		
 		if (options.use_fortran_n3lo_splitfuncs) {
 			log(LOG_DEBUG, "DGLAP", "Loading Fortran versions of P3 splitting functions");
-			createExpression<mvv_p3::P3nsm>(ExprName::P3nsm, _p3approx[static_cast<uint>(ExprName::P3nsm)]);
-			createExpression<mvv_p3::P3nsp>(ExprName::P3nsp, _p3approx[static_cast<uint>(ExprName::P3nsp)]);
-			createExpression<mvv_p3::P3nsv>(ExprName::P3nsv, _p3approx[static_cast<uint>(ExprName::P3nsv)]);
-			createExpression<mvv_p3::P3qq>(ExprName::P3qq, _p3approx[static_cast<uint>(ExprName::P3qq)]);
-			createExpression<mvv_p3::P3qg>(ExprName::P3qg, _p3approx[static_cast<uint>(ExprName::P3qg)]);
-			createExpression<mvv_p3::P3gq>(ExprName::P3gq, _p3approx[static_cast<uint>(ExprName::P3gq)]);
-			createExpression<mvv_p3::P3gg>(ExprName::P3gg, _p3approx[static_cast<uint>(ExprName::P3gg)]);
+			createExpression<mvv_p3::P3nsm>(ExprName::P3nsm, _p3_approx_types[static_cast<uint>(ExprName::P3nsm)]);
+			createExpression<mvv_p3::P3nsp>(ExprName::P3nsp, _p3_approx_types[static_cast<uint>(ExprName::P3nsp)]);
+			createExpression<mvv_p3::P3nsv>(ExprName::P3nsv, _p3_approx_types[static_cast<uint>(ExprName::P3nsv)]);
+			createExpression<mvv_p3::P3qq>(ExprName::P3qq, _p3_approx_types[static_cast<uint>(ExprName::P3qq)]);
+			createExpression<mvv_p3::P3qg>(ExprName::P3qg, _p3_approx_types[static_cast<uint>(ExprName::P3qg)]);
+			createExpression<mvv_p3::P3gq>(ExprName::P3gq, _p3_approx_types[static_cast<uint>(ExprName::P3gq)]);
+			createExpression<mvv_p3::P3gg>(ExprName::P3gg, _p3_approx_types[static_cast<uint>(ExprName::P3gg)]);
 		} else {
-			createExpression<P3qq>(ExprName::P3qq, _p3approx[static_cast<uint>(ExprName::P3qq)]);
-			createExpression<P3qg>(ExprName::P3qg, _p3approx[static_cast<uint>(ExprName::P3qg)]);
-			createExpression<P3gq>(ExprName::P3gq, _p3approx[static_cast<uint>(ExprName::P3gq)]);
-			createExpression<P3gg>(ExprName::P3gg, _p3approx[static_cast<uint>(ExprName::P3gg)]);
+			createExpression<P3qq>(ExprName::P3qq, _p3_approx_types[static_cast<uint>(ExprName::P3qq)]);
+			createExpression<P3qg>(ExprName::P3qg, _p3_approx_types[static_cast<uint>(ExprName::P3qg)]);
+			createExpression<P3gq>(ExprName::P3gq, _p3_approx_types[static_cast<uint>(ExprName::P3gq)]);
+			createExpression<P3gg>(ExprName::P3gg, _p3_approx_types[static_cast<uint>(ExprName::P3gg)]);
 
-			if (_p3exact[static_cast<uint>(ExprName::P3nsm)])
+			if (_p3_approx_types[static_cast<uint>(ExprName::P3nsm)] == P3ApproxType::Exact) {
+				log(LOG_DEBUG, "DGLAPSolver::loadAllExpressions()", "using exact P3nsm");
 				createExpression<p3_exact::P3nsm>(ExprName::P3nsm);
-			else
-				createExpression<P3nsm>(ExprName::P3nsm, _p3approx[static_cast<uint>(ExprName::P3nsm)]);
-
-			if (_p3exact[static_cast<uint>(ExprName::P3nsp)])
+			} else {
+				log(LOG_DEBUG, "DGLAPSolver::loadAllExpressions()", "using approx P3nsm");
+				createExpression<P3nsm>(ExprName::P3nsm, _p3_approx_types[static_cast<uint>(ExprName::P3nsm)]);
+			}
+			if (_p3_approx_types[static_cast<uint>(ExprName::P3nsp)] == P3ApproxType::Exact) {
+				log(LOG_DEBUG, "DGLAPSolver::loadAllExpressions()", "using exact P3nsp");
 				createExpression<p3_exact::P3nsp>(ExprName::P3nsp);
-			else
-				createExpression<P3nsp>(ExprName::P3nsp, _p3approx[static_cast<uint>(ExprName::P3nsp)]);
-
-			if (_p3exact[static_cast<uint>(ExprName::P3nsv)])
+			} else {
+				log(LOG_DEBUG, "DGLAPSolver::loadAllExpressions()", "using approx P3nsp");
+				createExpression<P3nsp>(ExprName::P3nsp, _p3_approx_types[static_cast<uint>(ExprName::P3nsp)]);
+			}
+			if (_p3_approx_types[static_cast<uint>(ExprName::P3nsv)] == P3ApproxType::Exact) {
+				log(LOG_DEBUG, "DGLAPSolver::loadAllExpressions()", "using exact P3nsv");
 				createExpression<p3_exact::P3nsv>(ExprName::P3nsv);
-			else
-				createExpression<P3nsv>(ExprName::P3nsv, _p3approx[static_cast<uint>(ExprName::P3nsv)]);
+			} else {
+				log(LOG_DEBUG, "DGLAPSolver::loadAllExpressions()", "using approx P3nsv");
+				createExpression<P3nsv>(ExprName::P3nsv, _p3_approx_types[static_cast<uint>(ExprName::P3nsv)]);
+			}
 		}
 
 		createExpression<OpMatElemN3LO>(ExprName::A3nsm, ome::AqqQNSEven);
@@ -263,7 +270,7 @@ namespace Candia2
 			}
         }
 
-		if (options.use_truncated_nonsinglet_sol) {
+		if (_evol_type == EvolType::Truncated) {
 			for (uint t=1; t<=_trunc_idx; ++t) {
 				for (uint j=0; j<_F.size(); ++j) {
 					for (uint n=0; n<=1; ++n) 
@@ -405,13 +412,14 @@ namespace Candia2
 		_D.clear();
 	}
 
-	std::vector<ArrayGrid> const& DGLAPSolver::evolve()
+	std::vector<ArrayGrid> const& DGLAPSolver::_evolve_function(EvolType evol_type)
 	{
+		_evol_type = evol_type;
 	    log(LOG_INFO, "DGLAP", "Evolving to {} flavors.", _alpha_s.nff());
 		using out_type = decltype(_F);
 		loadAllExpressions();
 
-		if (options.use_truncated_nonsinglet_sol)
+		if (_evol_type == EvolType::Truncated)
 			setupTruncatedDistributions();
 
 		out_type final_dists;
@@ -509,7 +517,7 @@ namespace Candia2
 			    evolveSinglet(resum_singlet, L1);
 				log(LOG_DEBUG, "DGLAP", "Finished singlet evolution and resummation.");
 				log(LOG_DEBUG, "DGLAP", "Starting non-singlet evolution and resummation...");
-				options.use_truncated_nonsinglet_sol ?
+				evol_type == EvolType::Exact ?
 					evolveNonSingletTrunc(resum_ns, L1) :
 					evolveNonSinglet(resum_ns, L1, L2, L3, L4);
 				log(LOG_DEBUG, "DGLAP", "Finished non-singlet evolution and resummation.");
@@ -557,7 +565,7 @@ namespace Candia2
 
 		log(LOG_INFO, "DGLAP", "Done!");
 		return _F;
-	} // evolve()
+	} // _evolve_function()
 
 
 	std::vector<ArrayGrid> DGLAPSolver::calculateSubtractionPDFs()

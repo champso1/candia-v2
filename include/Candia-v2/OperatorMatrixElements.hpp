@@ -110,9 +110,6 @@ namespace Candia2
 
 		inline double calcRegular(double x) const override
 		{
-			if (!_ome.has_regular())
-				return 0;
-
 			auto reg = _ome.get_regular().value();
 			return reg[3](_lm, _nf, x);
 		}

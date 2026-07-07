@@ -7,9 +7,10 @@
 
 namespace Candia2
 {
-	void LHAPDFGrid::evolve(
+	void LHAPDFGrid::_evolve_function(
 		std::vector<double> const& qvals,
-		DGLAPSolver::options_type const& dglap_options)
+		DGLAPSolver::options_type const& dglap_options,
+		LHAPDFGrid::EvolType evol_type)
 	{
 		double q0 = qvals.front();
 		double qf = qvals.back();
@@ -47,7 +48,8 @@ namespace Candia2
 
 			DGLAPSolver solver(_order, _grid, alphas, q, _iterations, _trunc_idx, _dist, _mur2_muf2);
 			solver.getOptions() = dglap_options;
-			std::vector<ArrayGrid> F = solver.evolve();
+			std::vector<ArrayGrid> F =
+				evol_type == EvolType::Exact ? solver.evolve() : solver.evolveTrunc();
 
 			std::unordered_map<int, ArrayGrid> map{};
 			auto map_emplacer = [&](int k, ArrayGridView v) {
@@ -72,26 +74,26 @@ namespace Candia2
 
 			std::vector<ArrayGrid> subtraction_pdfs = solver.calculateSubtractionPDFs();
 			if (!subtraction_pdfs.empty()) {
-				map_emplacer(C_FTILDE1, subtraction_pdfs[0].view());
-				map_emplacer(C_FTILDE2, subtraction_pdfs[1].view());
-				map_emplacer(C_FTILDE3, subtraction_pdfs[2].view());
-				map_emplacer(C_FTILDENNLO, subtraction_pdfs[3].view());
-				map_emplacer(C_FTILDEN3LO, subtraction_pdfs[4].view());
-				map_emplacer(C_DELTAF1, subtraction_pdfs[5].view());
-				map_emplacer(C_DELTAF2, subtraction_pdfs[6].view());
-				map_emplacer(C_DELTAF3, subtraction_pdfs[7].view());
-				map_emplacer(C_DELTAFNNLO, subtraction_pdfs[8].view());
-				map_emplacer(C_DELTAFN3LO, subtraction_pdfs[9].view());
-				map_emplacer(B_FTILDE1, subtraction_pdfs[10].view());
-				map_emplacer(B_FTILDE2, subtraction_pdfs[11].view());
-				map_emplacer(B_FTILDE3, subtraction_pdfs[12].view());
-				map_emplacer(B_FTILDENNLO, subtraction_pdfs[13].view());
-				map_emplacer(B_FTILDEN3LO, subtraction_pdfs[14].view());
-				map_emplacer(B_DELTAF1, subtraction_pdfs[15].view());
-				map_emplacer(B_DELTAF2, subtraction_pdfs[16].view());
-				map_emplacer(B_DELTAF3, subtraction_pdfs[17].view());
-				map_emplacer(B_DELTAFNNLO, subtraction_pdfs[18].view());
-				map_emplacer(B_DELTAFN3LO, subtraction_pdfs[19].view());
+				map_emplacer(_lhapdf_subpdf_pid_offset+C_FTILDE1, subtraction_pdfs[0].view());
+				map_emplacer(_lhapdf_subpdf_pid_offset+C_FTILDE2, subtraction_pdfs[1].view());
+				map_emplacer(_lhapdf_subpdf_pid_offset+C_FTILDE3, subtraction_pdfs[2].view());
+				map_emplacer(_lhapdf_subpdf_pid_offset+C_FTILDENNLO, subtraction_pdfs[3].view());
+				map_emplacer(_lhapdf_subpdf_pid_offset+C_FTILDEN3LO, subtraction_pdfs[4].view());
+				map_emplacer(_lhapdf_subpdf_pid_offset+C_DELTAF1, subtraction_pdfs[5].view());
+				map_emplacer(_lhapdf_subpdf_pid_offset+C_DELTAF2, subtraction_pdfs[6].view());
+				map_emplacer(_lhapdf_subpdf_pid_offset+C_DELTAF3, subtraction_pdfs[7].view());
+				map_emplacer(_lhapdf_subpdf_pid_offset+C_DELTAFNNLO, subtraction_pdfs[8].view());
+				map_emplacer(_lhapdf_subpdf_pid_offset+C_DELTAFN3LO, subtraction_pdfs[9].view());
+				map_emplacer(_lhapdf_subpdf_pid_offset+B_FTILDE1, subtraction_pdfs[10].view());
+				map_emplacer(_lhapdf_subpdf_pid_offset+B_FTILDE2, subtraction_pdfs[11].view());
+				map_emplacer(_lhapdf_subpdf_pid_offset+B_FTILDE3, subtraction_pdfs[12].view());
+				map_emplacer(_lhapdf_subpdf_pid_offset+B_FTILDENNLO, subtraction_pdfs[13].view());
+				map_emplacer(_lhapdf_subpdf_pid_offset+B_FTILDEN3LO, subtraction_pdfs[14].view());
+				map_emplacer(_lhapdf_subpdf_pid_offset+B_DELTAF1, subtraction_pdfs[15].view());
+				map_emplacer(_lhapdf_subpdf_pid_offset+B_DELTAF2, subtraction_pdfs[16].view());
+				map_emplacer(_lhapdf_subpdf_pid_offset+B_DELTAF3, subtraction_pdfs[17].view());
+				map_emplacer(_lhapdf_subpdf_pid_offset+B_DELTAFNNLO, subtraction_pdfs[18].view());
+				map_emplacer(_lhapdf_subpdf_pid_offset+B_DELTAFN3LO, subtraction_pdfs[19].view());
 			}
 
 		    _all_pdfs.emplace_back(q, map);
@@ -100,22 +102,6 @@ namespace Candia2
 		getLogOptions().verbosity = LOG_INFO;
 		endLogIterations();
 		getLogOptions().verbosity = LOG_WARNING;
-	}
-	
-	void LHAPDFGrid::evolve(
-		double q0, double qf, double dq,
-		DGLAPSolver::options_type const& dglap_options)
-	{
-	    double nsize = (qf-q0)/dq;
-		uint size = std::trunc(nsize) + 1;
-		std::vector<double> qvals(size);
-		auto as_qs_view =
-			std::views::iota(uint{0}, size)
-			| std::views::transform([q0,dq](uint x) -> double { return q0 + dq*x; });
-	    std::vector<double> as_qs(as_qs_view.begin(), as_qs_view.end());
-	    if (std::ranges::find(as_qs, qf) == as_qs.end())
-			as_qs.emplace_back(qf);
-		evolve(as_qs, dglap_options);
 	}
 
 	void LHAPDFGrid::write()

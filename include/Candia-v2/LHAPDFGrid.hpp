@@ -31,29 +31,31 @@ namespace Candia2
 		std::vector<double> _as_qs, _as_vals, _xvals;
 
 	public:
-		enum AdditionalSubtractionPDFs : int
+		enum SubtractionPDFIndices : int
 		{
-		    C_FTILDE1    = 9001,
-			C_FTILDE2    = 9002,
-			C_FTILDE3    = 9003,
-			C_FTILDENNLO = 9004, // ft1 + ft2
-			C_FTILDEN3LO = 9005, // ft1 + ft2 + ft3
-			C_DELTAF1    = 9006, // fc - ft1
-			C_DELTAF2    = 9007, // fc - ft2
-			C_DELTAF3    = 9008, // fc - ft3
-			C_DELTAFNNLO = 9009, // fc - ftNNLO
-			C_DELTAFN3LO = 9010, // fc - ftN3LO
-			B_FTILDE1    = 9101,
-			B_FTILDE2    = 9102,
-			B_FTILDE3    = 9103,
-			B_FTILDENNLO = 9104, // ft1 + ft2
-			B_FTILDEN3LO = 9105, // ft1 + ft2 + ft3
-			B_DELTAF1    = 9106, // fb - ft1
-			B_DELTAF2    = 9107, // fb - ft2
-			B_DELTAF3    = 9108, // fb - ft3
-			B_DELTAFNNLO = 9109, // fb - ftNNLO
-			B_DELTAFN3LO = 9110  // fb - ftN3LO
+		    C_FTILDE1=0,
+			C_FTILDE2   ,
+			C_FTILDE3   ,
+			C_FTILDENNLO, // ft1 + ft2
+			C_FTILDEN3LO, // ft1 + ft2 + ft3
+			C_DELTAF1   , // fc - ft1
+			C_DELTAF2   , // fc - ft2
+			C_DELTAF3   , // fc - ft3
+			C_DELTAFNNLO, // fc - ftNNLO
+			C_DELTAFN3LO, // fc - ftN3LO
+			B_FTILDE1   ,
+			B_FTILDE2   ,
+			B_FTILDE3   ,
+			B_FTILDENNLO, // ft1 + ft2
+			B_FTILDEN3LO, // ft1 + ft2 + ft3
+			B_DELTAF1   , // fb - ft1
+			B_DELTAF2   , // fb - ft2
+			B_DELTAF3   , // fb - ft3
+			B_DELTAFNNLO, // fb - ftNNLO
+			B_DELTAFN3LO  // fb - ftN3LO
 		};
+	private:
+		uint _lhapdf_subpdf_pid_offset{9000};
 	public:
 		LHAPDFGrid(
 			std::string const& name, std::filesystem::path const& infofile_in_path,
@@ -67,12 +69,29 @@ namespace Candia2
 				log(LOG_ERROR, "DGLAPSolverLHAPDF", "infofile_in_path is invalid ({})", infofile_in_path.string());
 		}
 		
-		void evolve(
-			double q0, double qf, double dq,
-			DGLAPSolver::options_type const& dglap_options);
-		void evolve(
+		inline void evolve(
 		    std::vector<double> const& qvals,
-			DGLAPSolver::options_type const& dglap_options);
+			DGLAPSolver::options_type const& dglap_options)
+		{
+			_evolve_function(qvals, dglap_options, EvolType::Exact);
+		}
+		inline void evolveTrunc(
+		    std::vector<double> const& qvals,
+			DGLAPSolver::options_type const& dglap_options)
+		{
+			_evolve_function(qvals, dglap_options, EvolType::Truncated);
+		}
 		void write();
+	private:
+		enum class EvolType
+		{
+			Exact,
+			Truncated,
+		};
+		
+		void _evolve_function(
+			std::vector<double> const& qvals,
+			DGLAPSolver::options_type const& dglap_options,
+			EvolType evol_type);
 	};
 }

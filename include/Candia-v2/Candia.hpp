@@ -27,11 +27,7 @@ namespace Candia2
 	{
 		bool use_nnlo_matching_conditions_at_n3lo{false}; //!< switch for whether to use nnlo matching at n3lo (for benchmarking purposes)
 		bool disable_heavy_flavor_matching{false}; //!< switch for whether to use matching at all for the heavy flavors
-
-		bool use_n3lo_heavyquark_asymmetry{true}; //!< use new OME from arXiv:2512.13508
-
-		bool use_truncated_nonsinglet_sol{false}; //!< whether to use the truncated ansatz in the non-singlet sector, as opposed to the exact solution
-		 
+		bool use_n3lo_heavyquark_asymmetry{true}; //!< use new OME from arXiv:2512.13508		 
 		bool use_fortran_nnlo_splitfuncs{false}; //!< whether to use the fortran versions for the nnlo splitting functions or the C++-translated ones
 		bool use_fortran_n3lo_splitfuncs{false}; //!< whether to use the fortran versions for the n3lo splitting functions or the C++-translated ones
 	};
@@ -120,21 +116,29 @@ namespace Candia2
 		}
 
 	private:
+		enum class EvolType
+		{
+			None,
+			Exact,
+			Truncated
+		};
+		EvolType _evol_type{EvolType::None};
+		
 		inline double& getSingletCoeffValue(uint j, uint k) {
-			if (!options.use_truncated_nonsinglet_sol)
+			if (_evol_type == EvolType::Exact)
 				return _S(0,j,0,k);
 			else
 				return _S_NS(0,j,0,k);
 		}
 		inline ArrayGridView getSingletCoeffArray(uint j) {
-			if (!options.use_truncated_nonsinglet_sol)
+			if (_evol_type == EvolType::Exact)
 				return _S(0,j,0);
 			else
 				return _S_NS(0,j,0);
 		}
 		
 	    inline double& getNonSingletCoeffValue(uint j, uint k) {
-			if (options.use_truncated_nonsinglet_sol)
+			if (_evol_type == EvolType::Truncated)
 				return _S_NS(0,j,0,k);
 			switch (_order) {
 				case 0: return _A(j,0,k); break;
@@ -146,7 +150,7 @@ namespace Candia2
 		}
 
 		inline ArrayGridView getNonSingletCoeffArray(uint j) {
-			if (options.use_truncated_nonsinglet_sol)
+			if (_evol_type == EvolType::Truncated)
 				return _S_NS(0,j,0);
 			switch (_order) {
 				case 0: return _A(j,0); break;
@@ -164,34 +168,23 @@ namespace Candia2
 
 
 	private:
-		std::array<P3ApproxType, static_cast<uint>(ExprName::Count)> _p3approx{
+		std::array<P3ApproxType, static_cast<uint>(ExprName::Count)> _p3_approx_types{
 			([](){
-				std::array<P3ApproxType, static_cast<uint>(ExprName::Count)> p3approx{};
-				std::ranges::fill(p3approx, P3ApproxType::ImodAvg);
-				return p3approx;
-			})()
-		};
-
-		std::array<bool, static_cast<uint>(ExprName::Count)> _p3exact{
-			([](){
-				std::array<bool, static_cast<uint>(ExprName::Count)> p3exact{};
-				std::ranges::fill(p3exact, false);
-				return p3exact;
+				std::array<P3ApproxType, static_cast<uint>(ExprName::Count)> p3approxs{};
+				std::ranges::fill(p3approxs, P3ApproxType::ImodAvg);
+				p3approxs[static_cast<uint>(ExprName::P3nsm)] = P3ApproxType::Exact;
+				p3approxs[static_cast<uint>(ExprName::P3nsp)] = P3ApproxType::Exact;
+				p3approxs[static_cast<uint>(ExprName::P3nsv)] = P3ApproxType::Exact;
+				return p3approxs;
 			})()
 		};
 
 	public:
 		inline void setP3ApproximationType(std::pair<ExprName,P3ApproxType> type)
 		{
-			_p3approx[static_cast<uint>(type.first)] = type.second;
+			_p3_approx_types[static_cast<uint>(type.first)] = type.second;
 		}
 
-		inline void useP3Exact(std::vector<uint> const& exprs)
-		{
-			for (auto expr : exprs)
-				_p3exact[static_cast<uint>(expr)] = true;
-		}
-		
 
 	public:
 		/**
@@ -218,15 +211,27 @@ namespace Candia2
 		inline Grid& getGrid() { return _grid; }
 
 		/**
-		 *  @brief Performs the full evolution.
+		 *  @brief Performs the full evolution using the exact ansatz in the NS sector
 		 */
-		std::vector<ArrayGrid> const& evolve();
+		inline std::vector<ArrayGrid> const& evolve()
+		{
+			return _evolve_function(EvolType::Exact);
+		}
+
+		/**
+		 *  @brief Performs the full evolution using the truncated ansatz in the NS sector
+		 */
+		inline std::vector<ArrayGrid> const& evolveTrunc()
+		{
+			return _evolve_function(EvolType::Truncated);
+		}
 
 		/**
 		 *  @brief returns a vector of some subtraction PDFs as in EQ.27, Eq.38 in arXiv:2410.03876 [hep-ph]
-		 *  returns 3 total, for the b-quark, that being f(tilde)1, f(tilde)2, and f(tilde)NLO
 		 */
 		std::vector<ArrayGrid> calculateSubtractionPDFs();
+	private:
+		std::vector<ArrayGrid> const& _evolve_function(EvolType evoltype);
 	private:
 		/**
 		 *  @brief Sets the initial values of the coefficients using the distribution

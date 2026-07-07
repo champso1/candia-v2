@@ -33,9 +33,9 @@ namespace Candia2
 
 		auto arr_accessor = [&](uint j) -> ArrayGridView {
 			if (_order == 2) {
-				return getOptions().use_truncated_nonsinglet_sol ? _S_NS(0,j,0) : _C(j,0,0,0);
+				return _evol_type == EvolType::Truncated ? _S_NS(0,j,0) : _C(j,0,0,0);
 			} else if (_order == 3) {
-				return getOptions().use_truncated_nonsinglet_sol ? _S_NS(0,j,0) : _D(j,0,0,0,0);
+				return _evol_type == EvolType::Truncated ? _S_NS(0,j,0) : _D(j,0,0,0,0);
 			}
 			throw "unreachable";
 		};

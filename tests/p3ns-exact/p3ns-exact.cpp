@@ -19,7 +19,7 @@ static std::vector<ArrayGrid> calculate_ratios(
 
 int main()
 {
-    auto run = [&](std::vector<uint> const& exact_exprs, std::vector<std::pair<ExprName, P3ApproxType>> const& approx_exprs) {
+    auto run = [&](std::vector<std::pair<ExprName, P3ApproxType>> const& approx_exprs) {
 		const uint order = 3;
 		const uint iterations = 12;
 		const uint trunc_idx = 10;
@@ -39,7 +39,6 @@ int main()
 
 		DGLAPSolver solver(order, grid, alphas, Qf, iterations, trunc_idx, dist, mur2_muf2);
 		auto& dglap_options = solver.getOptions();
-		dglap_options.use_truncated_nonsinglet_sol = true;
 		dglap_options.disable_heavy_flavor_matching = false;
 		dglap_options.use_nnlo_matching_conditions_at_n3lo = false;
 		dglap_options.use_n3lo_heavyquark_asymmetry = true;
@@ -47,28 +46,27 @@ int main()
 
 		for (auto&& p : approx_exprs)
 			solver.setP3ApproximationType(p);
-		solver.useP3Exact(exact_exprs);
 
-		std::vector<ArrayGrid> F = solver.evolve();
+		std::vector<ArrayGrid> F = solver.evolveTrunc();
 		return F;
 	};
 
 	vector<double> xtab;
 	Grid grid({1e-5, 1e-4, 1e-3, 1e-2, 0.1, 0.3, 0.5, 0.7, 0.9, 1.0});
 
-	std::vector<ArrayGrid> p3nsm_exact = run({static_cast<uint>(ExprName::P3nsm)}, {});
-	std::vector<ArrayGrid> p3nsm_approx_central = run({}, {});
-	std::vector<ArrayGrid> p3nsm_approx_imod1 = run({}, {std::make_pair(ExprName::P3nsm, P3ApproxType::Imod1)});
-	std::vector<ArrayGrid> p3nsm_approx_imod2 = run({}, {std::make_pair(ExprName::P3nsm, P3ApproxType::Imod2)});
+	std::vector<ArrayGrid> p3nsm_exact = run({std::make_pair(ExprName::P3nsm, P3ApproxType::Exact)});
+	std::vector<ArrayGrid> p3nsm_approx_central = run({});
+	std::vector<ArrayGrid> p3nsm_approx_imod1 = run({std::make_pair(ExprName::P3nsm, P3ApproxType::Imod1)});
+	std::vector<ArrayGrid> p3nsm_approx_imod2 = run({std::make_pair(ExprName::P3nsm, P3ApproxType::Imod2)});
 	std::vector<ArrayGrid> p3nsm_ratios_qns = calculate_ratios(p3nsm_exact, p3nsm_approx_central, p3nsm_approx_imod1, p3nsm_approx_imod2, 0);
 	outputData(p3nsm_ratios_qns, grid, "p3nsm-exact-vs-approx-qns.dat");
 	std::vector<ArrayGrid> p3nsm_ratios_lm = calculate_ratios(p3nsm_exact, p3nsm_approx_central, p3nsm_approx_imod1, p3nsm_approx_imod2, 2);
 	outputData(p3nsm_ratios_lm, grid, "p3nsm-exact-vs-approx-lm.dat");
 
-	std::vector<ArrayGrid> p3nsp_exact = run({static_cast<uint>(ExprName::P3nsp)}, {});
-	std::vector<ArrayGrid> p3nsp_approx_central = run({}, {});
-	std::vector<ArrayGrid> p3nsp_approx_imod1 = run({}, {std::make_pair(ExprName::P3nsp, P3ApproxType::Imod1)});
-	std::vector<ArrayGrid> p3nsp_approx_imod2 = run({}, {std::make_pair(ExprName::P3nsp, P3ApproxType::Imod2)});
+	std::vector<ArrayGrid> p3nsp_exact = run({std::make_pair(ExprName::P3nsp, P3ApproxType::Exact)});
+	std::vector<ArrayGrid> p3nsp_approx_central = run({});
+	std::vector<ArrayGrid> p3nsp_approx_imod1 = run({std::make_pair(ExprName::P3nsp, P3ApproxType::Imod1)});
+	std::vector<ArrayGrid> p3nsp_approx_imod2 = run({std::make_pair(ExprName::P3nsp, P3ApproxType::Imod2)});
     std::vector<ArrayGrid> p3nsp_ratios_qns = calculate_ratios(p3nsp_exact, p3nsp_approx_central, p3nsp_approx_imod1, p3nsp_approx_imod2, 1);
 	outputData(p3nsp_ratios_qns, grid, "p3nsp-exact-vs-approx-qns.dat");
 	std::vector<ArrayGrid> p3nsp_ratios_lm = calculate_ratios(p3nsp_exact, p3nsp_approx_central, p3nsp_approx_imod1, p3nsp_approx_imod2, 2);
