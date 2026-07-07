@@ -32,7 +32,7 @@
                 "CMAKE_BUILD_TYPE": "RelWithDebInfo",
 				"CANDIA_BUILD_TESTS": "YES",
                 "CANDIA_BUILD_DOCS": "NO",
-                "CANDIA_BUILD_MANUSCRIPTS": "YES",
+                "CANDIA_BUILD_MANUSCRIPTS": "NO",
                 "CANDIA_WITH_LHAPDF": "YES",
 				"CANDIA_LHAPDF_DIR": "$env{HOME}/.local"
             }
