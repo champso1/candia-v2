@@ -17,7 +17,7 @@ int main(int argc, char** argv)
 	LHAPDF::setVerbosity(0);
 	LHAPDF::PDF* pdf = LHAPDF::mkPDF("testpdf", 0);
 
-	double Qf = 10.0;
+	double Qf = 4.0;
 	double Qf2 = Qf*Qf;
 
 	std::vector<double> xtab{1e-5, 1e-4, 1e-3, 1e-2, 0.1, 0.3, 0.5, 0.7, 0.9, 1.0};
@@ -30,7 +30,7 @@ int main(int argc, char** argv)
 	double mb = dist.masses(DIST_B);
 	double mc2 = mc*mc;
 	double mb2 = mb*mb;
-	AlphaS alphas(3, dist.Q0(), Qf, dist.alpha0(), 1.0);
+	AlphaS alphas(3, dist.Q0(), dist.Qf(), dist.alpha0(), 1.0);
 	alphas.setVFNS(dist.masses(), dist.nfi(), dist.nff());
 	alphas.calculateThresholdValues();
 	double as = alphas.pre(dist.nff()+1)/(4.0*PI);
@@ -41,7 +41,7 @@ int main(int argc, char** argv)
 	double as3 = as2*as;
 	uint nf = 5;
 
-	double L = std::log(mb2/Qf2);
+	double L = std::log(mc2/Qf2);
 	OpMatElemN3LO::update(L, nf);
 
 	log(LOG_INFO, "subpdfs.cpp", "using alphas(nf={})/4pi = {}, mc={}, L=log(mc2/mu2)={}", nf, as, mc, L);
@@ -84,7 +84,7 @@ int main(int argc, char** argv)
 			sigma[i] += pdf->xfxQ2(j, x, Qf2) + pdf->xfxQ2(-j, x, Qf2);
 	}
 
-	std::ofstream outfile("out.dat");
+	std::ofstream outfile("out-c-nf5.dat");
 	outfile << std::scientific << std::setprecision(6);
 	for (auto&& [k, x] : grid.enumerate()) {
 		double ftilde1 = as*grid.convolution(g, a1hg, k);
@@ -98,15 +98,15 @@ int main(int argc, char** argv)
 		);
 		double ftildenlo  = ftilde1 + ftilde2;
 		double ftildennlo = ftilde1 + ftilde2 + ftilde3;
-		double deltaf1    = b[k] - ftilde1;
-		double deltaf2    = b[k] - ftilde2;
-		double deltaf3    = b[k] - ftilde3;
-		double deltafnlo  = b[k] - ftildenlo;
-		double deltafnnlo = b[k] - ftildennlo;
+		double deltaf1    = c[k] - ftilde1;
+		double deltaf2    = c[k] - ftilde2;
+		double deltaf3    = c[k] - ftilde3;
+		double deltafnlo  = c[k] - ftildenlo;
+		double deltafnnlo = c[k] - ftildennlo;
 
 		outfile
 /*1*/			<< x << ' '
-/*2*/			<< b[k] << ' ' <<
+/*2*/			<< c[k] << ' ' <<
 /*3*/			ftilde1 << ' ' <<
 /*4*/			ftilde2 << ' ' <<
 /*5*/			ftilde3 << ' ' <<

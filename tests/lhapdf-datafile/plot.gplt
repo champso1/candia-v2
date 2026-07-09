@@ -5,12 +5,10 @@ set size ratio 0.65
 
 set logscale xy
 set xlabel "x" offset 0,0.7
-set ylabel "xb(x,Q^2)"
 set xrange [1e-5:1]
 set yrange [1e-5:20]
 set format x "10^{%T}"
 set format y "10^{%T}"
-set title "b subtraction PDFs at Q=10 GeV, Candia-v2 evolution"
 
 set key bottom left Left reverse samplen 3 spacing 1.2
 
@@ -20,8 +18,29 @@ set style line 3 lc rgb 'dark-green' dt 3 lw 2 # Dotted Dark Green
 set style line 4 lc rgb 'orange' dt 4 lw 2 # Dash-Dot Orange
 set style line 5 lc rgb 'purple' dt 5 lw 2 # Dot-Dash Purple
 
-set output 'out.pdf'
-plot 'out.dat' u 1:2 w lines ls 1 title "f_b", \
+set output 'c-subpdf.pdf'
+set ylabel "xc(x,Q^2)"
+set title "c subtraction PDFs at Q=4 GeV, Candia-v2 evolution"
+plot 'out-c.dat' u 1:2 w lines ls 1 title "f_c", \
+     ''        u 1:3 w lines ls 2 title "f̃_c^{(1)}", \
+	 ''        u 1:4 w lines ls 3 title "f̃_c^{(2)}", \
+ 	 ''        u 1:5 w lines ls 4 title "f̃_c^{(3)}", \
+  	 ''        u 1:7 w lines ls 5 title "f̃_c^{(NNLO)}"
+
+set output 'c-subpdf-nf5.pdf'
+set ylabel "xc(x,Q^2)"
+set title "c subtraction PDFs at Q=4 GeV, Candia-v2 evolution (nf=5)"
+plot 'out-c-nf5.dat' u 1:2 w lines ls 1 title "f_c", \
+     ''        u 1:3 w lines ls 2 title "f̃_c^{(1)}", \
+	 ''        u 1:4 w lines ls 3 title "f̃_c^{(2)}", \
+ 	 ''        u 1:5 w lines ls 4 title "f̃_c^{(3)}", \
+  	 ''        u 1:7 w lines ls 5 title "f̃_c^{(NNLO)}"
+
+set output 'b-subpdf.pdf'
+set ylabel "xb(x,Q^2)"
+set title "b subtraction PDFs at Q=10 GeV, Candia-v2 evolution"
+plot 'out-b.dat' u 1:2 w lines ls 1 title "f_b", \
      ''        u 1:3 w lines ls 2 title "f̃_b^{(1)}", \
 	 ''        u 1:4 w lines ls 3 title "f̃_b^{(2)}", \
- 	 ''        u 1:5 w lines ls 4 title "f̃_b^{(3)}"
+ 	 ''        u 1:5 w lines ls 4 title "f̃_b^{(3)}", \
+  	 ''        u 1:7 w lines ls 5 title "f̃_b^{(NNLO)}"
