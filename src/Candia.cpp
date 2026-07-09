@@ -518,8 +518,8 @@ namespace Candia2
 				log(LOG_DEBUG, "DGLAP", "Finished singlet evolution and resummation.");
 				log(LOG_DEBUG, "DGLAP", "Starting non-singlet evolution and resummation...");
 				evol_type == EvolType::Exact ?
-					evolveNonSingletTrunc(resum_ns, L1) :
-					evolveNonSinglet(resum_ns, L1, L2, L3, L4);
+					evolveNonSinglet(resum_ns, L1, L2, L3, L4) :
+					evolveNonSingletTrunc(resum_ns, L1);
 				log(LOG_DEBUG, "DGLAP", "Finished non-singlet evolution and resummation.");
 
 				log(LOG_DEBUG, "DGLAP", "Fixing distributions...");
