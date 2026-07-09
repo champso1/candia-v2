@@ -44,6 +44,7 @@
 \usepackage{soul}
 \usepackage{import}
 \usepackage{url}
+\usepackage{booktabs}
 
 \ExplSyntaxOn
 \NewDocumentCommand{\comm}{mm}
@@ -57,11 +58,22 @@
 }
 \ExplSyntaxOff
 
-\newcommand{\dd}{\mathrm{d}}
 \newcommand{\vv}[1]{\bm{\mathbf{#1}}}
 \newcommand{\ddp}{\partial}
 \newcommand{\mat}[1]{\hat{\vv{#1}}}
 
+\newcommand{\as}{a_s}
+\newcommand{\MSbar}{\overline{\mathrm{MS}}}
+\newcommand{\fsub}{\widetilde f}
+\newcommand{\df}{\delta f}
+\newcommand{\ot}{\otimes}
+\newcommand{\dd}{\mathrm{d}}
+\newcommand{\FC}{\mathrm{FC}}
+\newcommand{\FE}{\mathrm{FE}}
+\newcommand{\Sub}{\mathrm{Sub}}
+\newcommand{\GMVFN}{\mathrm{GMVFN}}
+\newcommand{\NLO}{\mathrm{NLO}}
+\newcommand{\LO}{\mathrm{LO}}
 
 %% The lineno packages adds line numbers. Start line numbering with
 %% \begin{linenumbers}, end it with \end{linenumbers}. Or switch it on
@@ -488,7 +500,8 @@ The results of \texttt{Candia-v2} evolution at N$^3$LO in QCD are reported in Ta
 The heavy-quark mass values passed in the input are in the pole-mass approximation and are set to $m_c=\mu_0$, $m_b=4.5$ GeV, and $m_t=175$ GeV. The aN$^3$LO splitting functions currently implemented in the code use the approximations documented in Refs.~\cite{Davies:2022ofz,Moch:2021qrk,Falcioni:2023luc,Falcioni:2023vqq,Moch:2023tdj,Falcioni:2024xyt,Falcioni:2024qpd,Falcioni:2025hfz} for the singlet sector, while for the NS sector we implemented the exact results recently calculated in Ref.~\cite{Gehrmann:2026qbl}. At NNLO, we use the approximations in Refs.~\cite{Moch:2004pa,Vogt:2004mw} for a fast evaluation. The 3-loop OMEs for heavy-quark threshold conditions beyond NNLO with single mass from Refs.~\cite{Ablinger:2025joi,Ablinger:2024xtt} are implemented using an interface the \texttt{libome}~\cite{Ablinger:2025joi,libome} publicly available \texttt{C++} libraries for their numerical representation in terms of
 precise local overlapping series expansion. For the 2-loop OMEs, we implement the analytical expressions of Refs.~\cite{Buza:1995ie,Buza:1996wv}.
 
-\import{./res/tables}{scaleratio.tex}
+% \import{./res/tables}{scaleratio.tex}
+\import{./res/tables}{scaleratio-new.tex}
 
 In Fig.~\ref{g-uv-PDFs} we illustrate the results for the $Q=100$ GeV \texttt{Candia-v2} evolution at the various perturbative orders for the gluon and the $u_v$ PDFs. The initial conditions are those from the Les Houches toy model described in Sec.~4.4 of Ref.~\cite{Dittmar:2005ed}. 
 The results for the $c^{(-)}(x,Q^2) = c(x,Q^2) - \bar{c}(x,Q^2)$ and $b^{(-)} = b(x,Q^2) - \bar{b}(x,Q^2)$ heavy-flavor combinations are illustrated in Fig.~\ref{cm-bm-PDFs}. These heavy-flavor asymmetries start to be different from zero at NNLO and Fig.~\ref{cm-bm-PDFs} shows the impact from both the evolution and heavy-flavor matching conditions (see Sec.~6 of Ref.~\cite{Hampson:2025pvi}) at N$^3$LO the charm- and bottom-quark cases.  
@@ -511,10 +524,106 @@ The results for the $c^{(-)}(x,Q^2) = c(x,Q^2) - \bar{c}(x,Q^2)$ and $b^{(-)} = 
 
 
 
+\newpage 
 
 \section{Subtraction and Residual PDFs}
 
-The generation of subtraction and residual PDFs is very simple and the procedure is explained in detail in Sec.~\ref{subsec:subpdf-access}.
+In the calculation of hadronic cross sections whose domain is defined over a wide range of energies, General-mass variable flavor number (GMVFN) schemes organize heavy-quark
+contributions so as to interpolate between the fixed-flavor description near threshold and the massless variable-flavor description at scales much larger than the heavy-quark mass. In an ACOT-type realization, the hadronic cross
+section may be written schematically as
+\begin{equation}
+  \dd\sigma^{\GMVFN}
+  = \dd\sigma^{\FC}+\dd\sigma^{\FE}-\dd\sigma^{\Sub} \, .
+  \label{eq:gmvfn_master}
+\end{equation}
+Here $\dd\sigma^{\FC}$ denotes flavor-creation contributions, in which the
+heavy quark $Q$ is produced in the final state with its mass retained;
+$\dd\sigma^{\FE}$ denotes flavor-excitation contributions initiated by a heavy-quark PDF; and $\dd\sigma^{\Sub}$ removes the overlap between the two.
+This subtraction is required because the collinear limit of the flavor-creation channel is already resummed into the heavy-quark PDF $f_Q(x,\mu)$.
+
+As observed in Ref.~\cite{Guzzi:2024can}, the subtraction terms can be packaged into universal objects called \emph{subtraction PDFs}. To NLO and NNLO, that is, ${\cal O}(\alpha_s^2)$ and ${\cal O}(\alpha_s^3)$ respectively in the subtraction
+coefficients, one may define
+\begin{align}
+\fsub_Q^{(1)}(x,\mu)
+&= \as\,\bigl[A_{Qg}^{(1)} \ot g\bigr](x,\mu),
+\label{eq:fsub1}
+\\
+\fsub_Q^{(2)}(x,\mu)
+&= \as^2\sum_{i=g,q,\bar q}
+\bigl[A_{Qi}^{(2)} \ot f_i\bigr](x,\mu),
+\\
+\fsub_Q^{(3)}(x,\mu)
+&= \as^3\sum_{i=g, q,\bar q}
+\bigl[A_{Qi}^{(3)} \ot f_i\bigr](x,\mu),
+\label{eq:fsub2}
+\\
+\fsub_Q^{(\NLO)}(x,\mu)
+&\equiv \fsub_Q^{(1)}(x,\mu)+\fsub_Q^{(2)}(x,\mu).
+\label{eq:fsubnlo}
+\\
+\fsub_Q^{(\textrm{NNLO})}(x,\mu)
+&\equiv \fsub_Q^{(1)}(x,\mu)+\fsub_Q^{(2)}(x,\mu)+\fsub_Q^{(3)}(x,\mu).
+\label{eq:fsubnnlo}
+\end{align}
+The kernels $A_{Qi}^{(n)}$ are operator matrix elements (OMEs) arising from
+mass factorization.  They describe the perturbative transition of a massless
+initial-state parton $i$ into the heavy quark $Q$ and contain the dependence on
+$m_Q$ and on the factorization scheme.  Crucially, they are independent of the
+particular short-distance hard process.  For this reason, the quantities in
+Eqs.~\eqref{eq:fsub1}--\eqref{eq:fsubnlo} are universal PDF-level matching
+objects: once computed for a chosen PDF ensemble, heavy-quark mass, perturbative
+order, and scheme, they can be tabulated and reused in different ACOT-like
+calculations.
+
+It is more economical to combine the flavor-excitation and
+subtraction pieces before performing the hard-scattering convolution.  This is
+achieved by defining \emph{residual PDFs}
+\begin{align}
+  \df_Q^{(1)}(x,\mu)
+  &\equiv f_Q(x,\mu)-\fsub_Q^{(1)}(x,\mu),
+  \label{eq:res1}
+  \\
+  \df_Q^{(\NLO)}(x,\mu)
+  &\equiv f_Q(x,\mu)-\fsub_Q^{(\NLO)}(x,\mu).
+  \label{eq:resnlo}
+\end{align}
+The residual $\df_Q$ is the part of the evolved heavy-quark PDF that is not
+already accounted for by the fixed-order collinear subtraction through the
+specified perturbative order.  With these definitions, the matched
+flavor-excitation contribution can be written directly in terms of residual
+PDFs.
+% In compressed notation, suppressing the second incoming hadron and the
+% exchange term, the NLO structure is
+% \begin{equation}
+%   \dd\sigma^{\FE}-\dd\sigma^{\Sub}
+%   = \as\, \df_Q^{(\NLO)} \ot \widehat\sigma_{Qg}^{(1)} \ot g
+%   + \as^2\, \df_Q^{(1)} \ot
+%     \left(
+%       \widehat\sigma_{Qg}^{(2)}\ot g
+%       + \sum_{i=q,\bar q}\widehat\sigma_{Qq}^{(2)}\ot f_i
+%     \right)
+%   + \cdots .
+%   \label{eq:residual_master}
+% \end{equation}
+% Equation~\eqref{eq:residual_master} displays the main practical advantage: the
+% process-dependent information is isolated in the finite hard-scattering
+% functions $\widehat\sigma_{Qi}^{(n)}$, while the universal collinear matching is
+% carried by $\fsub_Q$ or, equivalently, $\df_Q$.
+
+This separation is especially convenient for implementing ACOT, S-ACOT, and
+related GMVFN prescriptions in numerical codes.  The same subtraction or
+residual PDF grids can be convolved with different partonic hard cross sections,
+while different choices for the treatment of $m_Q$ in the flavor-excitation
+hard parts correspond to scheme choices that differ only by higher-order terms
+once the mandatory subtraction structure is preserved.  Thus, PDF subtractions
+and residuals provide a process-independent interface between universal DGLAP
+collinear dynamics and process-dependent massive hard scattering.  They make the
+avoidance of double counting explicit, improve modularity of implementations,
+and facilitate the extension of ACOT-like schemes beyond the lowest nontrivial
+order.
+
+In Fig.~\ref{sub-PDFs}, we show the charm- and bottom-quark subtraction PDFs evolved with \texttt{Candia-v2} at $Q=4$ GeV ($n_f=4$) and $Q=10$ GeV ($n_f=5$) respectively, which are compared to the charm and bottom PDFs from the Les Houches toy model of Ref.~\cite{Dittmar:2005ed} evolved at the same energies and $n_f$'s. The generation of subtraction and residual PDFs in \texttt{Candia-v2} is very simple and the procedure is explained in detail in Sec.~\ref{subsec:subpdf-access}.
+
 
 \begin{figure}
 \centering
@@ -526,10 +635,12 @@ The generation of subtraction and residual PDFs is very simple and the procedure
 
 
 
-
+\newpage
 
 \section{Description of the Program}
 \label{sec:prog-desc}
+
+In this section we describe the requirements to acquire, build, and use the code, followed by discussions on the pertinent parts of the library relevant for the user as well as the internals relevant for developers or users more interested in the deeper functionality of \texttt{Candia-v2}.
 
 \subsection{Requirements and Dependencies}
 \label{subsec:reqs-and-deps}
@@ -537,25 +648,25 @@ The generation of subtraction and residual PDFs is very simple and the procedure
 There are some version requirements and dependencies one needs to install in order to successfully compile and run the code. They are:
 % 
 \begin{itemize}
-\item CMake,
-\item C++20 compatibility -- among the standard compilers, one would need GCC >= 13 or LLVM CLang >= 17. See Section~\ref{subsubsec:compilers} for a note on the compiler choice.
-\item GFortran,
-\item Intel Threading Building Blocks (TBB): the backend for the implementation of C++ execution policies, which are used throughout the code to handle parallelization and vectorization of compatible parts of the program
-\item GSL (GNU Scientific Library)
-\item (Optional) LaTeX utilities: if one wants to build this manuscript and other relevant ones included in the repository,
-\item (Optional) Doxygen: if one wants to build the code documentation.
-\item (Optional) LHAPDF: if one wants to interface with LHAPDF
+\item \texttt{CMake},
+\item \texttt{C++20} compatibility -- among the standard compilers, one would need \texttt{GCC >= 13} or \texttt{LLVM CLang >= 17}. See Section~\ref{subsubsec:compilers} for a note on the compiler choice.
+\item \texttt{GFortran},
+\item \texttt{Intel Threading Building Blocks (TBB)}: the backend for the implementation of C++ execution policies
+\item \texttt{GSL} (GNU Scientific Library)
+\item (Optional) \texttt{LaTeX} utilities: if one wants to build the manuscripts included in the repository,
+\item (Optional) \texttt{Doxygen}: if one wants to build the code documentation.
+\item (Optional) \texttt{LHAPDF}: if one wants to interface with LHAPDF
 \end{itemize}
 
-For the latter three optional dependencies, see Section~\ref{subsec:acq-and-build} for descriptions of the CMake flags needed to enable these features.
+For the latter three optional dependencies, see Section~\ref{subsec:acq-and-build} for descriptions of the \texttt{CMake} flags needed to enable these features.
 
 \subsubsection{A Note on System and Compiler Choices}
 \label{subsubsec:compilers}
 
-The two mainstream platform independent compiler suites, namely GCC and LLVM CLang, have been tested and work for compiling and using \texttt{Candia-v2} on Linux machines, MacOS machines, and Windows machines inside of Windows Subsystem for Linux (WSL).
-The Apple CLang compiler's standard library implementation does not natively include support for C++ execution policies, so GCC or LLVM CLang are recommended on MacOS.
-Windows is not supported natively nor recommended due to GSL and LHAPDF being autotools-based, as well as the lack of a Fortran compiler within Visual Studio.
-Therefore, if using a Windows machine, we highly recommend using WSL.
+The two mainstream platform independent compiler suites, namely \texttt{GCC} and \texttt{LLVM CLang}, have been tested and work for compiling and using \texttt{Candia-v2} on Linux machines, MacOS machines, and Windows machines inside of Windows Subsystem for Linux (WSL).
+The Apple \texttt{CLang} compiler's standard library implementation does not natively include support for \texttt{C++} execution policies, so \texttt{GCC} or \texttt{LLVM CLang} are recommended on MacOS.
+Windows is not supported natively nor recommended due to GSL and \texttt{LHAPDF} being autotools-based, as well as the lack of a \texttt{Fortran} compiler within \texttt{Visual Studio}.
+Therefore, if using a Windows machine, we highly recommend using \texttt{WSL}.
 
 
 \subsection{Acquiring and Building}
@@ -591,7 +702,7 @@ Among standard CMake options, there are several additional options that are spec
 \subsection{Basic User Guide}
 \label{subsec:ex-prog}
 
-In this section we present a complete example program that illustrates the capabilities of \texttt{Candia-v2}, accompanied with descriptions of the basic moving parts required to operate the library. In 
+In this section we present a complete example program that illustrates the capabilities of \texttt{Candia-v2}, accompanied with descriptions of the basic moving parts required to operate the library.
 
 In Listing~\ref{lst:ex-prog} is a full C++ program that will perform the DGLAP evolution at N$^3$LO starting from the standard benchmark initial conditions up to $\mu=\qty{100}{\GeV}$.
 % 
@@ -754,6 +865,35 @@ There were a few bugs in \texttt{Candia} that have been fixed in \texttt{Candia-
 
 Apart from the bug fixes, there are several major improvements in \texttt{Candia-v2}. The first, and most significant, is that the evolution of the decoupled non-singlet PDFs can be performed concurrently by placing them on separate threads. The singlet PDFs are coupled, but we can put the convolutions themselves on separate threads by rewriting the loops to utilize C++ execution policies. This allows the compiler to choose, in whatever way it deems most efficient, how to parallelize the loop iterations. The second major improvement is the memory management. Due to the recursive nature of the coefficients, we only need to store adjacent iterations, drastically reducing the memory footprint especially for higher orders. The last is that, due to the way we perform the convolution, we do not require the $x$-dependent parts of the $P_2$ and $P_3$ pieces, corresponding to the coefficients of the plus distribution and delta function, respectively. So, we only need to calculate them once per $n_f$, and can just cache them for future evaluations of the splitting function.
 
+
+\section{Conclusions}
+\label{sec:conclusions}
+
+We have presented \textsc{Candia-v2}, a modernized and extended implementation
+of the \textsc{Candia} algorithm for solving the DGLAP evolution equations
+directly in Bjorken-$x$ space. The new version supersedes the original
+\textsc{Candia} code by providing a C++ interface, improved memory management,
+parallelized components, and a more flexible API.
+
+The main physics extension of \textsc{Candia-v2} is the implementation of PDF
+evolution through approximate N$^3$LO accuracy in QCD. The code includes the currently
+available four-loop DGLAP splitting functions, using exact results in the
+non-singlet sector and state-of-the-art approximations in the singlet sector.
+Heavy-quark threshold matching is implemented with operator matrix elements up
+to three loops, interfaced through \textsc{libome}. 
+
+In addition to standard PDF evolution, \textsc{Candia-v2} provides direct access
+to subtraction and residual heavy-quark PDFs. These quantities provide reusable, process-independent building blocks that facilitate the implementation of a large variety of GMVFN schemes with improved numerical accuracy.
+
+The package also includes optional interfaces to \textsc{LHAPDF}, enabling both LHAPDF input distributions and LHAPDF-formatted output grids. This makes
+\textsc{Candia-v2} suitable both as a standalone evolution code and as a
+component in larger environments for broader phenomenological studies. 
+
+The public release of \textsc{Candia-v2} provides a useful tool for analyses in high-precision collider phenomenology. As exact
+four-loop singlet splitting functions and additional higher-order ingredients
+become available, the modular structure of the code will allow them to be
+incorporated in a straightforward way. \textsc{Candia-v2} therefore provides a
+flexible platform for precision phenomenology as increasingly precise measurements from the LHC, the HL-LHC program, and future facilities such as the Electron-Ion Collider demand commensurate theoretical accuracy.
 
 \bibliographystyle{elsarticle-num}
 \bibliography{sources}
