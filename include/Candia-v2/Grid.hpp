@@ -32,9 +32,8 @@ namespace Candia2
 	class Grid final
 	{
     public:
-		using value_type = double; //!< alias for underlying grid type. not settable at this point
 		using grid_type = std::vector<double>; //!< alias for the underlying grid type
-		using gauleg_type = std::vector<value_type>; //!< alias for the type of the array of gauss-legendre weights/abscissae
+		using gauleg_type = std::vector<double>; //!< alias for the type of the array of gauss-legendre weights/abscissae
 		using ntab_type = std::vector<int>; //!< alias for the type of the calulated ntab array
 		using xtab_type = std::vector<double>;
 	private:
@@ -65,7 +64,7 @@ namespace Candia2
 				grid_type::size_type idx;
 
 				inline auto operator*() const {
-					return std::pair<uint, grid_type::value_type>{idx, v[idx]};
+					return std::pair<uint, double>{idx, v[idx]};
 				}
 
 				inline Iterator& operator++() { ++idx; return *this; }
@@ -101,7 +100,7 @@ namespace Candia2
 		inline ntab_type& ntab() { return _ntab; }
 
 		inline grid_type const& points() const { return _points; }
-		inline value_type operator[](uint idx) const { return _points[idx]; }
+		inline double operator[](uint idx) const { return _points[idx]; }
 
 		inline gauleg_type const& abscissae() const { return _Xi; }
 		inline gauleg_type const& weights() const { return _Wi; }
@@ -123,9 +122,9 @@ namespace Candia2
 		 *  @param W the list of gauleg weights
 		 */
 		double mappingFunctionBase(
-			uint k, value_type x, auto&& yandjaccessor,
+			uint k, double x, auto&& yandjaccessor,
 			Expression& E, std::span<double> A,
-			value_type eplus1,
+			double eplus1,
 			gauleg_type const& X, gauleg_type const& W);
 
 		/**
@@ -146,20 +145,20 @@ namespace Candia2
 		 *  @brief Uses a binary search to find the grid point closest to the given value of x
 		 *  @param x value to search for
 		 */
-		int interpFindIdx(value_type x);
+		int interpFindIdx(double x);
 		/**
 		 *  @brief Interpolates array @a y at @a x on the grid.
 		 *  @param y the array grid to interpolate
 		 *  @param x the value of x to interpolate at
 		 */
-		value_type interpolate(std::span<double> y, value_type x);
+		double interpolate(std::span<double> y, double x);
 		/**
 		 *  @brief Performs a convolution between an array @a A and an expression @a E
 		 *  @param A the array
 		 *  @param E the expression
 		 *  @param k the grid index to perform the convolution at
 		 */
-		value_type convolution(std::span<double> A, Expression& E, uint k);
+		double convolution(std::span<double> A, Expression& E, uint k);
 
 		/**
 		 *  @brief Performs a convolution between two arrays
@@ -168,13 +167,13 @@ namespace Candia2
 		 *  @param q energy (squared)
 		 *  @param tau the other factor used in the convolution
 		 */
-		value_type convolution(std::span<double> A1, std::span<double> A2, double tau);
+		double convolution(std::span<double> A1, std::span<double> A2, double tau);
 	private:
 		/** @brief adds the xtab array to the set of points, also filling in ntab */
 		void addXtab();
 		/** @brief fills the grid points in  */
 		void fillPoints();
 	    /** @brief Initializes the set of gauss-legendre weights and abscissae */
-		void initGauLeg(value_type x1, value_type x2, gauleg_type& Xi, gauleg_type& Wi);
+		void initGauLeg(double x1, double x2, gauleg_type& Xi, gauleg_type& Wi);
 	};
 }

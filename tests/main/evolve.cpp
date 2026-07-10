@@ -178,13 +178,13 @@ int main(int argc, char *argv[]) {
 	alphas.setVFNS(dist.masses(), dist.nfi(), dist.nff());
 	// alphas.setFFNS(4);
 
-	DGLAPSolver solver(order, grid, alphas, Qf, iterations, trunc_idx, std::move(dist), mur2_muf2);
-	auto& dglap_options = solver.getOptions();
-	dglap_options.disable_heavy_flavor_matching = false;
-	dglap_options.use_nnlo_matching_conditions_at_n3lo = false;
-	dglap_options.use_n3lo_heavyquark_asymmetry = true;
-	dglap_options.use_fortran_n3lo_splitfuncs = false;
-
+	DGLAPSolver solver(order, grid, alphas, Qf, iterations, trunc_idx, dist, mur2_muf2);
+	solver.setP3ApproximationTypes({
+			std::make_pair(ExprName::P3nsm, P3ApproxType::ImodAvg),
+			std::make_pair(ExprName::P3nsp, P3ApproxType::ImodAvg),
+			std::make_pair(ExprName::P3nsv, P3ApproxType::ImodAvg)
+		});
+	
 	auto t0 = chrono::high_resolution_clock::now();
 	auto F = use_trunc ? solver.evolveTrunc() : solver.evolve();
 	auto tf = chrono::high_resolution_clock::now();

@@ -67,7 +67,7 @@ namespace Candia2
 	{
 		log(::CANDIA_OPENING_TEXT);
 
-		log(LOG_DEBUG, "DGLAP", "Evolving with log(mu_R / mu_F) = log({:.1}) = {:.4}.", _mur2_muf2, _log_mur2_muf2);
+		log(LOG_DEBUG, "DGLAPSolver::DGLAPSolver()", "Evolving with log(mu_R / mu_F) = log({:.1}) = {:.4}.", _mur2_muf2, _log_mur2_muf2);
 
 		if (_order == 0 && _trunc_idx != 0) {
 			_trunc_idx = 0; // LO has exact singlet solution, do not add additional terms
@@ -109,18 +109,18 @@ namespace Candia2
 		log(LOG_DEBUG, "DGLAPSolver::DGLAPSolver()", "c  array: {}", func(_r1));
 	    
 		setInitialConditions(initial_dist);
-		log(LOG_DEBUG, "DGLAP", "Successfully filled coefficients with initial conditions.");
+		log(LOG_DEBUG, "DGLAPSolver::DGLAPSolver()", "Successfully filled coefficients with initial conditions.");
 	}
 
 	DGLAPSolver::~DGLAPSolver()
 	{
 		log(LOG_INFO, "DGLAP", "Exiting...");
-		log(CANDIA_CLOSING_TEXT);
+		log(::CANDIA_CLOSING_TEXT);
 	}
 
 	void DGLAPSolver::setInitialConditions(Distribution const& dist)
 	{
-		log(LOG_DEBUG, "DGLAP", "Setting initial conditions... ");
+		log(LOG_DEBUG, "DGLAPSolver::setInitialConditions()", "Setting initial conditions... ");
 
 		dist.fillSingletCoeffs(
 			[&](uint j, uint k) -> double& {
@@ -154,7 +154,7 @@ namespace Candia2
 		createExpression<P1gg>(ExprName::P1gg);
 
 		if (options.use_fortran_nnlo_splitfuncs) {
-			log(LOG_DEBUG, "DGLAP", "Loading Fortran versions of P2 splitting functions");
+			log(LOG_DEBUG, "DGLAPSolver::loadAllExpressions()", "Loading Fortran versions of P2 splitting functions");
 			createExpression<mvv_p2::P2nsm>(ExprName::P2nsm);
 			createExpression<mvv_p2::P2nsp>(ExprName::P2nsp);
 			createExpression<mvv_p2::P2nsv>(ExprName::P2nsv);
@@ -163,7 +163,7 @@ namespace Candia2
 			createExpression<mvv_p2::P2gq>(ExprName::P2gq);
 			createExpression<mvv_p2::P2gg>(ExprName::P2gg);
 		} else {
-			log(LOG_DEBUG, "DGLAP", "Loading C++ versions of P2 splitting functions");
+			log(LOG_DEBUG, "DGLAPSolver::loadAllExpressions()", "Loading C++ versions of P2 splitting functions");
 			createExpression<P2nsm>(ExprName::P2nsm);
 			createExpression<P2nsp>(ExprName::P2nsp);
 			createExpression<P2nsv>(ExprName::P2nsv);
@@ -182,10 +182,10 @@ namespace Candia2
 		bool using_exact_p3ns = it != _p3_approx_types.end();
 		
 		if (options.use_fortran_n3lo_splitfuncs && using_exact_p3ns)
-			log(LOG_ERROR, "DGLAP", "Cannot use both the Fortran P3s and the exact (the Fortran versions are approximate)");
+			log(LOG_ERROR, "DGLAPSolver::loadAllExpressions()", "Cannot use both the Fortran P3s and the exact (the Fortran versions are approximate)");
 		
 		if (options.use_fortran_n3lo_splitfuncs) {
-			log(LOG_DEBUG, "DGLAP", "Loading Fortran versions of P3 splitting functions");
+			log(LOG_DEBUG, "DGLAPSolver::loadAllExpression()", "Loading Fortran versions of P3 splitting functions");
 			createExpression<mvv_p3::P3nsm>(ExprName::P3nsm, _p3_approx_types[static_cast<uint>(ExprName::P3nsm)]);
 			createExpression<mvv_p3::P3nsp>(ExprName::P3nsp, _p3_approx_types[static_cast<uint>(ExprName::P3nsp)]);
 			createExpression<mvv_p3::P3nsv>(ExprName::P3nsv, _p3_approx_types[static_cast<uint>(ExprName::P3nsv)]);
@@ -231,6 +231,31 @@ namespace Candia2
 		createExpression<OpMatElemN3LO>(ExprName::A3psqq, ome::AqqQPS);
 		createExpression<OpMatElemN3LO>(ExprName::A3sqg, ome::AqgQ);
 		createExpression<OpMatElemN3LO>(ExprName::A3PSshq, ome::AQqPSs);
+
+		log(LOG_DEBUG, "DGLAPSolver::loadAllExpressions()", "Using the following P3 approximation types:");
+		for (uint i=static_cast<uint>(ExprName::P3nsm); i<=static_cast<uint>(ExprName::P3gg); ++i) {
+			ExprName exprname = static_cast<ExprName>(i);
+			P3ApproxType approxtype = _p3_approx_types[i];
+
+			std::string exprname_str{}, approxtype_str{};
+			switch (exprname) {
+				case ExprName::P3nsm: exprname_str = "P3nsm"; break;
+				case ExprName::P3nsp: exprname_str = "P3nsp"; break;
+				case ExprName::P3nsv: exprname_str = "P3nsv"; break;
+				case ExprName::P3qq: exprname_str = "P3qq"; break;
+				case ExprName::P3qg: exprname_str = "P3qg"; break;
+				case ExprName::P3gq: exprname_str = "P3gq"; break;
+				case ExprName::P3gg: exprname_str = "P3gg"; break;
+				default: throw std::runtime_error("unreachable");
+			}
+			switch (approxtype) {
+				case P3ApproxType::Imod1: approxtype_str = "Imod1"; break;
+				case P3ApproxType::Imod2: approxtype_str = "Imod2"; break;
+				case P3ApproxType::ImodAvg: approxtype_str = "ImodAvg"; break;
+				case P3ApproxType::Exact: approxtype_str = "Exact"; break;
+			}
+			log(LOG_DEBUG, "DGLAPSolver::loadAllExpressions()", "  - {} => {}", exprname_str, approxtype_str);
+		}
     }
 
     void DGLAPSolver::setupCoefficients()
@@ -415,6 +440,7 @@ namespace Candia2
 	std::vector<ArrayGrid> const& DGLAPSolver::_evolve_function(EvolType evol_type)
 	{
 		_evol_type = evol_type;
+		
 	    log(LOG_INFO, "DGLAP", "Evolving to {} flavors.", _alpha_s.nff());
 		using out_type = decltype(_F);
 		loadAllExpressions();
@@ -442,6 +468,7 @@ namespace Candia2
 			log(LOG_DEBUG, "DGLAP", "Finished setting up distributions for evolution.");
 
 			// if the next mass is zero, we are already done
+			// but this shouldn't really be hit 
 			if (_alpha_s.masses(_nf+1) == 0.0) {
 				log(LOG_WARNING, "DGLAP", "Next mass is zero. Quitting...");
 				break;
@@ -451,11 +478,9 @@ namespace Candia2
 			_alpha_s.update(_nf);
 			log(LOG_DEBUG, "DGLAP", "Loading relevant splitting function / OME values into cache");
 			SplittingFunction::update(_nf, _alpha_s.beta0(), _log_muf2_mur2);
-			OpMatElem::update(-_log_mur2_muf2, _nf);
-			for (auto& expr : _expressions) {
-				expr->fill(_grid.points());
+			OpMatElem::update(_log_muf2_mur2, _nf);
+			for (auto& expr : _expressions)
 				expr->preCalc();
-			}
 			
 			log(LOG_DEBUG, "DGLAP", "Retrieving values of alpha_s, and calculating all logarithm factors");
 			bool resum_tab = _alpha_s.resumTabulated();
@@ -517,7 +542,7 @@ namespace Candia2
 			    evolveSinglet(resum_singlet, L1);
 				log(LOG_DEBUG, "DGLAP", "Finished singlet evolution and resummation.");
 				log(LOG_DEBUG, "DGLAP", "Starting non-singlet evolution and resummation...");
-				evol_type == EvolType::Exact ?
+				_evol_type == EvolType::Exact ?
 					evolveNonSinglet(resum_ns, L1, L2, L3, L4) :
 					evolveNonSingletTrunc(resum_ns, L1);
 				log(LOG_DEBUG, "DGLAP", "Finished non-singlet evolution and resummation.");

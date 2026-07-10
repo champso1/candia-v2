@@ -1,0 +1,29 @@
+SetDesc: 'Candia-v2 evolution'
+Authors: C. Hampson, M. Guzzi
+Reference: arXiv:2512.22667
+Format: lhagrid1
+DataVersion: 1
+NumMembers: 1
+SetIndex: 99876
+Flavors: [%PIDS%]
+OrderQCD: %ORDER%
+FlavorScheme: variable
+NumFlavors: 5
+ErrorType: hessian
+ErrorConfLevel: 90
+XMin: 1.000000e-05
+XMax: 1.000000E+00
+QMin: 1.414213E+00
+QMax: 1.000000E+02
+MZ: 91.1870
+MUp: 0.0
+MDown: 0.0
+MStrange: 1.414213
+MCharm: 1.414213
+MBottom: 4.5
+MTop: 175.0
+AlphaS_MZ:  0.118000
+AlphaS_OrderQCD: %ORDER%
+AlphaS_Type: ipol
+AlphaS_Qs: [%AS_QS%]
+AlphaS_Vals: [%AS_VALS%]

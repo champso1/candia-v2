@@ -95,7 +95,7 @@ namespace Candia2
 	    addXtab();
 	}
 
-	void Grid::initGauLeg(value_type x1, value_type x2, gauleg_type& Xi, gauleg_type& Wi)
+	void Grid::initGauLeg(double x1, double x2, gauleg_type& Xi, gauleg_type& Wi)
 	{
 		const double eps = 3.0e-11; // relative precision
 
@@ -173,7 +173,7 @@ namespace Candia2
 	}
 
 	constexpr auto NN = 2*INTERP_POINTS;
-    int Grid::interpFindIdx(value_type x)
+    int Grid::interpFindIdx(double x)
 	{
 		static const int n = static_cast<int>(size());
 		static const int max_k = static_cast<int>(n-NN);
@@ -187,7 +187,7 @@ namespace Candia2
 		return std::clamp(k, 0, max_k);
 	}
 
-	Grid::value_type Grid::interpolate(std::span<double> yy, value_type x)
+    double Grid::interpolate(std::span<double> yy, double x)
 	{
 		constexpr int n = 2 * INTERP_POINTS;
     
@@ -239,9 +239,9 @@ namespace Candia2
 	}
 
 	double Grid::mappingFunctionBase(
-		uint k, value_type x, auto&& yandjaccessor,
+		uint k, double x, auto&& yandjaccessor,
 		Expression& E, std::span<double> A,
-		value_type plus,
+		double plus,
 		gauleg_type const& X, gauleg_type const& W)
 	{
 		double ak = A[k];

@@ -44,8 +44,7 @@ int main()
 		dglap_options.use_n3lo_heavyquark_asymmetry = true;
 		dglap_options.use_fortran_n3lo_splitfuncs = false;
 
-		for (auto&& p : approx_exprs)
-			solver.setP3ApproximationType(p);
+		solver.setP3ApproximationTypes(approx_exprs);
 
 		std::vector<ArrayGrid> F = solver.evolveTrunc();
 		return F;

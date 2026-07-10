@@ -41,9 +41,8 @@ namespace Candia2
 		using array_type = std::vector<double>; //!< alias for passed-in grid array
 
 	protected:
-		cache_type _reg_cache{}; //!< stores the values of the regular part of the expression
-		double _plus_cache; //!< stores the value of the plus part of the expression
-		double _delta_cache; //!< stores the value of the delta coefficient
+		double _plus_cache{}; //!< stores the value of the plus part of the expression
+		double _delta_cache{}; //!< stores the value of the delta coefficient
 
 		Expression() = default; //!< default constructor
 	public:
@@ -60,7 +59,6 @@ namespace Candia2
 		/** @brief clears all the cache values */
 		inline virtual void clear()
 		{
-			_reg_cache.clear();
 			_plus_cache = 0.0;
 			_delta_cache = 0.0;
 		}
@@ -68,18 +66,11 @@ namespace Candia2
 		/**
 		 *  @brief Fills the cache(s) with the values of the regular part of the expression on the grid for interpolation
 		 *  @param grid_points The array of grid points.
+		 *  @note this function currently does nothing at the use for a regular cache has not yet manifested
 		 */
 		inline virtual void fill(array_type const& grid_points)
 		{
-			auto enumerate =
-				std::ranges::views::iota(uint{0},grid_points.size()-1)
-				| std::ranges::views::transform([&](uint i){ return std::make_pair(i, grid_points[i]); });
-			
-			_reg_cache.resize(grid_points.size());
-			std::ranges::fill(_reg_cache, double{0});
-			for (auto [i, x] : enumerate)
-				_reg_cache[i] = calcRegular(x);
-			[[maybe_unused]] int ___x = 0;
+		    log(LOG_WARNING, "SplittingFunction::fill()", "Not used ATM -- this method does nothing");
 		}
 
 		/**
@@ -90,12 +81,16 @@ namespace Candia2
 		inline virtual double delta() { return _delta_cache; }
 		/** @} */
 
-
+		/**
+		 *  @defgroup piececalculates Expression Calculators
+		 *  @{
+		 */
 		inline virtual double calcRegular([[maybe_unused]] double x) const { return 0.0; }
 		inline virtual double calcPlus() const { return 0.0; }
 		inline virtual double calcDelta() const { return 0.0; }
-
-		/** @brief calculates all nf-dependent/constant pieces of an expression */
+		/** @} */
+		
+		/** @brief calculates all nf-dependent/constant/x-independent pieces of an expression */
 		virtual void preCalc()
 		{
 			_plus_cache = calcPlus();
