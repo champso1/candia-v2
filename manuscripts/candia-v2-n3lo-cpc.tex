@@ -200,7 +200,9 @@ We present \texttt{Candia-v2}, an open-source software package that generalizes 
 
 
 
-
+\pagebreak
+\tableofcontents
+\pagebreak
 
 
 
@@ -648,7 +650,7 @@ In this section we describe the requirements to acquire, build, and use the code
 There are some version requirements and dependencies one needs to install in order to successfully compile and run the code. They are:
 % 
 \begin{itemize}
-\item \texttt{CMake},
+\item \texttt{CMake} and a build tool e.g. GNU Make or Ninja,
 \item \texttt{C++20} compatibility -- among the standard compilers, one would need \texttt{GCC >= 13} or \texttt{LLVM CLang >= 17}. See Section~\ref{subsubsec:compilers} for a note on the compiler choice.
 \item \texttt{GFortran},
 \item \texttt{Intel Threading Building Blocks (TBB)}: the backend for the implementation of C++ execution policies
@@ -658,12 +660,12 @@ There are some version requirements and dependencies one needs to install in ord
 \item (Optional) \texttt{LHAPDF}: if one wants to interface with LHAPDF
 \end{itemize}
 
-For the latter three optional dependencies, see Section~\ref{subsec:acq-and-build} for descriptions of the \texttt{CMake} flags needed to enable these features.
+The optional dependencies are enabled by passing \texttt{CMake} flags when configuring the project; see Section~\ref{subsec:acq-and-build} for what they are.
 
 \subsubsection{A Note on System and Compiler Choices}
 \label{subsubsec:compilers}
 
-The two mainstream platform independent compiler suites, namely \texttt{GCC} and \texttt{LLVM CLang}, have been tested and work for compiling and using \texttt{Candia-v2} on Linux machines, MacOS machines, and Windows machines inside of Windows Subsystem for Linux (WSL).
+The two mainstream platform independent compiler suites, namely \texttt{GCC} and \texttt{LLVM CLang}, have been tested for compiling and using \texttt{Candia-v2} on Linux machines, MacOS machines, and Windows machines inside of Windows Subsystem for Linux (WSL).
 The Apple \texttt{CLang} compiler's standard library implementation does not natively include support for \texttt{C++} execution policies, so \texttt{GCC} or \texttt{LLVM CLang} are recommended on MacOS.
 Windows is not supported natively nor recommended due to GSL and \texttt{LHAPDF} being autotools-based, as well as the lack of a \texttt{Fortran} compiler within \texttt{Visual Studio}.
 Therefore, if using a Windows machine, we highly recommend using \texttt{WSL}.
@@ -702,7 +704,7 @@ Among standard CMake options, there are several additional options that are spec
 \subsection{Basic User Guide}
 \label{subsec:ex-prog}
 
-In this section we present a complete example program that illustrates the capabilities of \texttt{Candia-v2}, accompanied with descriptions of the basic moving parts required to operate the library.
+In this section we present a complete example program that illustrates the capabilities of \texttt{Candia-v2}.
 
 In Listing~\ref{lst:ex-prog} is a full C++ program that will perform the DGLAP evolution at N$^3$LO starting from the standard benchmark initial conditions up to $\mu=\qty{100}{\GeV}$.
 % 
@@ -722,35 +724,268 @@ We also define the following variables:
 \item \mintinline{cpp}{mur2_muf2}: the ratio $\mu_R^2/\mu_F^2$ (note this is the ratio of the \textit{squared} energies).
 \end{itemize}
 %
-Using these variables, the user then initializes the main classes handing the interpolation and convolution grid, the running coupling, the initial conditions, and lastly the solver itself.
-An \mintinline{cpp}{std::vector<ArrayGrid>} is returned, which the user can handle however they need; the \mintinline{cpp}{ArrayGrid} is a very simple storage container for accessing values of an array whose points are determined via a grid (see Section~\ref{subsec:arraygrid} for a lower level description of this class).
-Elements can be accessed just like an ordinary \mintinline{cpp}{std::vector}, e.g. using the \mintinline{cpp}{operator[]} syntax.
+Using these variables, the user then initializes the main classes handing the interpolation and convolution grid, the running coupling, the initial conditions, and lastly the solver itself. An \mintinline{cpp}{std::vector<ArrayGrid>} is returned, which the user can handle however they need; the \mintinline{cpp}{ArrayGrid} is a very simple storage container for accessing values of an array whose points are determined via a grid (see Section~\ref{subsec:arraygrid} for a lower level description of this class).
+Elements can be accessed just like an ordinary \mintinline{cpp}{std::vector}, e.g. using the \mintinline{cpp}{operator[]} syntax. There are 37 total distributions, whose indices are described in Table~\ref{tab:dist-indices}.
 
-There are four main moving parts: the $x$-grid, the initial conditions, the running coupling ($\alpha_s$), and the main solver.
-The \mintinline{cpp}{Grid} class handles the first of these parts. This handles defining the set of $x$-points on which the PDFs are defined and on which the convolution and interpolation routines are performed. The grid is designed in such a way to handle the behavior near $x \rightarrow 0$ and $x \rightarrow 1$ where, especially at N$^3$LO, there are large powers of $\ln x$, $\ln (1-x)$, and similar. This is achieved by splitting up the grid into three parts, and performing appropriate mappings onto $[0,1]$, after which a standard (and quick) Gauss-Legendre integration procedure is performed. These intervals are: $(\mathrm{min}, 0.1)$ mapped logarithmically ($\mathrm{min}$ is the minimum value chosen in the program, not zero), $[0.1, 0.9)$ mapped linearly, and $(0.9, 1)$ mapped quadratically, with points packed towards $x \rightarrow 1$. With the grid partitioned in this way, we can afford to have less overall points in each interval and thus overall, drastically reducing the total time required for performing convolutions.
+\begin{table}[h]
+  \centering
+  \begin{tabular}{c|c}
+    \hline 
+    0 & $g$ \\ 
+    1-6 & $q_{i}$ \\ 
+    7-12 & $\overline{q}_i$ \\ 
+    13-18 & $q_{i}^{(-)}$ \\ 
+    19-24 & $q_{i}^{(+)}$ \\ 
+    25 & $q^{(-)}$ \\ 
+    26-30 & $q_{NS,1i}^{(-)},\quad i\neq1$ \\ 
+    31 & $q^{(+)}$ \\ 
+    32-36 & $q_{NS,1i}^{(+)},\quad i\neq1$ \\ 
+    \hline
+  \end{tabular}
+  \caption{Correspondence between indices and parton distributions.}
+  \label{tab:dist-indices}
+\end{table}
 
-The initial conditions are handled by the \mintinline{cpp}{Distribution} class, or more accurately, derivations of it like the \mintinline{cpp}{LesHouchesDistribution} class, which implement all the information necessary to specify the initial conditions of the evolution. This includes the initial energy $Q_0$, the values of the PDFs at $Q_0$, the value of $\alpha_s$ at $Q_0$, the masses of the quarks. This information is then used to construct an object of the \mintinline{cpp}{AlphaS} class, which handles performing the evolution of the coupling along with the matching at the quark mass thresholds.
 
-Lastly, the full evolution is performed upon constructing an object of the \mintinline{cpp}{DGLAPSolver} class, and calling the \mintinline{cpp}{evolve()} method. As mentioned above, this returns a \mintinline{cpp}{std::vector<ArrayGrid>} of the final, evolved PDFs, for usage in whatever way is desired.
+\subsection{Code Description}
+\label{sec:code-description}
 
-\subsubsection{Evolution Options}
-\label{subsec:dglap-options}
+In this section, we will give lower level descriptions of the various classes composing \texttt{Candia-v2}.
 
-There are a number of options that can be supplied to the \mintinline{cpp}{DGLAPSolver} after its instantiation and before calling \mintinline{cpp}{.evolve()}.
+\subsubsection{The ArrayGrid Class}
+\label{subsec:arraygrid}
+
+The \mintinline{cpp}{ArrayGrid} class is the underlying array type used for PDFs or anything that is defined on the $x$-grid, which itself is described in the next section. The motivation for creating a new class, rather than just using \mintinline{cpp}{std::vector}s, is to avoid the memory fragmentation issue associated with the large numbers of nested arrays required for the higher order coefficients. \mintinline{cpp}{ArrayGrid} is an alias for a base class \mintinline{cpp}{ArrayGridBase<type, D>} where \mintinline{cpp}{type} is the underlying datatype and D is the number of dimensions of the array. All memory is allocated only once in a single array, and array access is wrapped in the \mintinline{cpp}{operator()} method -- since \mintinline{cpp}{operator[]} isn't allowed to take multiple arguments in C++20 -- which handles the dimension strides correctly. For $D=1$, there is a specialization which does enable the \mintinline{cpp}{operator[]} syntax just like an ordinary array.
+
+Creating an \mintinline{cpp}{ArrayGrid} is done by:
+
+\begin{minted}{cpp}
+template <typename T, uint D>
+ArrayGridBase::ArrayGridBase(
+  std::array<uint, D> const& sizes
+);
+\end{minted}
+
+where \mintinline{cpp}{sizes} contains the size of each dimension.
+
+Accessing elements is used by calling
+
+\begin{minted}{cpp}
+template <typename... TArgs>
+decltype(auto) operator()(TArgs... args)
+\end{minted}
+
+This method supports either $D-1$ arguments, in which case a \mintinline{cpp}{std::span} is returned (representing the innermost array dimension) or $D$ arguments, in which a single number is returned. Other higher-order views over more dimensions are not supported because they are not useful in this code.
+
+\subsubsection{The Grid Class}
+\label{subsec:grid-class}
+
+The $x$-grid on which the PDFs are defined and on which interpolations and convolutions are done is handled by the \mintinline{cpp}{Grid} class. By default, the grid is filled in three separate segments, which is done in order to best handle the unstable behavior of PDFs and splitting functions in the extremes $x \rightarrow 0$ and $x \rightarrow 1$. The first segment is filled logarithmically from $[<min>,0.1)$, linearly from $[0.1,0.9)$, and quadratically from $[0.9,1.0)$, with more points packed towards $x \rightarrow 1$, with 150 points in the first segment and 30 in the other two.
+
+The constructor has the following signature:
+
+\begin{minted}{cpp}
+Grid::Grid(
+    xtab_type const& xtab,
+    GridFillerArgs const& grid_filler={},
+    ConvIntArgs const& gauleg_args={}
+);
+\end{minted}
+
+where \mintinline{cpp}{GridFillerArgs} is a struct containing options for how the grid is filled:
+
+\begin{minted}{cpp}
+struct GridFillerArgs final
+{
+  double min{1.0e-5};
+  uint log_size{101};
+  uint lin_size{51};
+  uint quad_size{26};
+  double pivot1{0.1}, pivot2{0.9};
+};
+\end{minted}
+
+and \mintinline{cpp}{ConvIntArgs} is a struct containing options for convolutions and interpolations:
+
+\begin{minted}{cpp}
+struct ConvIntArgs final
+{
+  uint num_gauss_points{50};
+  uint num_interp_points{4};
+};
+\end{minted}
+
+\mintinline{cpp}{xtab} is an array of $x$-values that should be placed directly on the grid and whose indices should be kept track of (in an array called \mintinline{cpp}{ntab}) so that the values of other quantities at these points can very easily be extracted for e.g. benchmarking.
+
+The grid also behaves itself as an interable object, allowing one to do something like (assuming \mintinline{cpp}{grid} is defined)
+
+\begin{minted}{cpp}
+for (double x : grid) {
+  // do something with each x
+}
+\end{minted}
+
+Further, one can grab both the index and $x$-value at once using the \mintinline{cpp}{.enumerate()} method, which returns a \mintinline{cpp}{std::ranges::view}, and it behaves just like Python's \mintinline{python}{enumerate()} function:
+
+\begin{minted}{cpp}
+for (auto [i, x] : grid.enumerate()) {
+  // do something with each index i and value x
+}
+\end{minted}
+
+Lastly, the signatures for the convolution and interpolation routines are
+
+\begin{minted}{cpp}
+double Grid::interpolate(
+  std::span<double> y,
+  double x);
+double Grid::convolution(
+  std::span<double> A,
+  Expression& E,
+  uint k);
+double Grid::convolution(
+  std::span<double> A1,
+  std::span<double> A2,
+  double tau);
+\end{minted}
+
+\texttt{Candia-v2} supports convolutions between an array (e.g. a PDF) and an expression (e.g. a splitting function) in the first case, as well as a convolution between two arrays for e.g. luminosity calculations in the second case.
+
+The convolutions are performed using Gauss-Legendre integration, with the set of abscissae and weights in the range $(<min>,1)$ calculated when the constructor is called. We use $z$ to represent a single abscissa and $w$ to represent a single weight during a traditional integration loop.
+The actual convolution is done via a series of ``mappings'' for each of the aforementioned segments (logarithmic, linear, quadratic), where the $x$ value of the convolution and the current $z$ value in the Gauss-Legendre integration loop are used to obtain the mapped value $y$ and the Jacobian $J$. This is represented internally as an array of \mintinline{cpp}{std::function}, wrapped with a getter function to choose the appropriate mapping(s) for the given $x$-value.
+
+\subsubsection{The AlphaS Class}
+\label{subsec:alphas-class}
+
+The evolution of the QCD strong coupling $\alpha_s$ is handed via the \mintinline{cpp}{AlphaS} class, whose constructor has the following signature:
+
+\begin{minted}{cpp}
+AlphaS::AlphaS(
+  uint order,
+  double Q0, double Qf,
+  double alpha0,
+  double mur2_muf2
+);
+\end{minted}
+
+$Q_0$ and $\alpha_0$ are typically given by initial conditions, while the perturbative order, $Q_f$, and the ratio $\mu_R^2/\mu_F^2$ are chosen by the user.
+
+In general, the evolution can proceed under the Fixed-Flavor Number Scheme (FFNS) or the Variable-Flavor Number Scheme (VFNS). In the former case, the number of flavors is held fixed, while in the latter, once the evolution scale crosses the pole mass of a heavy-quark, we transition to to using $n_f+1$ active flavors. These options are chosen by calling one of the following functions:
+
+\begin{minted}{cpp}
+void AlphaS::setFFNS(uint nf);
+void AlphaS::setVFNS(
+  std::array<double, 8> const& masses,
+  uint nfi, uint nff);
+void AlphaS::calculateThresholdValues();
+\end{minted}
+
+The final function is automatically called by the VFNS method, so the user need not call it themselves. The values of $\alpha_s$, in either scheme, are stored in two internal arrays called ``pre'' and ``post'', which are the values of $\alpha_s$ pre- and post- mass threshold, respectively, with the index being the $n_f$ value. This means that, for a given evolution step, the initial value of $\alpha_s$ is given by \mintinline{cpp}{post[nf]} and the final value is given by \mintinline{cpp}{pre[nf+1]}. In the FFNS scheme these are the only two values in the entire array, and there is only one evolution step. Given the reference value of $\alpha_s$, new values are calculated between thresholds by solving the QCD RGE with a fourth-order Runge-Kutta algorithm. At LO, there is an exact solution to this equation, so that is of course used instead.
+
+This class also handles the calculation of the $b$-function and its coefficients:
+
+\begin{minted}{cpp}
+double AlphaS::betaFn(double alpha) const;
+double AlphaS::beta0() const;
+double AlphaS::beta1() const;
+double AlphaS::beta2() const;
+double AlphaS::beta3() const;
+\end{minted}
+
+These functions simply retrieve values which are calculated each time $n_f$ is updated via
+
+\begin{minted}{cpp}
+void AlphaS::update(uint nf);
+\end{minted}
+
+\subsubsection{Distributions}
+\label{subsec:distributions}
+
+Initial conditions are all handled by the \mintinline{cpp}{Distribution} class, or more accurately, subclasses of it. For instance, \mintinline{cpp}{LesHouchesDistribution} is a subclass, and implements the standard benchmarking initial conditions. These classes define the initial evolution energy, the values of the PDFs at that energy, as well as the reference value of $\alpha_s$ at the initial energy, and the masses of the quarks (and hence the initial number of flavors). Each subclass must implement the functions that return the initial PDFs for the gluon, as well as the $xu(x, Q_0^2)$, $xd(x, Q_0^2)$, and $xs(x, Q_0^2)$ along with the anti-quark distributions. They must also specify the following methods:
+
+\begin{minted}{cpp}
+void Distribution::fillSingletCoeffs(
+  accessor_type const& accessor,
+  std::vector<value_type> const& grid_points
+);
+void Distribution::fillNonSingletCoeffs(
+  accessor_type const& accessor,
+  std::vector<value_type> const& grid_points
+);
+void Distribution::setup(double Q0, double Qf)
+\end{minted}
+
+which handle setting up the coefficients with the initial PDFs, as well as what to do if the user wants to update the value of the initial or final energies (e.g. returning a new value of $n_{f,i}$). The \mintinline{cpp}{accessor} is a function that accepts an id and a grid index, the former corresponding to a distribution in Table~\ref{tab:dist-indices}, and the latter being a grid index.
+
+\subsubsection{Expressions}
+\label{subsec:expressions}
+
+The main \mintinline{cpp}{Expression} class handles splitting function, operator matrix elements, and anything with with regular parts, plus-distribution parts, and delta-function parts. Additionally, due to the method by which we perform the convolutions, we only require the $n_f$-dependent/$x$-independent parts of the latter two, so each expression will store these values by calling
+
+\begin{minted}{cpp}
+void Expression::preCalc()
+\end{minted}
+
+The value of $n_f$ and any other $x$-independent quantities for the splitting functions are updated globally by calling
+
+\begin{minted}{cpp}
+static SplittingFunction::update(
+  uint nf,
+  double beta0,
+  double log_muf2_mur2
+);
+\end{minted}
+
+In general to retrieve the value of any piece of an expression is done by
+
+\begin{minted}{cpp}
+double Expression::calcRegular(double x);
+double Expression::calcPlus();
+double Expression::calcDelta();
+\end{minted}
+
+while retrieving the calculated values of the latter two is done by
+
+\begin{minted}{cpp}
+double Expression::plus();
+double Expression::delta();
+\end{minted}
+
+Every splitting function is a derived class of \mintinline{cpp}{SplittingFunction}, which itself is a derived class of \mintinline{cpp}{Expression}. By default, the global value of $n_f$ is set to 4, so if the user needs to evaluate these on their own, ensure to call the static  \mintinline{cpp}{.update()} method with the desired value of $n_f$ (and other $x$-independent quantities).
+
+The case is similar for the operator matrix elements, where for NNLO each OME is a subclass of \mintinline{cpp}{OpMatElem}. In the case of N$^3$LO, where we interface with \texttt{libome}, there is only one class \mintinline{cpp}{OpMatElemN3LO} whose constructor accepts an \mintinline{cpp}{ome::rpd_distribution}, the standard container for OMEs in \texttt{libome}.
+
+\subsubsection{The DGLAPSolver Class}
+\label{subsec:dglapsolver}
+
+The \mintinline{cpp}{DGLAPSolver} is the class that handles the actual evolution of the PDFs. In particular, it performs the calculation of all the coefficient via the defined set of recursion relations for that order. In the singlet sector is calculates these via the truncated ansatz, and depending on user choice, it either calculates the non-singlet coefficients via this same ansatz or with the exact ansatz.
+
+The constructor has the following signature:
+
+\begin{minted}{cpp}
+DGLAPSolver(
+  uint order, Grid& grid, AlphaS const& alpha_s,
+  double Qf, uint iterations, uint trunc_idx,
+  Distribution const& initial_dist,
+  double mur2_muf2 = 1.0
+);
+\end{minted}
+
+There are a number of options that can be supplied to the \mintinline{cpp}{DGLAPSolver} after its instantiation and before performing the evolution.
 The first of these are the splitting function approximation types.
 The current format of the approximations relies on two outer envelopes, with a third option being the average of the two.
 In the case of the non-singlet splitting functions, there is also the availability of the exact expressions.
-The default configuration is to use the average of the envelopes for all of the singlet splitting functions and the exact expression for the non-singlet splitting functions, but these can be changed with the  \mintinline{cpp}{.setP3ApproximationType()} method.
+The default configuration is to use the average of the envelopes for all of the singlet splitting functions and the exact expression for the non-singlet splitting functions, but these can be changed with the  \mintinline{cpp}{.setP3ApproximationTypes()} method.
 For instance, to use envelope 1 for $P^{(3)}_{qg}$ (with every other splitting function using the average by default), and the average of the envelopes for $P_{\mathrm{NS}}^{(3),+}$, one would do
 
 \begin{minted}{cpp}
-solver.setP3ApproximationType({
+solver.setP3ApproximationTypes({
     std::make_pair(ExprName::P3qg, P3ApproxType::Imod1),
     std::make_pair(ExprName::P3nsp, P3ApproxType::ImodAvg),
 });
 \end{minted}
 
-There are an additional set of options related mainly to benchmarking or compatibility, which can be accessed by calling \mintinline{cpp}{.getOptions()}, which returns the struct in Listing~\ref{lst:dglap-options}.
+There are an additional set of options related mainly to benchmarking or compatibility, which can be accessed by calling \mintinline{cpp}{.getOptions()}, which returns the struct in Listing~\ref{lst:dglap-options}. Among these options are ones that turn on or off some various N$^3$LO components, or that use the Fortran ABI for the splitting functions (which should not be noticeably different). The names of the options, we hope, are self-explanatory.
 
 \begin{listing}
   \inputminted[frame=lines,linenos]{cpp}{res/dglap_options.cpp}
@@ -758,12 +993,13 @@ There are an additional set of options related mainly to benchmarking or compati
   \label{lst:dglap-options}
 \end{listing}
 
-Note, again, that these options must be specified \textit{before} calling \mintinline{cpp}{.evolve()}
+After options are specified as desired, the user can then call either \mintinline{cpp}{.evolve()} or \mintinline{cpp}{.evolveTrunc()}. The former performs the evolution of the non-singlet sector using the exact ansatz, while the latter does it with the truncated ansatz. We will note here that, at higher orders where the non-singlet coefficients (e.g. the $D^{s}_{t,m,n}$ coefficients at N$^3$LO) pick up additional dimensions, the exact ansatz's time complexity increases exponentially, whereas the truncated does not. At N$^3$LO this becomes noticeable, where for suitably high numbers of iterations it is frequently faster to use the truncated ansatz.
+
 
 \subsubsection{LHAPDF Interface}
 \label{subsec:lhapdf-interface}
 
-Assuming the correct flags were set up in the CMake configuration, there will be the option to interface the input and/or output with LHAPDF. To handle the former case, there is the option to specify the initial distribution as an LHAPDF PDF via the \mintinline{cpp}{LHAPDFDistribution} class, which simply takes an LHAPDF PDF, as well as the particular desired initial and final energies. It can be used in an identical fashion (since it is also a derived class of \mintinline{cpp}{Distribution}) to the \mintinline{cpp}{LesHouchesDistribution} seen in Listing~\ref{lst:ex-prog}.
+Assuming the correct flags were set up in the CMake configuration, there will be the option to interface the input and/or output with LHAPDF. To handle the former case, there is the option to specify the initial distribution as an LHAPDF PDF via the \mintinline{cpp}{LHAPDFDistribution} class, which simply takes an LHAPDF PDF, as well as the particular desired initial and final energies. It can be used in an identical fashion (since it is also a derived class of \mintinline{cpp}{Distribution}) to the \mintinline{cpp}{LesHouchesDistribution} seen in Listing~\ref{lst:ex-prog}. See Section~\ref{subsec:distributions} for a further description of what is required of a subclass of \mintinline{cpp}{Distribution}
 
 There is also the option to produce an output PDF that can then be imported and used within LHAPDF. This can be done via the \mintinline{cpp}{LHAPDFGrid} class. An example main function is given in Listing~\ref{lst:lhapdfgrid}.
 
@@ -773,7 +1009,9 @@ There is also the option to produce an output PDF that can then be imported and 
   \label{lst:lhapdfgrid}
 \end{listing}
 
-In the event that LHAPDF was installed in a system directory, e.g. \path{/usr/local}, \texttt{Candia-v2} will not install the PDF into the corresponding PDF set directory to avoid requiring user credentials or escalation. The user is free to copy/move the PDF to the PDF set directory themselves, which is typically \path{<lhapdf-prefix>/share/LHAPDF}.
+The \path{infofile.in} file is a template \path{.info} file present in LHAPDF PDF sets. An example one is included in the root of the project. This file contains a number of replacement fields enclosed in percent signs '\%', so that once the evolution is complete, the code will insert into the file e.g. the list of values of $\alpha_s$ by replacing the string ``\%AS\_QS\%'' in the file.
+
+Since the user may have installed LHAPDF in a system directory, e.g. \path{/usr/local}, \texttt{Candia-v2} will not install the PDF into the corresponding PDF set directory to avoid requiring user credentials or escalation. The user is free to copy/move the PDF to the PDF set directory themselves, which is typically \path{<lhapdf-prefix>/share/LHAPDF}, or load the set directory from the working directory.
 
 \subsubsection{Subtraction and Residual PDF Access}
 \label{subsec:subpdf-access}
@@ -784,77 +1022,16 @@ The generation of subtraction and residual PDFs is very simple, and only require
 std::vector<ArrayGrid> DGLAPSolver::calculateSubtractionPDFs();
 \end{minted}
 
-This function returns the same datatype as the \mintinline{cpp}{.evolve()} method, and will contain 20 total PDFs: $\tilde{f}_q^{(1)}$, $\tilde{f}_q^{(2)}$, $\tilde{f}_q^{(3)}$, $\tilde{f}_q^{(\mathrm{NLO})}$, $\tilde{f}_q^{(\mathrm{NNLO})}$, ${\delta}f_q^{(1)}$, ${\delta}f_q^{(2)}$, ${\delta}f_q^{(3)}$, ${\delta}f_q^{(\mathrm{NLO})}$, and ${\delta}f_q^{(\mathrm{NNLO})}$, for charm and bottom quark PDFs.
+This function returns the same datatype as the \mintinline{cpp}{.evolve()} methods, and will contain 20 total PDFs: $\tilde{f}_q^{(1)}$, $\tilde{f}_q^{(2)}$, $\tilde{f}_q^{(3)}$, $\tilde{f}_q^{(\mathrm{NLO})}$, $\tilde{f}_q^{(\mathrm{NNLO})}$, ${\delta}f_q^{(1)}$, ${\delta}f_q^{(2)}$, ${\delta}f_q^{(3)}$, ${\delta}f_q^{(\mathrm{NLO})}$, and ${\delta}f_q^{(\mathrm{NNLO})}$, for charm and bottom quark PDFs.
 
-Handling the order of these in an array of length 20 is aided by the \mintinline{cpp}{SubtractionPDFIndices} enum so that, for instance, one can retrieve ${\delta}f_b^{(2)}$ simply by
+Handling the order of these in an array of length 20 is aided by the \mintinline{cpp}{SubtractionPDFIndices} enum\footnote{This is a large enum, so we refer the reader to the source code for the full list of values.} so that, for instance, one can retrieve ${\delta}f_b^{(2)}$ simply by
 
 \begin{minted}{cpp}
 auto deltafb2 = subpdfs[B_DELTAF2];
 \end{minted}
 
-Of course, if the solver has not evolved pass the mass of the charm or the bottom quark, then those PDFs will be zero.
+Of course, if the solver has not evolved past the mass of the charm or the bottom quark, then those PDFs will be zero.
 
-\subsection{Additional Program Description}
-\label{sec:adv-prog-desc}
-
-The previous section contained information regarding parts of the library that the user would be likely to interact with for basic DGLAP evolution. In this section we describe the other pieces of the internals of the code.
-
-\subsubsection{The ArrayGrid Class}
-\label{subsec:arraygrid}
-
-The \mintinline{cpp}{ArrayGrid}, which is the subtype of the \mintinline{cpp}{std::vector} returned by \mintinline{cpp}{DGLAPSolver::evolve}, is actually an alias:
-
-\begin{minted}{cpp}
-using ArrayGrid = ArrayGridBase<double, 1>;
-\end{minted}
-
-where \mintinline{cpp}{ArrayGridBase} takes two template arguments, that being the underlying datatype of the array, and the number of dimensions. This class avoids the issue of memory fragmentation for large numbers of nested \mintinline{cpp}{std::vector}s by allocating all dimensions as one vector, and providing convenience methods for access as if it were an ordinary $N$-dimensional array. This accessor has the following signature:
-
-\begin{minted}{cpp}
-template <typename... TArgs>
-decltype(auto) operator()(TArgs... args)
-\end{minted}
-
-The \mintinline{cpp}{operator[]} overload doesn't support additional arguments until C++23, which is why \mintinline{cpp}{operator()} is used. One simply provides enough arguments as there are dimensions to this method which retrieves the desired quantity.
-
-If the user specifies only $N$-1 arguments in the above function, since there is no longer a reference to return for some subrange, we now return a \mintinline{cpp}{std::span}, which should still behave similarly to the ordinary nested vector data structure.
-
-\subsubsection{Splitting Functions and Operator Matrix Elements}
-\label{subsec:splitfuncs-and-omes}
-
-Splitting functions and operator matrix elements are derived classes of \mintinline{cpp}{Expression}, which represents any expression containing a regular part, a plus distribution part, and a delta function part. The following methods calculate these pieces:
-
-\begin{minted}{cpp}
-double Expression::calcRegular(double x);
-double Expression::calcPlus();
-double Expression::calcDelta();
-\end{minted}
-
-while these methods will return cached values:
-
-\begin{minted}{cpp}
-double Expression::plus();
-double Expression::delta();
-\end{minted}
-
-which are filled by calling
-
-\begin{minted}{cpp}
-void Expression::preCalc();
-\end{minted}
-
-The \mintinline{cpp}{SplittingFunction} class inherits from \mintinline{cpp}{Expression} and adds a few attributes required for evaluation of the splitting function pieces, such as storing $n_f$, $\beta_0$, and $\ln(\mu_R^2/\mu_F^2)$. These values are updated by calling
-
-\begin{minted}{cpp}
-void SplittingFunction::update(
-    uint nf,
-    double beta0,
-    double log_mur2_muf2);
-\end{minted}
-
-The individual splitting functions inherit from \mintinline{cpp}{SplittingFunction} and provide the ``calc'' methods.
-
-The \mintinline{cpp}{OpMatElem} class inherits from \mintinline{cpp}{Expression} and provide very similar functionality, but for the OMEs. The only difference is that, since the N$^3$LO OMEs interface with \texttt{libome}, there is another subclass called \mintinline{cpp}{OpMatElemN3LO} whose constructor accepts an \mintinline{cpp}{ome::rpd_distribution} from the \texttt{libome} library.
 
 \subsection{Major Fixes and Optimizations from \texorpdfstring{\texttt{Candia-v1}}{Candia-v1}}
 \label{subsec:optims}

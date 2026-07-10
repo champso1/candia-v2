@@ -28,6 +28,6 @@ int main()
     order, grid, alphas,
     Qf, iterations, trunc_idx,
     dist, mur2_muf2);
-  auto dists = solver.evolve();
+  std::vector<ArrayGrid> dists = solver.evolve();
   // do stuff with the distributions
 }
