@@ -111,7 +111,7 @@ namespace Candia2
 	/** @brief struct to store flags/options for logging */
 	struct LogOptions final
 	{
-		int verbosity{LOG_WARNING}; //!< anything equal to or above (in terms of priority) is displayed, everything else isn't
+		int verbosity{LOG_INFO}; //!< anything equal to or above (in terms of priority) is displayed, everything else isn't
 		bool use_log_output_stream{false}; //!< switch for whether we are logging to another output stream, like a file
 		std::reference_wrapper<std::ostream> log_output_stream{std::ref(std::cerr)}; //!< actual output stream. only used if @a use_log_output_stream is true
 	};

@@ -169,6 +169,8 @@ int main(int argc, char *argv[]) {
 	log_options.use_log_output_stream = true;
 	log_options.log_output_stream = log_output_file;
 
+	log_options.verbosity = LOG_ERROR;
+
 	std::vector<double> xtab{1e-5, 1e-4, 1e-3, 1e-2, 0.1, 0.3, 0.5, 0.7, 0.9, 1.0};
 	Grid grid(xtab);
 
