@@ -1,9 +1,10 @@
-# 1.7.0 (from 1.6.0) <date>:
+# 1.7.0 (from 1.6.0) July 11, 2026:
 	- Using the exact P3ns splitting functions is now the default, and the `.useP3Exact()` method is removed, with all approximation specifications moving to the `.setP3ApproximationTypes()` method.
 	- Specifying to evolve with truncated ansatz is moved from `DGLAPOptions` to just being a new method, `.evolveTrunc()`, with `.evolve()` performing the exact only
 	- Fixed issues with the calculation of the subtraction and residual PDFs, as well as the alphas normalization
 	- Most LOG\_INFO messages were moved to LOG\_DEBUG, so that by default we only see the evolution progress and nothing else
 	- GridFillers were completely removed since LogLinQuad was just objectively better and faster, there was no reason to use anything else. Everything else is moved to `Grid`, and its constructor is now much cleaner
+	- Removed `read_table.cpp` from the examples, and replaced it with `lhapdf_grid.cpp`, and cleaned up `evolve_dglap.cpp` to add more comments explaining the different pieces of code
 
 # 1.6.0 (from 1.5.2) May 4, 2026:
 	- Threading is now the default and there is no option to change this by specifying the `-DENABLE_THREADING=OFF` flag anymore.

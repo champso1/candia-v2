@@ -37,21 +37,16 @@ Among standard CMake options like `-DCMAKE_BUILD_TYPE` or `-DCMAKE_INSTALL_PREFI
 - `CANDIA_WITH_LHAPDF` (default: FALSE): compile LHAPDF support. 
 - `CANDIA_LHAPDF_DIR` (default: '/usr/local'): if LHAPDF is installed in a nonstandard location (i.e. not /usr/local), then specify its installation prefix here. this variable is ignored if `CANDIA_WITH_LHAPDF` is FALSE.
 - `CANDIA_BUILD_DOCS` (default: FALSE): use Doxygen to build the code documentation
-- `CANDIA_BUILD_MANUSCRIPTS` (default: FALSE): use LaTeX to build the manuscripts
-- `CANDIA_BUILD_EXAMPLES` (default: YES): build the two examples in the `examples/` directory
-- `CANDIA_BUILD_TESTS` (default: FALSE): build the "tests" in the `tests/` directory. These aren't traditional tests, but rather a more extensive set of C++ files to perform e.g. benchmarking. Basic functionality is already in the examples.
+- `CANDIA_BUILD_MANUSCRIPTS` (default: FALSE): use LaTeX to build the manuscripts in the `manuscripts/` directory
+- `CANDIA_BUILD_EXAMPLES` (default: TRUE): build the two examples in the `examples/` directory
+- `CANDIA_BUILD_TESTS` (default: FALSE): build the "tests" in the `tests/` directory. These aren't traditional tests, but rather a more extensive set of C++ files to perform e.g. benchmarking, plot generation, table creation, etc.
 
 Running `cmake --install <build-dir>` will perform standard installation to the chosen directory, and will also spit out a `candiaConfig.cmake` file -- see [here](#usage-from-other-cmake-projects) for what to do with it in other CMake projects.
 
 
 ## Usage
 
-Once built, there will be a directory named `examples` in which there are some executables, data files, and other auxiliary files that all demonstrate a lot of the basic functionality, the source files for which are in the `examples` directory in the root of the repository.
-
-- `evolve_dglap.cpp`: performs the evolution with the arguments passed in to the executable. Spits out a data file containing all of the resultant distributions.
-- `read_table.cpp`: accepts a data file on the command line and spits out a PDF file containing a table of the results built with LaTeX. Requires `pdflatex` to be available on the command line.
-
-Running the an executable with no arguments will indicate how to use each one. `evolve_dglap.cpp` will also contain comments on the library and what is going on.
+The `examples/` directory contains two files that illustrate the basic functionality of the library. The two main forms of output are basic PDFs from a single evolution, or an LHAPDF PDF from a set of evolutions to multiple different final energies. The former is exhibited in `evolve_dglap.cpp` and the latter in `lhapdf_grid.cpp`.
 
 ## Usage from Other CMake Projects
 
