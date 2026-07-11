@@ -1,5 +1,0 @@
-\hline \hline
-\end{tabular}
-\end{center}
-\end{table}
-\end{document}

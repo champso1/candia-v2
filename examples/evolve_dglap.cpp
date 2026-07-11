@@ -33,7 +33,7 @@ int main(int argc, char *argv[]) {
 	iterations = std::stoi(argv[2]);
 	trunc_idx = std::stoi(argv[3]);
 	mur2_muf2 = std::stold(argv[4]);
-	datafile_name = std::format("{}.dat", argv[7]);
+	datafile_name = std::format("{}.dat", argv[5]);
 	/* ========== */
 
 	// here we configure how the code logs its output
