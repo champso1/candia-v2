@@ -1,46 +1,45 @@
 # Candia-v2
 
 
-`Candia-v2` is a new and improved version of `Candia` (cfr. C. Hampson, M. Guzzi, arXiv:2512.22667; A. Cafarella, M. Guzzi, C. Coriano', Comp.Phys.Comm. 179 2008; A. Cafarella, M. Guzzi, C. Coriano', Nucl.Phys.B748 2006), a computer code to numerically solve DGLAP evolution for collinear PDFs in the x-space up to next-to-next-to-next-to leading order (N3LO) accuracy in perturbative QCD. `Candia-v2` currently uses an approximate version of the 4-loop splitting functions as the calculation of their exact analytical form is still in progress. `Candia` was originally written in C and was only capable of evolution up to next-to-next-to (NNLO) accuracy in QCD. New information on the splitting functions and operator matrix elements as well as advancements to C++ led to the development of `Candia-v2`, which also brings significant optimizations.
+`Candia-v2` is a new and improved version of `Candia` (cfr. C. Hampson, M. Guzzi, arXiv:2512.22667; A. Cafarella, M. Guzzi, C. Coriano', Comp.Phys.Comm. 179 2008; A. Cafarella, M. Guzzi, C. Coriano', Nucl.Phys.B748 2006), a computer code to numerically solve DGLAP evolution for collinear PDFs in the x-space up to next-to-next-to-next-to leading order (N3LO) accuracy in perturbative QCD. `Candia-v2` currently uses an approximate version of the 4-loop singlet splitting functions and the exact expressions for the 4-loop non-singlet splitting functions. `Candia` was originally written in C and was only capable of evolution up to next-to-next-to (NNLO) accuracy in QCD. New information on the splitting functions and operator matrix elements as well as advancements to C++ led to the development of `Candia-v2`, which also brings significant optimizations.
 
 ## Building
 
 ### Prerequisites
 
-- `libome`: fast interface to OMEs. included as a submodule to this repository
+- libome: fast interface to OMEs. included as a submodule to this repository
 - GSL: GNU Scientific Library
-- `tbb`: Intel Threading Building Blocks -- allows usage of C++ execution policies to parallelize/vectorize C++ algorithm loops
-- Compiler with C++20 support see [here](#compiler-and-system-support) for info about compiler/system choice
+- tbb: Intel Threading Building Blocks -- allows usage of C++ execution policies to parallelize/vectorize C++ algorithm loops
+- Compiler with C++20 support, see [here](#compiler-and-system-support) for info about compiler/system choice
 - LHAPDF (optional): for interface to/from LHAPDF grids.
-- CMake and a build tool e.g. `Make` or `Ninja`
+- CMake and a build tool e.g. GNU `Make` or `Ninja`
 - Doxygen (optional): for building the code documentation
 - LaTeX tools (optional): for building the manuscripts
 
 #### Compiler and System Support
 
-Windows is in general not supported except for Windows Subsystem for Linux. However, Intel provides a C/C++ and Fortran compiler and library suite which, coupled with [this platform-independent CMake-based GSL wrapper](https://github.com/ampl/GSL), allows one to use `Candia-v2` on Windows, just without the LHAPDF support. As far as we are aware, LHAPDF doesn't have a widely available fork/wrapper to port the Autotools-based system to something like CMake. Further, LHAPDF uses some POSIX syscalls which would require some manual intervention.
-
-MacOS is supported but LLVM's CLang or GCC are required, because as far as we are aware, Apple's CLang's `libc++` doesn't implement C++ execution policies. As a note, it was a bit challenging to link with LLVM's `libc++`, so we recommend just using GCC on MacOS. Further, it is best to compile GSL and LHAPDF (if using the LHAPDF interface) using the same GCC version to avoid weird compile errors with `Candia-v2`.
+Windows is in general not supported except for Windows Subsystem for Linux. MacOS is supported but LLVM's CLang or GCC are required, because as far as we are aware, Apple's CLang's `libc++` doesn't implement C++ execution policies. Further, it is best to compile GSL and LHAPDF (if using the LHAPDF interface) using the same GCC version to avoid weird compile errors with `Candia-v2`.
 
 ### Compiling
 
 Compiling follows the standard CMake procedure:
 
 ```bash
+git clone https://github.com/champso1/candia-v2.git --recurse-submodules
 mkdir build
 cd build
-cmake .. <options>
+cmake .. [options]
 cmake --build .
 # optional: cmake --install .
 ```
 
 Among standard CMake options like `-DCMAKE_BUILD_TYPE` or `-DCMAKE_INSTALL_PREFIX` are the following `Candia-v2` specific options (all of which are prefixed with `CANDIA_`):
-- `CANDIA_WITH_LHAPDF` (bool; default: OFF): compile LHAPDF support. 
-- `CANDIA_LHAPDF_DIR` (string; default: '/usr/local'): if LHAPDF is installed in a nonstandard location (i.e. not /usr/local), then specify its installation prefix here. this variable is ignored if `CANDIA_WITH_LHAPDF` is OFF.
-- `CANDIA_BUILD_DOCS` (bool; default: OFF): use Doxygen to build the code documentation
-- `CANDIA_BUILD_MANUSCRIPTS` (bool; default: OFF): use LaTeX to build the manuscripts
-- `CANDIA_BUILD_EXAMPLES` (bool; default: YES): build the two examples in the `examples/` directory
-- `CANDIA_BUILD_TESTS` (bool; default: OFF): build the "tests" in the `tests/` directory. These aren't traditional tests, but rather a more extensive set of C++ files to perform e.g. benchmarking. Basic functionality is already in the examples.
+- `CANDIA_WITH_LHAPDF` (default: FALSE): compile LHAPDF support. 
+- `CANDIA_LHAPDF_DIR` (default: '/usr/local'): if LHAPDF is installed in a nonstandard location (i.e. not /usr/local), then specify its installation prefix here. this variable is ignored if `CANDIA_WITH_LHAPDF` is FALSE.
+- `CANDIA_BUILD_DOCS` (default: FALSE): use Doxygen to build the code documentation
+- `CANDIA_BUILD_MANUSCRIPTS` (default: FALSE): use LaTeX to build the manuscripts
+- `CANDIA_BUILD_EXAMPLES` (default: YES): build the two examples in the `examples/` directory
+- `CANDIA_BUILD_TESTS` (default: FALSE): build the "tests" in the `tests/` directory. These aren't traditional tests, but rather a more extensive set of C++ files to perform e.g. benchmarking. Basic functionality is already in the examples.
 
 Running `cmake --install <build-dir>` will perform standard installation to the chosen directory, and will also spit out a `candiaConfig.cmake` file -- see [here](#usage-from-other-cmake-projects) for what to do with it in other CMake projects.
 
@@ -77,7 +76,7 @@ We will now keep a Changelog file for each release/update to the main branch, fo
 
 ## Attributions and License
 
-This code is available under the GPLv3 license, distributed here as [LICENSE](LICENSE). We also are grateful for the code and routines provided for the NNLO and approximate N3LO splitting functions, references to which are provided in the public GitHub repository [here](https://github.com/svenolafmoch/Conformal-EIC), licensed also under the GPLv3 license. We are also grateful for the 3-loop operator matrix elements, provided via the `libome` library. The original repository is [here](https://gitlab.com/libome/libome), and a fork used in `candia-v2` is given [here](https://github.com/champso1/libome-fork), also available under the GPLv3 license, with appropriate citations required for usage given in its CITATION file.
+This code is available under the GPLv3 license, distributed here as [LICENSE](LICENSE). We also are grateful for the code and routines provided for the NNLO and approximate N3LO splitting functions, references to which are provided in the public GitHub repository [here](https://github.com/svenolafmoch/Conformal-EIC), licensed also under the GPLv3 license. We are also grateful for the 3-loop operator matrix elements, provided via the `libome` library. The original repository is [here](https://gitlab.com/libome/libome), and a fork used in `candia-v2` is given [here](https://github.com/champso1/libome-fork), also available under the GPLv3 license, with appropriate citations required for usage given in its CITATION file. Lastly, the code for the exact P3ns splitting functions (which are not included in the above repository yet) are from [arXiv:2604.09534](https://arxiv.org/abs/2604.09534).
 
 ## Contacts
 
