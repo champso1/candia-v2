@@ -56,21 +56,21 @@
             }
         },
 		{
-            "name": "gcc-osx",
-            "displayName": "gcc-osx",
-            "description": "Using compilers: C = gcc, CXX = g++",
-            "generator": "Ninja Multi-Config",
-            "binaryDir": "${sourceDir}/bin/${presetName}",
+            "name": "clang-clangd",
+            "displayName": "clang-clangd",
+            "description": "Using compilers: C = clang, CXX = clang++",
+            "generator": "Unix Makefiles",
+            "binaryDir": "${sourceDir}/build",
             "cacheVariables": {
                 "CMAKE_INSTALL_PREFIX": "${sourceDir}/install/${presetName}",
-                "CMAKE_C_COMPILER": "gcc-15",
-                "CMAKE_CXX_COMPILER": "g++-15",
-                "CMAKE_CONFIGURATION_TYPES": "Release;Debug;RelWithDebInfo",
+                "CMAKE_C_COMPILER": "clang",
+                "CMAKE_CXX_COMPILER": "clang++",
+                "CMAKE_BUILD_TYPE": "Debug",
 				"CANDIA_BUILD_TESTS": "YES",
-                "CANDIA_BUILD_DOCS": "YES",
-                "CANDIA_BUILD_MANUSCRIPTS": "YES",
+                "CANDIA_BUILD_DOCS": "NO",
+                "CANDIA_BUILD_MANUSCRIPTS": "NO",
                 "CANDIA_WITH_LHAPDF": "YES",
-				"CANDIA_LHAPDF_DIR": "$env{HOME}/software/LHAPDF-6.5.5/out"
+				"CANDIA_LHAPDF_DIR": "$env{HOME}/.local"
             }
         }
     ]
