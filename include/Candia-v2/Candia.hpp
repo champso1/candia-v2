@@ -123,14 +123,21 @@ namespace Candia2
 			Truncated
 		};
 		EvolType _evol_type{EvolType::None};
-		
+
+		/** @defgroup coeffgetters Helpers for  */
+		/**
+		 *  @ingroup coeffgetters
+		 *  @{
+		 */
 		inline double& getSingletCoeffValue(uint j, uint k) {
+			assert(_evol_type != EvolType::None, "invalid evolution type (found None)");
 			if (_evol_type == EvolType::Exact)
 				return _S(0,j,0,k);
 			else
 				return _S_NS(0,j,0,k);
 		}
 		inline ArrayGridView getSingletCoeffArray(uint j) {
+			assert(_evol_type != EvolType::None, "invalid evolution type (found None)");
 			if (_evol_type == EvolType::Exact)
 				return _S(0,j,0);
 			else
@@ -138,6 +145,7 @@ namespace Candia2
 		}
 		
 	    inline double& getNonSingletCoeffValue(uint j, uint k) {
+			assert(_evol_type != EvolType::None, "invalid evolution type (found None)");
 			if (_evol_type == EvolType::Truncated)
 				return _S_NS(0,j,0,k);
 			switch (_order) {
@@ -150,6 +158,7 @@ namespace Candia2
 		}
 
 		inline ArrayGridView getNonSingletCoeffArray(uint j) {
+			assert(_evol_type != EvolType::None, "invalid evolution type (found None)");
 			if (_evol_type == EvolType::Truncated)
 				return _S_NS(0,j,0);
 			switch (_order) {
@@ -180,9 +189,10 @@ namespace Candia2
 		};
 
 	public:
-		inline void setP3ApproximationType(std::pair<ExprName,P3ApproxType> type)
+		inline void setP3ApproximationTypes(std::vector<std::pair<ExprName,P3ApproxType>> types)
 		{
-			_p3_approx_types[static_cast<uint>(type.first)] = type.second;
+			for (auto const& [first, second] : types)
+				_p3_approx_types[static_cast<uint>(first)] = second;
 		}
 
 
@@ -255,6 +265,7 @@ namespace Candia2
 			std::vector<ArrayGrid>& resum_singlet,
 			std::vector<ArrayGrid>& resum);
 
+		// TODO: why the fuck did I write this one?
 		void fixDistributionsForce(std::vector<ArrayGrid>& resum);
 
 		/** @brief takes the default exact coefficients (A, B, ...) and sets up S to contain all necessary info */

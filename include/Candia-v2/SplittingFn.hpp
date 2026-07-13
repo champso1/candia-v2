@@ -368,10 +368,10 @@ namespace Candia2
 	class P3qq final: public SplittingFunction
 	{
 	private:
-		double x1l4cff, x1l3cff;
-		double y1l4cff, y1l3cff;
-		double bfkl1;
-		double x0l6cff, x0l5cff, x0l4cff;
+		double x1l4cff{}, x1l3cff{};
+		double y1l4cff{}, y1l3cff{};
+		double bfkl1{};
+		double x0l6cff{}, x0l5cff{}, x0l4cff{};
 	public:
 		using SplittingFunction::SplittingFunction;
 		
@@ -388,10 +388,10 @@ namespace Candia2
 	class P3qg final: public SplittingFunction
 	{
 	private:
-		double x1l5cff, x1l4cff;
-		double y1l5cff, y1l4cff;
-		double bfkl1;
-		double x0l6cff, x0l5cff, x0l4cff;
+		double x1l5cff{}, x1l4cff{};
+		double y1l5cff{}, y1l4cff{};
+		double bfkl1{};
+		double x0l6cff{}, x0l5cff{}, x0l4cff{};
 	public:
 		using SplittingFunction::SplittingFunction;
 		
@@ -406,10 +406,10 @@ namespace Candia2
 	class P3gq final: public SplittingFunction
 	{
 	private:
-		double x1l5cff, x1l4cff;
-		double y1l5cff, y1l4cff;
-		double bfkl0, bfkl1;
-		double x0l6cff, x0l5cff, x0l4cff;
+		double x1l5cff{}, x1l4cff{};
+		double y1l5cff{}, y1l4cff{};
+		double bfkl0{}, bfkl1{};
+		double x0l6cff{}, x0l5cff{}, x0l4cff{};
 	public:
 		using SplittingFunction::SplittingFunction;
 
@@ -424,11 +424,11 @@ namespace Candia2
 	class P3gg final: public SplittingFunction
 	{
 	private:
-		double a4gluon;
-		double ccoeff, dcoeff;
-		double x1l4cff, x1l3cff;
-		double bfkl0, bfkl1;
-		double x0l6cff, x0l5cff, x0l4cff;
+		double a4gluon{};
+		double ccoeff{}, dcoeff{};
+		double x1l4cff{}, x1l3cff{};
+		double bfkl0{}, bfkl1{};
+		double x0l6cff{}, x0l5cff{}, x0l4cff{};
 	public:
 		using SplittingFunction::SplittingFunction;
 		

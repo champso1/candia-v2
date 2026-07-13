@@ -37,7 +37,7 @@ namespace Candia2
 			} else if (_order == 3) {
 				return _evol_type == EvolType::Truncated ? _S_NS(0,j,0) : _D(j,0,0,0,0);
 			}
-			throw "unreachable";
+			throw std::runtime_error("unreachable");
 		};
 		
 		for (uint i=1; i<=_nf; i++) {

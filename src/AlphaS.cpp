@@ -193,6 +193,9 @@ namespace Candia2
 
 	void AlphaS::calculateThresholdValues()
 	{
+		if (_scheme == FIXED)
+			return;
+		
 	    double mur_muf = std::sqrt(_mur2_muf2);
 		log(LOG_DEBUG, "AlphaS::calculateThresholdValues()", "Using mur/muf={}", mur_muf);
 		
