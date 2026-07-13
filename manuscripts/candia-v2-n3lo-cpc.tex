@@ -183,27 +183,22 @@ We present \texttt{Candia-v2}, an open-source software package that generalizes 
   %Only required for a New Version summary, otherwise leave out.
 {\em Reasons for the new version:} Significant developments in the calculation of the DGLAP splitting functions at four loops as well as the operator matrix elements at N$^3$LO.\\
   %Only required for a New Version summary, otherwise leave out.
-{\em Summary of revisions:} Conversion from \texttt{C} to \texttt{C++}, optimizations with convolution/interpolation routines, N$^3$LO evolution, and possibility for LHAPDF inputs and outputs \\
+{\em Summary of revisions:} Conversion from \texttt{C} to \texttt{C++}, optimizations with convolution/interpolation routines, N$^3$LO evolution, and possibility for LHAPDF inputs and outputs. Implementation of a module for subtraction and residual parton distributions functions (PDFs) \\
   %Only required for a New Version summary, otherwise leave out.
-{\em Nature of problem:} This program solves the DGLAP evolution equations in $x$-space for parton distributions functions (PDFs) at N$^3$LO \\
+{\em Nature of problem:} This program solves the DGLAP evolution equations in $x$-space for PDFs at N$^3$LO \\
   %Describe the nature of the problem here. \\
 {\em Solution method:} The algorithm is based upon logarithmic expansions of the solution in $x$-space and a set of recursion relations for unknown coefficients. \\
   %Describe the method solution here.
-{\em Additional comments including restrictions and unusual features:} Due to the dependency on the GNU Scientific Library (GSL) and (optionally) LHAPDF, which do not provide native binaries for Windows and are also difficult to build from source on Windows, we recommend using WSL if a Unix-like system is unavailable. Additionally, on MacOS systems, since Apple \texttt{clang} does not implement the Intel Threading Building Blocks (TBB) library, it is recommended to either use GCC or LLVM's \texttt{clang}.
-
-
+{\em Additional comments including restrictions and unusual features:} Due to the dependency on the GNU Scientific Library (GSL) and (optionally) LHAPDF, which do not provide native binaries for Windows and are also difficult to build from source on Windows, we recommend using WSL if a UNIX-like system is unavailable. Additionally, on MacOS systems, since Apple \texttt{clang} does not implement the Intel Threading Building Blocks (TBB) library, it is recommended to either use GCC or LLVM's \texttt{clang}.
 
 \end{small}
 \end{abstract}
 \end{frontmatter}
 
 
-
-
 \pagebreak
 \tableofcontents
 \pagebreak
-
 
 
 \section{Introduction}
@@ -217,13 +212,13 @@ The package incorporates the most recent results on the 4-loop DGLAP splitting f
 The ongoing Run 3 of the Large Hadron Collider (LHC) is expected to deliver approximately (300~fb$^{-1}$) of integrated luminosity, and the future high-luminosity LHC (HL-LHC) program aims to increase this amount by about one order of magnitude for both the ATLAS and CMS experiments. In parallel, the Electron-Ion Collider (EIC) will provide high-precision measurements of hadronic structure over a complementary kinematic range~\cite{AbdulKhalek:2021gbh}. These experimental advances require theoretical predictions for hadronic cross sections with comparable accuracy. This, in turn, motivates the development of precise and efficient PDF-evolution tools, such as (\texttt{Candia-v2}), capable of implementing the most recent perturbative QCD ingredients.
 
 Accurate parton evolution is an essential ingredient in the theoretical interpretation of present and future collider data. Over the years, a variety of numerical and semi-analytic strategies have been developed to solve the DGLAP equations, including methods based on Mellin-space techniques, recursive solutions, interpolation grids, Runge-Kutta integration, and parton-branching formulations~\cite{Furmanski:1981cw,Rossi:1983xz,DaLuzVieira:1990xk,Kumano:1992vd,Pascaud:1994vx,Miyama:1995bd,Pascaud:1996ci,Kosower:1997hg,Hirai:1997gb,Blumlein:1997em,Coriano:1998wj,Santorelli:1998yt,Ratcliffe:2000kp,Weinzierl:2002mv,Cafarella:2005zj,Jadach:2005bf,Guzzi:2006wx,Jadach:2007qa,Simonelli:2024vyh}. Several of these approaches have been implemented in fast evolution programs, some of which are publicly available. Representative examples include \texttt{partonevolution}~\cite{Weinzierl:2002mv}, based on Mellin inversion along an optimized contour; \texttt{Pegasus}~\cite{Vogt:2004ns}, which uses the $U$-matrix method in Mellin space; \texttt{Candia}~\cite{Cafarella:2008du,candiav1}, which implements logarithmic recursion relations directly in $x$-space; \texttt{Hoppet}~\cite{Salam:2008qg,Karlberg:2026kte}, based on $x$-space Runge-Kutta evolution; and \texttt{QCDNum}~\cite{Botje:2010ay}, which employs polynomial-spline interpolation in $x$-space. More recent developments include \texttt{Apfel}~\cite{Bertone:2013vaa,Bertone:2017gds}, which combines Runge-Kutta evolution with high-order $x$-space interpolation; \linebreak \texttt{ChiliPDF}~\cite{Diehl:2021gvs}, based on global Chebyshev interpolation in Mellin space; \texttt{EKO}~\cite{Candido:2022tld}, which implements the evolution-kernel-operator formalism in Mellin space; and \texttt{uPDFevolv}~\cite{Hautmann:2014uua,Jung:2024uwc}, which follows the parton-branching approach. 
-A recent comparison of QCD evolution at approximate N$^3$LO accuracy was presented in Ref.~\cite{Cooper-Sarkar:2024crx}.
+A recent comparison of QCD evolution at approximate N$^3$LO (aN$^3$LO) accuracy was presented in Ref.~\cite{Cooper-Sarkar:2024crx}.
 %
-Global PDF analyses at approximate N$^3$LO (aN$^3$LO) in QCD have recently been documented in Refs.~\cite{NNPDF:2024nan,McGowan:2022nag} while the inclusion of QED corrections with a photon PDF at NLO accuracy is documented in Refs.~\cite{Cridge:2023ryv,Ball:2025xgq}.
+Global PDF analyses at aN$^3$LO in QCD have recently been documented in Refs.~\cite{NNPDF:2024nan,McGowan:2022nag} while the inclusion of QED corrections with a photon PDF at NLO accuracy is documented in Refs.~\cite{Cridge:2023ryv,Ball:2025xgq}.
 
 The manuscript is organized as follows.
-In Sec.~\ref{sec:program-description} we briefly illustrate the algorithm for the N$^3$LO evolution,...  
-
+In Sec.~\ref{sec:program-description} we briefly illustrate the algorithm for the N$^3$LO evolution and summarize the recursion relations from Ref.~\cite{Hampson:2025pvi}. In Sec.~\ref{sec:results}, we illustrate the \texttt{Candia-v2} evolution results for selected PDF combinations and provide numerical values in Table~\ref{tab:scaleratioN3LO}. Sec.~\ref{sub-ref-PDFs} discusses subtraction and residual PDFs while in Sec.~\ref{sec:prog-desc}, we provide a detailed description of the program and its functionalities with illustration of the core classes.  
+Sec.~\ref{sec:conclusions} contains our concluding remarks. 
 
 
 
@@ -260,7 +255,7 @@ The renormalization scale ($\mu_R$) evolution of the QCD strong coupling is desc
 \label{eq:1-basics-betafn}
 \end{equation}
 %
-where the $\beta_n$ coefficients of the QCD $\beta$-function~\cite{Gross:1973id,Politzer:1974fr}  are known up to four loops~\cite{vanRitbergen:1997va,Czakon:2004bu} and we report them below
+where the $\beta_n$ coefficients of the QCD $\beta$-function~\cite{Gross:1973id,Politzer:1974fr}  are known up to four loops~\cite{vanRitbergen:1997va,Czakon:2004bu} and we report them below for consistency
 %
 \begin{align}
 \beta_{0}  &= \frac{11}{3}N_{C}-\frac{4}{3}T_{f} \\
@@ -345,7 +340,7 @@ where $P_{ps}$ denotes the pure-singlet term. Similarly, the singlet quark--gluo
 
 
 
-\subsection{$N^3LO$ recursion relations for the exact solution (NS Sector)}
+\subsection{\texorpdfstring{$N^3LO$}{N3LO} recursion relations for the exact solution (NS Sector)}
 \label{sec:ns-exact}
 
 In Mellin-space, convolution products are mapped onto algebraic products ($[a\otimes b](N)=a(N)b(N)$) and DGLAP equations in the NS sector are purely algebraic with exact solutions. Motivated by this, we introduce the following exponential-type power series {\it ansatz} in $x$-space at the generic scale $\mu$:
@@ -359,7 +354,7 @@ f^{\mathrm{N}^m\mathrm{LO}}(x,\mu^2) =
 f(x,\mu_0^2),
 \label{x-ansatz}
 \end{equation}
-where the index $m$ corresponds to the expansion order of the splitting functions in Eq.~(\ref{kernel-expansion}) (at N$^3$LO $m=3$), $f(x,\mu_0^2)$ is the PDF at the initial scale $\mu_0$, and the $a_i(x)$ functions are determined through recursion relations in $x$ space. The functions $L_0,\dots, L_3$ are logarithmic contributions containing only $\alpha_s(\mu^2)\equiv\alpha_s$, $\alpha_s(\mu_0^2)\equiv\alpha_0$ and the $\beta_n$ coefficients. These logarithmic functions are inherited from the solution in Mellin-space and are given by 
+where the index $m$ corresponds to the expansion order of the splitting functions in Eq.~(\ref{kernel-expansion}) (at N$^3$LO $m=3$), $f(x,\mu_0^2)$ is the PDF at the initial scale $\mu_0$, and the $a_i(x)$ functions are determined through recursion relations in $x$ space. The functions $L_0,\dots, L_3$ are logarithmic contributions containing only $\alpha_s(\mu^2)\equiv\alpha_s$, $\alpha_s(\mu_0^2)\equiv\alpha_0$ and the $\beta_n$ coefficients. These logarithmic functions are inherited from the algebraic solution in Mellin-space and are given by 
 %
 \begin{align}
 L_0 &= \log \left(\frac{\alpha_s}{\alpha_0}\right), 
@@ -371,7 +366,7 @@ L_2 &= \log \left(\frac{\alpha_s - r_1}{\alpha_0 - r_1}\right).
 L_3 &= \frac{1}{\sqrt{-\bar{b}^2+4\bar{c}}}\arctan\left( \frac{(\alpha_s - \alpha_0)\sqrt{-\bar{b}^2+4\bar{c}}}{2\alpha_s\alpha_0 + \bar{b}(\alpha_s+\alpha_0) + 2\bar{c}} \right),
 \end{align}
 %
-where we have defined $\bar{b} \equiv -2\mathrm{Re}[r_2] = -2\mathrm{Re}[r_3]$ and $\bar{c} = |r_2|^2 = |r_3|^3$ and $r_1$, $r_2$, and $r_3$ are the non-trivial roots of the 4-loop QCD $\beta$-function appearing in the denominator of Eq.~(\ref{NS-DGLAP}) (see Sec.~III of Ref.~\cite{Hampson:2025pvi} for details). We report their $n_f$ dependent numerical values in Table~\ref{n3lo-roots} for completeness where $r_1$ is real, and $r_2$ and $r_3$ are complex conjugates of each other. These are computed numerically and are hard-coded into the program.
+where we have defined $\bar{b} \equiv -2\mathrm{Re}[r_2] = -2\mathrm{Re}[r_3]$ and $\bar{c} = |r_2|^2 = |r_3|^3$ and $r_1$, $r_2$, and $r_3$ are the non-trivial roots of the 4-loop QCD $\beta$-function appearing in the denominator of Eq.~(\ref{NS-DGLAP}) (see Sec.~III of Ref.~\cite{Hampson:2025pvi} for more details). We report their $n_f$ dependent numerical values in Table~\ref{n3lo-roots} for completeness where $r_1$ is real, and $r_2$ and $r_3$ are complex conjugates of each other. These are computed numerically and are hard-coded into the program.
 %
 \begin{table}[ht]
 \centering
@@ -444,7 +439,7 @@ The procedure for determining all $D^s_{t,m,n}$ coefficients for a particular va
 \subsection{Recursion Relations for the Truncated Solution}
 \label{sec:recrels-singlet}
 
-Expanding the ${\cal \hat P}(x,\alpha_s)/\beta(\alpha_s)$ ratio in the DGLAP singlet sector at order ${\cal O}(\alpha_s^k)$, one obtains the $k$-order truncated version of the DGLAP equations 
+Expanding the ${\cal P}(x,\alpha_s)/\beta(\alpha_s)$ ratio in the DGLAP singlet sector at order ${\cal O}(\alpha_s^k)$, one obtains the $k$-order truncated version of the DGLAP equations 
 
 \begin{eqnarray}
 \frac{\partial{{\bf f}(x,\alpha_s)}}{\partial\alpha_s}=
@@ -498,15 +493,12 @@ These recursion relations generate truncated solutions at arbitrary order $\kapp
 
 \section{Results}
 \label{sec:results}
-The results of \texttt{Candia-v2} evolution at N$^3$LO in QCD are reported in Table~\ref{tab:scaleratioN3LO} where we also show the impact from scale dependence as discussed in Ref.~\cite{Hampson:2025pvi}. The initial conditions are those from the Les Houches toy model used in Sec.~4.4 of Ref.~\cite{Dittmar:2005ed} at the initial scale of $\mu^2_0=2$ GeV$^2$. The PDFs are evolved in the variable flavor number scheme (VFNS) up to $\mu_F^2 = 10^4$ GeV$^2$. 
-The heavy-quark mass values passed in the input are in the pole-mass approximation and are set to $m_c=\mu_0$, $m_b=4.5$ GeV, and $m_t=175$ GeV. The aN$^3$LO splitting functions currently implemented in the code use the approximations documented in Refs.~\cite{Davies:2022ofz,Moch:2021qrk,Falcioni:2023luc,Falcioni:2023vqq,Moch:2023tdj,Falcioni:2024xyt,Falcioni:2024qpd,Falcioni:2025hfz} for the singlet sector, while for the NS sector we implemented the exact results recently calculated in Ref.~\cite{Gehrmann:2026qbl}. At NNLO, we use the approximations in Refs.~\cite{Moch:2004pa,Vogt:2004mw} for a fast evaluation. The 3-loop OMEs for heavy-quark threshold conditions beyond NNLO with single mass from Refs.~\cite{Ablinger:2025joi,Ablinger:2024xtt} are implemented using an interface the \texttt{libome}~\cite{Ablinger:2025joi,libome} publicly available \texttt{C++} libraries for their numerical representation in terms of
-precise local overlapping series expansion. For the 2-loop OMEs, we implement the analytical expressions of Refs.~\cite{Buza:1995ie,Buza:1996wv}.
+The results of \texttt{Candia-v2} evolution at aN$^3$LO in QCD are reported in Table~\ref{tab:scaleratioN3LO} where we also show the impact from scale dependence as discussed in Ref.~\cite{Hampson:2025pvi}. The initial conditions are those from the Les Houches toy model used in Sec.~4.4 of Ref.~\cite{Dittmar:2005ed} at the initial scale of $\mu^2_0=2$ GeV$^2$. The PDFs are evolved in the variable flavor number scheme (VFNS) up to $\mu_F^2 = 10^4$ GeV$^2$. 
+The heavy-quark mass values passed in the input are in the pole-mass approximation and are set to $m_c=\mu_0$, $m_b=4.5$ GeV, and $m_t=175$ GeV. The aN$^3$LO splitting functions currently implemented in the code use the approximations documented in Refs.~\cite{Davies:2022ofz,Moch:2021qrk,Falcioni:2023luc,Falcioni:2023vqq,Moch:2023tdj,Falcioni:2024xyt,Falcioni:2024qpd,Falcioni:2025hfz} for the singlet sector, while for the NS sector we implemented the exact results recently calculated in Ref.~\cite{Gehrmann:2026qbl}. At NNLO, we use the approximations in Refs.~\cite{Moch:2004pa,Vogt:2004mw} for a fast evaluation. The 3-loop OMEs for heavy-quark threshold conditions beyond NNLO with single mass from Refs.~\cite{Ablinger:2025joi,Ablinger:2024xtt} are implemented using the  \texttt{libome}~\cite{Ablinger:2025joi,libome} publicly available \texttt{C++} libraries where their numerical representation is given in terms of precise local overlapping series expansion. For the 2-loop OMEs, we implement the analytical expressions of Refs.~\cite{Buza:1995ie,Buza:1996wv}.
 
-% \import{./res/tables}{scaleratio.tex}
-\import{./res/tables}{scaleratio-new.tex}
+\import{./res/tables}{scaleratio.tex}
 
-In Fig.~\ref{g-uv-PDFs} we illustrate the results for the $Q=100$ GeV \texttt{Candia-v2} evolution at the various perturbative orders for the gluon and the $u_v$ PDFs. The initial conditions are those from the Les Houches toy model described in Sec.~4.4 of Ref.~\cite{Dittmar:2005ed}. 
-The results for the $c^{(-)}(x,Q^2) = c(x,Q^2) - \bar{c}(x,Q^2)$ and $b^{(-)} = b(x,Q^2) - \bar{b}(x,Q^2)$ heavy-flavor combinations are illustrated in Fig.~\ref{cm-bm-PDFs}. These heavy-flavor asymmetries start to be different from zero at NNLO and Fig.~\ref{cm-bm-PDFs} shows the impact from both the evolution and heavy-flavor matching conditions (see Sec.~6 of Ref.~\cite{Hampson:2025pvi}) at N$^3$LO the charm- and bottom-quark cases.  
+In Fig.~\ref{g-uv-PDFs}, we illustrate the results for the $Q=100$ GeV \texttt{Candia-v2} evolution at the various perturbative orders and the convergence pattern for the gluon and $u_v$ PDFs. The results for the $c^{(-)}(x,Q^2) = c(x,Q^2) - \bar{c}(x,Q^2)$ and $b^{(-)} = b(x,Q^2) - \bar{b}(x,Q^2)$ heavy-flavor combinations are illustrated in Fig.~\ref{cm-bm-PDFs}. These heavy-flavor asymmetries start to be different from zero at NNLO and Fig.~\ref{cm-bm-PDFs} shows the impact from both the evolution and heavy-flavor matching conditions (see Sec.~6 of Ref.~\cite{Hampson:2025pvi}) at N$^3$LO for the charm and bottom PDFs.  
 
 
 \begin{figure}
@@ -529,21 +521,20 @@ The results for the $c^{(-)}(x,Q^2) = c(x,Q^2) - \bar{c}(x,Q^2)$ and $b^{(-)} = 
 \newpage 
 
 \section{Subtraction and Residual PDFs}
+\label{sub-ref-PDFs}
 
-In the calculation of hadronic cross sections whose domain is defined over a wide range of energies, General-mass variable flavor number (GMVFN) schemes organize heavy-quark
-contributions so as to interpolate between the fixed-flavor description near threshold and the massless variable-flavor description at scales much larger than the heavy-quark mass. In an ACOT-type realization, the hadronic cross
-section may be written schematically as
+In the calculation of hadronic cross sections whose domain is defined over a wide range of energies, General Mass Variable Flavor Number (GMVFN) schemes are factorization schemes that organize heavy-quark
+contributions so as to interpolate between the fixed-flavor description near threshold and the massless variable-flavor description at scales much larger than the heavy-quark mass. For example, in the ACOT~\cite{Aivazis:1993kh,Aivazis:1993pi,Tung:2001mv,Kramer:2000hn,Guzzi:2011ew,Guzzi:2024can} scheme, the hadronic cross section may be written schematically as
 \begin{equation}
   \dd\sigma^{\GMVFN}
-  = \dd\sigma^{\FC}+\dd\sigma^{\FE}-\dd\sigma^{\Sub} \, .
+  = \dd\sigma^{\FC}+\dd\sigma^{\FE}-\dd\sigma^{\Sub} \, ,
   \label{eq:gmvfn_master}
 \end{equation}
-Here $\dd\sigma^{\FC}$ denotes flavor-creation contributions, in which the
-heavy quark $Q$ is produced in the final state with its mass retained;
-$\dd\sigma^{\FE}$ denotes flavor-excitation contributions initiated by a heavy-quark PDF; and $\dd\sigma^{\Sub}$ removes the overlap between the two.
-This subtraction is required because the collinear limit of the flavor-creation channel is already resummed into the heavy-quark PDF $f_Q(x,\mu)$.
+where $\dd\sigma^{\FC}$ denotes flavor-creation (FC) contributions in which heavy quarks are produced in the final state and their full mass dependence is retained in the calculation;
+$\dd\sigma^{\FE}$ denotes flavor-excitation (FE) contributions that are initiated by a heavy-quark PDF and represent the excitation of a heavy flavor in the proton; and $\dd\sigma^{\Sub}$ is a subtraction (SUB) contribution which removes the overlap between the two in the various kinematic regimes.
+This subtraction is required because the collinear limit of the FC channel is already resummed into the heavy-quark PDF $f_Q(x,\mu)$.
 
-As observed in Ref.~\cite{Guzzi:2024can}, the subtraction terms can be packaged into universal objects called \emph{subtraction PDFs}. To NLO and NNLO, that is, ${\cal O}(\alpha_s^2)$ and ${\cal O}(\alpha_s^3)$ respectively in the subtraction
+As observed in Ref.~\cite{Guzzi:2024can}, the SUB terms can be organized together using universal objects called \emph{subtraction PDFs}. To NLO and NNLO, that is, ${\cal O}(\alpha_s^2)$ and ${\cal O}(\alpha_s^3)$ respectively in the subtraction
 coefficients, one may define
 \begin{align}
 \fsub_Q^{(1)}(x,\mu)
@@ -564,21 +555,19 @@ coefficients, one may define
 \label{eq:fsubnlo}
 \\
 \fsub_Q^{(\textrm{NNLO})}(x,\mu)
-&\equiv \fsub_Q^{(1)}(x,\mu)+\fsub_Q^{(2)}(x,\mu)+\fsub_Q^{(3)}(x,\mu).
+&\equiv \fsub_Q^{(1)}(x,\mu)+\fsub_Q^{(2)}(x,\mu)+\fsub_Q^{(3)}(x,\mu),
 \label{eq:fsubnnlo}
 \end{align}
-The kernels $A_{Qi}^{(n)}$ are operator matrix elements (OMEs) arising from
-mass factorization.  They describe the perturbative transition of a massless
+which refer to the heavy quark $Q$ and where we use $a_s\equiv\alpha_s/(4\pi)$.
+The functions $A_{Qi}^{(n)}$ are the  OMEs arising from mass factorization. They describe the perturbative transition of a massless
 initial-state parton $i$ into the heavy quark $Q$ and contain the dependence on
-$m_Q$ and on the factorization scheme.  Crucially, they are independent of the
-particular short-distance hard process.  For this reason, the quantities in
-Eqs.~\eqref{eq:fsub1}--\eqref{eq:fsubnlo} are universal PDF-level matching
+$m_Q$ and on the factorization scheme. They are universal in that they are independent of the
+particular short-distance hard process. For this reason, the quantities in
+Eqs.~\eqref{eq:fsub1}--\eqref{eq:fsubnnlo} are universal PDF-level matching
 objects: once computed for a chosen PDF ensemble, heavy-quark mass, perturbative
-order, and scheme, they can be tabulated and reused in different ACOT-like
-calculations.
+order, and scheme, they can be tabulated and reused in different implementations.
 
-It is more economical to combine the flavor-excitation and
-subtraction pieces before performing the hard-scattering convolution.  This is
+It is more economical to combine the FE and SUB contributions before performing the hard-scattering convolution because FE and SUB contributions share the same matrix elements. This is
 achieved by defining \emph{residual PDFs}
 \begin{align}
   \df_Q^{(1)}(x,\mu)
@@ -589,42 +578,13 @@ achieved by defining \emph{residual PDFs}
   &\equiv f_Q(x,\mu)-\fsub_Q^{(\NLO)}(x,\mu).
   \label{eq:resnlo}
 \end{align}
-The residual $\df_Q$ is the part of the evolved heavy-quark PDF that is not
-already accounted for by the fixed-order collinear subtraction through the
-specified perturbative order.  With these definitions, the matched
-flavor-excitation contribution can be written directly in terms of residual
+The residual $\df_Q$ is the part of the evolved heavy-quark PDF that is not already accounted for by the fixed-order collinear subtraction through the specified perturbative order.  With these definitions,  
+FE and SUB contributions are combined directly using residual
 PDFs.
-% In compressed notation, suppressing the second incoming hadron and the
-% exchange term, the NLO structure is
-% \begin{equation}
-%   \dd\sigma^{\FE}-\dd\sigma^{\Sub}
-%   = \as\, \df_Q^{(\NLO)} \ot \widehat\sigma_{Qg}^{(1)} \ot g
-%   + \as^2\, \df_Q^{(1)} \ot
-%     \left(
-%       \widehat\sigma_{Qg}^{(2)}\ot g
-%       + \sum_{i=q,\bar q}\widehat\sigma_{Qq}^{(2)}\ot f_i
-%     \right)
-%   + \cdots .
-%   \label{eq:residual_master}
-% \end{equation}
-% Equation~\eqref{eq:residual_master} displays the main practical advantage: the
-% process-dependent information is isolated in the finite hard-scattering
-% functions $\widehat\sigma_{Qi}^{(n)}$, while the universal collinear matching is
-% carried by $\fsub_Q$ or, equivalently, $\df_Q$.
 
-This separation is especially convenient for implementing ACOT, S-ACOT, and
-related GMVFN prescriptions in numerical codes.  The same subtraction or
-residual PDF grids can be convolved with different partonic hard cross sections,
-while different choices for the treatment of $m_Q$ in the flavor-excitation
-hard parts correspond to scheme choices that differ only by higher-order terms
-once the mandatory subtraction structure is preserved.  Thus, PDF subtractions
-and residuals provide a process-independent interface between universal DGLAP
-collinear dynamics and process-dependent massive hard scattering.  They make the
-avoidance of double counting explicit, improve modularity of implementations,
-and facilitate the extension of ACOT-like schemes beyond the lowest nontrivial
-order.
+This combination facilitates the numerical implementation of different GMVFN prescriptions \cite{Buza:1996wv,Thorne:2006qt,}. The same subtraction or residual PDF grids can be convoluted with different partonic hard cross sections, while different choices for the treatment of $m_Q$ in the FE hard parts correspond to scheme choices that differ only by higher-order terms once the mandatory subtraction structure is preserved. 
 
-In Fig.~\ref{sub-PDFs}, we show the charm- and bottom-quark subtraction PDFs evolved with \texttt{Candia-v2} at $Q=4$ GeV ($n_f=4$) and $Q=10$ GeV ($n_f=5$) respectively, which are compared to the charm and bottom PDFs from the Les Houches toy model of Ref.~\cite{Dittmar:2005ed} evolved at the same energies and $n_f$'s. The generation of subtraction and residual PDFs in \texttt{Candia-v2} is very simple and the procedure is explained in detail in Sec.~\ref{subsec:subpdf-access}.
+In Fig.~\ref{sub-PDFs}, we show the charm- and bottom-quark subtraction PDFs evolved with \texttt{Candia-v2} at $Q=4$ GeV ($n_f=4$) and $Q=10$ GeV ($n_f=5$) respectively, which are compared to the charm and bottom PDFs from the Les Houches toy model of Ref.~\cite{Dittmar:2005ed} evolved at the same energies and $n_f$'s. The generation of subtraction and residual PDFs in \texttt{Candia-v2} is very simple and the procedure is outlined in detail in Sec.~\ref{subsec:subpdf-access}.
 
 
 \begin{figure}
@@ -642,7 +602,7 @@ In Fig.~\ref{sub-PDFs}, we show the charm- and bottom-quark subtraction PDFs evo
 \section{Description of the Program}
 \label{sec:prog-desc}
 
-In this section we describe the requirements to acquire, build, and use the code, followed by discussions on the pertinent parts of the library relevant for the user as well as the internals relevant for developers or users more interested in the deeper functionality of \texttt{Candia-v2}.
+In this section we describe the requirements to acquire, build, and use \texttt{Candia-v2}, followed by discussions on the pertinent parts of the library relevant for the user as well as the internals relevant for developers or users more interested in the deeper functionality of the code.
 
 \subsection{Requirements and Dependencies}
 \label{subsec:reqs-and-deps}
@@ -650,17 +610,17 @@ In this section we describe the requirements to acquire, build, and use the code
 There are some version requirements and dependencies one needs to install in order to successfully compile and run the code. They are:
 % 
 \begin{itemize}
-\item \texttt{CMake} and a build tool e.g. GNU Make or Ninja,
-\item \texttt{C++20} compatibility -- among the standard compilers, one would need \texttt{GCC >= 13} or \texttt{LLVM CLang >= 17}. See Section~\ref{subsubsec:compilers} for a note on the compiler choice.
+\item \texttt{CMake} and a build tool e.g. \texttt{GNU Make} or \texttt{Ninja},
+\item \texttt{C++20} compatibility -- among the standard compilers, one would need \texttt{GCC >= 13} or \texttt{LLVM CLang >= 17} (see Section~\ref{subsubsec:compilers} for a note on the compiler choice),
 \item \texttt{GFortran},
-\item \texttt{Intel Threading Building Blocks (TBB)}: the backend for the implementation of C++ execution policies
-\item \texttt{GSL} (GNU Scientific Library)
-\item (Optional) \texttt{LaTeX} utilities: if one wants to build the manuscripts included in the repository,
-\item (Optional) \texttt{Doxygen}: if one wants to build the code documentation.
-\item (Optional) \texttt{LHAPDF}: if one wants to interface with LHAPDF
+\item \texttt{Intel Threading Building Blocks (TBB)}: the backend for the implementation of \texttt{C++} execution policies,
+\item \texttt{GSL} (GNU Scientific Library),
+\item (Optional) \LaTeX~utilities: if one wants to build the manuscripts included in the repository,
+\item (Optional) \texttt{Doxygen}: if one wants to build the code documentation,
+\item (Optional) \texttt{LHAPDF}: if one wants to interface with LHAPDF.
 \end{itemize}
 
-The optional dependencies are enabled by passing \texttt{CMake} flags when configuring the project; see Section~\ref{subsec:acq-and-build} for what they are.
+The optional dependencies are enabled by passing \texttt{CMake} flags when configuring the project; see Section~\ref{subsec:acq-and-build} for more details.
 
 \subsubsection{A Note on System and Compiler Choices}
 \label{subsubsec:compilers}
@@ -675,9 +635,9 @@ Therefore, if using a Windows machine, we highly recommend using \texttt{WSL}.
 \label{subsec:acq-and-build}
 
 The code is publicly available at \href{GitHub}{https://github.com/champso1/candia-v2}.
-There are usually a number of active branches in which various new features and/or fixes are being addressed, but by default the \textit{main} branch contains the most stable version, and the \textit{dev} branch contains the most recent version.
-While one can at any time build from the \textit{main} branch (and most of the time from the \textit{dev} branch), it is preferable to checkout the corresponding tag from the cloned repository via \mintinline{bash}{git checkout <tag>}, e.g. \mintinline{bash}{git checkout v1.6.0}.
-After acquiring the source code, one follows the standard CMake building process:
+There are several active branches in which various new features and/or fixes are being addressed, but by default the \texttt{main} branch contains the most stable version, and the \texttt{dev} branch contains the most recent version.
+While one can at any time build from the \texttt{main} branch (and most of the time from the \texttt{dev} branch), it is preferable to checkout the corresponding tag from the cloned repository via \mintinline{bash}{git checkout <tag>}, e.g. \mintinline{bash}{git checkout v1.7.0}.
+After acquiring the source code, one follows the standard \texttt{CMake} building process:
 % 
 \begin{minted}{bash}
   git clone https://github.com/champso1/candia-v2 \
@@ -690,42 +650,50 @@ After acquiring the source code, one follows the standard CMake building process
 \end{minted}
 % 
 Note that \mintinline{bash}{--recurse-submodules} is passed to \mintinline{bash}{git clone} so that the \texttt{libome} repository, a submodule, is cloned and initialized correctly.
-Among standard CMake options, there are several additional options that are specific to \texttt{Candia-v2}:
+Among standard \texttt{CMake} options, there are several additional options that are specific to \texttt{Candia-v2}:
 % 
 \begin{itemize}
-\item \mintinline{cfg}{CANDIA_WITH_LHAPDF}\ (default=false): Compile in the LHAPDF interface
-\item \mintinline{cfg}{CANDIA_LHAPDF_DIR}\ (default=\path{/usr/local}): The LHAPDF installation prefix. Should only be specified if \mintinline{cfg}{CANDIA_WITH_LHAPDF} is enabled and the user has installed LHAPDF in a non-standard location, i.e. anywhere other than \path{/usr/local}.
-\item \mintinline{cfg}{CANDIA_BUILD_MANUSCRIPTS}\ (default=false): Compile the PRD and CPC manuscripts from the \path{/manuscripts} directory. Requires LaTeX utilities to be available on the command line.
-\item \mintinline{cfg}{CANDIA_BUILD_DOCS}\ (default=false): Build the code documentation using Doxygen.
-\item \mintinline{cfg}{CANDIA_BUILD_EXAMPLES}\ (default=true): Build the two example programs \path{evolve_dglap.cpp} and \path{read_table.cpp} from the \path{examples/} directory. The former illustrates the basic usage of \texttt{Candia-v2}, while the latter is a simple C++ program to read in the outputted datafile and prints out a LaTeX table. Requires LaTeX utilities to be available on the command line.
-\item \mintinline{cfg}{CANDIA_BUILD_TESTS}\ (default=false): Build the ``tests''. These are not standard tests, rather a large set of additional C++ files to perform benchmarking, plot generation, etc.
+\item \mintinline{cfg}{CANDIA_WITH_LHAPDF}\ (default=\texttt{false}): Compile in the LHAPDF interface,
+\item \mintinline{cfg}{CANDIA_LHAPDF_DIR}\ (default=\path{/usr/local}): The LHAPDF installation prefix. Should only be specified if \mintinline{cfg}{CANDIA_WITH_LHAPDF} is enabled and the user has installed LHAPDF in a non-standard location, i.e. anywhere other than \path{/usr/local},
+\item \mintinline{cfg}{CANDIA_BUILD_MANUSCRIPTS}\ (default=\texttt{false}): Compile the manuscripts from the \path{/manuscripts} directory. Requires \LaTeX~utilities to be available on the command line,
+\item \mintinline{cfg}{CANDIA_BUILD_DOCS}\ (default=\texttt{false}): Build the code documentation using \texttt{Doxygen},
+\item \mintinline{cfg}{CANDIA_BUILD_EXAMPLES}\ (default=\texttt{true}): Build the two example programs from the \path{examples/} directory, which illustrate the various components of the library,
+\item \mintinline{cfg}{CANDIA_BUILD_TESTS}\ (default=\texttt{false}): Build the ``tests''. These are not standard tests, rather they are a large set of additional \texttt{C++} files to perform benchmarking, plot generation, etc.
 \end{itemize}
 
 \subsection{Basic User Guide}
 \label{subsec:ex-prog}
 
-In this section we present a complete example program that illustrates the capabilities of \texttt{Candia-v2}.
+In this section we present a complete example program that illustrates the capabilities of \texttt{Candia-v2}. Notice that throughout the following code snippets, 
+we have defined an alias for an unsigned integer type called \mintinline{cpp}{uint}:
 
-In Listing~\ref{lst:ex-prog} is a full C++ program that will perform the DGLAP evolution at N$^3$LO starting from the standard benchmark initial conditions up to $\mu=\qty{100}{\GeV}$.
+\begin{minted}{cpp}
+using uint = unsigned int;
+\end{minted}
+
+Listing~\ref{lst:ex-prog} contains a full \texttt{C++} program that performs the N$^3$LO DGLAP evolution at $\mu=100$ GeV using the Les Houches standard benchmark initial conditions~\cite{Dittmar:2005ed}.
 % 
 \begin{listing}
   \inputminted[frame=lines,linenos]{cpp}{res/example.cpp}
-  \caption{Example program that performs a full DGLAP evolution at N$^3$LO starting from the standard benchmark initial conditions and ending at $\mu=\qty{100}{\GeV}$.}
+  \caption{Example program to perform an N$^3$LO PDF evolution at $\mu=100$ GeV, using the current Les Houches standard benchmark initial conditions~\cite{Dittmar:2005ed}.}
   \label{lst:ex-prog}
 \end{listing}
 % 
-In the code, the user first includes \mintinline{cpp}{Candia-v2/Candia.hpp}. This header includes all other necessary headers, so the user need not include anything else.
-We also define the following variables:
+In the code, the user first includes the main header \mintinline{cpp}{Candia-v2/Candia.hpp},  which includes all the necessary headers so that nothing else needs to be included.
+The following variables are also defined:
 \begin{itemize}
-\item \mintinline{cpp}{order}: the perturbative order of the solution -- this number is the $m$ in N$^m$LO.
-\item \mintinline{cpp}{iterations}: the number of total iterations to complete -- this number corresponds to the $s$ index in Eq.~\eqref{eq:full-exact-ansatz} in the case of the exact ansatz and the $n$ index in Eq.~\eqref{log-ansatz} in the case of the truncated ansatz.
-\item \mintinline{cpp}{trunc_idx}: the truncation index to use for the singlet solution -- this number corresponds to the variable $\kappa$ in Eq.~\eqref{log-ansatz} in the truncated ansatz.
-\item \mintinline{cpp}{Qf}: the final energy to evolve to.
-\item \mintinline{cpp}{mur2_muf2}: the ratio $\mu_R^2/\mu_F^2$ (note this is the ratio of the \textit{squared} energies).
+\item \mintinline{cpp}{order}: the perturbative order of the solution -- this is the $m$ index in N$^m$LO,
+\item \mintinline{cpp}{iterations}: the number of total iterations to complete -- this number corresponds to the $s$ index in Eq.~\eqref{eq:full-exact-ansatz} in the case of the exact ansatz, and the $n$ index in Eq.~\eqref{log-ansatz} in the case of the truncated ansatz,
+\item \mintinline{cpp}{trunc_idx}: the truncation index -- this corresponds to the variable $\kappa$ in Eq.~\eqref{log-ansatz},
+\item \mintinline{cpp}{Qf}: the final evolution energy,
+\item \mintinline{cpp}{mur2_muf2}: the ratio $\mu_R^2/\mu_F^2$.
 \end{itemize}
 %
-Using these variables, the user then initializes the main classes handing the interpolation and convolution grid, the running coupling, the initial conditions, and lastly the solver itself. An \mintinline{cpp}{std::vector<ArrayGrid>} is returned, which the user can handle however they need; the \mintinline{cpp}{ArrayGrid} is a very simple storage container for accessing values of an array whose points are determined via a grid (see Section~\ref{subsec:arraygrid} for a lower level description of this class).
-Elements can be accessed just like an ordinary \mintinline{cpp}{std::vector}, e.g. using the \mintinline{cpp}{operator[]} syntax. There are 37 total distributions, whose indices are described in Table~\ref{tab:dist-indices}.
+Using these variables, the user initializes the main classes handling the interpolation and convolution grid, the running coupling, the initial conditions, and the solver.
+An \mintinline{cpp}{std::vector<ArrayGrid>} is returned, which can be processed as required; the \mintinline{cpp}{ArrayGrid} is a simple storage container for accessing array values whose points are determined via a grid (see Section~\ref{subsec:arraygrid} for a lower-level description of this class).
+Elements can be accessed like an ordinary \mintinline{cpp}{std::vector}, e.g., using the \mintinline{cpp}{operator[]} syntax. There are 37 total distributions, whose indices are described in Table~\ref{tab:dist-indices}. 
+
+The example file \path{examples/evolve_dglap.cpp} is equivalent to that in Listing~\ref{lst:ex-prog}, but with comments describing each component.
 
 \begin{table}[h]
   \centering
@@ -742,7 +710,7 @@ Elements can be accessed just like an ordinary \mintinline{cpp}{std::vector}, e.
     32-36 & $q_{NS,1i}^{(+)},\quad i\neq1$ \\ 
     \hline
   \end{tabular}
-  \caption{Correspondence between indices and parton distributions.}
+  \caption{Correspondence between indices and parton distributions functions.}
   \label{tab:dist-indices}
 \end{table}
 
@@ -750,14 +718,26 @@ Elements can be accessed just like an ordinary \mintinline{cpp}{std::vector}, e.
 \subsection{Code Description}
 \label{sec:code-description}
 
-In this section, we will give lower level descriptions of the various classes composing \texttt{Candia-v2}.
+This section illustrates a lower-level description of the various classes composing \texttt{Candia-v2}.
 
 \subsubsection{The ArrayGrid Class}
 \label{subsec:arraygrid}
 
-The \mintinline{cpp}{ArrayGrid} class is the underlying array type used for PDFs or anything that is defined on the $x$-grid, which itself is described in the next section. The motivation for creating a new class, rather than just using \mintinline{cpp}{std::vector}s, is to avoid the memory fragmentation issue associated with the large numbers of nested arrays required for the higher order coefficients. \mintinline{cpp}{ArrayGrid} is an alias for a base class \mintinline{cpp}{ArrayGridBase<type, D>} where \mintinline{cpp}{type} is the underlying datatype and D is the number of dimensions of the array. All memory is allocated only once in a single array, and array access is wrapped in the \mintinline{cpp}{operator()} method -- since \mintinline{cpp}{operator[]} isn't allowed to take multiple arguments in C++20 -- which handles the dimension strides correctly. For $D=1$, there is a specialization which does enable the \mintinline{cpp}{operator[]} syntax just like an ordinary array.
+The \mintinline{cpp}{ArrayGrid} class is the underlying array type used for PDFs 
+or any quantity defined on the $x$-grid, which is described in the next section. The motivation for creating a new class, rather than utilizing nested \mintinline{cpp}{std::vector} 
+instances, is to avoid the memory fragmentation issues associated with the large numbers of nested arrays 
+required for higher-order coefficients. \mintinline{cpp}{ArrayGrid} is an alias for the base 
+class \mintinline{cpp}{ArrayGridBase<type, D>}, where \mintinline{cpp}{type} represents the 
+underlying data type and \mintinline{cpp}{D} denotes the number of dimensions:
 
-Creating an \mintinline{cpp}{ArrayGrid} is done by:
+\begin{minted}{cpp}
+using ArrayGrid = ArrayGridBase<double, 1>;
+\end{minted}
+
+All memory is allocated only once in a single array. Array access is wrapped in the \mintinline{cpp}{operator()} method -- as multi-argument \mintinline{cpp}{operator[]} 
+syntax is restricted and is not able to take multiple arguments in \texttt{C++20} -- which handles the dimension strides correctly. For $D=1$, e.g., in the \mintinline{cpp}{ArrayGrid}, a specialization is provided that enables the traditional \mintinline{cpp}{operator[]} syntax like an ordinary array.
+
+The creation of an \mintinline{cpp}{ArrayGridBase} is done by:
 
 \begin{minted}{cpp}
 template <typename T, uint D>
@@ -766,7 +746,7 @@ ArrayGridBase::ArrayGridBase(
 );
 \end{minted}
 
-where \mintinline{cpp}{sizes} contains the size of each dimension.
+where \mintinline{cpp}{sizes} is an array of length $D$ which contains the size of each dimension.
 
 Accessing elements is used by calling
 
@@ -775,32 +755,32 @@ template <typename... TArgs>
 decltype(auto) operator()(TArgs... args)
 \end{minted}
 
-This method supports either $D-1$ arguments, in which case a \mintinline{cpp}{std::span} is returned (representing the innermost array dimension) or $D$ arguments, in which a single number is returned. Other higher-order views over more dimensions are not supported because they are not useful in this code.
+This method supports either $D-1$ arguments, in which case a \mintinline{cpp}{std::span} is returned (representing the innermost array dimension) or $D$ arguments, in which a single number is returned. Other higher-order views over more dimensions are not supported because they are not used in this code.
 
 \subsubsection{The Grid Class}
 \label{subsec:grid-class}
 
-The $x$-grid on which the PDFs are defined and on which interpolations and convolutions are done is handled by the \mintinline{cpp}{Grid} class. By default, the grid is filled in three separate segments, which is done in order to best handle the unstable behavior of PDFs and splitting functions in the extremes $x \rightarrow 0$ and $x \rightarrow 1$. The first segment is filled logarithmically from $[<min>,0.1)$, linearly from $[0.1,0.9)$, and quadratically from $[0.9,1.0)$, with more points packed towards $x \rightarrow 1$, with 150 points in the first segment and 30 in the other two.
+The $x$-grid where the PDFs are defined and on which interpolations and convolutions are done is handled by the \mintinline{cpp}{Grid} class. By default, the grid is filled in three separate segments, which is done in order to best handle the unstable behavior of PDFs and splitting functions in the extreme $x \rightarrow 0$ and $x \rightarrow 1$ kinematic regions. By default, there are 100 points in the first segment, 50 in the second, and 25 in the last, which can be changed by passing the corresponding arguments to the constructor.
 
 The constructor has the following signature:
 
 \begin{minted}{cpp}
 Grid::Grid(
-    xtab_type const& xtab,
+    std::vector<double> const& xtab,
     GridFillerArgs const& grid_filler={},
     ConvIntArgs const& gauleg_args={}
 );
 \end{minted}
 
-where \mintinline{cpp}{GridFillerArgs} is a struct containing options for how the grid is filled:
+where \mintinline{cpp}{GridFillerArgs} is a structure (struct) containing options for how the grid is filled:
 
 \begin{minted}{cpp}
 struct GridFillerArgs final
 {
   double min{1.0e-5};
-  uint log_size{101};
-  uint lin_size{51};
-  uint quad_size{26};
+  uint log_size{100};
+  uint lin_size{50};
+  uint quad_size{25};
   double pivot1{0.1}, pivot2{0.9};
 };
 \end{minted}
@@ -815,9 +795,9 @@ struct ConvIntArgs final
 };
 \end{minted}
 
-\mintinline{cpp}{xtab} is an array of $x$-values that should be placed directly on the grid and whose indices should be kept track of (in an array called \mintinline{cpp}{ntab}) so that the values of other quantities at these points can very easily be extracted for e.g. benchmarking.
+The \mintinline{cpp}{xtab} array contains specific $x$-values that the user wants aligned with the grid; their corresponding indices are stored in the \mintinline{cpp}{ntab} array (which can be retrieved by calling \mintinline{cpp}{grid.ntab()}) to ensure that values of other quantities at these nodes can be efficiently extracted (e.g., for benchmarking purposes).
 
-The grid also behaves itself as an interable object, allowing one to do something like (assuming \mintinline{cpp}{grid} is defined)
+The grid class acts as an iterable object, enabling range-based loops as demonstrated in the following snippet (assuming the variable \mintinline{cpp}{grid} is initialized):
 
 \begin{minted}{cpp}
 for (double x : grid) {
@@ -825,7 +805,7 @@ for (double x : grid) {
 }
 \end{minted}
 
-Further, one can grab both the index and $x$-value at once using the \mintinline{cpp}{.enumerate()} method, which returns a \mintinline{cpp}{std::ranges::view}, and it behaves just like Python's \mintinline{python}{enumerate()} function:
+Furthermore, the \mintinline{cpp}{.enumerate()} method permits simultaneous retrieval of both the index and its corresponding $x$-value. This method mirrors the design and functionality of Python's built-in \mintinline{python}{enumerate()} function, and can be used like:
 
 \begin{minted}{cpp}
 for (auto [i, x] : grid.enumerate()) {
@@ -833,7 +813,7 @@ for (auto [i, x] : grid.enumerate()) {
 }
 \end{minted}
 
-Lastly, the signatures for the convolution and interpolation routines are
+Finally, the signatures for the convolution and interpolation routines are
 
 \begin{minted}{cpp}
 double Grid::interpolate(
@@ -849,15 +829,26 @@ double Grid::convolution(
   double tau);
 \end{minted}
 
-\texttt{Candia-v2} supports convolutions between an array (e.g. a PDF) and an expression (e.g. a splitting function) in the first case, as well as a convolution between two arrays for e.g. luminosity calculations in the second case.
+\texttt{Candia-v2} supports two primary convolution modalities: 
+convolutions between an array (e.g., a PDF), represented by the \mintinline{cpp}{std::span}, and an expression (e.g., a splitting function), represented by the \mintinline{cpp}{Expression},
+and convolutions between two separate arrays, such as those required for parton luminosity calculations.
 
-The convolutions are performed using Gauss-Legendre integration, with the set of abscissae and weights in the range $(<min>,1)$ calculated when the constructor is called. We use $z$ to represent a single abscissa and $w$ to represent a single weight during a traditional integration loop.
-The actual convolution is done via a series of ``mappings'' for each of the aforementioned segments (logarithmic, linear, quadratic), where the $x$ value of the convolution and the current $z$ value in the Gauss-Legendre integration loop are used to obtain the mapped value $y$ and the Jacobian $J$. This is represented internally as an array of \mintinline{cpp}{std::function}, wrapped with a getter function to choose the appropriate mapping(s) for the given $x$-value.
+These convolutions are evaluated numerically via Gauss-Legendre quadrature. 
+The corresponding abscissae and weights are precomputed within the interval 
+$(x_{\min}, 1)$ during object construction. In a standard integration loop, 
+$z$ denotes a single abscissa and $w$ represents its associated weight. 
+The underlying convolution relies on a sequence of coordinate mappings 
+tailored to each grid segment (logarithmic, linear, or quadratic). 
+For a given target $x$-value and the current quadrature point $z$, 
+the code evaluates the mapped value $y$ and the corresponding 
+Jacobian $J$. This mapping logic is implemented internally via an array 
+of \mintinline{cpp}{std::function} objects, managed by a wrapper 
+function that dispatches the appropriate transformation for the specified $x$-value.
 
 \subsubsection{The AlphaS Class}
 \label{subsec:alphas-class}
 
-The evolution of the QCD strong coupling $\alpha_s$ is handed via the \mintinline{cpp}{AlphaS} class, whose constructor has the following signature:
+The evolution of the QCD strong coupling $\alpha_s$ is handed by the \mintinline{cpp}{AlphaS} class, whose constructor has the following signature:
 
 \begin{minted}{cpp}
 AlphaS::AlphaS(
@@ -868,21 +859,40 @@ AlphaS::AlphaS(
 );
 \end{minted}
 
-$Q_0$ and $\alpha_0$ are typically given by initial conditions, while the perturbative order, $Q_f$, and the ratio $\mu_R^2/\mu_F^2$ are chosen by the user.
+The initial evolution scale $Q_0$ and $\alpha_0\equiv \alpha_s(Q_0)$ are specified by the initial conditions of the evolution, while the perturbative order, the final evolution scale $Q_f$, and the ratio $\mu_R^2/\mu_F^2$, are chosen by the user.
 
-In general, the evolution can proceed under the Fixed-Flavor Number Scheme (FFNS) or the Variable-Flavor Number Scheme (VFNS). In the former case, the number of flavors is held fixed, while in the latter, once the evolution scale crosses the pole mass of a heavy-quark, we transition to to using $n_f+1$ active flavors. These options are chosen by calling one of the following functions:
+In general, the evolution proceeds via either the 
+Fixed-Flavor Number Scheme (FFNS) or the Variable-Flavor Number Scheme (VFNS). 
+In the FFNS approach, the number of active flavors remains constant. 
+Conversely, in the VFNS framework, the system transitions to $n_f+1$ 
+active flavors once the evolution scale crosses the threshold of 
+a heavy-quark pole mass. These operational modes are selected by 
+invoking either of the following functions:
+
 
 \begin{minted}{cpp}
 void AlphaS::setFFNS(uint nf);
 void AlphaS::setVFNS(
   std::array<double, 8> const& masses,
   uint nfi, uint nff);
-void AlphaS::calculateThresholdValues();
 \end{minted}
 
-The final function is automatically called by the VFNS method, so the user need not call it themselves. The values of $\alpha_s$, in either scheme, are stored in two internal arrays called ``pre'' and ``post'', which are the values of $\alpha_s$ pre- and post- mass threshold, respectively, with the index being the $n_f$ value. This means that, for a given evolution step, the initial value of $\alpha_s$ is given by \mintinline{cpp}{post[nf]} and the final value is given by \mintinline{cpp}{pre[nf+1]}. In the FFNS scheme these are the only two values in the entire array, and there is only one evolution step. Given the reference value of $\alpha_s$, new values are calculated between thresholds by solving the QCD RGE with a fourth-order Runge-Kutta algorithm. At LO, there is an exact solution to this equation, so that is of course used instead.
+The strong coupling values in both schemes are 
+stored in two internal arrays, \mintinline{cpp}{pre} and 
+\mintinline{cpp}{post}, which store the values of $\alpha_s$ 
+immediately before and after a given mass threshold, respectively, 
+indexed by the number of active flavors $n_f$. Consequently, 
+for a single evolution step within a threshold, 
+the initial value of $\alpha_s$ is provided by \mintinline{cpp}{post[nf]}
+and the final value is given by \mintinline{cpp}{pre[nf+1]}.
+In the FFNS, these represent the only two occupied elements in 
+the arrays, as the evolution consists of a single step. 
+Intermediate values 
+between thresholds are computed by solving the QCD renormalization 
+group equation (RGE) via a fourth-order Runge-Kutta algorithm, while values across thresholds are obtained by performing matching in accordance to the perturbative order.
+At leading order (LO), the exact analytical solution to the RGE is exploited instead of using the numerical Runge-Kutta solution to optimize computational performance.
 
-This class also handles the calculation of the $b$-function and its coefficients:
+This class also handles the calculation of the QCD $\beta$-function and its coefficients:
 
 \begin{minted}{cpp}
 double AlphaS::betaFn(double alpha) const;
@@ -892,7 +902,7 @@ double AlphaS::beta2() const;
 double AlphaS::beta3() const;
 \end{minted}
 
-These functions simply retrieve values which are calculated each time $n_f$ is updated via
+The methods related to the $\beta$-function coefficients simply retrieve values which are calculated each time the number of flavors $n_f$ is updated via
 
 \begin{minted}{cpp}
 void AlphaS::update(uint nf);
@@ -901,7 +911,7 @@ void AlphaS::update(uint nf);
 \subsubsection{Distributions}
 \label{subsec:distributions}
 
-Initial conditions are all handled by the \mintinline{cpp}{Distribution} class, or more accurately, subclasses of it. For instance, \mintinline{cpp}{LesHouchesDistribution} is a subclass, and implements the standard benchmarking initial conditions. These classes define the initial evolution energy, the values of the PDFs at that energy, as well as the reference value of $\alpha_s$ at the initial energy, and the masses of the quarks (and hence the initial number of flavors). Each subclass must implement the functions that return the initial PDFs for the gluon, as well as the $xu(x, Q_0^2)$, $xd(x, Q_0^2)$, and $xs(x, Q_0^2)$ along with the anti-quark distributions. They must also specify the following methods:
+All initial conditions are handled by the \mintinline{cpp}{Distribution} class and its derived classes. For instance, \mintinline{cpp}{LesHouchesDistribution} is one such class that implements the benchmark initial conditions from Ref.~\cite{Dittmar:2005ed}. These classes define the values of the PDFs and the strong coupling at the initial evolution energy $\mu_0^2 = \qty{2}{\GeV\squared}$, as well as the quark masses and the initial number of flavors. Each subclass must implement the functions that return the initial PDFs for the gluon, as well as $xu(x, Q_0^2)$, $xd(x, Q_0^2)$, and $xs(x, Q_0^2)$ along with the anti-quark distributions. They must also specify the following methods:
 
 \begin{minted}{cpp}
 void Distribution::fillSingletCoeffs(
@@ -912,20 +922,27 @@ void Distribution::fillNonSingletCoeffs(
   accessor_type const& accessor,
   std::vector<value_type> const& grid_points
 );
-void Distribution::setup(double Q0, double Qf)
+void Distribution::setup(double Q0, double Qf);
 \end{minted}
 
-which handle setting up the coefficients with the initial PDFs, as well as what to do if the user wants to update the value of the initial or final energies (e.g. returning a new value of $n_{f,i}$). The \mintinline{cpp}{accessor} is a function that accepts an id and a grid index, the former corresponding to a distribution in Table~\ref{tab:dist-indices}, and the latter being a grid index.
+The first two methods compute the initialization of the evolution coefficients using the initial PDFs. The \mintinline{cpp}{accessor} is a function that accepts an ID and a grid index. The ID corresponds to a specific distribution in Table~\ref{tab:dist-indices}, while the grid index specifies the target kinematic point. The \mintinline{cpp}{setup} method defines the actions required when a user updates the initial or final energies, such as returning a new value for the initial $n_f$.
 
 \subsubsection{Expressions}
 \label{subsec:expressions}
 
-The main \mintinline{cpp}{Expression} class handles splitting function, operator matrix elements, and anything with with regular parts, plus-distribution parts, and delta-function parts. Additionally, due to the method by which we perform the convolutions, we only require the $n_f$-dependent/$x$-independent parts of the latter two, so each expression will store these values by calling
+The main \mintinline{cpp}{Expression} class handles splitting functions 
+and operator matrix elements, which are defined as mathematical 
+distributions used to regularize and isolate divergences. These 
+functions contain regular parts, plus-distributions, and 
+$\delta$-function parts. Additionally, due to the method by which the 
+convolutions are performed, only the $n_f$-dependent and $x$-independent 
+components of the plus-distributions and $\delta$-functions are 
+required. Consequently, each expression pre-computes and stores these 
+values by implementing:
 
 \begin{minted}{cpp}
-void Expression::preCalc()
+void preCalc();
 \end{minted}
-
 The value of $n_f$ and any other $x$-independent quantities for the splitting functions are updated globally by calling
 
 \begin{minted}{cpp}
@@ -936,7 +953,7 @@ static SplittingFunction::update(
 );
 \end{minted}
 
-In general to retrieve the value of any piece of an expression is done by
+The value of any piece of an expression is obtained by
 
 \begin{minted}{cpp}
 double Expression::calcRegular(double x);
@@ -944,23 +961,38 @@ double Expression::calcPlus();
 double Expression::calcDelta();
 \end{minted}
 
-while retrieving the calculated values of the latter two is done by
+while the pre-calculated values of the latter two are obtained by 
 
 \begin{minted}{cpp}
 double Expression::plus();
 double Expression::delta();
 \end{minted}
 
-Every splitting function is a derived class of \mintinline{cpp}{SplittingFunction}, which itself is a derived class of \mintinline{cpp}{Expression}. By default, the global value of $n_f$ is set to 4, so if the user needs to evaluate these on their own, ensure to call the static  \mintinline{cpp}{.update()} method with the desired value of $n_f$ (and other $x$-independent quantities).
+Every splitting function is a derived class of \mintinline{cpp}{SplittingFunction}, 
+which itself inherits from \mintinline{cpp}{Expression}. Note that, by default, the global 
+value of $n_f$ is set to 4; therefore, evaluating these functions independently 
+requires invoking the static \mintinline{cpp}{update()} method with the desired 
+value of $n_f$ and other $x$-independent quantities.
 
-The case is similar for the operator matrix elements, where for NNLO each OME is a subclass of \mintinline{cpp}{OpMatElem}. In the case of N$^3$LO, where we interface with \texttt{libome}, there is only one class \mintinline{cpp}{OpMatElemN3LO} whose constructor accepts an \mintinline{cpp}{ome::rpd_distribution}, the standard container for OMEs in \texttt{libome}.
+A similar architecture is used for the OMEs. At NNLO, 
+each OME is implemented as a derived class of \mintinline{cpp}{OpMatElem}. At 
+N$^3$LO, where the package interfaces with \texttt{libome}, a single class 
+named \mintinline{cpp}{OpMatElemN3LO} is used. Its constructor accepts an 
+\mintinline{cpp}{ome::rpd_distribution}, which serves as a standard 
+container for OMEs within \texttt{libome}.
 
 \subsubsection{The DGLAPSolver Class}
 \label{subsec:dglapsolver}
 
-The \mintinline{cpp}{DGLAPSolver} is the class that handles the actual evolution of the PDFs. In particular, it performs the calculation of all the coefficient via the defined set of recursion relations for that order. In the singlet sector is calculates these via the truncated ansatz, and depending on user choice, it either calculates the non-singlet coefficients via this same ansatz or with the exact ansatz.
+The \mintinline{cpp}{DGLAPSolver} class manages the evolution of the PDFs. 
+Specifically, it computes all ansatz coefficients utilizing the recursion 
+relations defined at the specified perturbative order. In the singlet 
+sector, these coefficients are evaluated via the truncated ansatz. For 
+the non-singlet sector, the class can compute the coefficients using 
+either the truncated or the exact ansatz, depending on the configuration 
+specified by the user.
 
-The constructor has the following signature:
+The class constructor has the following signature:
 
 \begin{minted}{cpp}
 DGLAPSolver(
@@ -971,13 +1003,19 @@ DGLAPSolver(
 );
 \end{minted}
 
-There are a number of options that can be supplied to the \mintinline{cpp}{DGLAPSolver} after its instantiation and before performing the evolution.
-The first of these are the splitting function approximation types.
-The current format of the approximations relies on two outer envelopes, with a third option being the average of the two.
-In the case of the non-singlet splitting functions, there is also the availability of the exact expressions.
-The default configuration is to use the average of the envelopes for all of the singlet splitting functions and the exact expression for the non-singlet splitting functions, but these can be changed with the  \mintinline{cpp}{.setP3ApproximationTypes()} method.
-For instance, to use envelope 1 for $P^{(3)}_{qg}$ (with every other splitting function using the average by default), and the average of the envelopes for $P_{\mathrm{NS}}^{(3),+}$, one would do
+Several configuration options can be supplied to the \mintinline{cpp}{DGLAPSolver} 
+instance prior to performing the evolution. Chief among these are the approximation 
+types for the three-loop splitting functions, $P^{(3)}$. The framework currently supports 
+two distinct envelope approximations, alongside a third option corresponding to their 
+average. For the non-singlet sector, the exact analytic expressions are also available.
 
+By default, the solver utilizes the average of the envelopes for all singlet splitting 
+functions, and the exact expressions for the non-singlet splitting functions.
+This behavior can be 
+customized using the \mintinline{cpp}{.setP3ApproximationTypes()} method. For example, to 
+select the first envelope for $P^{(3)}_{qg}$ while retaining the default average for the 
+remaining singlet functions, and to enforce the envelope average for $P_{\mathrm{NS}}^{(3),+}$
+as opposed to the exact expression, the configuration would be specified as follows:
 \begin{minted}{cpp}
 solver.setP3ApproximationTypes({
     std::make_pair(ExprName::P3qg, P3ApproxType::Imod1),
@@ -985,7 +1023,23 @@ solver.setP3ApproximationTypes({
 });
 \end{minted}
 
-There are an additional set of options related mainly to benchmarking or compatibility, which can be accessed by calling \mintinline{cpp}{.getOptions()}, which returns the struct in Listing~\ref{lst:dglap-options}. Among these options are ones that turn on or off some various N$^3$LO components, or that use the Fortran ABI for the splitting functions (which should not be noticeably different). The names of the options, we hope, are self-explanatory.
+An additional set of configuration options, primarily intended for benchmarking 
+and compatibility verification, can be accessed via the \mintinline{cpp}{.getOptions()} 
+method. This method returns the configuration structure detailed in Listing~\ref{lst:dglap-options}. 
+These parameters permit the selective activation of various N$^3$LO components
+or the usage of the Fortran Application Binary Interface (ABI) for evaluating the splitting 
+functions.
+
+Once the solver is configured, the evolution is executed by invoking either 
+the \mintinline{cpp}{evolve()} or the \mintinline{cpp}{evolveTrunc()} method. The 
+former solves the non-singlet sector evolution using the exact ansatz, whereas 
+the latter employs the truncated ansatz. At higher perturbative orders, 
+the non-singlet coefficients (such as the $D^{s}_{t,m,n}$ coefficients at N$^3$LO) 
+acquire additional dimensions. Consequently, the algorithmic time complexity of 
+the exact ansatz scales exponentially with the perturbative order, while that of 
+the truncated ansatz remains highly manageable. At N$^3$LO, this complexity difference 
+becomes pronounced; for large numbers of evolution iterations, the truncated ansatz 
+offers a significant performance advantage.
 
 \begin{listing}
   \inputminted[frame=lines,linenos]{cpp}{res/dglap_options.cpp}
@@ -993,15 +1047,27 @@ There are an additional set of options related mainly to benchmarking or compati
   \label{lst:dglap-options}
 \end{listing}
 
-After options are specified as desired, the user can then call either \mintinline{cpp}{.evolve()} or \mintinline{cpp}{.evolveTrunc()}. The former performs the evolution of the non-singlet sector using the exact ansatz, while the latter does it with the truncated ansatz. We will note here that, at higher orders where the non-singlet coefficients (e.g. the $D^{s}_{t,m,n}$ coefficients at N$^3$LO) pick up additional dimensions, the exact ansatz's time complexity increases exponentially, whereas the truncated does not. At N$^3$LO this becomes noticeable, where for suitably high numbers of iterations it is frequently faster to use the truncated ansatz.
 
 
 \subsubsection{LHAPDF Interface}
 \label{subsec:lhapdf-interface}
 
-Assuming the correct flags were set up in the CMake configuration, there will be the option to interface the input and/or output with LHAPDF. To handle the former case, there is the option to specify the initial distribution as an LHAPDF PDF via the \mintinline{cpp}{LHAPDFDistribution} class, which simply takes an LHAPDF PDF, as well as the particular desired initial and final energies. It can be used in an identical fashion (since it is also a derived class of \mintinline{cpp}{Distribution}) to the \mintinline{cpp}{LesHouchesDistribution} seen in Listing~\ref{lst:ex-prog}. See Section~\ref{subsec:distributions} for a further description of what is required of a subclass of \mintinline{cpp}{Distribution}
+If the corresponding compilation flags are enabled during the \texttt{CMake} 
+configuration phase, the code provides an interface to import input 
+distributions from, or export evolution results to, the \texttt{LHAPDF} library. 
+To handle input initialization, the initial state can be populated directly from 
+an \texttt{LHAPDF} set using the \mintinline{cpp}{LHAPDFDistribution} class. This 
+class encapsulates an \texttt{LHAPDF} object alongside the user-specified initial 
+and final evolution energies. Because \mintinline{cpp}{LHAPDFDistribution} inherits 
+from the \mintinline{cpp}{Distribution} base class, it can be utilized in an 
+identical manner to the \mintinline{cpp}{LesHouchesDistribution} shown in 
+Listing~\ref{lst:ex-prog}.
 
-There is also the option to produce an output PDF that can then be imported and used within LHAPDF. This can be done via the \mintinline{cpp}{LHAPDFGrid} class. An example main function is given in Listing~\ref{lst:lhapdfgrid}.
+Conversely, exporting the evolved PDFs into a format 
+compatible with \texttt{LHAPDF} is managed by the 
+\mintinline{cpp}{LHAPDFGrid} class. This component handles the generation of a standard 
+grid output file that can be natively loaded by \texttt{LHAPDF}. A representative 
+example demonstrating this is provided in Listing~\ref{lst:lhapdfgrid}, and an example file with additional comments is given in the repository as \path{examples/lhapdf_grid.cpp}.
 
 \begin{listing}
   \inputminted[frame=lines,linenos]{cpp}{res/lhapdfgrid.cpp}
@@ -1009,67 +1075,71 @@ There is also the option to produce an output PDF that can then be imported and 
   \label{lst:lhapdfgrid}
 \end{listing}
 
-The \path{infofile.in} file is a template \path{.info} file present in LHAPDF PDF sets. An example one is included in the root of the project. This file contains a number of replacement fields enclosed in percent signs '\%', so that once the evolution is complete, the code will insert into the file e.g. the list of values of $\alpha_s$ by replacing the string ``\%AS\_QS\%'' in the file.
+The template file \path{infofile.in} serves as the blueprint for the \path{.info} metadata file mandatory for all \texttt{LHAPDF} PDF sets. An example configuration file is provided in the project root directory; it contains placeholder fields enclosed in percent signs (\%), so that upon successful completion of the PDF evolution, the code substitutes these placeholders with the computed physical specifications and parameters. For instance, the strong coupling $\alpha_s$ values are inserted by replacing the placeholder string \texttt{\%AS\_QS\%} within the file.
 
-Since the user may have installed LHAPDF in a system directory, e.g. \path{/usr/local}, \texttt{Candia-v2} will not install the PDF into the corresponding PDF set directory to avoid requiring user credentials or escalation. The user is free to copy/move the PDF to the PDF set directory themselves, which is typically \path{<lhapdf-prefix>/share/LHAPDF}, or load the set directory from the working directory.
 
-\subsubsection{Subtraction and Residual PDF Access}
+Note that \texttt{Candia-v2} does not directly install the output PDFs into the \texttt{LHAPDF} PDF set directory, due to the fact that \texttt{LHAPDF} may be installed in a system path, e.g., \path{/usr/local}. This prevents potential write-permission conflicts or the need for superuser escalation during installation. Instead, generated PDF sets are written to the local working directory. Users can subsequently configure \texttt{LHAPDF} to load the sets locally, or manually transfer the directories to the \texttt{LHAPDF} set directory, typically located at \path{<lhapdf-prefix>/share/LHAPDF}.
+
+\subsubsection{Subtraction and Residual PDFs}
 \label{subsec:subpdf-access}
 
-The generation of subtraction and residual PDFs is very simple, and only requires one call to the following function:
+The generation of subtraction and residual PDFs is straightforward, requiring only a single call to the following function:
 
 \begin{minted}{cpp}
 std::vector<ArrayGrid> DGLAPSolver::calculateSubtractionPDFs();
 \end{minted}
 
-This function returns the same datatype as the \mintinline{cpp}{.evolve()} methods, and will contain 20 total PDFs: $\tilde{f}_q^{(1)}$, $\tilde{f}_q^{(2)}$, $\tilde{f}_q^{(3)}$, $\tilde{f}_q^{(\mathrm{NLO})}$, $\tilde{f}_q^{(\mathrm{NNLO})}$, ${\delta}f_q^{(1)}$, ${\delta}f_q^{(2)}$, ${\delta}f_q^{(3)}$, ${\delta}f_q^{(\mathrm{NLO})}$, and ${\delta}f_q^{(\mathrm{NNLO})}$, for charm and bottom quark PDFs.
+This function returns the same datatype as the \mintinline{cpp}{.evolve()} methods and contains in total 20 PDF objects: $\tilde{f}_q^{(1)}$, $\tilde{f}_q^{(2)}$, $\tilde{f}_q^{(3)}$, $\tilde{f}_q^{(\mathrm{NLO})}$, $\tilde{f}_q^{(\mathrm{NNLO})}$, ${\delta}f_q^{(1)}$, ${\delta}f_q^{(2)}$, ${\delta}f_q^{(3)}$, ${\delta}f_q^{(\mathrm{NLO})}$, and ${\delta}f_q^{(\mathrm{NNLO})}$, where the index $q$ represents either the charm- or the bottom-quark PDF.
 
-Handling the order of these in an array of length 20 is aided by the \mintinline{cpp}{SubtractionPDFIndices} enum\footnote{This is a large enum, so we refer the reader to the source code for the full list of values.} so that, for instance, one can retrieve ${\delta}f_b^{(2)}$ simply by
+Handling the order of these in an array of length 20 is aided by the \mintinline{cpp}{SubtractionPDFIndices} enum\footnote{This is a large enum, so we refer the reader to the source code for the full list of values.} so that, for instance, one can retrieve ${\delta}f_b^{(2)}$ simply using 
 
 \begin{minted}{cpp}
 auto deltafb2 = subpdfs[B_DELTAF2];
 \end{minted}
 
-Of course, if the solver has not evolved past the mass of the charm or the bottom quark, then those PDFs will be zero.
+If the solver has not evolved up to a scale higher than the mass of the charm or the bottom quark, then those PDFs are zero.
 
 
 \subsection{Major Fixes and Optimizations from \texorpdfstring{\texttt{Candia-v1}}{Candia-v1}}
 \label{subsec:optims}
 
-We now, for completeness, describe the major fixes, optimizations, and general enhancements that have been made with the advance to \texttt{Candia-v2}. The first one is the flexibility offered by C++ over C when it comes to type-generic functions and interfaces. While this doesn't have any direct performance impacts, it makes debugging and reading the code easier, leading to a faster developing process and cleaner API.
+In this section, we describe the major bug fixes, algorithmic optimizations, and architectural enhancements introduced in \texttt{Candia-v2}. A primary improvement stems from the enhanced flexibility that \texttt{C++} offers over \texttt{C} regarding type-generic functionality and interfaces. Although this transition does not directly improve performance, it significantly aids debugging and improves code readability leading to a faster developing process and cleaner API.
 
-There were a few bugs in \texttt{Candia} that have been fixed in \texttt{Candia-v2}. First, the new NNLO coefficient introduced with the exact solution was missing the factor of $\beta_1$ in the arctangent. The second bug was an incorrect initialization of the $\ln \frac{\mu_R^2}{\mu_F^2}$ when performing the matching of the coupling, leaving this term equal to zero no matter what the user specified. Third, the initial conditions for the coupling were set incorrectly. The intention is to start the evolution just before the mass of the charm, such that matching for the coupling (and PDFs) occurs right away. However, the initial value of $\alpha_0=0.35$ was originally specified for \textit{after} the threshold of the charm, leading to incorrect values of $\alpha_s$ throughout the rest of the evolution. Lastly, there was a small typo in the definition of $A_{gg}^{(2)}$, the numerical impacts of which were virtually insignificant.
+Several bugs present in the original \texttt{Candia} code have been fixed in \texttt{Candia-v2}. First, the NNLO coefficient associated with the exact analytical solution omitted a factor of $\beta_1$ within the arctangent argument. Second, the variable representing the logarithmic ratio $\ln(\mu_R^2/\mu_F^2)$ was incorrectly initialized, leading to its value being set to zero (corresponding to a ratio $\mu_R^2/\mu_F^2 = 1$) regardless of user inputs. This led to an invalid matching procedure for the strong coupling if the user specified a ratio $\mu_R^2/\mu_F^2 \neq 1$.
+ 
+Third, the initial conditions for the coupling evolution were misconfigured. The intent of the Les Houches benchmarking initial conditions is to initiate the evolution at $n_f=3$, immediately \textit{below} the charm-quark mass threshold, in order to trigger matching instantaneously for both the coupling and the PDFs. However, the initial reference value $\alpha_0=0.35$ was inadvertently assigned \textit{above} the charm-quark  threshold, systematically altering the evolved values of $\alpha_s(Q^2)$. Finally, a minor typographical error in the definition of $A_{gg}^{(2)}$ was corrected, though its numerical impact on the overall evolution was found to be negligible.
 
-Apart from the bug fixes, there are several major improvements in \texttt{Candia-v2}. The first, and most significant, is that the evolution of the decoupled non-singlet PDFs can be performed concurrently by placing them on separate threads. The singlet PDFs are coupled, but we can put the convolutions themselves on separate threads by rewriting the loops to utilize C++ execution policies. This allows the compiler to choose, in whatever way it deems most efficient, how to parallelize the loop iterations. The second major improvement is the memory management. Due to the recursive nature of the coefficients, we only need to store adjacent iterations, drastically reducing the memory footprint especially for higher orders. The last is that, due to the way we perform the convolution, we do not require the $x$-dependent parts of the $P_2$ and $P_3$ pieces, corresponding to the coefficients of the plus distribution and delta function, respectively. So, we only need to calculate them once per $n_f$, and can just cache them for future evaluations of the splitting function.
+In addition to critical bug fixes, several improvements have been implemented in \texttt{Candia-v2}. The most significant development is  the implementation of parallel computing to distribute the computation of the evolution equations for the decoupled non-singlet PDFs across independent execution threads. In the singlet sector, DGLAP equations are coupled and the CPU-intensive numerical computations from the convolutions are refactored to allow the utilization of \texttt{C++} execution policies within the algorithms library. This allows the compiler to optimize loop iterations dynamically via parallelization, vectorization, or a combination of the two.
 
+The second major enhancement involves optimized memory management. Based on the recursive structure of the algorithm, the code only retains data from adjacent iterations in memory. This drastically reduces the total memory usage, especially at higher perturbative orders. Finally, the specific formulation of the numerical convolution eliminates the need to repeatedly evaluate the $x$-dependent components of the $P_2$ and $P_3$ kernel terms, which correspond to the coefficients of the plus distribution and the Dirac delta function, respectively. Consequently, these terms are computed only once per active flavor number $n_f$ and are subsequently cached, accelerating the evaluation of the splitting functions.
 
 \section{Conclusions}
 \label{sec:conclusions}
 
-We have presented \textsc{Candia-v2}, a modernized and extended implementation
-of the \textsc{Candia} algorithm for solving the DGLAP evolution equations
+We have presented \texttt{Candia-v2}, a modernized and extended implementation
+of the \texttt{Candia} algorithm for solving the DGLAP evolution equations
 directly in Bjorken-$x$ space. The new version supersedes the original
-\textsc{Candia} code by providing a C++ interface, improved memory management,
+\textsc{Candia} code by providing a \texttt{C++} interface, improved memory management,
 parallelized components, and a more flexible API.
 
-The main physics extension of \textsc{Candia-v2} is the implementation of PDF
+The main physics extension of \texttt{Candia-v2} is the implementation of PDF
 evolution through approximate N$^3$LO accuracy in QCD. The code includes the currently
 available four-loop DGLAP splitting functions, using exact results in the
 non-singlet sector and state-of-the-art approximations in the singlet sector.
 Heavy-quark threshold matching is implemented with operator matrix elements up
 to three loops, interfaced through \textsc{libome}. 
 
-In addition to standard PDF evolution, \textsc{Candia-v2} provides direct access
+In addition to standard PDF evolution, \texttt{Candia-v2} provides direct access
 to subtraction and residual heavy-quark PDFs. These quantities provide reusable, process-independent building blocks that facilitate the implementation of a large variety of GMVFN schemes with improved numerical accuracy.
 
-The package also includes optional interfaces to \textsc{LHAPDF}, enabling both LHAPDF input distributions and LHAPDF-formatted output grids. This makes
-\textsc{Candia-v2} suitable both as a standalone evolution code and as a
+The package also includes optional interfaces to \texttt{LHAPDF}, enabling both LHAPDF input distributions and LHAPDF-formatted output grids. This makes
+\texttt{Candia-v2} suitable both as a standalone evolution code and as a
 component in larger environments for broader phenomenological studies. 
 
-The public release of \textsc{Candia-v2} provides a useful tool for analyses in high-precision collider phenomenology. As exact
+The public release of \texttt{Candia-v2} provides a useful tool for analyses in high-precision collider phenomenology. As exact
 four-loop singlet splitting functions and additional higher-order ingredients
 become available, the modular structure of the code will allow them to be
-incorporated in a straightforward way. \textsc{Candia-v2} therefore provides a
+incorporated in a straightforward way. \texttt{Candia-v2} therefore provides a
 flexible platform for precision phenomenology as increasingly precise measurements from the LHC, the HL-LHC program, and future facilities such as the Electron-Ion Collider demand commensurate theoretical accuracy.
 
 \bibliographystyle{elsarticle-num}

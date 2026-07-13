@@ -7,7 +7,7 @@ int main()
 {
   const double order = 3;
   const double iterations = 10;
-  const double trunc_idx = 15;
+  const double trunc_idx = 10;
   const double Qf = 100;
   const double mur2_muf2 = 1.0;
 
@@ -21,7 +21,7 @@ int main()
     dist.Q0(), dist.Qf(),
     dist.alpha0(),
     mur2_muf2);
-  alphas.setVFNS(dist.masses(), dist.nfi());
+  alphas.setVFNS(dist.masses(), dist.nfi(), dist.nff());
   // alphas.setFFNS(4);
 
   DGLAPSolver solver(
