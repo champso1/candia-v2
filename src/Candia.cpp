@@ -47,12 +47,14 @@ namespace Candia2
 {
 
 	DGLAPSolver::DGLAPSolver(
-		uint order, Grid& grid, AlphaS const& alpha_s,
+		uint order,
+		Grid& grid,
+		AlphaS const& alpha_s, AlphaQED const& alpha_qed,
 		double Qf, uint iterations, uint trunc_idx,
 		Distribution const& initial_dist,
 		double mur2_muf2) 
 		: _order{order},  _grid{grid}, _Qf{Qf},
-		  _alpha_s{alpha_s},
+		  _alpha_s{alpha_s}, _alpha_qed{alpha_qed},
 		  _mur2_muf2{mur2_muf2}, _log_mur2_muf2{std::log(mur2_muf2)}, _log_muf2_mur2{-std::log(mur2_muf2)},
 		  _is_scale_difference{mur2_muf2 != 1.0},
 		  _initial_dist{initial_dist},

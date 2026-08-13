@@ -11,6 +11,7 @@
 #include <vector>
 
 #include "Candia-v2/Common.hpp"
+#include "Candia-v2/Couplings.hpp"
 #include "Candia-v2/Expression.hpp"
 #include "Candia-v2/Grid.hpp"
 #include "Candia-v2/AlphaS.hpp"
@@ -30,6 +31,7 @@ namespace Candia2
 		bool use_n3lo_heavyquark_asymmetry{true}; //!< use new OME from arXiv:2512.13508		 
 		bool use_fortran_nnlo_splitfuncs{false}; //!< whether to use the fortran versions for the nnlo splitting functions or the C++-translated ones
 		bool use_fortran_n3lo_splitfuncs{false}; //!< whether to use the fortran versions for the n3lo splitting functions or the C++-translated ones
+		bool try_qed{false}; //!< whether to try and include QED effects
 	};
 
 	/**
@@ -44,6 +46,7 @@ namespace Candia2
 		Grid _grid; //!< main @a Grid object
 		double _Qf{}; //!< final energy value to evolve to
 		AlphaS _alpha_s; //!< main @a AlphaS object
+		AlphaQED _alpha_qed; //!< main @a AlphaQED object
 		double _mur2_muf2{}; //!< \f$mu_r^2/mu_f^2\f$
 		double _log_mur2_muf2{}; //!< \f$\log(\frac{\mu_r^2}{\mu_f^2})\f$
 		double _log_muf2_mur2{}; //!< \f$\log(\frac{\mu_f^2}{\mu_r^2})\f$
@@ -209,7 +212,9 @@ namespace Candia2
 		 *  @param mur2_muf2 The ratio of \f$\mu_r^2/\mu_f^2\f$
 		 */
 	    DGLAPSolver(
-			uint order, Grid& grid, AlphaS const& alpha_s,
+			uint order,
+			Grid& grid,
+			AlphaS const& alpha_s, AlphaQED const& alpha_qed,
 			double Qf, uint iterations, uint trunc_idx,
 			Distribution const& initial_dist,
 			double mur2_muf2 = 1.0);
