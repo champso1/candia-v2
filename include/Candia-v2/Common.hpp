@@ -53,6 +53,10 @@ namespace Candia2
 	constexpr double Zeta5   = 1.0369277551433699263;
 	constexpr double Zeta6   = PI_6/945.0;
 	constexpr double Zeta7   = 1.0083492773819228268;
+	constexpr std::array<double, 6> Q_QUARK{2.0/3.0, -1.0/3.0, 2.0/3.0, -1.0/3.0, 2.0/3.0, -1.0/3.0};
+
+	constexpr double MTAU = 1.777;
+	constexpr double ALPHAQED_MTAU = 1.0/133.4;
 	/** @} */
 
 	/**

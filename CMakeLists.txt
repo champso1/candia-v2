@@ -41,6 +41,7 @@ set(headers
   include/Candia-v2/ArrayGrid.hpp
   include/Candia-v2/Candia.hpp
   include/Candia-v2/Common.hpp
+  include/Candia-v2/Couplings.hpp
   include/Candia-v2/Distribution.hpp
   include/Candia-v2/Expression.hpp
   include/Candia-v2/Grid.hpp
