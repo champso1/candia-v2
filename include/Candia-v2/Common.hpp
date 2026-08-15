@@ -53,7 +53,7 @@ namespace Candia2
 	constexpr double Zeta5   = 1.0369277551433699263;
 	constexpr double Zeta6   = PI_6/945.0;
 	constexpr double Zeta7   = 1.0083492773819228268;
-	constexpr std::array<double, 6> Q_QUARK{2.0/3.0, -1.0/3.0, 2.0/3.0, -1.0/3.0, 2.0/3.0, -1.0/3.0};
+	constexpr std::array Q_QUARK{2.0/3.0, -1.0/3.0, -1.0/3.0, 2.0/3.0, 2.0/3.0, -1.0/3.0};
 
 	constexpr double MTAU = 1.777;
 	constexpr double ALPHAQED_MTAU = 1.0/133.4;
@@ -69,6 +69,92 @@ namespace Candia2
 	constexpr const uint DEFAULT_TRUNC_IDX = 5;
 	constexpr const uint NUM_SUBTRACT_PDFS = 2;
 	/** @{ */
+
+	enum class StandardPartonIndices : uint
+	{
+		G=0,
+		U,
+		D,
+		S,
+		C,
+		B,
+		T,
+		UB,
+		DB,
+		SB,
+		CB,
+		BB,
+		TB,
+		UM,
+		DM,
+		SM,
+		CM,
+		BM,
+		TM,
+		UP,
+		DP,
+		SP,
+		CP,
+		BP,
+		TP,
+		QM,
+		QNSP2,
+		QNSP3,
+		QNSP4,
+		QNSP5,
+		QNSP6,
+		QP,
+		QNSM2,
+		QNSM3,
+		QNSM4,
+		QNSM5,
+		QNSM6,
+		COUNT,
+	};
+
+
+	enum class QEDPartonIndices : uint
+	{
+		G=0,
+		U,
+		D,
+		S,
+		C,
+		B,
+		T,
+		UB,
+		DB,
+		SB,
+		CB,
+		BB,
+		TB,
+		UV,
+		DV,
+		SV,
+		CV,
+		BV,
+		TV,
+		PHOTON,
+		E,
+		MU,
+		TAU,
+		EB,
+		MUB,
+		TAUB,
+		EV,
+		MUV,
+		TAUV,
+		SIGMADS,
+		SIGMAUC,
+		SIGMASB,
+		SIGMACT,
+		SIGMAUD,
+		SIGMA,
+		SIGMAL2,
+		SIGMAL3,
+		SIGMAL,
+		COUNT,
+	};
 
 
 	// colors for printing to the terminal

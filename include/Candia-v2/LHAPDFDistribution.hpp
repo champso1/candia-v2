@@ -56,11 +56,9 @@ namespace Candia2
 		value_type xsb(value_type x) const override { return _pdf->xfxQ(-3, x, _Q0); }
 		value_type xcb(value_type x) const override { return _pdf->xfxQ(-4, x, _Q0); }
 
-		void fillSingletCoeffs(
-			accessor_type const& accessor,
-			std::vector<value_type> const& grid_points) const override;
-		void fillNonSingletCoeffs(
-			accessor_type const& accessor,
+		void fillCoeffs(
+			accessor_type const& s_accessor,
+			accessor_type const& ns_accessor,
 			std::vector<value_type> const& grid_points) const override;
 
 		virtual void setup(double q0, double qf) override;

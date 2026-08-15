@@ -9,6 +9,7 @@
 #include <memory>
 #include <utility>
 #include <vector>
+#include <optional>
 
 #include "Candia-v2/Common.hpp"
 #include "Candia-v2/Couplings.hpp"
@@ -46,7 +47,7 @@ namespace Candia2
 		Grid _grid; //!< main @a Grid object
 		double _Qf{}; //!< final energy value to evolve to
 		AlphaS _alpha_s; //!< main @a AlphaS object
-		AlphaQED _alpha_qed; //!< main @a AlphaQED object
+		std::optional<AlphaQED> _alpha_qed; //!< main @a AlphaQED object
 		double _mur2_muf2{}; //!< \f$mu_r^2/mu_f^2\f$
 		double _log_mur2_muf2{}; //!< \f$\log(\frac{\mu_r^2}{\mu_f^2})\f$
 		double _log_muf2_mur2{}; //!< \f$\log(\frac{\mu_f^2}{\mu_r^2})\f$
@@ -55,10 +56,13 @@ namespace Candia2
 		// TODO: remove the nfi and nff variables, they shouldn't be needed anymore
 		// since they are stored inside the alpha_s object
 		uint _nf{}; //!< current active number of massless flavors
+		const uint _nl{3}; //!< number of active leptons (set to 3 by default for now)
 		uint _nfi{}; //!< minimum number based on initial evolution and provided quark masses
 		uint _nff{}; //!< final based on final evolution and provided quark masses
 		double _alpha0{}; //!< initial alpha_s in an interval
 		double _alpha1{}; //!< final alpha_s in an interval
+		double _alphaqed0{}; //!< initial alpha_qed in an interval
+		double _alphaqed1{}; //!< final alpha_qed in an interval
 
 		inline std::vector<uint> getEvolutionIndices()
 		{
@@ -89,13 +93,16 @@ namespace Candia2
 		uint _iterations{}; //!< number of singlet/non-singlet iterations
 		uint _trunc_idx{}; //!< number of additional singlet truncated iterations
 
-	    ArrayGridN<3> _A; //!< LO coeffs
-		ArrayGridN<4> _B; //!< NLO coeffs
-		ArrayGridN<5> _C; //!< NNLO coeffs
-		ArrayGridN<6> _D; //!< N3LO coeffs
-	    ArrayGridN<4> _S; //!< singlet coeffs
-		ArrayGridN<4> _S_NS; //!< non-singlet coeffs (truncated)
-		std::vector<ArrayGrid> _F; //!< final distributions
+	    ArrayGridN<3> _A{}; //!< LO coeffs
+		ArrayGridN<4> _B{}; //!< NLO coeffs
+		ArrayGridN<5> _C{}; //!< NNLO coeffs
+		ArrayGridN<6> _D{}; //!< N3LO coeffs
+		ArrayGridN<4> _S{}; //!< singlet coeffs
+		ArrayGridN<4> _S_NS{}; //!< non-singlet coeffs (truncated)
+		std::vector<ArrayGrid> _F{}; //!< final distributions
+
+		ArrayGridN<4> _A_QED{}; //!< LO QCD/LO QED non-singlet coeffs
+		ArrayGridN<4> _S_QED{}; //!< LO QCD/LO QED singlet coeffs
 
 		std::array<double,8> _r1{}; //!< real solution to N3LO quadratic
 		std::array<double,8> _b{};  //!< \f$-2*\mathrm{Re}[r_2]\f$
@@ -214,6 +221,26 @@ namespace Candia2
 	    DGLAPSolver(
 			uint order,
 			Grid& grid,
+			AlphaS const& alpha_s,
+			double Qf, uint iterations, uint trunc_idx,
+			Distribution const& initial_dist,
+			double mur2_muf2 = 1.0);
+		
+		/**
+		 *  @brief Constructs a DGLAPSolver object with QED effects
+		 *  @param order The perturbative order
+		 *  @param grid reference to a @a Grid object
+		 *  @param alpha_s (const) reference to an @a AlphaS object
+		 *  @param alpha_qed (const) reference to an @a AlphaQED object
+		 *  @param Qf the final energy to evolve to
+		 *  @param iterations Number of iterations to complete (the outer, s-index)
+		 *  @param trunc_idx Number of terms in the singlet expansion to truncate at
+		 *  @param initial_dist (const) reference to a @a Distribution object
+		 *  @param mur2_muf2 The ratio of \f$\mu_r^2/\mu_f^2\f$
+		 */
+	    DGLAPSolver(
+			uint order,
+			Grid& grid,
 			AlphaS const& alpha_s, AlphaQED const& alpha_qed,
 			double Qf, uint iterations, uint trunc_idx,
 			Distribution const& initial_dist,
@@ -230,7 +257,7 @@ namespace Candia2
 		 */
 		inline std::vector<ArrayGrid> const& evolve()
 		{
-			log(LOG_INFO, "DGLAPSolver", "Using exact ansatz for NS sector");
+			log(LOG_DEBUG, "DGLAPSolver", "Using exact ansatz for NS sector");
 			return _evolve_function(EvolType::Exact);
 		}
 
@@ -239,7 +266,7 @@ namespace Candia2
 		 */
 		inline std::vector<ArrayGrid> const& evolveTrunc()
 		{
-			log(LOG_INFO, "DGLAPSolver", "Using exact ansatz for NS sector");
+			log(LOG_DEBUG, "DGLAPSolver", "Using exact ansatz for NS sector");
 			return _evolve_function(EvolType::Truncated);
 		}
 
@@ -251,14 +278,14 @@ namespace Candia2
 		std::vector<ArrayGrid> const& _evolve_function(EvolType evoltype);
 	private:
 		/**
-		 *  @brief Sets the initial values of the coefficients using the distribution
-		 *  @param dist The initial distribution
-		 */
-		void setInitialConditions(Distribution const& dist);
-		/**
 		 *  @brief Sets the non-singlet/singlet distributions that are actually evolved rather than the raw quark distributions
 		 */
 		void setupCoefficients();
+		/**
+		 *  @brief Sets up the QED basis
+		 */
+		void setupQEDCoefficients();
+
 		/**
 		 *  @brief Does the opposite of @a setInitialConditions, i.e. retrieves the raw quark dists from the special evolution ones
 		 *  @param resum_ns the set of resummed non-singlet distributions
@@ -275,6 +302,7 @@ namespace Candia2
 
 		/** @brief takes the default exact coefficients (A, B, ...) and sets up S to contain all necessary info */
 		void setupTruncatedDistributions();
+	    
 
 		void evolveSinglet(std::reference_wrapper<std::vector<ArrayGrid>> arr, double L1);
 		/**

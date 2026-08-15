@@ -34,6 +34,7 @@ set(sources
   src/RecRel.cpp
   src/SpecialFuncs.cpp
   src/SplittingFns.cpp
+  src/SplittingFnsQED.cpp
   src/SplittingFns_P3nsExact.cpp)
 
 set(headers
@@ -51,7 +52,8 @@ set(headers
   include/Candia-v2/OperatorMatrixElements.hpp
   include/Candia-v2/Options.hpp
   include/Candia-v2/SpecialFuncs.hpp
-  include/Candia-v2/SplittingFn.hpp)
+  include/Candia-v2/SplittingFn.hpp
+  include/Candia-v2/SplittingFnQED.hpp)
 
 enable_language(Fortran)
 add_library(hplog STATIC src/fortran/hplog5.f)

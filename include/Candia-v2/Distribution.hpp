@@ -86,20 +86,14 @@ namespace Candia2
 		virtual value_type xcb([[maybe_unused]] value_type x) const { return 0.0; }
 
 		/**
-		 *  @brief Helper for filling the set of singlet coefficients
-		 *  @param accessor the accessor to retrieve a singlet coefficient
+		 *  @brief Helper for filling the coefficients
+		 *  @param s_accessor the accessor to retrieve a singlet coefficient
+		 *  @param ns_accessor the accessor to retrieve a non-singlet coefficient
 		 *  @param grid_points the grid points at which to fill the coefficients
 		 */
-		virtual void fillSingletCoeffs(
-			accessor_type const& accessor,
-			std::vector<value_type> const& grid_points) const = 0;
-		/**
-		 *  @brief Helper for filling the set of non-singlet coefficients
-		 *  @param accessor the accessor to retrieve a non-singlet coefficient
-		 *  @param grid_points the grid points at which to fill the coefficients
-		 */
-		virtual void fillNonSingletCoeffs(
-			accessor_type const& accessor,
+		virtual void fillCoeffs(
+			accessor_type const& s_accessor,
+			accessor_type const& ns_accessor,
 			std::vector<value_type> const& grid_points) const = 0;
 
 		/**
@@ -188,14 +182,138 @@ namespace Candia2
 		}
 		inline value_type xsb(value_type x) const override { return xs(x); }
 
-		void fillSingletCoeffs(
-			accessor_type const& accessor,
-			std::vector<value_type> const& grid_points) const override;
-	    void fillNonSingletCoeffs(
-			accessor_type const& accessor,
+		void fillCoeffs(
+			accessor_type const& s_accessor,
+			accessor_type const& ns_accessor,
 			std::vector<value_type> const& grid_points) const override;
 
-		virtual void setup(double Q0, double Qf) override;
+		void setup(double Q0, double Qf) override;
+	};
+
+
+	/**
+	 *  @brief Adds lepton/photon distributions
+	 */
+	class QEDDistribution
+	{
+	protected:
+		double _alphaqed0;
+	public:
+		virtual double xgamma(double x) const = 0;
+		virtual double xe(double x) const = 0;
+		virtual double xmu(double x) const = 0;
+		virtual double xtau(double x) const = 0;
+		virtual double xeb(double x) const = 0;
+		virtual double xmub(double x) const = 0;
+		virtual double xtaub(double x) const = 0;
+	};
+
+	class LesHouchesQED final : public Distribution, public QEDDistribution
+	{
+	public:
+		explicit LesHouchesQED(double qf)
+		{
+			setup(MTAU, qf);
+		}
+
+		inline value_type xuv(value_type x) const
+		{
+			return 5.1072*std::pow(x, 0.8)*std::pow(1.0-x, 3.0);
+		}
+		inline value_type xdv(value_type x) const
+		{
+			return 3.06432*std::pow(x, 0.8)*std::pow(1.0-x, 4.0);
+		}
+		inline value_type xg (value_type x) const override
+		{
+			return 1.7*std::pow(x, -0.1)*std::pow(1.0-x, 5.0);
+		}
+		inline value_type xu (value_type x) const override
+		{
+			return xuv(x) + xub(x);
+		}
+		inline value_type xd (value_type x) const override
+		{
+			return xdv(x) + xdb(x);
+		}
+		inline value_type xdb(value_type x) const override
+		{
+			return 0.1939875*std::pow(x, -0.1)*std::pow(1.0-x, 6.0);
+		}
+		inline value_type xub(value_type x) const override
+		{
+			return xdb(x)*(1.0-x);
+		}
+		inline value_type xs (value_type x) const override
+		{
+			return 0.2*(xub(x) + xdb(x));
+		}
+		inline value_type xsb(value_type x) const override { return xs(x); }
+
+
+		
+		inline double xS(double x) const
+		{
+			return 0.0;
+		}
+		inline double xgamma(double x) const override
+		{
+			return 0.0;
+		}
+		inline double xe(double x) const override
+		{
+			return 0.0;
+		}
+		inline double xmu(double x) const override
+		{
+			return 0.0;
+		}
+		inline double xtau(double x) const override
+		{
+			return 0.0;
+		}
+		inline double xeb(double x) const override
+		{
+			return 0.0;
+		}
+		inline double xmub(double x) const override
+		{
+			return 0.0;
+		}
+		inline double xtaub(double x) const override
+		{
+			return 0.0;
+		}
+
+		inline double xsigmaud(double x) const
+		{
+			return
+				xu(x) + xub(x)
+				+ xc(x) + xcb(x)
+				- (xd(x) + xdb(x));
+		}
+		inline double xsigma(double x) const
+		{
+			return
+				xu(x) + xub(x)
+				+ xc(x) + xcb(x)
+				+ xd(x) + xdb(x);
+		}
+		inline double xsigmal(double x) const
+		{
+			return
+				xe(x) + xeb(x)
+				+ xmu(x) + xmub(x)
+				+ xtau(x) + xtaub(x);
+		}
+
+		// TODO: split singlet non-singlet?
+		void fillCoeffs(
+			accessor_type const& s_accessor,
+			accessor_type const& ns_accessor,
+			std::vector<value_type> const& grid_points) const override;
+
+		void setup(double q0, double qf) override;
 	};
 	
 } // namespace Candia2
