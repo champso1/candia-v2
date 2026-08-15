@@ -20,6 +20,7 @@ namespace Candia2
 		P3nsm, P3nsp, P3nsv, P3qq, P3qg, P3gq, P3gg,
 		A2ns, A2hq, A2hg, A2gq, A2gg,
 		A3nsm, A3nsp, A3gq, A3gg, A3hq, A3hg, A3psqq, A3sqg, A3PSshq,
+		P0ff, P0fy, P0yf, P0yy,
 		Count
 	};
 

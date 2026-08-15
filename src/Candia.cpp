@@ -6,7 +6,9 @@
 #include "Candia-v2/Expression.hpp"
 #include "Candia-v2/Grid.hpp"
 #include "Candia-v2/SplittingFn.hpp"
+#include "Candia-v2/SplittingFnQED.hpp"
 #include "Candia-v2/OperatorMatrixElements.hpp"
+#include "Candia-v2/Math.hpp"
 
 
 // PDF indices
@@ -49,12 +51,12 @@ namespace Candia2
 	DGLAPSolver::DGLAPSolver(
 		uint order,
 		Grid& grid,
-		AlphaS const& alpha_s, AlphaQED const& alpha_qed,
+		AlphaS const& alpha_s,
 		double Qf, uint iterations, uint trunc_idx,
 		Distribution const& initial_dist,
 		double mur2_muf2) 
 		: _order{order},  _grid{grid}, _Qf{Qf},
-		  _alpha_s{alpha_s}, _alpha_qed{alpha_qed},
+		  _alpha_s{alpha_s},
 		  _mur2_muf2{mur2_muf2}, _log_mur2_muf2{std::log(mur2_muf2)}, _log_muf2_mur2{-std::log(mur2_muf2)},
 		  _is_scale_difference{mur2_muf2 != 1.0},
 		  _initial_dist{initial_dist},
@@ -107,37 +109,79 @@ namespace Candia2
 			return vec_to_str(view);
 		};
 		log(LOG_DEBUG, "DGLAPSolver::DGLAPSolver()", "r1 array: {}", func(_r1));
-		log(LOG_DEBUG, "DGLAPSolver::DGLAPSolver()", "b  array: {}", func(_r1));
-		log(LOG_DEBUG, "DGLAPSolver::DGLAPSolver()", "c  array: {}", func(_r1));
-	    
-		setInitialConditions(initial_dist);
-		log(LOG_DEBUG, "DGLAPSolver::DGLAPSolver()", "Successfully filled coefficients with initial conditions.");
+		log(LOG_DEBUG, "DGLAPSolver::DGLAPSolver()", "b  array: {}", func(_b));
+		log(LOG_DEBUG, "DGLAPSolver::DGLAPSolver()", "c  array: {}", func(_c));
+	}
+
+	DGLAPSolver::DGLAPSolver(
+		uint order,
+		Grid& grid,
+		AlphaS const& alpha_s, AlphaQED const& alpha_qed,
+		double Qf, uint iterations, uint trunc_idx,
+		Distribution const& initial_dist,
+		double mur2_muf2) 
+		: _order{order},  _grid{grid}, _Qf{Qf},
+		  _alpha_s{alpha_s}, _alpha_qed{alpha_qed},
+		  _mur2_muf2{mur2_muf2}, _log_mur2_muf2{std::log(mur2_muf2)}, _log_muf2_mur2{-std::log(mur2_muf2)},
+		  _is_scale_difference{mur2_muf2 != 1.0},
+		  _initial_dist{initial_dist},
+		  _iterations{iterations}, _trunc_idx{trunc_idx}
+		  // _A({DISTS, 2, grid.size()}),
+		  // _B({DISTS, 2, iterations, grid.size()}),
+		  // _C({DISTS, 2, iterations, iterations, grid.size()}),
+		  // _D({DISTS, 2, iterations, iterations, iterations, grid.size()}),
+		  // _S({trunc_idx+1, 2, 2, grid.size()}),
+		  // _S_NS{},
+		  // _F(DISTS, ArrayGrid(grid.size()))
+	{
+		log(::CANDIA_OPENING_TEXT);
+
+		log(LOG_DEBUG, "DGLAPSolver::DGLAPSolver()", "Evolving with log(mu_R / mu_F) = log({:.1}) = {:.4}.", _mur2_muf2, _log_mur2_muf2);
+
+		if (_order == 0 && _trunc_idx != 0) {
+			_trunc_idx = 0; // LO has exact singlet solution, do not add additional terms
+			log(LOG_WARNING, "DGLAP", "Specified value of the truncation index ({}) will be set to zero.", _trunc_idx);
+		}
+
+		_r1[1] = -0.965105642503553;
+		_b[1] = -2.0 * 0.1629296392275606;
+		_c[1] = std::pow(0.1629296392275606, 2) + std::pow(0.9535744823175397, 2);
+
+		_r1[2] = -1.0315080774348302;
+		_b[2] = -2.0 * 0.18523659836580222;
+		_c[2] = std::pow(0.18523659836580222, 2) + std::pow(1.0299109343730084, 2);
+				
+		_r1[3] = -1.1120253073038324;
+		_b[3] = -2.0 * 0.2214224000789979;
+		_c[3] = std::pow(0.2214224000789979, 2) + std::pow(1.131077812338495, 2);
+
+		_r1[4] = -1.2090185772488318;
+		_b[4] = -2.0 * 0.2867586032664649;
+		_c[4] = std::pow(0.2867586032664649, 2) + std::pow(1.272794345339416, 2);
+				
+		_r1[5] = -1.3205899823870375;
+		_b[5] = -2.0 * 0.42477034063852415;
+		_c[5] = std::pow(0.42477034063852415, 2) + std::pow(1.4854822725151384, 2);
+				
+		_r1[6] = -1.4277979273114205;
+		_b[6] = -2.0 * 0.7964970177083996;
+		_c[6] = std::pow(0.7964970177083996, 2) + std::pow(1.816809978388145, 2);
+
+		auto func = [](std::array<double, 8> const& a) -> std::string {
+			auto view =
+				std::views::iota(1) | std::views::take(6)
+				| std::views::transform([&a](int i){ return a[i]; });
+			return vec_to_str(view);
+		};
+		log(LOG_DEBUG, "DGLAPSolver::DGLAPSolver()", "r1 array: {}", func(_r1));
+		log(LOG_DEBUG, "DGLAPSolver::DGLAPSolver()", "b  array: {}", func(_b));
+		log(LOG_DEBUG, "DGLAPSolver::DGLAPSolver()", "c  array: {}", func(_c));
 	}
 
 	DGLAPSolver::~DGLAPSolver()
 	{
 		log(LOG_INFO, "DGLAP", "Exiting...");
 		log(::CANDIA_CLOSING_TEXT);
-	}
-
-	void DGLAPSolver::setInitialConditions(Distribution const& dist)
-	{
-		log(LOG_DEBUG, "DGLAPSolver::setInitialConditions()", "Setting initial conditions... ");
-
-		dist.fillSingletCoeffs(
-			[&](uint j, uint k) -> double& {
-				return _S(0,j,0,k); },
-			_grid.points());
-		dist.fillNonSingletCoeffs(
-			[&](uint j, uint k) -> double& {
-			switch (_order) {
-				case 0: return _A(j,0,k); break;
-				case 1: return _B(j,0,0,k); break;
-				case 2: return _C(j,0,0,0,k); break;
-				case 3: return _D(j,0,0,0,0,k); break;
-				default: throw std::runtime_error("unreachable");
-			}},
-			_grid.points());
 	}
 
 	void DGLAPSolver::loadAllExpressions()
@@ -258,6 +302,15 @@ namespace Candia2
 			}
 			log(LOG_DEBUG, "DGLAPSolver::loadAllExpressions()", "  - {} => {}", exprname_str, approxtype_str);
 		}
+
+
+		if (getOptions().try_qed) {
+			log(LOG_DEBUG, "DGLAPSolver::loadAllExpressions()", "trying to load QED expressions");
+			createExpression<P0ff>(ExprName::P0ff);
+			createExpression<P0fy>(ExprName::P0fy);
+			createExpression<P0yf>(ExprName::P0yf);
+			createExpression<P0yy>(ExprName::P0yy);
+		}
     }
 
     void DGLAPSolver::setupCoefficients()
@@ -283,6 +336,36 @@ namespace Candia2
 			for (uint j=32; j<=36; j++)
 				getNonSingletCoeffValue(j, k)=getNonSingletCoeffValue(19, k)-getNonSingletCoeffValue(j-12, k);
 		}
+    }
+
+	void DGLAPSolver::setupQEDCoefficients()
+    {
+	    // log(LOG_WARNING, "DGLAPSolver::setupQEDCoefficients()", "not implemented");
+		for (uint k=0; k<_grid.size(); k++) {
+			for (uint j=13; j<=18; j++)
+				_A_QED(j,0,0,k) = _A_QED(j-12,0,0,k) - _A_QED(j-6,0,0,k);
+			auto sigmauc = static_cast<uint>(QEDPartonIndices::SIGMAUC);
+			auto sigmads = static_cast<uint>(QEDPartonIndices::SIGMADS);
+			auto sigmasb = static_cast<uint>(QEDPartonIndices::SIGMASB);
+			_A_QED(sigmauc,0,0,k)
+				= _A_QED(1,  0,0,k)
+				+ _A_QED(1+6,0,0,k)
+				- _A_QED(4,  0,0,k)
+				- _A_QED(4+6,0,0,k);
+
+			_A_QED(sigmads,0,0,k)
+				= _A_QED(2,  0,0,k)
+				+ _A_QED(2+6,0,0,k)
+				- _A_QED(3,  0,0,k)
+				- _A_QED(3+6,0,0,k);
+			
+			_A_QED(sigmasb, 0,0,k)
+				= _A_QED(3,  0,0,k)
+				+ _A_QED(3+6,0,0,k)
+				- _A_QED(5,  0,0,k)
+				- _A_QED(5+6,0,0,k);
+		}
+
     }
 
 	void DGLAPSolver::fixDistributions(
@@ -439,26 +522,77 @@ namespace Candia2
 		_D.clear();
 	}
 
+
 	std::vector<ArrayGrid> const& DGLAPSolver::_evolve_function(EvolType evol_type)
 	{
 		_evol_type = evol_type;
+
+		uint num_dists;
+		if (getOptions().try_qed) {
+			num_dists = static_cast<uint>(QEDPartonIndices::COUNT);
+			_A_QED.resize({num_dists, 2, _iterations, _grid.size()});
+			_S_QED.resize({_trunc_idx+1, num_dists, 2, _grid.size()});
+
+			auto s_accessor =
+				[&](uint j, uint k) -> double& {
+					return _S_QED(0,j,0,k);
+				};
+			auto ns_accessor =
+				[&](uint j, uint k) -> double& {
+					switch (_order) {
+						case 0: return _A_QED(j,0,0,k); break;
+						default: throw std::runtime_error("implement >LO for QED");
+					}
+				};
+			_initial_dist.fillCoeffs(s_accessor, ns_accessor, _grid.points());
+		} else {
+			num_dists = static_cast<uint>(StandardPartonIndices::COUNT);
+			auto s_accessor =
+				[&](uint j, uint k) -> double& {
+					return _S(0,j,0,k);
+				};
+			if (_evol_type == EvolType::Truncated) {
+			    _S_NS.resize({_trunc_idx+1, num_dists, 2, _grid.size()});
+				auto ns_accessor =
+					[&](uint j, uint k) -> double& {
+					    return _S_NS(0,j,0,k);
+					};
+				_initial_dist.fillCoeffs(s_accessor, ns_accessor, _grid.points());
+			} else {
+				switch (_order) {
+					case 0: _A.resize({num_dists, 2, _grid.size()}); break;
+					case 1: _B.resize({num_dists, 2, _iterations, _grid.size()}); break;
+					case 2: _C.resize({num_dists, 2, _iterations, _iterations, _grid.size()}); break;
+					case 3: _D.resize({num_dists, 2, _iterations, _iterations, _iterations, _grid.size()}); break;
+					default: throw std::runtime_error("unreachable");
+				}
+				auto ns_accessor =
+					[&](uint j, uint k) -> double& {
+						switch (_order) {
+							case 0: return _A(j,0,k); break;
+							case 1: return _B(j,0,0,k); break;
+							case 2: return _C(j,0,0,0,k); break;
+							case 3: return _D(j,0,0,0,0,k); break;
+							default: throw std::runtime_error("unreachable");
+						}
+					};
+				_initial_dist.fillCoeffs(s_accessor, ns_accessor, _grid.points());
+			}   
+		}
+	    
 		
 	    log(LOG_INFO, "DGLAP", "Evolving to {} flavors.", _alpha_s.nff());
-		using out_type = decltype(_F);
 		loadAllExpressions();
-
-		if (_evol_type == EvolType::Truncated)
-			setupTruncatedDistributions();
-
-		out_type final_dists;
+		
+		std::vector<ArrayGrid> final_dists(num_dists, ArrayGrid(_grid.size()));
 
 		// since we now only store two iterations at once,
 		// we create these temporary arrays that will store the results of the resummation
 		// since they were originally stored in the s=0 part that no longer exists
 		// they are then copied to the _F final dists or the s=0 of the next iteration
-		std::vector<ArrayGrid> resum_ns(DISTS, ArrayGrid(_grid.size()));
-		std::vector<ArrayGrid> resum_singlet(DISTS, ArrayGrid(_grid.size()));
-		std::vector<ArrayGrid> resum(DISTS, ArrayGrid(_grid.size()));
+		std::vector<ArrayGrid> resum_ns(num_dists, ArrayGrid(_grid.size()));
+		std::vector<ArrayGrid> resum_singlet(num_dists, ArrayGrid(_grid.size()));
+		std::vector<ArrayGrid> resum(num_dists, ArrayGrid(_grid.size()));
 		
 		bool performed_evolution = false;
 		for (_nf=_alpha_s.nfi(); _nf<=_alpha_s.nff(); _nf++) {
@@ -466,11 +600,15 @@ namespace Candia2
 			bool last_loop = _nf == _alpha_s.nff();
 
 			log(LOG_DEBUG, "DGLAP", "Setting up distributions for evolution.");
-			setupCoefficients();
+			if (getOptions().try_qed)
+				setupQEDCoefficients();
+			else
+				setupCoefficients();
 			log(LOG_DEBUG, "DGLAP", "Finished setting up distributions for evolution.");
 
 			// if the next mass is zero, we are already done
-			// but this shouldn't really be hit 
+			// but this shouldn't really be hit
+			// TODO: handle lepton masses?
 			if (_alpha_s.masses(_nf+1) == 0.0) {
 				log(LOG_WARNING, "DGLAP", "Next mass is zero. Quitting...");
 				break;
@@ -495,10 +633,12 @@ namespace Candia2
 			double beta0 = _alpha_s.beta0();
 			double beta1 = _alpha_s.beta1();
 			double beta2 = _alpha_s.beta2();
+			double beta0qed{};
 			double r1 = _r1[_nf];
 			double b = _b[_nf];
 			double c = _c[_nf];
 			double L1 = std::log(_alpha1/_alpha0);
+			double L1QED{};
 			double L2{}, L3{}, L4{};
 			if (_order == 1) {
 				L2 = std::log((_alpha1*beta1 + 4.0*PI*beta0)
@@ -528,30 +668,195 @@ namespace Candia2
 				L4 = std::atan((_alpha1-_alpha0)*aux / (2.0*_alpha0*_alpha1 + (_alpha0+_alpha1)*b + 2.0*c))/aux;
 			}
 
-			log(LOG_DEBUG, "DGLAP::evolve()", "Values of log coeffs:");
+			log(LOG_DEBUG, "DGLAP::evolve()", "Values of QCD log coeffs:");
 			std::vector<std::pair<double, std::string_view>> coeffs{{L1, "L1"}, {L2, "L2"}, {L3, "L3"}, {L4, "L4"}};
 			for (auto [x, xname] : coeffs)
 				log(LOG_DEBUG, "DGLAP::evolve()", "  - {} = {: }", xname, x);
 			
 			log(LOG_DEBUG, "DGLAP", "Doing {} resummation", (resum_tab ? "tabulated" : "threshold" ));
 			log(LOG_DEBUG, "DGLAP", "AlphaS: {} --> {}", _alpha0, _alpha1);
+			
+			if (getOptions().try_qed) {
+				_alpha_qed.value().update(_nf, _nl);
+				SplitFuncQED::update(_nf, _alpha_s.beta0(), _log_muf2_mur2, _nl);
+				std::tie(_alphaqed0, _alphaqed1) = _alpha_qed.value().initFinalAlpha();
+				L1QED = std::log(_alphaqed1/_alphaqed0);
+				beta0qed = _alpha_qed.value().beta0();
+				log(LOG_DEBUG, "DGLAP::evolve()", "Values of QED log coeffs:");
+				log(LOG_DEBUG, "DGLAP::evolve()", "  - L1 = {: }", L1QED);
+				log(LOG_DEBUG, "DGLAP", "AlphaQED: {} --> {}", _alphaqed0, _alphaqed1);
+			}
 
 			// only do evolution if alphas are different
 			// (i.e. energy scales are different)
 			if (_alpha0 != _alpha1) {
 				performed_evolution = true;
-				log(LOG_DEBUG, "DGLAP", "Starting singlet evolution and resummation...");
-			    evolveSinglet(resum_singlet, L1);
-				log(LOG_DEBUG, "DGLAP", "Finished singlet evolution and resummation.");
-				log(LOG_DEBUG, "DGLAP", "Starting non-singlet evolution and resummation...");
-				_evol_type == EvolType::Exact ?
-					evolveNonSinglet(resum_ns, L1, L2, L3, L4) :
-					evolveNonSingletTrunc(resum_ns, L1);
-				log(LOG_DEBUG, "DGLAP", "Finished non-singlet evolution and resummation.");
+				if (getOptions().try_qed) {
+					log(LOG_DEBUG, "DGLAP", "Performing the evolution with QED effects");
 
-				log(LOG_DEBUG, "DGLAP", "Fixing distributions...");
-				fixDistributions(resum_ns, resum_singlet, resum);
-				log(LOG_DEBUG, "DGLAP", "Finished fixing distributions.");
+					// singlet
+					{
+						auto& p0ns = getExpression(ExprName::P0ns);
+						auto& p0qq = getExpression(ExprName::P0qq);
+						auto& p0qg = getExpression(ExprName::P0qg);
+						auto& p0gq = getExpression(ExprName::P0gq);
+						auto& p0gg = getExpression(ExprName::P0gg);
+						auto& p0ff = getExpression(ExprName::P0ff);
+						auto& p0fy = getExpression(ExprName::P0fy);
+						auto& p0yf = getExpression(ExprName::P0yf);
+						auto& p0yy = getExpression(ExprName::P0yy);
+
+						auto sigmaud = static_cast<uint>(QEDPartonIndices::SIGMAUD);
+						auto sigma = static_cast<uint>(QEDPartonIndices::SIGMA);
+						auto gluon = static_cast<uint>(QEDPartonIndices::G);
+						auto photon = static_cast<uint>(QEDPartonIndices::PHOTON);
+						auto sigmal = static_cast<uint>(QEDPartonIndices::SIGMAL);
+						std::array s_dists{sigmaud, sigma, gluon, photon, sigmal};
+
+						// for nf=4, we have an equal number of up/down quarks
+						// so the numerator, Nup-Ndown = 0, and deltaNf = 0
+						double deltaNf = 0;
+
+						double cp = 0.5*((2./3.)*(2./3.) + (-1./3.)*(-1./3.));
+						double cm = 0.5*((2./3.)*(2./3.) - (-1./3.)*(-1./3.));
+						double fac_qcd = -2.0/_alpha_s.beta0();
+						double fac_qed = -2.0/beta0qed;
+
+						double L0QED = L1QED;
+						double L0QCD = L1;
+
+						for (uint s=1; s<_iterations; s++) {
+							for (uint n=1; n<=s; n++) {
+								auto pows = std::pow(L0QED,n)*std::pow(L0QCD,s-n)/factorial(n)/factorial(s-n);
+								for (uint k=0; k<_grid.size()-1;k++) {
+									_S_QED(sigmaud,1,n,k) = fac_qed*(
+										cp*_grid.convolution(_A_QED(sigmaud,0,n-1), p0ff, k) +
+										cm*_grid.convolution(_A_QED(sigma,0,n-1), p0ff, k) +
+										0 +
+										2*NC*_nf*(cp*deltaNf + cm)*_grid.convolution(_A_QED(photon,0,n-1), p0fy, k) +
+										0
+									);
+									_S_QED(sigma,1,n,k) = fac_qed*(
+										cm*_grid.convolution(_A_QED(sigmaud,0,n-1), p0ff, k) +
+										cp*_grid.convolution(_A_QED(sigma,0,n-1), p0ff, k) +
+										0 +
+										2*NC*_nf*(cp + cm*deltaNf)*_grid.convolution(_A_QED(photon,0,n-1), p0fy, k) +
+										0
+									);
+									_S_QED(gluon,1,n,k) = 0; // obviously
+									_S_QED(photon,1,n,k) = fac_qed*(
+										cm*_grid.convolution(_A_QED(sigmaud,0,n-1), p0yf, k) +
+										cp*_grid.convolution(_A_QED(sigma,0,n-1), p0yf, k) +
+										0 +
+										-3.0/4.0*beta0qed*_grid.convolution(_A_QED(photon,0,n-1), p0yy, k) +
+										_grid.convolution(_A_QED(sigmal,0,n-1), p0yf, k)
+									);
+									_S_QED(sigmal,1,n,k) = fac_qed*(
+										0 +
+										0 +
+										0 +
+										2.0*_nl*_grid.convolution(_A_QED(photon,0,n-1), p0fy, k) +
+										_grid.convolution(_A_QED(sigmal,0,n-1), p0ff, k)
+									);
+
+									for (uint j : s_dists)
+										resum_singlet[j][k] += _S_QED(j,1,n,k)*pows;
+								}
+							}
+
+							uint n = 0;
+							auto pows = std::pow(L0QED,n)*std::pow(L0QCD,s-n)/factorial(n)/factorial(s-n);
+							for (uint k=0; k<_grid.size()-1;k++) {
+								_S_QED(sigmaud,1,n,k) = fac_qcd*(
+									_grid.convolution(_A_QED(sigmaud,0,n), p0ns, k) +
+									deltaNf*(
+										_grid.convolution(_A_QED(sigma,0,n), p0qq, k) +
+										_grid.convolution(_A_QED(sigma,0,n), p0ns, k)) +
+									deltaNf*_grid.convolution(_A_QED(gluon,0,n), p0qg, k) +
+									0 +
+									0
+								);
+								_S_QED(sigma,1,n,k) = fac_qcd*(
+									0 +
+									_grid.convolution(_A_QED(sigma,0,n), p0qq, k) +
+									_grid.convolution(_A_QED(gluon,0,n), p0qg, k) +
+									0 +
+									0
+								);
+								_S_QED(gluon,1,n,k) = fac_qcd*(
+									0 +
+									_grid.convolution(_A_QED(sigma,0,n), p0gq, k) +
+									_grid.convolution(_A_QED(gluon,0,n), p0gg, k) +
+									0 +
+									0
+								);
+								_S_QED(photon,1,n,k) = 0; // obviously
+								_S_QED(sigmal,1,n,k) = 0; // obviously
+								
+								for (uint j : s_dists)
+									resum_singlet[j][k] += _S_QED(j,1,n,k)*pows;
+							}
+
+							for (uint j : s_dists) {
+								for (uint n=0; n<=s; ++n)
+									std::ranges::copy(_S_QED(j,1,n), _S_QED(j,0,n).begin());
+							}
+						}
+					}
+					// non-singlet
+					{
+						std::array ns_dists{
+							static_cast<uint>(QEDPartonIndices::UV),
+							static_cast<uint>(QEDPartonIndices::DV),
+							static_cast<uint>(QEDPartonIndices::SIGMADS),
+							static_cast<uint>(QEDPartonIndices::SIGMAUC),
+							static_cast<uint>(QEDPartonIndices::SIGMASB)
+						};
+						// aliases, TODO: change these
+						double L0QED = L1QED;
+						double L0QCD = L1;
+						
+						for (uint j : ns_dists) {
+							auto& p0ns = getExpression(ExprName::P0ns);
+							auto& p0ff     = getExpression(ExprName::P0ff);
+							double fac_qcd = -2.0/_alpha_s.beta0();
+							double fac_qed = -2.0/beta0qed;
+		
+							for (uint s=1; s<_iterations; s++) {
+								for (uint n=1; n<=s; n++) {
+									for (uint k=0; k<_grid.size()-1;k++) {
+										_A_QED(j,1,n,k) = fac_qed*_grid.convolution(_A_QED(j,0,n-1), p0ff, k);
+										resum_ns[j][k] += _A_QED(j,1,n,k)*std::pow(L0QED,n)*std::pow(L0QCD,s-n)/factorial(n)/factorial(s-n);
+									}
+								}
+			
+								for (uint k=0; k<_grid.size()-1;k++) {
+									uint n = 0;
+									_A_QED(j,1,n,k) = fac_qcd*_grid.convolution(_A_QED(j,0,n), p0ns, k);
+									resum_ns[j][k] += _A_QED(j,1,n,k)
+										*std::pow(L0QED,n)*std::pow(L0QCD,s-n)
+										/factorial(n)/factorial(s-n);
+								}
+			
+								for (uint n=0; n<=s; ++n)
+									std::ranges::copy(_A_QED(j,1,n), _A_QED(j,0,n).begin());
+							}
+						}
+					}
+				} else {
+					log(LOG_DEBUG, "DGLAP", "Starting singlet evolution and resummation...");
+					evolveSinglet(resum_singlet, L1);
+					log(LOG_DEBUG, "DGLAP", "Finished singlet evolution and resummation.");
+					log(LOG_DEBUG, "DGLAP", "Starting non-singlet evolution and resummation...");
+					_evol_type == EvolType::Exact ?
+						evolveNonSinglet(resum_ns, L1, L2, L3, L4) :
+						evolveNonSingletTrunc(resum_ns, L1);
+					log(LOG_DEBUG, "DGLAP", "Finished non-singlet evolution and resummation.");
+
+					log(LOG_DEBUG, "DGLAP", "Fixing distributions...");
+					fixDistributions(resum_ns, resum_singlet, resum);
+					log(LOG_DEBUG, "DGLAP", "Finished fixing distributions.");
+				}
 
 				// if we just resummed to a tabulated value,
 				// _F contains our final distributions

@@ -53,6 +53,14 @@ namespace Candia2
 		 */
 		virtual double evaluate(double Q0, double Qf, double alpha0) const = 0;
 
+		/**
+		 *  this method will just return a0 and evalutate(q0, qf, a0)
+		 */
+		virtual std::pair<double,double> initFinalAlpha() const
+		{
+			return std::make_pair(_alpha0, evaluate(Q0(), Qf(), _alpha0));
+		}
+
 	protected:
 		virtual double calcBeta0(uint nf, uint nl) const = 0; //!< calculates \f$\beta_0\f$ for @a nf flavors and @a nf leptons
 		virtual double calcBeta1(uint nf, uint nl) const = 0; //!< calculates \f$\beta_1\f$ for @a nf flavors and @a nf leptons
@@ -82,10 +90,10 @@ namespace Candia2
 	public:
 		using Coupling::Coupling;
 
-		inline double evaluate([[maybe_unused]] double Q0, double Qf, [[maybe_unused]] double alpha0) const override
+		inline double evaluate(double Q0, double Qf, double alpha0) const override
 		{
-			double log_arg = (Qf/MTAU)*(Qf/MTAU);
-		    return ALPHAQED_MTAU/(1.0 + ALPHAQED_MTAU*beta0()*std::log(log_arg));
+			double log_arg = (Qf/Q0)*(Qf/Q0);
+		    return alpha0/(1.0 + (alpha0/PI_4)*beta0()*std::log(log_arg));
 		}
 
 	private:
