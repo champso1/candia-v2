@@ -92,8 +92,11 @@ namespace Candia2
 
 		inline double evaluate(double Q0, double Qf, double alpha0) const override
 		{
+			log(LOG_DEBUG, "AlphaQED::evaluate()", "Q0={}, Qf={}, a0={}", Q0, Qf, alpha0);
 			double log_arg = (Qf/Q0)*(Qf/Q0);
-		    return alpha0/(1.0 + (alpha0/PI_4)*beta0()*std::log(log_arg));
+			double res = alpha0/(1.0 + (alpha0/4.0/PI)*beta0()*std::log(log_arg));
+			log(LOG_DEBUG, "AlphaQED::evaluate()", "alpha1={}", res);
+		    return res;
 		}
 
 	private:
@@ -103,6 +106,7 @@ namespace Candia2
 			double fac = nl;
 			for (uint i=0; i<nf; ++i)
 				fac += NC*Q_QUARK[i]*Q_QUARK[i];
+			log(LOG_DEBUG, "AlphaQED::calcBeta0()", "nf+nl = {}, beta0 = {}", nn, -4.0/3.0*fac);
 			return -4.0/3.0*fac;
 		}
 		inline double calcBeta1(uint nf, uint nl) const override

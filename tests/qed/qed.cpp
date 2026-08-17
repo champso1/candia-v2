@@ -1,6 +1,4 @@
-#include "Candia-v2/Common.hpp"
-#include "Candia-v2/Couplings.hpp"
-#include <iterator>
+#include "Candia-v2/Candia.hpp"
 using namespace Candia2;
 
 #include <vector>
@@ -11,31 +9,25 @@ int main()
 	getLogOptions().verbosity = LOG_INFO;
 
 	uint order = 0;
+	uint iterations = 10;
+	uint trunc_idx = 0;
 	double Q0 = 1e-2;
 	double Qf = 1e2;
 	double logq0 = std::log10(Q0);
 	double logqf = std::log10(Qf);
 	double mur2_muf2 = 1;
 	double a0 = ALPHAQED_MTAU;
-	uint nf = 4;
-	uint nl = 3;
-	AlphaQED qed(order, Q0, Qf, a0, mur2_muf2);
-	qed.update(nf, nl);
 
-	uint num_energies = 100;
-	double num_energies_f = num_energies;
-	double dq = (Qf-Q0)/(num_energies_f-1);
-	double log_dq = (logqf-logq0)/(num_energies_f-1);
-	
-	auto values =
-		std::views::iota(uint{0}, num_energies)
-		| std::views::transform(
-			[&](uint i){
-				double q = std::pow(10.0, logq0 + static_cast<double>(i)*log_dq);
-				double a = qed.evaluate(Q0, q, a0);
-				return std::make_pair(q, a);
-			});
-	std::ofstream outfile("alphaqed.dat");
-	for (auto [e,a] : values)
-		outfile << e << ' ' << a << '\n';
+	std::vector<double> xtab{1e-5, 1e-4, 1e-3, 1e-2, 0.1, 0.3, 0.5, 0.7, 0.9, 1.0};
+	Grid grid(xtab);
+
+	LesHouchesQED dist(Qf);
+	// LHAPDFDistribution dist(make_lhapdf_pdf("CT18NNLO"), 1.295, 100.0);
+	AlphaQED alphaqed(order, dist.Q0(), dist.Qf(), dist.alphaqed0(), mur2_muf2);
+	AlphaS alphas(order, dist.Q0(), dist.Qf(), dist.alpha0(), mur2_muf2);
+	alphas.setFFNS(4);
+
+	DGLAPSolver solver(order, grid, alphas, alphaqed, Qf, iterations, trunc_idx, dist, mur2_muf2);
+	solver.getOptions().try_qed = true;
+	auto dists = solver.evolve();
 }

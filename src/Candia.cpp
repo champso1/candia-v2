@@ -9,6 +9,7 @@
 #include "Candia-v2/SplittingFnQED.hpp"
 #include "Candia-v2/OperatorMatrixElements.hpp"
 #include "Candia-v2/Math.hpp"
+#include <algorithm>
 
 
 // PDF indices
@@ -340,32 +341,7 @@ namespace Candia2
 
 	void DGLAPSolver::setupQEDCoefficients()
     {
-	    // log(LOG_WARNING, "DGLAPSolver::setupQEDCoefficients()", "not implemented");
-		for (uint k=0; k<_grid.size(); k++) {
-			for (uint j=13; j<=18; j++)
-				_A_QED(j,0,0,k) = _A_QED(j-12,0,0,k) - _A_QED(j-6,0,0,k);
-			auto sigmauc = static_cast<uint>(QEDPartonIndices::SIGMAUC);
-			auto sigmads = static_cast<uint>(QEDPartonIndices::SIGMADS);
-			auto sigmasb = static_cast<uint>(QEDPartonIndices::SIGMASB);
-			_A_QED(sigmauc,0,0,k)
-				= _A_QED(1,  0,0,k)
-				+ _A_QED(1+6,0,0,k)
-				- _A_QED(4,  0,0,k)
-				- _A_QED(4+6,0,0,k);
-
-			_A_QED(sigmads,0,0,k)
-				= _A_QED(2,  0,0,k)
-				+ _A_QED(2+6,0,0,k)
-				- _A_QED(3,  0,0,k)
-				- _A_QED(3+6,0,0,k);
-			
-			_A_QED(sigmasb, 0,0,k)
-				= _A_QED(3,  0,0,k)
-				+ _A_QED(3+6,0,0,k)
-				- _A_QED(5,  0,0,k)
-				- _A_QED(5+6,0,0,k);
-		}
-
+	    log(LOG_WARNING, "DGLAPSolver::setupQEDCoefficients()", "not implemented (nor needed, atm?)");
     }
 
 	void DGLAPSolver::fixDistributions(
@@ -442,6 +418,30 @@ namespace Candia2
 					resum[j](k) = resum[13](k) - resum[j-12](k);
 			}
 		}
+    }
+
+	void DGLAPSolver::fixDistributionsQED(
+		std::vector<ArrayGrid>& resum_ns,
+		std::vector<ArrayGrid>& resum_singlet,
+		std::vector<ArrayGrid>& resum)
+    {
+		auto num_dists = static_cast<uint>(QEDPartonIndices::COUNT);
+		
+	    auto sigmaud = static_cast<uint>(QEDPartonIndices::SIGMAUD);
+		auto sigma = static_cast<uint>(QEDPartonIndices::SIGMA);
+		auto gluon = static_cast<uint>(QEDPartonIndices::G);
+		auto photon = static_cast<uint>(QEDPartonIndices::PHOTON);
+		auto sigmal = static_cast<uint>(QEDPartonIndices::SIGMAL);
+		std::array s_dists{sigmaud, sigma, gluon, photon, sigmal};
+
+		auto ns_dists =
+			std::views::iota(uint{0}, num_dists)
+			| std::views::filter([&](uint j){ return std::ranges::find(s_dists, j) == s_dists.end(); });
+
+		for (uint j : s_dists)
+			std::ranges::copy(resum_singlet[j], resum[j].begin());
+		for (uint j : ns_dists)
+			std::ranges::copy(resum_ns[j], resum[j].begin());
     }
 
 	void DGLAPSolver::fixDistributionsForce(std::vector<ArrayGrid>& resum)
@@ -526,16 +526,18 @@ namespace Candia2
 	std::vector<ArrayGrid> const& DGLAPSolver::_evolve_function(EvolType evol_type)
 	{
 		_evol_type = evol_type;
+		if (getOptions().try_qed && !_alpha_qed.has_value())
+			log(LOG_ERROR, "DGLAPSolver::_evolve_function()", "wanting to do QED without having initialized alpha_qed");
 
 		uint num_dists;
 		if (getOptions().try_qed) {
 			num_dists = static_cast<uint>(QEDPartonIndices::COUNT);
 			_A_QED.resize({num_dists, 2, _iterations, _grid.size()});
-			_S_QED.resize({_trunc_idx+1, num_dists, 2, _grid.size()});
+			_S_QED.resize({num_dists, 2, _iterations, _grid.size()});
 
 			auto s_accessor =
 				[&](uint j, uint k) -> double& {
-					return _S_QED(0,j,0,k);
+					return _S_QED(j,0,0,k);
 				};
 			auto ns_accessor =
 				[&](uint j, uint k) -> double& {
@@ -684,6 +686,7 @@ namespace Candia2
 				beta0qed = _alpha_qed.value().beta0();
 				log(LOG_DEBUG, "DGLAP::evolve()", "Values of QED log coeffs:");
 				log(LOG_DEBUG, "DGLAP::evolve()", "  - L1 = {: }", L1QED);
+				log(LOG_DEBUG, "DGLAP::evolve()", "  - beta0 = {: }", beta0qed);
 				log(LOG_DEBUG, "DGLAP", "AlphaQED: {} --> {}", _alphaqed0, _alphaqed1);
 			}
 
@@ -729,35 +732,40 @@ namespace Candia2
 							for (uint n=1; n<=s; n++) {
 								auto pows = std::pow(L0QED,n)*std::pow(L0QCD,s-n)/factorial(n)/factorial(s-n);
 								for (uint k=0; k<_grid.size()-1;k++) {
-									_S_QED(sigmaud,1,n,k) = fac_qed*(
+									double res1 = fac_qed*(
 										cp*_grid.convolution(_A_QED(sigmaud,0,n-1), p0ff, k) +
 										cm*_grid.convolution(_A_QED(sigma,0,n-1), p0ff, k) +
 										0 +
 										2*NC*_nf*(cp*deltaNf + cm)*_grid.convolution(_A_QED(photon,0,n-1), p0fy, k) +
 										0
 									);
-									_S_QED(sigma,1,n,k) = fac_qed*(
+									double res2 = fac_qed*(
 										cm*_grid.convolution(_A_QED(sigmaud,0,n-1), p0ff, k) +
 										cp*_grid.convolution(_A_QED(sigma,0,n-1), p0ff, k) +
 										0 +
 										2*NC*_nf*(cp + cm*deltaNf)*_grid.convolution(_A_QED(photon,0,n-1), p0fy, k) +
 										0
 									);
-									_S_QED(gluon,1,n,k) = 0; // obviously
-									_S_QED(photon,1,n,k) = fac_qed*(
+									double res4 = fac_qed*(
 										cm*_grid.convolution(_A_QED(sigmaud,0,n-1), p0yf, k) +
 										cp*_grid.convolution(_A_QED(sigma,0,n-1), p0yf, k) +
 										0 +
 										-3.0/4.0*beta0qed*_grid.convolution(_A_QED(photon,0,n-1), p0yy, k) +
 										_grid.convolution(_A_QED(sigmal,0,n-1), p0yf, k)
 									);
-									_S_QED(sigmal,1,n,k) = fac_qed*(
+									double res5 = fac_qed*(
 										0 +
 										0 +
 										0 +
 										2.0*_nl*_grid.convolution(_A_QED(photon,0,n-1), p0fy, k) +
 										_grid.convolution(_A_QED(sigmal,0,n-1), p0ff, k)
 									);
+									
+									_S_QED(sigmaud,1,n,k) = res1;
+									_S_QED(sigma,1,n,k) = res2;
+									_S_QED(gluon,1,n,k) = 0; // obviously
+									_S_QED(photon,1,n,k) = res4;
+									_S_QED(sigmal,1,n,k) = res5;
 
 									for (uint j : s_dists)
 										resum_singlet[j][k] += _S_QED(j,1,n,k)*pows;
@@ -767,7 +775,7 @@ namespace Candia2
 							uint n = 0;
 							auto pows = std::pow(L0QED,n)*std::pow(L0QCD,s-n)/factorial(n)/factorial(s-n);
 							for (uint k=0; k<_grid.size()-1;k++) {
-								_S_QED(sigmaud,1,n,k) = fac_qcd*(
+								double res1 = fac_qcd*(
 									_grid.convolution(_A_QED(sigmaud,0,n), p0ns, k) +
 									deltaNf*(
 										_grid.convolution(_A_QED(sigma,0,n), p0qq, k) +
@@ -776,20 +784,24 @@ namespace Candia2
 									0 +
 									0
 								);
-								_S_QED(sigma,1,n,k) = fac_qcd*(
+								double res2 = fac_qcd*(
 									0 +
 									_grid.convolution(_A_QED(sigma,0,n), p0qq, k) +
 									_grid.convolution(_A_QED(gluon,0,n), p0qg, k) +
 									0 +
 									0
 								);
-								_S_QED(gluon,1,n,k) = fac_qcd*(
+								double res3 = fac_qcd*(
 									0 +
 									_grid.convolution(_A_QED(sigma,0,n), p0gq, k) +
 									_grid.convolution(_A_QED(gluon,0,n), p0gg, k) +
 									0 +
 									0
 								);
+								
+								_S_QED(sigmaud,1,n,k) = res1;
+								_S_QED(sigma,1,n,k) = res2;
+								_S_QED(gluon,1,n,k) = res3;
 								_S_QED(photon,1,n,k) = 0; // obviously
 								_S_QED(sigmal,1,n,k) = 0; // obviously
 								
@@ -843,6 +855,7 @@ namespace Candia2
 							}
 						}
 					}
+					fixDistributionsQED(resum_ns, resum_singlet, resum);
 				} else {
 					log(LOG_DEBUG, "DGLAP", "Starting singlet evolution and resummation...");
 					evolveSinglet(resum_singlet, L1);

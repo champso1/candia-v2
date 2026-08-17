@@ -9,6 +9,7 @@ target_link_libraries(tests_main_util PUBLIC candia LHAPDF::LHAPDF)
 
 set(tests_main_executables
   evolve
+  evolve-qed
   read
   compare
   ratio
@@ -31,4 +32,4 @@ set(resources
 )
 file(COPY ${resources} DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 
-add_custom_target(tests_main DEPENDS evolve read compare ratio precision scaleratio test-all)
+add_custom_target(tests_main DEPENDS evolve evolve-qed read compare ratio precision scaleratio test-all)

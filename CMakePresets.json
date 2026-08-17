@@ -96,5 +96,12 @@
 		"libome_ROOT": "$env{HOME}/.local"
             }
 		}
+    ],
+    "buildPresets": [
+        {
+            "name": "clang-debug",
+            "configurePreset": "clang",
+            "configuration": "Debug"
+        }
     ]
 }

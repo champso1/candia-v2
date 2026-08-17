@@ -199,6 +199,8 @@ namespace Candia2
 	protected:
 		double _alphaqed0;
 	public:
+		virtual double alphaqed0() const { return _alphaqed0; }
+		
 		virtual double xgamma(double x) const = 0;
 		virtual double xe(double x) const = 0;
 		virtual double xmu(double x) const = 0;
@@ -251,11 +253,6 @@ namespace Candia2
 		inline value_type xsb(value_type x) const override { return xs(x); }
 
 
-		
-		inline double xS(double x) const
-		{
-			return 0.0;
-		}
 		inline double xgamma(double x) const override
 		{
 			return 0.0;
@@ -305,6 +302,25 @@ namespace Candia2
 				xe(x) + xeb(x)
 				+ xmu(x) + xmub(x)
 				+ xtau(x) + xtaub(x);
+		}
+
+		inline double xsigmauc(double x) const
+		{
+			return
+				xu(x) + xub(x)
+				- (xc(x) + xcb(x));
+		}
+
+		inline double xsigmads(double x) const
+		{
+			return
+				xd(x) + xdb(x)
+				- (xs(x) + xsb(x));
+		}
+
+		inline double xsigmasb(double x) const
+		{
+			return xs(x) + xsb(x);
 		}
 
 		// TODO: split singlet non-singlet?

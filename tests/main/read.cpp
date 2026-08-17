@@ -36,12 +36,17 @@ int main(int argc, char *argv[])
 
 	xtab_type xtab{};
 	dist_type dists_raw{};
-	if (origin == 0) {
+	if (origin == 0 && type != 5) {
 		auto read_candia_file_result = read_candia_file(datafile_path, 37);
 		xtab = read_candia_file_result.xtab;
 		dists_raw = read_candia_file_result.dists_ntabbed;
-	} else {
+	} else if (origin != 0 && type != 5){
 		auto [xtab, dists] = read_other_file(datafile_path, 37);
+	} else if (type == 5) {
+		auto num_dists = static_cast<uint>(QEDPartonIndices::COUNT);
+		auto read_candia_file_result = read_candia_file(datafile_path, num_dists);
+		xtab = read_candia_file_result.xtab;
+		dists_raw = read_candia_file_result.dists_ntabbed;
 	}
 
 	auto dists = fix_dists(dists_raw, type);
