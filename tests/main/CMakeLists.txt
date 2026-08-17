@@ -1,6 +1,7 @@
-set(names "evolve" "read" "compare" "ratio" "precision" "plot" "scaleratio" "test-all")
+set(names "evolve" "evolve-qed" "read" "compare" "ratio" "precision" "plot" "scaleratio" "test-all")
 add_executable(compare compare.cpp util.cpp)
 add_executable(evolve evolve.cpp)
+add_executable(evolve-qed evolve-qed.cpp util.cpp)
 add_executable(plot plot.cpp)
 add_executable(precision precision.cpp util.cpp)
 add_executable(ratio ratio.cpp util.cpp)
@@ -31,4 +32,4 @@ set(resources
 )
 file(COPY ${resources} DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 
-add_custom_target(tests_main DEPENDS evolve read compare ratio precision scaleratio test-all)
+add_custom_target(tests_main DEPENDS evolve evolve-qed read compare ratio precision scaleratio test-all)

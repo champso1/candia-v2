@@ -73,5 +73,12 @@
 				"CANDIA_LHAPDF_DIR": "$env{HOME}/.local"
             }
         }
+    ],
+    "buildPresets": [
+        {
+            "name": "clang-debug",
+            "configurePreset": "clang",
+            "configuration": "Debug"
+        }
     ]
 }

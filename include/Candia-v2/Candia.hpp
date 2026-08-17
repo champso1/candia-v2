@@ -297,6 +297,17 @@ namespace Candia2
 			std::vector<ArrayGrid>& resum_singlet,
 			std::vector<ArrayGrid>& resum);
 
+		/**
+		 *  @brief Does the opposite of @a setInitialConditions, i.e. retrieves the raw quark dists from the special evolution ones (QED)
+		 *  @param resum_ns the set of resummed non-singlet distributions
+		 *  @param resum_singlet the set of resummed singlet distributions
+		 *  @param resum[out] the final set of all (non-singlet and singlet) fixed distributions
+		 */
+		void fixDistributionsQED(
+			std::vector<ArrayGrid>& resum_ns, 
+			std::vector<ArrayGrid>& resum_singlet,
+			std::vector<ArrayGrid>& resum);
+
 		// TODO: why the fuck did I write this one?
 		void fixDistributionsForce(std::vector<ArrayGrid>& resum);
 

@@ -3,4 +3,5 @@
 namespace Candia2
 {
 	SplitFuncQED::nc_type SplitFuncQED::_nc{3.0, 1.0};
+	uint SplitFuncQED::_nl;
 }

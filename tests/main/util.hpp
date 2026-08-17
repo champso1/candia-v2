@@ -33,13 +33,14 @@ inline std::vector<std::string> cols_special_combos{"xuv", "xdv", "xL_-", "xL_+"
 inline std::vector<std::string> cols_special_combos_qm{"xu_v", "xd_v", "x\\bar{u}", "x\\bar{d}", "xL_+", "xs_+", "xc_+", "xb_+", "xg"};
 inline std::vector<std::string> cols_special_combos_ns_and_s{"xq_{NS,1d}^{(-)}", "xq_{NS,1c}^{(-)}", "xq_{NS,1b}^{(-)}", "xq_{NS,1d}^{(+)}", "xq_{NS,1c}^{(+)}", "xq_{NS,1b}^{(+)}", "xq^{(-)}", "xq^{(+)}", "xg"};
 inline std::vector<std::string> cols_special_combos_ffns{"xuv", "xdv", "xL-", "xL+", "xs-", "xs+", "xc+", "xg"};
+inline std::vector<std::string> cols_qed{"xu_v", "x\\Sigma_{UD}", "x\\Sigma", "xg", "x\\gamma", "x\\Sigma^\\ell"};
 inline std::vector<std::reference_wrapper<const std::vector<std::string>>> cols{
 	std::cref(cols_all_flavors),
 	std::cref(cols_special_combos),
 	std::cref(cols_special_combos_qm),
 	std::cref(cols_special_combos_ns_and_s),
 	std::cref(cols_special_combos_ffns),
-	std::cref(cols_special_combos_ns_and_s),
+	std::cref(cols_qed),
 };
 
 void print_compare_types(std::string_view filename);

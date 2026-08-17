@@ -4,10 +4,8 @@ set output "alphaqed.pdf"
 set border lw 2
 set size ratio 0.65
 
-set logscale xy
+set logscale x
 set xlabel "Q [GeV]"
 set ylabel "{/Symbol a}(Q)"
 
-plot "alphaqed.dat" w lines,\
-	 '' u 3 w lines,\
-	 '' u 4 w lines
+plot "alphaqed.dat" w lines
