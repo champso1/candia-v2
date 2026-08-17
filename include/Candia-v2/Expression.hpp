@@ -88,6 +88,7 @@ namespace Candia2
 		 */
 		inline virtual double calcRegular([[maybe_unused]] double x) const { return 0.0; }
 		inline virtual double calcPlus() const { return 0.0; }
+		inline virtual double calcPlus([[maybe_unused]] double x) const { return calcPlus(); }
 		inline virtual double calcDelta() const { return 0.0; }
 		/** @} */
 		

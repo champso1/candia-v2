@@ -256,7 +256,7 @@ namespace Candia2
 			double interpa = interpolate(A, a);
 
 			double fac1 = w*J * eregy*interpa;
-			double fac2 = w*J * (1.0/(1.0-y))*plus*(interpa - ak);
+			double fac2 = w*J * (1.0/(1.0-y))*(E.calcPlus(y)*interpa - plus*ak);
 			out += fac1;
 			out += fac2;
 		}
@@ -284,13 +284,13 @@ namespace Candia2
 	double Grid::convolution(std::span<double> A, Expression &E, uint k)
 	{
 		double x = _points[k];
-		double plus = E.plus();
+		double plus1 = E.calcPlus(1.0);
 		double delta = E.delta();
-		double res = (plus*std::log1p(-x) + delta) * A[k];
+		double res = (plus1*std::log1p(-x) + delta) * A[k];
 
 		auto mappings = getMappings(x);
 		for (auto& mapping : mappings)
-			res += mappingFunctionBase(k, x, mapping, E, A, plus, _Xi, _Wi);
+			res += mappingFunctionBase(k, x, mapping, E, A, plus1, _Xi, _Wi);
 		
 		return res;
 	}
