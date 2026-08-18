@@ -53,27 +53,12 @@ namespace Candia2
 			s_accessor(static_cast<uint>(QEDPartonIndices::G), k) = xg(x);
 			s_accessor(static_cast<uint>(QEDPartonIndices::PHOTON), k) = xgamma(x);
 			s_accessor(static_cast<uint>(QEDPartonIndices::SIGMAL), k) = xsigmal(x);
-			
-			ns_accessor(static_cast<uint>(QEDPartonIndices::U), k) = xu(x);  
-			ns_accessor(static_cast<uint>(QEDPartonIndices::D), k) = xd(x);  
-			ns_accessor(static_cast<uint>(QEDPartonIndices::S), k) = xs(x);  
-			ns_accessor(static_cast<uint>(QEDPartonIndices::UB), k) = xub(x);
-			ns_accessor(static_cast<uint>(QEDPartonIndices::DB), k) = xdb(x);
-			ns_accessor(static_cast<uint>(QEDPartonIndices::SB), k) = xs(x);
 
 			ns_accessor(static_cast<uint>(QEDPartonIndices::UV), k) = xuv(x);  
 			ns_accessor(static_cast<uint>(QEDPartonIndices::DV), k) = xdv(x);
-
 			ns_accessor(static_cast<uint>(QEDPartonIndices::SIGMAUC), k) = xsigmauc(x);
 			ns_accessor(static_cast<uint>(QEDPartonIndices::SIGMADS), k) = xsigmads(x);
 			ns_accessor(static_cast<uint>(QEDPartonIndices::SIGMASB), k) = xsigmasb(x);
-			
-			ns_accessor(static_cast<uint>(QEDPartonIndices::E), k) = xe(x); 
-			ns_accessor(static_cast<uint>(QEDPartonIndices::MU), k) = xmu(x); 
-			ns_accessor(static_cast<uint>(QEDPartonIndices::TAU), k) = xtau(x); 
-			ns_accessor(static_cast<uint>(QEDPartonIndices::EB), k) = xeb(x);
-			ns_accessor(static_cast<uint>(QEDPartonIndices::MUB), k) = xmub(x);
-			ns_accessor(static_cast<uint>(QEDPartonIndices::TAUB), k) = xtaub(x); 
 		}
 	}
 

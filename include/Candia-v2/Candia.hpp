@@ -308,7 +308,10 @@ namespace Candia2
 			std::vector<ArrayGrid>& resum_singlet,
 			std::vector<ArrayGrid>& resum);
 
-		// TODO: why the fuck did I write this one?
+	    /**
+		 * same as @a fixDistributions(), but doesn't zero parts of the arrays in the event no evolution has occurred yet
+		 * this is because the resum_{singlet,ns} arrays won't have been set up
+		 */
 		void fixDistributionsForce(std::vector<ArrayGrid>& resum);
 
 		/** @brief takes the default exact coefficients (A, B, ...) and sets up S to contain all necessary info */
@@ -334,6 +337,17 @@ namespace Candia2
 		 *  @param L1 The LO logarithmic coefficient
 		 */
 		void evolveNonSingletTrunc(std::reference_wrapper<std::vector<ArrayGrid>> arr, double L1);
+
+		/**
+		 *  @brief Performs the PDF evolution including QED effects
+		 *  @param arr Reference to the array in which to place the resummed results,
+		 *  which will be different if resumming to the final energy vs a threshold one
+		 *  @param L1 The LO logarithmic coefficient
+		 */
+		void evolveQED(
+			std::reference_wrapper<std::vector<ArrayGrid>> arr_singlet,
+			std::reference_wrapper<std::vector<ArrayGrid>> arr_ns,
+			double L0QED, double L0QCD);
 		
 		/**
 		 *  @brief Performs the heavy-flavor matching for the quark/gluon distributions

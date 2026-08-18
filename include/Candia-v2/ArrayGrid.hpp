@@ -76,6 +76,11 @@ namespace Candia2
 			std::ranges::fill(_strides, 0.0);
 		}
 
+		inline void zero()
+		{
+			std::ranges::fill(_data, 0.0);
+		}
+
 		auto begin() requires (D==1) { return _data.begin(); }
 		auto end()   requires (D==1) { return _data.end(); }
 		auto begin() const requires (D==1) { return _data.begin(); }

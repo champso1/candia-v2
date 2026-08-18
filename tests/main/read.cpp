@@ -44,6 +44,7 @@ int main(int argc, char *argv[])
 		auto [xtab, dists] = read_other_file(datafile_path, 37);
 	} else if (type == 5) {
 		auto num_dists = static_cast<uint>(QEDPartonIndices::COUNT);
+		log(LOG_INFO, "read.cpp", "reading QED. num_dists={}", num_dists);
 		auto read_candia_file_result = read_candia_file(datafile_path, num_dists);
 		xtab = read_candia_file_result.xtab;
 		dists_raw = read_candia_file_result.dists_ntabbed;
