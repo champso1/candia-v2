@@ -200,11 +200,12 @@ dist_type fix_dists(dist_type const& dists, int type)
 			dist_type dists_fixed(ncols, std::vector<double>(dists.at(0).size(), 0.0));
 			for (uint k=0; k<dists_fixed.at(0).size(); ++k) {
 				dists_fixed.at(0).at(k) = dists[static_cast<uint>(QEDPartonIndices::UV)][k];
-			    dists_fixed.at(1).at(k) = dists[static_cast<uint>(QEDPartonIndices::SIGMAUD)][k];
-				dists_fixed.at(2).at(k) = dists[static_cast<uint>(QEDPartonIndices::SIGMA)][k];
-				dists_fixed.at(3).at(k) = dists[static_cast<uint>(QEDPartonIndices::G)][k];
-				dists_fixed.at(4).at(k) = dists[static_cast<uint>(QEDPartonIndices::PHOTON)][k];
-				dists_fixed.at(5).at(k) = dists[static_cast<uint>(QEDPartonIndices::SIGMAL)][k];
+				dists_fixed.at(1).at(k) = dists[static_cast<uint>(QEDPartonIndices::SIGMADS)][k];
+			    dists_fixed.at(2).at(k) = dists[static_cast<uint>(QEDPartonIndices::SIGMAUD)][k];
+				dists_fixed.at(3).at(k) = dists[static_cast<uint>(QEDPartonIndices::SIGMA)][k];
+				dists_fixed.at(4).at(k) = dists[static_cast<uint>(QEDPartonIndices::G)][k];
+				dists_fixed.at(5).at(k) = dists[static_cast<uint>(QEDPartonIndices::PHOTON)][k];
+				dists_fixed.at(6).at(k) = dists[static_cast<uint>(QEDPartonIndices::SIGMAL)][k];
 			}
 			return dists_fixed;
 		}; break;
