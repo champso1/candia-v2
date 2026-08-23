@@ -8,6 +8,7 @@
 #include <functional>
 #include <string_view>
 #include <unordered_map>
+#include <utility>
 #include <vector>
 #include <numbers>
 #include <format>
@@ -53,7 +54,7 @@ namespace Candia2
 	constexpr double Zeta5   = 1.0369277551433699263;
 	constexpr double Zeta6   = PI_6/945.0;
 	constexpr double Zeta7   = 1.0083492773819228268;
-	constexpr std::array Q_QUARK{2.0/3.0, -1.0/3.0, -1.0/3.0, 2.0/3.0, 2.0/3.0, -1.0/3.0};
+	constexpr std::array<double,6> Q_QUARK{2.0/3.0, -1.0/3.0, -1.0/3.0, 2.0/3.0, 2.0/3.0, -1.0/3.0};
 
 	constexpr double MTAU = 1.777;
 	constexpr double ALPHAQED_MTAU = 1.0/133.4;
@@ -427,4 +428,20 @@ namespace Candia2
 			std::istreambuf_iterator<char>(infile),
 			std::istreambuf_iterator<char>{});
 	}
+
+
+	template <typename T, uint... N>
+	constexpr T _power_impl(T in, std::integer_sequence<uint,N...>)
+	{
+		return (((void)N, in) * ...);
+	}
+	
+	template <uint N, typename T>
+	constexpr T power(T in)
+	{
+		if constexpr (N == 1)
+			return in;
+		return _power_impl(in, std::make_integer_sequence<uint,N>{});
+	}
+	
 }; // namespace Candia2
