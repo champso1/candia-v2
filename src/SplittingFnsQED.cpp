@@ -3,4 +3,5 @@
 namespace Candia2
 {
 	uint SplitFuncQED::_nl;
+	double SplitFuncQED::_totalchargefac;
 }
