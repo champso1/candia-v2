@@ -1,4 +1,5 @@
 #include "Candia-v2/Candia.hpp"
+#include "Candia-v2/Common.hpp"
 using namespace Candia2;
 using out_type = std::vector<ArrayGrid>;
 
@@ -62,11 +63,13 @@ static void outputData(
 		outfile << x << ' ';
 	outfile << '\n';
 
+	auto num_dists = static_cast<uint>(QEDPartonIndices::COUNT);
+	
 	// print them out
 	for (uint k=0; k<grid.size(); k++){
 		outfile << setw(15) << setprecision(8) << grid[k] << ' ';
 		outfile << setprecision(std::numeric_limits<double>::max_digits10);	
-		for (uint j=0; j<DISTS; ++j)
+		for (uint j=0; j<num_dists; ++j)
 			outfile << F[j][k] << ' ';
 		outfile << '\n';
 	}
