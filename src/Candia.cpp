@@ -8,7 +8,6 @@
 #include "Candia-v2/SplittingFn.hpp"
 #include "Candia-v2/SplittingFnQED.hpp"
 #include "Candia-v2/OperatorMatrixElements.hpp"
-#include "Candia-v2/Math.hpp"
 
 
 // PDF indices
@@ -431,9 +430,9 @@ namespace Candia2
 
 		auto uv = static_cast<uint>(QEDPartonIndices::UV);
 		auto dv = static_cast<uint>(QEDPartonIndices::DV);
-		auto sigmauc = static_cast<uint>(QEDPartonIndices::SIGMAUC);
-		auto sigmads = static_cast<uint>(QEDPartonIndices::SIGMADS);
-		auto sigmasb = static_cast<uint>(QEDPartonIndices::SIGMASB);
+		auto sigmauc = static_cast<uint>(QEDPartonIndices::DELTAUC);
+		auto sigmads = static_cast<uint>(QEDPartonIndices::DELTADS);
+		auto sigmasb = static_cast<uint>(QEDPartonIndices::DELTASB);
 		std::array ns_dists{uv, dv, sigmauc, sigmads, sigmasb};
 		
 		for (uint j : s_dists)

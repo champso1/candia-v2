@@ -304,21 +304,21 @@ namespace Candia2
 				+ xtau(x) + xtaub(x);
 		}
 
-		inline double xsigmauc(double x) const
+		inline double xdeltauc(double x) const
 		{
 			return
 				xu(x) + xub(x)
 				- (xc(x) + xcb(x));
 		}
 
-		inline double xsigmads(double x) const
+		inline double xdeltads(double x) const
 		{
 			return
 				xd(x) + xdb(x)
 				- (xs(x) + xsb(x));
 		}
 
-		inline double xsigmasb(double x) const
+		inline double xdeltasb(double x) const
 		{
 			return xs(x) + xsb(x);
 		}
