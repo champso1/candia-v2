@@ -25,6 +25,7 @@ set(sources
   src/Candia.cpp
   src/Distribution.cpp
   src/Evolution.cpp
+  src/EvolutionQED.cpp
   src/Expression.cpp
   src/Grid.cpp
   src/HFT.cpp

@@ -56,9 +56,9 @@ namespace Candia2
 
 			ns_accessor(static_cast<uint>(QEDPartonIndices::UV), k) = xuv(x);  
 			ns_accessor(static_cast<uint>(QEDPartonIndices::DV), k) = xdv(x);
-			ns_accessor(static_cast<uint>(QEDPartonIndices::SIGMAUC), k) = xsigmauc(x);
-			ns_accessor(static_cast<uint>(QEDPartonIndices::SIGMADS), k) = xsigmads(x);
-			ns_accessor(static_cast<uint>(QEDPartonIndices::SIGMASB), k) = xsigmasb(x);
+			ns_accessor(static_cast<uint>(QEDPartonIndices::DELTAUC), k) = xdeltauc(x);
+			ns_accessor(static_cast<uint>(QEDPartonIndices::DELTADS), k) = xdeltads(x);
+			ns_accessor(static_cast<uint>(QEDPartonIndices::DELTASB), k) = xdeltasb(x);
 		}
 	}
 
