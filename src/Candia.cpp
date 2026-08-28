@@ -293,9 +293,18 @@ namespace Candia2
 
 		if (getOptions().try_qed) {
 			log(LOG_DEBUG, "DGLAPSolver::loadAllExpressions()", "trying to load QED expressions");
-			createExpression<P0ff>(ExprName::P0ff);
-			createExpression<P0fy>(ExprName::P0fy);
-			createExpression<P0yf>(ExprName::P0yf);
+			createExpression<P0uu>(ExprName::P0uu);
+			createExpression<P0dd>(ExprName::P0dd);
+			createExpression<P0ll>(ExprName::P0ll);
+			
+			createExpression<P0uy>(ExprName::P0uy);
+			createExpression<P0dy>(ExprName::P0dy);
+			createExpression<P0ly>(ExprName::P0ly);
+			
+			createExpression<P0yu>(ExprName::P0yu);
+			createExpression<P0yd>(ExprName::P0yd);
+			createExpression<P0yl>(ExprName::P0yl);
+			
 			createExpression<P0yy>(ExprName::P0yy);
 		}
     }

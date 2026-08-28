@@ -2,7 +2,6 @@
 
 #include "Candia-v2/Common.hpp"
 #include "Candia-v2/SplittingFn.hpp"
-#include "Candia-v2/SpecialFuncs.hpp"
 
 #include <cmath>
 
@@ -27,33 +26,11 @@ namespace Candia2
 		}
 
 	protected:
-		inline double pqq(double x) const
-		{
-			return 1+x*x; // coefficient of the plus distribution
-		}
-		inline double pqg(double x) const
-		{
-			double x1 = 1.0-x;
-			return x*x + x1*x1;
-		}
-		inline double pgq(double x) const
-		{
-			double x1 = 1.0-x;
-			return (1.0 + x1*x1)/x;
-		}
-		inline double ps(double x) const
-		{
-			double lx = std::log(x);
-			return 20.0/(9.0*x) - 2.0 + 6.0*x - (56.0/9.0)*x*x + (1 + 5.0*x + (8.0/3.0)*x*x)*lx - (1.0+x)*lx*lx;
-		}
-		inline double S2(double x) const
-		{
-			double lx = std::log(x);
-			double lx2 = lx*lx;
-			double lpx = std::log1p(x);
-
-			return lx2/2.0 - Zeta2 - 2*Li2(-x) - 2.0*lx*lpx;
-		}
+		double pqq(double x) const;
+		double pqg(double x) const;
+		double pgq(double x) const;
+		double ps(double x) const;
+		double S2(double x) const;
 	};
 
 	class P0ff : public SplitFuncQED
@@ -168,6 +145,7 @@ namespace Candia2
 			return _totalchargefac*(-2.0/3.0);
 		}
 	};
+
 	
 
 	class P1ffV : public SplitFuncQED
@@ -178,39 +156,12 @@ namespace Candia2
 		using SplitFuncQED::SplitFuncQED;
 		P1ffV(double fac1, double fac2) : _fac1{fac1}, _fac2{fac2} {}
 	private:
-		inline double regular_nofac1(double x) const
-		{
-			double x1 = 1.0-x;
-			double lx = std::log(x);
-			double lx2 = lx*lx;
-			double lx1 = std::log(x1);
-
-			return ((3.0 + 7.0*x)/2.0)*lx + ((1.0+x)/2.0)*lx2 + 5.0*x1;
-		}
-		inline double regular_nofac2(double x) const
-		{
-			return (4.0/3.0)*(1.0-x);
-		}
-		inline double plus_nofac1(double x) const
-		{
-			double x1 = 1.0-x;
-			double lx = std::log(x);
-			double lx1 = std::log(x1);
-			return (2.0*lx*lx1 + (3.0/2.0)*lx)*pqq(x);
-		}
-		inline double plus_nofac2(double x) const
-		{
-			double lx = std::log(x);
-			return ((2.0/3.0)*lx + 10.0/9.0)*pqq(x);
-		}
-		inline double delta_nofac1() const
-		{
-			return PI_2/2.0 - 3.0/8.0 - 6.0*Zeta3;
-		}
-		inline double delta_nofac2() const
-		{
-			return 2.0*PI_2/9.0 + 1.0/6.0;
-		}
+		double regular_nofac1(double x) const;
+		double regular_nofac2(double x) const;
+		double plus_nofac1(double x) const;
+		double plus_nofac2(double x) const;
+		double delta_nofac1() const;
+		double delta_nofac2() const;
 	public:
 		inline double calcRegular(double x) const override { return _fac1*regular_nofac1(x) + _totalchargefac*_fac2*regular_nofac2(x); }
 		inline double calcPlus(double x) const override { return _fac1*plus_nofac1(x) + _totalchargefac*_fac2*plus_nofac2(x); }
@@ -293,7 +244,7 @@ namespace Candia2
 	class P1dDS final : public P1fFS
 	{
 	public:
-		P1dDS() : P1fFS(NC*power<2>(Q_QUARK[1])*power<2>(Q_QUARK[1])) {}
+		P1dDS() : P1fFS(NC*power<4>(Q_QUARK[1])) {}
 	};
 	class P1lLS final : public P1fFS
 	{
@@ -309,17 +260,7 @@ namespace Candia2
 	public:
 		P1fy(double fac) : _fac{fac} {}
 	private:
-		inline double regular_nofac(double x) const
-		{
-			double dx = (1.0-x)/x;
-			double lx = std::log(x);
-			double lx2 = lx*lx;
-			double lx1 = std::log1p(-x);
-			double ldx = std::log(dx);
-			double ldx2 = ldx*ldx;
-			
-			return 0.5*(4.0 - 9.0*x - (1.0 - 4.0*x)*lx - (1.0 - 2.0*x)*lx2 + 4.0*lx1 + pqg(x)*(2.0*ldx2 - 4.0*ldx - 2.0*PI_2/3.0 + 10));
-		}
+		double regular_nofac(double x) const;
 	public:
 	    inline double calcRegular(double x) const override { return _fac*regular_nofac(x); }
 	};
@@ -346,19 +287,8 @@ namespace Candia2
 	public:
 		P1yf(double fac1, double fac2) : _fac1{fac1}, _fac2{fac2} {}
 	private:
-		inline double regular_nofac1(double x) const
-		{
-			double lx = std::log(x);
-			double lx2 = lx*lx;
-			double lx1 = std::log1p(-x);
-			double lx12 = lx1*lx1;
-			return -(3.0*lx1 + lx12)*pgq(x) + (2.0 + (7.0/2.0)*x)*lx - (1.0 - x/2.0)*lx2 - 2.0*x*lx1 - (7.0/2.0)*x - 5.0/2.0;
-		}
-		inline double regular_nofac2(double x) const
-		{
-			double lx1 = std::log1p(-x);
-			return (4.0/3.0)*x + pgq(x)*(20.0/9.0 + (4.0/3.0)*lx1);
-		}
+		double regular_nofac1(double x) const;
+		double regular_nofac2(double x) const;
 	public:
 		inline double calcRegular(double x) const override { return _fac1*_totalchargefac*regular_nofac1(x) - _fac2*_totalchargefac*regular_nofac2(x); }
 	};
@@ -386,16 +316,7 @@ namespace Candia2
 		using SplitFuncQED::SplitFuncQED;
 		P11qB(double fac) : _fac{fac} {}
 	private:
-		inline double regular_nofac(double x) const
-		{
-			double lx = std::log(x);
-			double lx2 = lx*lx;
-			double lx1 = std::log1p(-x);
-			double dx = (1.0-x)/x;
-			double ldx = std::log(dx);
-			double ldx2 = ldx*ldx;
-			return 0.5*(4.0 - 9.0*x - (1.0 - 4.0*x)*lx - (1.0 - 2.0*x)*lx2 + 4.0*lx1 + pqg(x)*(2.0*ldx2 - 4.0*ldx - 2*PI_2/3.0 + 10.0));
-		}
+		double regular_nofac(double x) const;
 	public:
 		inline double calcRegular(double x) const override{ return _fac*regular_nofac(x); }
 	};
@@ -434,13 +355,7 @@ namespace Candia2
 				_chsq_sum += Q_QUARK[i]*Q_QUARK[i];
 		}
 	private:
-		inline double regular_nofac(double x) const
-		{
-			double x2 = x*x;
-			double lx = std::log(x);
-			double lx2 = lx*lx;
-			return -16.0 + 8.0*x + (20.0/3.0)*x2 + 4.0/(3.0*x) - (6.0 + 10.0*x)*lx - 2.0*(1.0+x)*lx2;
-		}
+		double regular_nofac(double x) const;
 	public:
 		inline double calcRegular(double x) const override { return _fac*_chsq_sum*regular_nofac(x); }
 	};
@@ -490,22 +405,9 @@ namespace Candia2
 	public:
 		P11qqV(double fac) : _fac{fac} {}
 	private:
-		inline double regular_nofac(double x) const
-		{
-			double lx = std::log(x);
-			double lx2 = lx*lx;
-			return -2.0*(((3.0 + 7.0*x)/2)*lx + ((1.0 + x)/2.0)*lx2 + 5.0*(1.0-x));
-		}
-		inline double plus_nofac(double x) const
-		{
-			double lx = std::log(x);
-			double lx1 = std::log1p(-x);
-			return -2.0*(2.0*lx1 + 3.0/2.0)*lx*pqq(x);
-		}
-		inline double delta_nofac() const
-		{
-			return -2.0*(PI_2/2.0 - 3.0/8.0 - 6.0*Zeta3);
-		}
+		double regular_nofac(double x) const;
+		double plus_nofac(double x) const;
+		double delta_nofac() const;
 	public:
 		inline double calcRegular(double x) const override { return _fac*regular_nofac(x); }
 		inline double calcPlus(double x) const override { return _fac*plus_nofac(x); }
@@ -529,17 +431,8 @@ namespace Candia2
 	public:
 		P11qqbarV(double fac) : _fac{fac} {}
 	private:
-		inline double regular_nofac(double x) const
-		{
-			double lx = std::log(x);
-			return 2.0*(4.0*(1.0-x) + 2*(1.0+x)*lx);
-		}
-		inline double plus_nofac(double x) const
-		{
-			double lx = std::log(x);
-			double lx1 = std::log1p(-x);
-			return 2.0*(2.0*pqq(-x)*S2(x));
-		}
+		double regular_nofac(double x) const;
+		double plus_nofac(double x) const;
 	public:
 		inline double calcRegular(double x) const override { return _fac*regular_nofac(x); }
 		inline double calcPlus(double x) const override { return _fac*plus_nofac(x); }
@@ -562,14 +455,7 @@ namespace Candia2
 	public:
 		P11bq(double fac) : _fac{fac} {}
 	private:
-		inline double regular_nofac(double x) const
-		{
-			double lx1 = std::log1p(-x);
-			double lx12 = lx1*lx1;
-			double lx = std::log(x);
-			double lx2 = lx*lx;
-			return -(3.0*lx1 + lx12)*pgq(x) + (2.0 + (7.0/2.0)*x)*lx - (1.0 - x/2.0)*lx2 - 2.0*x*lx1 - (7.0/2.0)*x - 5.0/2.0;
-		}
+		double regular_nofac(double x) const;
 	public:
 		inline double calcRegular(double x) const override { return _fac*regular_nofac(x); }
 	};
