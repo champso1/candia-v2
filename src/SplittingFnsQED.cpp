@@ -167,4 +167,9 @@ namespace Candia2
 		double lx2 = lx*lx;
 		return -(3.0*lx1 + lx12)*pgq(x) + (2.0 + (7.0/2.0)*x)*lx - (1.0 - x/2.0)*lx2 - 2.0*x*lx1 - (7.0/2.0)*x - 5.0/2.0;
 	}
+
+
+
+
+	
 }

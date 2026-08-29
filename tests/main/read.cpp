@@ -53,5 +53,5 @@ int main(int argc, char *argv[])
 	auto dists = fix_dists(dists_raw, type);
 	
 	std::string basename = datafile_path.filename().string().substr(0, datafile_path.filename().string().rfind('.'));	
-	outputLatexTable(xtab, dists, basename, cols[type].get(), 1, format == 0);
+	outputLatexTable2(xtab, dists, basename, cols[type].get(), 1, format == 0);
 }

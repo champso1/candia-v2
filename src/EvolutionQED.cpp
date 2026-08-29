@@ -22,15 +22,18 @@ namespace Candia2
 		auto& p0qg = getExpression(ExprName::P0qg);
 		auto& p0gq = getExpression(ExprName::P0gq);
 		auto& p0gg = getExpression(ExprName::P0gg);
-		
+
+		auto& p0ff = getExpression(ExprName::P0ff);
 		auto& p0uu = getExpression(ExprName::P0uu);
 		auto& p0dd = getExpression(ExprName::P0dd);
 		auto& p0ll = getExpression(ExprName::P0ll);
-		
+
+		auto& p0fy = getExpression(ExprName::P0fy);
 		auto& p0uy = getExpression(ExprName::P0uy);
 		auto& p0dy = getExpression(ExprName::P0dy);
 		auto& p0ly = getExpression(ExprName::P0ly);
-		
+
+		auto& p0yf = getExpression(ExprName::P0yf);
 		auto& p0yu = getExpression(ExprName::P0yu);
 		auto& p0yd = getExpression(ExprName::P0yd);
 		auto& p0yl = getExpression(ExprName::P0yl);
@@ -41,7 +44,6 @@ namespace Candia2
 		auto beta0qed = _alpha_qed.value().beta0();
 
 		// singlet
-		/*
 		{
 			auto sigmaud = static_cast<uint>(QEDPartonIndices::SIGMAUD);
 			auto sigma = static_cast<uint>(QEDPartonIndices::SIGMA);
@@ -56,7 +58,7 @@ namespace Candia2
 
 			double cp = 0.5*((2./3.)*(2./3.) + (-1./3.)*(-1./3.));
 			double cm = 0.5*((2./3.)*(2./3.) - (-1./3.)*(-1./3.));
-			double fac_qcd = -2.0/beta0qcd();
+			double fac_qcd = -2.0/beta0qcd;
 			double fac_qed = -2.0/beta0qed;
 
 			for (uint s=1; s<_iterations; s++) {
@@ -109,9 +111,7 @@ namespace Candia2
 					for (uint k=0; k<_grid.size()-1;k++) {
 						double res1 = fac_qcd*(
 							_grid.convolution(_S_QED(sigmaud,0,n), p0ns, k) +
-							deltaNf*(
-								_grid.convolution(_S_QED(sigma,0,n), p0qq, k) +
-								_grid.convolution(_S_QED(sigma,0,n), p0ns, k)) +
+							0 +
 							deltaNf*_grid.convolution(_S_QED(gluon,0,n), p0qg, k) +
 							0 +
 							0
@@ -148,7 +148,6 @@ namespace Candia2
 				}
 			}
 		}
-		*/
 		
 		// non-singlet
 		{
@@ -177,7 +176,7 @@ namespace Candia2
 			
 					for (uint s=1; s<_iterations; s++) {
 						for (uint n=1; n<=s; n++) {
-							double pows = std::pow(L0QCD,n)*std::pow(L0QED,s-n)/factorial(n)/factorial(s-n);
+							double pows = std::pow(L0QED,n)*std::pow(L0QCD,s-n)/factorial(n)/factorial(s-n);
 							for (uint k=0; k<_grid.size()-1;k++) {
 								_A_QED(j,1,n,k) = fac_qed*_grid.convolution(_A_QED(j,0,n-1), p0ff, k);
 								arr_ns.get()[j][k] += _A_QED(j,1,n,k)*pows;
@@ -186,7 +185,7 @@ namespace Candia2
 
 						{
 							uint n = 0;
-							double pows = std::pow(L0QCD,n)*std::pow(L0QED,s-n)/factorial(n)/factorial(s-n);
+							double pows = std::pow(L0QED,n)*std::pow(L0QCD,s-n)/factorial(n)/factorial(s-n);
 							for (uint k=0; k<_grid.size()-1;k++) {
 								_A_QED(j,1,n,k) = fac_qcd*_grid.convolution(_A_QED(j,0,n), p0ns, k);
 								arr_ns.get()[j][k] += _A_QED(j,1,n,k)*pows;
