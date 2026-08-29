@@ -33,7 +33,7 @@ inline std::vector<std::string> cols_special_combos{"xuv", "xdv", "xL_-", "xL_+"
 inline std::vector<std::string> cols_special_combos_qm{"xu_v", "xd_v", "x\\bar{u}", "x\\bar{d}", "xL_+", "xs_+", "xc_+", "xb_+", "xg"};
 inline std::vector<std::string> cols_special_combos_ns_and_s{"xq_{NS,1d}^{(-)}", "xq_{NS,1c}^{(-)}", "xq_{NS,1b}^{(-)}", "xq_{NS,1d}^{(+)}", "xq_{NS,1c}^{(+)}", "xq_{NS,1b}^{(+)}", "xq^{(-)}", "xq^{(+)}", "xg"};
 inline std::vector<std::string> cols_special_combos_ffns{"xuv", "xdv", "xL-", "xL+", "xs-", "xs+", "xc+", "xg"};
-inline std::vector<std::string> cols_qed{"xu_v", "xd_v", "x\\Delta_{ds}", "x\\Delta_{uc}", "x\\Delta_{sb}"};
+inline std::vector<std::string> cols_qed{"xu_v", "x\\Delta_{ds}", "x\\Delta_{uc}", "xg", "x\\gamma", "x\\Delta_{UD}",  "x\\Sigma", "x\\Sigma^\\ell"};
 inline std::vector<std::reference_wrapper<const std::vector<std::string>>> cols{
 	std::cref(cols_all_flavors),
 	std::cref(cols_special_combos),
@@ -59,13 +59,24 @@ std::pair<xtab_type, dist_type> read_other_file(fs::path const &path, uint size)
 
 constexpr inline char const* TEX_TABLE_DIR{"tex-table"};
 constexpr inline char const* TEX_TABLE_TEMPLATE{"table-base.txt"};
-constexpr inline char const* TEX_SUBTABLE_TEMPLATE{"table-sub-base.txt"};
-constexpr inline char const* TEX_FOOTER_TEMPLATE{"table-footer.txt"};
+constexpr inline char const* TEX_TABLE_SUBTABLE_TEMPLATE{"table-sub-base.txt"};
+constexpr inline char const* TEX_TABLE_FOOTER_TEMPLATE{"table-footer.txt"};
 constexpr inline char const* TEX_TABLE_COL_LINE{"    \\multicolumn{1}{c|} {$^COL^$} &\n"};
 constexpr inline char const* TEX_TABLE_COL_LINE_FINAL{"    \\multicolumn{1}{c||}{$^COL^$} \\\\[0.5mm]"};
 constexpr inline char const* TEX_TABLE_COL_DEF{"r|"};
 
+constexpr inline std::string_view TEX_TABLE2_DIR{"tex-table2"};
+constexpr inline std::string_view TEX_TABLE2_TEMPLATE{"table-base.txt"};
+constexpr inline std::string_view TEX_TABLE2_SUBTABLE_TEMPLATE{"table-sub-base.txt"};
+constexpr inline std::string_view TEX_TABLE2_FOOTER_TEMPLATE{"table-footer.txt"};
+constexpr inline std::string_view TEX_TABLE2_COL_DEF{"c"};
+
 void outputLatexTable(
+    xtab_type const& xtab,
+	dist_type const& diffs, std::string const& filename,
+	std::vector<std::string> const& cols, int format, bool benchmark_format);
+
+void outputLatexTable2(
     xtab_type const& xtab,
 	dist_type const& diffs, std::string const& filename,
 	std::vector<std::string> const& cols, int format, bool benchmark_format);

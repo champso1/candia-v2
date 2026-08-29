@@ -38,7 +38,7 @@ namespace Candia2
 	private:
 		double _fac;
 	public:
-		P0ff(double fac) : _fac{fac} {}
+		P0ff(double fac=1.0) : _fac{fac} {}
 	private:
 		inline double plus_nofac(double x) const
 		{
@@ -75,7 +75,7 @@ namespace Candia2
 	private:
 		double _fac;
 	public:
-		P0fy(double fac) : _fac{fac} {}
+		P0fy(double fac=1.0) : _fac{fac} {}
 	private:
 		inline double regular_nofac(double x) const
 		{
@@ -108,7 +108,7 @@ namespace Candia2
 	private:
 		double _fac;
 	public:
-		P0yf(double fac) : _fac{fac} {}
+		P0yf(double fac=1.0) : _fac{fac} {}
 	private:
 		inline double regular_nofac(double x) const
 		{
@@ -154,7 +154,7 @@ namespace Candia2
 		double _fac1, _fac2;
 	public:
 		using SplitFuncQED::SplitFuncQED;
-		P1ffV(double fac1, double fac2) : _fac1{fac1}, _fac2{fac2} {}
+		P1ffV(double fac1=1.0, double fac2=1.0) : _fac1{fac1}, _fac2{fac2} {}
 	private:
 		double regular_nofac1(double x) const;
 		double regular_nofac2(double x) const;
@@ -184,12 +184,14 @@ namespace Candia2
 		P1llV() : P1ffV(-1.0, -1.0) {}
 	};
 
+
+	
 	class P1ffbarV : public SplitFuncQED
 	{
 	private:
 		double _fac;
 	public:
-		P1ffbarV(double fac) : _fac{fac} {}
+		P1ffbarV(double fac=1.0) : _fac{fac} {}
 	private:
 		inline double regular_nofac(double x) const
 		{
@@ -220,12 +222,15 @@ namespace Candia2
 		P1llbarV() : P1ffbarV(1) {}
 	};
 
+
+	
+
 	class P1fFS : public SplitFuncQED
 	{
 	private:
 		double _fac;
 	public:
-		P1fFS(double fac) : _fac{fac} {}
+		P1fFS(double fac=1.0) : _fac{fac} {}
 	private:
 		inline double regular_nofac(double x) const { return ps(x); }
 	public:
@@ -252,13 +257,14 @@ namespace Candia2
 		P1lLS() : P1fFS(1.0) {}
 	};
 
+	
 
 	class P1fy : public SplitFuncQED
 	{
 	private:
 		double _fac;
 	public:
-		P1fy(double fac) : _fac{fac} {}
+		P1fy(double fac=1.0) : _fac{fac} {}
 	private:
 		double regular_nofac(double x) const;
 	public:
@@ -280,12 +286,14 @@ namespace Candia2
 		P1ly() : P1fy(1.0) {}
 	};
 
+
+	
 	class P1yf : public SplitFuncQED
 	{
 	private:
 		double _fac1, _fac2;
 	public:
-		P1yf(double fac1, double fac2) : _fac1{fac1}, _fac2{fac2} {}
+		P1yf(double fac1=1.0, double fac2=1.0) : _fac1{fac1}, _fac2{fac2} {}
 	private:
 		double regular_nofac1(double x) const;
 		double regular_nofac2(double x) const;
@@ -308,13 +316,15 @@ namespace Candia2
 		P1yl() : P1yf(1.0,1.0) {}
 	};
 
+
+	
 	class P11qB : public SplitFuncQED
 	{
 	private:
 		double _fac;
 	public:
 		using SplitFuncQED::SplitFuncQED;
-		P11qB(double fac) : _fac{fac} {}
+		P11qB(double fac=1.0) : _fac{fac} {}
 	private:
 		double regular_nofac(double x) const;
 	public:
@@ -341,6 +351,7 @@ namespace Candia2
 		P11dg() : P11qB(TR*Q_QUARK[1]*Q_QUARK[1]) {}
 	};
 
+	
 
 	class P11bB : public SplitFuncQED
 	{
@@ -348,7 +359,7 @@ namespace Candia2
 		double _fac;
 		double _chsq_sum;
 	public:
-		P11bB(double fac) : _fac{fac}
+		P11bB(double fac=1.0) : _fac{fac}
 		{
 			_chsq_sum = 0;
 			for (uint i=0; i<_nf; ++i)
@@ -370,6 +381,7 @@ namespace Candia2
 		P11yg() : P11bB(TR) {}
 	};
 
+
 	
 	class P11bb : public SplitFuncQED
 	{
@@ -377,7 +389,7 @@ namespace Candia2
 		double _fac;
 		double _chsq_sum;
 	public:
-		P11bb(double fac) : _fac{fac}
+		P11bb(double fac=1.0) : _fac{fac}
 		{
 			_chsq_sum = 0;
 			for (uint i=0; i<_nf; ++i)
@@ -398,12 +410,13 @@ namespace Candia2
 		P11gg() : P11bb(TR) {}
 	};
 
+	
 	class P11qqV : public SplitFuncQED
 	{
 	private:
 		double _fac;
 	public:
-		P11qqV(double fac) : _fac{fac} {}
+		P11qqV(double fac=1.0) : _fac{fac} {}
 	private:
 		double regular_nofac(double x) const;
 		double plus_nofac(double x) const;
@@ -424,12 +437,13 @@ namespace Candia2
 		P11ddV() : P11qqV(CF*Q_QUARK[1]*Q_QUARK[1]) {}
 	};
 
+	
 	class P11qqbarV : public SplitFuncQED
 	{
 	private:
 		double _fac;
 	public:
-		P11qqbarV(double fac) : _fac{fac} {}
+		P11qqbarV(double fac=1.0) : _fac{fac} {}
 	private:
 		double regular_nofac(double x) const;
 		double plus_nofac(double x) const;
@@ -448,12 +462,13 @@ namespace Candia2
 		P11ddbarV() : P11qqbarV(CF*Q_QUARK[1]*Q_QUARK[1]) {}
 	};
 
+	
 	class P11bq : public SplitFuncQED
 	{
 	private:
 		double _fac;
 	public:
-		P11bq(double fac) : _fac{fac} {}
+		P11bq(double fac=1.0) : _fac{fac} {}
 	private:
 		double regular_nofac(double x) const;
 	public:
