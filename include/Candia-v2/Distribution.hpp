@@ -194,31 +194,20 @@ namespace Candia2
 	/**
 	 *  @brief Adds lepton/photon distributions
 	 */
-	class QEDDistribution
+	class QEDDistribution : public Distribution
 	{
 	protected:
 		double _alphaqed0;
 	public:
-		virtual double alphaqed0() const { return _alphaqed0; }
-		
-		virtual double xgamma(double x) const = 0;
-		virtual double xe(double x) const = 0;
-		virtual double xmu(double x) const = 0;
-		virtual double xtau(double x) const = 0;
-		virtual double xeb(double x) const = 0;
-		virtual double xmub(double x) const = 0;
-		virtual double xtaub(double x) const = 0;
-	};
-
-	class LesHouchesQED final : public Distribution, public QEDDistribution
-	{
-	public:
-		explicit LesHouchesQED(double qf)
+		explicit QEDDistribution(double qf)
 		{
-			setup(MTAU, qf);
+			setup(std::numbers::sqrt2, qf);
 		}
+		
+	    inline double alphaqed0() const { return _alphaqed0; }
+		
 
-		inline value_type xuv(value_type x) const
+	    inline value_type xuv(value_type x) const
 		{
 			return 5.1072*std::pow(x, 0.8)*std::pow(1.0-x, 3.0);
 		}
@@ -226,9 +215,10 @@ namespace Candia2
 		{
 			return 3.06432*std::pow(x, 0.8)*std::pow(1.0-x, 4.0);
 		}
+
 		inline value_type xg (value_type x) const override
 		{
-			return 1.7*std::pow(x, -0.1)*std::pow(1.0-x, 5.0);
+		    return 1.7*std::pow(x, -0.1)*std::pow(1.0-x, 5.0);
 		}
 		inline value_type xu (value_type x) const override
 		{
@@ -253,83 +243,12 @@ namespace Candia2
 		inline value_type xsb(value_type x) const override { return xs(x); }
 
 
-		inline double xgamma(double x) const override
-		{
-			return 0.0;
-		}
-		inline double xe(double x) const override
-		{
-			return 0.0;
-		}
-		inline double xmu(double x) const override
-		{
-			return 0.0;
-		}
-		inline double xtau(double x) const override
-		{
-			return 0.0;
-		}
-		inline double xeb(double x) const override
-		{
-			return 0.0;
-		}
-		inline double xmub(double x) const override
-		{
-			return 0.0;
-		}
-		inline double xtaub(double x) const override
-		{
-			return 0.0;
-		}
-
-		inline double xsigmaud(double x) const
-		{
-			return
-				xu(x) + xub(x)
-				+ xc(x) + xcb(x)
-				- (xd(x) + xdb(x));
-		}
-		inline double xsigma(double x) const
-		{
-			return
-				xu(x) + xub(x)
-				+ xc(x) + xcb(x)
-				+ xd(x) + xdb(x);
-		}
-		inline double xsigmal(double x) const
-		{
-			return
-				xe(x) + xeb(x)
-				+ xmu(x) + xmub(x)
-				+ xtau(x) + xtaub(x);
-		}
-
-		inline double xdeltauc(double x) const
-		{
-			return
-				xu(x) + xub(x)
-				- (xc(x) + xcb(x));
-		}
-
-		inline double xdeltads(double x) const
-		{
-			return
-				xd(x) + xdb(x)
-				- (xs(x) + xsb(x));
-		}
-
-		inline double xdeltasb(double x) const
-		{
-			return xs(x) + xsb(x);
-		}
-
-		// TODO: split singlet non-singlet?
-		void fillCoeffs(
+		virtual void fillCoeffs(
 			accessor_type const& s_accessor,
 			accessor_type const& ns_accessor,
-			std::vector<value_type> const& grid_points) const override;
-
-		void setup(double q0, double qf) override;
+			std::vector<double> const& grid_points) const override;
+		virtual void setup(double Q0, double Qf) override;
 	};
+
 	
 } // namespace Candia2

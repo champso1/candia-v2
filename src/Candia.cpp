@@ -424,24 +424,35 @@ namespace Candia2
     {
 		auto num_dists = static_cast<uint>(QEDPartonIndices::COUNT);
 		
-	    auto sigmaud = static_cast<uint>(QEDPartonIndices::SIGMAUD);
+	    auto deltaud = static_cast<uint>(QEDPartonIndices::DELTAUD);
 		auto sigma = static_cast<uint>(QEDPartonIndices::SIGMA);
 		auto gluon = static_cast<uint>(QEDPartonIndices::G);
 		auto photon = static_cast<uint>(QEDPartonIndices::PHOTON);
 		auto sigmal = static_cast<uint>(QEDPartonIndices::SIGMAL);
-		std::array s_dists{sigmaud, sigma, gluon, photon, sigmal};
+		std::array s_dists{deltaud, sigma, gluon, photon, sigmal};
 
 		auto uv = static_cast<uint>(QEDPartonIndices::UV);
 		auto dv = static_cast<uint>(QEDPartonIndices::DV);
-		auto sigmauc = static_cast<uint>(QEDPartonIndices::DELTAUC);
-		auto sigmads = static_cast<uint>(QEDPartonIndices::DELTADS);
-		auto sigmasb = static_cast<uint>(QEDPartonIndices::DELTASB);
-		std::array ns_dists{uv, dv, sigmauc, sigmads, sigmasb};
+		auto deltauc = static_cast<uint>(QEDPartonIndices::DELTAUC);
+		auto deltads = static_cast<uint>(QEDPartonIndices::DELTADS);
+		auto deltasb = static_cast<uint>(QEDPartonIndices::DELTASB);
+		auto deltal2 = static_cast<uint>(QEDPartonIndices::DELTAL2);
+		auto deltal3 = static_cast<uint>(QEDPartonIndices::DELTAL3);
+		std::array ns_dists{uv, dv, deltauc, deltads, deltasb, deltal2, deltal3};
 		
 		for (uint j : s_dists)
 			std::ranges::copy(resum_singlet[j], resum[j].begin());
 		for (uint j : ns_dists)
 			std::ranges::copy(resum_ns[j], resum[j].begin());
+
+		auto ep = static_cast<uint>(QEDPartonIndices::EP);
+		auto mup = static_cast<uint>(QEDPartonIndices::MUP);
+		auto taup = static_cast<uint>(QEDPartonIndices::TAUP);
+		for (uint k=0; k<_grid.size(); ++k) {
+			resum[ep][k] = (2.0*resum[sigmal][k] + resum[deltal3][k] + 3.0*resum[deltal2][k])/6.0;
+			resum[mup][k] = (2.0*resum[sigmal][k] + resum[deltal3][k] - 3.0*resum[deltal2][k])/6.0;
+			resum[taup][k] = (resum[sigmal][k] - resum[deltal3][k])/3.0;
+		}
     }
 
 	void DGLAPSolver::fixDistributionsForce(std::vector<ArrayGrid>& resum)

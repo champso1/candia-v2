@@ -2,7 +2,6 @@
 using namespace Candia2;
 
 #include <vector>
-#include <fstream>
 
 int main()
 {
@@ -21,7 +20,7 @@ int main()
 	std::vector<double> xtab{1e-5, 1e-4, 1e-3, 1e-2, 0.1, 0.3, 0.5, 0.7, 0.9, 1.0};
 	Grid grid(xtab);
 
-	LesHouchesQED dist(Qf);
+	QEDDistribution dist(Qf);
 	// LHAPDFDistribution dist(make_lhapdf_pdf("CT18NNLO"), 1.295, 100.0);
 	AlphaQED alphaqed(order, dist.Q0(), dist.Qf(), dist.alphaqed0(), mur2_muf2);
 	AlphaS alphas(order, dist.Q0(), dist.Qf(), dist.alpha0(), mur2_muf2);
