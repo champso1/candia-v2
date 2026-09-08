@@ -1,5 +1,4 @@
 #include "Candia-v2/Candia.hpp"
-#include "Candia-v2/Common.hpp"
 using namespace Candia2;
 using out_type = std::vector<ArrayGrid>;
 
@@ -115,7 +114,7 @@ int main(int argc, char *argv[]) {
 	std::vector<double> xtab{1e-5, 1e-4, 1e-3, 1e-2, 0.1, 0.3, 0.5, 0.7, 0.9, 1.0};
 	Grid grid(xtab);
 
-	LesHouchesQED dist(Qf);
+	QEDDistribution dist(Qf);
 	AlphaS alphas(order, dist.Q0(), dist.Qf(), dist.alpha0(), mur2_muf2);
 	alphas.setFFNS(4);
 	AlphaQED alphaqed(order, dist.Q0(), dist.Qf(), dist.alphaqed0(), mur2_muf2);
