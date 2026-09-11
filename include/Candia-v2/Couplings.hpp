@@ -17,6 +17,8 @@ namespace Candia2
 	protected:
 		uint _order{}; //!< Perturbative order.
 		double _Q0{}, _Qf{}; //!< initial and final evolution energies
+		uint _nl{}, _nli{}, _nlf{}; //!< number of active leptons
+		uint _nf{}, _nfi{}, _nff{}; //!< number of active quarks
 		double _alpha0{}; //!< Initial value of couplin gat Q0
 
 	    double _beta0{}; //!< \f$\beta_0\f$
@@ -26,8 +28,6 @@ namespace Candia2
 
 		double _mur2_muf2; //!< \f$\frac{mu_R^2}/{mu_F^2}\f$, NO LOG
 		double _L{}; //!< \f$\log(\frac{mu_R^2}/{mu_F^2})\f$
-
-		uint _nf{}, _nl{};
 		
 	public:
 		Coupling(uint order, double Q0, double Qf, double alpha0, double mur2_muf2)
@@ -61,6 +61,8 @@ namespace Candia2
 			return std::make_pair(_alpha0, evaluate(Q0(), Qf(), _alpha0));
 		}
 
+		
+
 	protected:
 		virtual double calcBeta0(uint nf, uint nl) const = 0; //!< calculates \f$\beta_0\f$ for @a nf flavors and @a nf leptons
 		virtual double calcBeta1(uint nf, uint nl) const = 0; //!< calculates \f$\beta_1\f$ for @a nf flavors and @a nf leptons
@@ -88,36 +90,50 @@ namespace Candia2
 	class AlphaQED final : public Coupling
 	{
 	public:
+		using nfud_threshold_type = std::array<double,3>;
+	private:
+		// for each nf, there are differing numbers of up/down quarks
+		// which are important for determining beta0qed
+		static std::array<nfud_threshold_type,9> _nfud_thresholds;
+		static inline constexpr double quark_up_q2 = (2.0/3.0)*(2.0/3.0);
+		static inline constexpr double quark_down_q2 = (-1.0/3.0)*(-1.0/3.0);
+
+	public:
 		using Coupling::Coupling;
 
 		inline double evaluate(double Q0, double Qf, double alpha0) const override
 		{
-			log(LOG_DEBUG, "AlphaQED::evaluate()", "Q0={}, Qf={}, a0={}", Q0, Qf, alpha0);
 			double log_arg = (Qf/Q0)*(Qf/Q0);
 			double res = alpha0/(1.0 + (alpha0/4.0/PI)*beta0()*std::log(log_arg));
-			log(LOG_DEBUG, "AlphaQED::evaluate()", "alpha1={}", res);
 		    return res;
+		}
+
+		inline uint numUp() const
+		{
+			return _nfud_thresholds[_nf][1];
+		}
+		inline uint numDown() const
+		{
+			return _nfud_thresholds[_nf][2];
 		}
 
 	private:
 		inline double calcBeta0(uint nf, uint nl) const override
 		{
-			auto nn = nf + nl;
-			double fac = nl;
-			for (uint i=0; i<nf; ++i)
-				fac += NC*Q_QUARK[i]*Q_QUARK[i];
-			log(LOG_DEBUG, "AlphaQED::calcBeta0()", "nf+nl = {}, beta0 = {}", nn, -4.0/3.0*fac);
-			return -4.0/3.0*fac;
+			double fac = nl + NC*(_nfud_thresholds[nf][1]*quark_up_q2 + _nfud_thresholds[nf][2]*quark_down_q2);
+			double b0 = -4.0/3.0*fac;
+			log(LOG_DEBUG, "AlphaQED::calcBeta0()", "nf={}, nl={}, beta0={}", nf, nl, b0);
+			return b0;
 		}
-		inline double calcBeta1(uint nf, uint nl) const override
+		inline double calcBeta1([[maybe_unused]] uint nf, [[maybe_unused]] uint nl) const override
 		{
 			throw std::runtime_error("TODO: beta1/2/3 for alphaqed");
 		}
-		inline double calcBeta2(uint nf, uint nl) const override
+		inline double calcBeta2([[maybe_unused]] uint nf, [[maybe_unused]] uint nl) const override
 		{
 			throw std::runtime_error("TODO: beta1/2/3 for alphaqed");
 		}
-		inline double calcBeta3(uint nf, uint nl) const override
+		inline double calcBeta3([[maybe_unused]] uint nf, [[maybe_unused]] uint nl) const override
 		{
 			throw std::runtime_error("TODO: beta1/2/3 for alphaqed");
 		}

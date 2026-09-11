@@ -108,7 +108,7 @@ namespace Candia2
 		std::vector<value_type> _data{};
 	public:
 		ArrayGridBase() = default;
-		virtual ~ArrayGridBase() = default;
+		~ArrayGridBase() = default;
 		explicit ArrayGridBase(uint size) : _data(size, 0.0) {}
 		ArrayGridBase(ArrayGridBase const& other)
 			: _data{other._data}

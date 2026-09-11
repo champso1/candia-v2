@@ -32,7 +32,7 @@ namespace Candia2
 		bool use_n3lo_heavyquark_asymmetry{true}; //!< use new OME from arXiv:2512.13508		 
 		bool use_fortran_nnlo_splitfuncs{false}; //!< whether to use the fortran versions for the nnlo splitting functions or the C++-translated ones
 		bool use_fortran_n3lo_splitfuncs{false}; //!< whether to use the fortran versions for the n3lo splitting functions or the C++-translated ones
-		bool try_qed{false}; //!< whether to try and include QED effects
+		bool try_qed{false};
 	};
 
 	/**
@@ -104,9 +104,36 @@ namespace Candia2
 		ArrayGridN<4> _A_QED{}; //!< LO QCD/LO QED non-singlet coeffs
 		ArrayGridN<4> _S_QED{}; //!< LO QCD/LO QED singlet coeffs
 
-		std::array<double,8> _r1{}; //!< real solution to N3LO quadratic
-		std::array<double,8> _b{};  //!< \f$-2*\mathrm{Re}[r_2]\f$
-		std::array<double,8> _c{};  //!< \f$|r_2|^2\f$
+		// real solution to N3LO quadratic
+		static constexpr std::array<double,8> _r1{
+			0.0, // nf=0
+			-0.965105642503553,
+			-1.0315080774348302,
+			-1.1120253073038324,
+			-1.2090185772488318,
+			-1.3205899823870375,
+			-1.4277979273114205,
+		};
+		// \f$-2*\mathrm{Re}[r_2]\f$
+		static constexpr std::array<double,8> _b{
+			0.0, // nf=0
+			-2.0 * 0.1629296392275606,
+			-2.0 * 0.18523659836580222,
+			-2.0 * 0.2214224000789979,
+			-2.0 * 0.2867586032664649,
+			-2.0 * 0.42477034063852415,
+			-2.0 * 0.7964970177083996,
+		};
+		// \f$|r_2|^2\f$
+		static constexpr std::array<double,8> _c{
+			0.0, // nf=0
+			power<2>(0.1629296392275606) + power<2>(0.9535744823175397),
+			power<2>(0.18523659836580222) + power<2>(1.0299109343730084),
+			power<2>(0.2214224000789979) + power<2>(1.131077812338495),
+			power<2>(0.2867586032664649) + power<2>(1.272794345339416),
+			power<2>(0.42477034063852415) + power<2>(1.4854822725151384),
+			power<2>(0.7964970177083996) + power<2>(1.816809978388145),
+		};
 
 		std::array<std::unique_ptr<Expression>, static_cast<uint>(ExprName::Count)> _expressions{};
 		template <typename TExpr, typename... TExprArgs>
@@ -270,6 +297,8 @@ namespace Candia2
 			return _evolve_function(EvolType::Truncated);
 		}
 
+		std::vector<ArrayGrid> const& evolveQED();
+
 		/**
 		 *  @brief returns a vector of some subtraction PDFs as in EQ.27, Eq.38 in arXiv:2410.03876 [hep-ph]
 		 */
@@ -303,7 +332,7 @@ namespace Candia2
 		 *  @param resum_singlet the set of resummed singlet distributions
 		 *  @param resum[out] the final set of all (non-singlet and singlet) fixed distributions
 		 */
-		void fixDistributionsQED(
+		void fixQEDDistributions(
 			std::vector<ArrayGrid>& resum_ns, 
 			std::vector<ArrayGrid>& resum_singlet,
 			std::vector<ArrayGrid>& resum);

@@ -1,6 +1,4 @@
-#include <chrono>
 #include <filesystem>
-#include <charconv>
 #include <string>
 namespace fs = std::filesystem;
 
@@ -11,7 +9,7 @@ using out_type = std::vector<ArrayGrid>;
 static void usage();
 static void outputData(
 	out_type const& F, std::vector<double> const& xtab, Grid const& grid,
-	uint order, uint iterations, uint trunc_idx, double mur2_muf2,
+	uint iterations, uint trunc_idx, double mur2_muf2,
 	std::string filename="");
 
 
@@ -91,7 +89,7 @@ int main(int argc, char *argv[]) {
 	auto F = solver.evolve();
 	// auto F = solver.evolveTrunc();
 
-	outputData(F, xtab, grid, order, iterations, trunc_idx, mur2_muf2, datafile_name);
+	outputData(F, xtab, grid, iterations, trunc_idx, mur2_muf2, datafile_name);
 }
 
 
@@ -113,7 +111,7 @@ static void usage()
 
 static void outputData(
 	out_type const& F, Grid::grid_type const& xtab, Grid const& grid,
-	uint order, uint iterations, uint trunc_idx, double mur2_muf2,
+	uint iterations, uint trunc_idx, double mur2_muf2,
 	std::string filename)
 {
 	uint num_grid_points = grid.size();

@@ -35,7 +35,7 @@ int main()
 	auto datafile_list = create_datafiles(
 		{0, 1, 2, 3},
 	    {"lo", "nlo", "nnlo", "n3lo"},
-		13, 10,
+		iterations, trunc_idx,
 		{0.5, 1.0, 2.0});
 
 	std::ranges::for_each(datafile_list, [](auto&& datafile){ validate_file(datafile); });

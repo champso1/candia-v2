@@ -294,8 +294,6 @@ namespace Candia2
 		[[maybe_unused]] const double b = _b[_nf];
 		[[maybe_unused]] const double c = _c[_nf];
 
-		double conv0 =  _grid.convolution(D, P0, k);
-
 		double fac1 = -64*PI_2;
 		double fac2 = -32*PI*r1;
 		double fac3 = -16*r1*r1;
@@ -328,8 +326,6 @@ namespace Candia2
 		const double r1 = _r1[_nf];
 		const double b = _b[_nf];
 		const double c = _c[_nf];
-
-		double conv0 = _grid.convolution(D, P0, k);
 
 		double fac1 = 128*PI_2*(b+r1);
 		double fac2 = -64*PI*c;

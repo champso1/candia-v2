@@ -5,11 +5,8 @@ using namespace std;
 namespace fs = filesystem;
 
 #include "Candia-v2/Candia.hpp"
-#include "Candia-v2/LHAPDFDistribution.hpp"
 using namespace Candia2;
 using out_type = std::vector<ArrayGrid>;
-
-#include "yaml-cpp/yaml.h"
 
 static void usage()
 {
@@ -21,8 +18,8 @@ static void usage()
 	cout << "    <iterations>: number of total iterations to perform.\n";
 	cout << "    <trunc_idx>: number of truncation iterations to perform (for each main iteration!)\n";
 	cout << "    <mur2_muf2>: ratio of mu_R^2 / mu_F^2.\n";
-	cout << "    <use_trunc>: 0=use exact, 1=use truncated";
-	cout << "    <debug>: 0=do not show debug messages, 1=show debug messages";
+	cout << "    <use_trunc>: 0=use exact, 1=use truncated\n";
+	cout << "    <debug>: 0=do not show debug messages, 1=show debug messages\n";
 	cout << "    [title]: optional -- gives a title for the resulting datafile and logfile\n";
 	cout << "-------------------------------------------------------\n\n";
 	throw std::runtime_error("invalid cli arguments");
@@ -82,66 +79,19 @@ static void outputData(
 	}
 }
 
-struct CfgFileArgs final
-{
-	uint order;
-	uint iterations;
-	uint trunc_idx;
-	double mur2_muf2;
-	double Qf;
-	bool use_trunc;
-	bool debug;
-	std::string title;
-};
-
-static CfgFileArgs read_options_from_yaml()
-{
-	YAML::Node configfile = YAML::LoadFile("evolve.config.yaml");
-    return {
-		.order = configfile["order"].as<uint>(),
-		.iterations = configfile["iterations"].as<uint>(),
-		.trunc_idx = configfile["trunc_idx"].as<uint>(),
-		.mur2_muf2 = configfile["mur2_muf2"].as<double>(),
-		.Qf = configfile["Qf"].as<double>(),
-		.use_trunc = configfile["use_trunc"].as<bool>(),
-		.debug = configfile["debug"].as<bool>(),
-		.title = configfile["title"].as<std::string>(),
-	};
-}
-
 int main(int argc, char *argv[]) {
 	if (argc != 7 && argc != 8 && argc != 1)
 		usage();
 
-	uint order;
-	uint iterations;
-	uint trunc_idx;
-	double mur2_muf2;
-	bool use_trunc;
-	bool debug;
-	double Qf;
+	uint order = stoi(argv[1]);
+	uint iterations = stoi(argv[2]);
+	uint trunc_idx = stoi(argv[3]);
+	double mur2_muf2 = stold(argv[4]);
+	bool use_trunc = stoi(argv[5]) == 1;
+	bool debug = stoi(argv[6]) == 1;
+	double Qf = 100.0;
 
 	std::string datafile_name{};
-
-	if (argc == 1) {
-		auto args = read_options_from_yaml();
-		order = args.order;
-		iterations = args.iterations;
-		trunc_idx = args.trunc_idx;
-		mur2_muf2 = args.mur2_muf2;
-		use_trunc = args.use_trunc;
-		debug = args.debug;
-		Qf = args.Qf;
-		datafile_name = args.title + ".dat";
-	} else {
-		order = stoi(argv[1]);
-		iterations = stoi(argv[2]);
-		trunc_idx = stoi(argv[3]);
-		mur2_muf2 = stold(argv[4]);
-		use_trunc = stoi(argv[5]) == 1;
-		debug = stoi(argv[6]) == 1;
-		Qf = 100.0;
-	}
 	
 	if (argc == 8) {
 		datafile_name = argv[7];

@@ -36,7 +36,7 @@ namespace Candia2
 				break;
 		}
 		if (_nff < 1 || _nff > 6)
-			log(LOG_ERROR, "LHAPDF", "error finding nf (_nff={})", _nff);
+			log(LOG_ERROR, "LesHouchesDistribution", "error finding nf (_nff={})", _nff);
 	}
 
 
@@ -70,6 +70,7 @@ namespace Candia2
 				u + ub +
 				- d - db
 				- s - sb;
+			double deltauc = u + ub;
 			double deltads =
 				d + db
 				- s - sb;
@@ -84,6 +85,7 @@ namespace Candia2
 
 			ns_accessor(static_cast<uint>(QEDPartonIndices::UV), k) = xuv(x);  
 			ns_accessor(static_cast<uint>(QEDPartonIndices::DV), k) = xdv(x);
+			ns_accessor(static_cast<uint>(QEDPartonIndices::DELTAUC), k) = deltauc;
 			ns_accessor(static_cast<uint>(QEDPartonIndices::DELTADS), k) = deltads;
 			ns_accessor(static_cast<uint>(QEDPartonIndices::DELTAL2), k) = deltal2;
 			ns_accessor(static_cast<uint>(QEDPartonIndices::DELTAL3), k) = deltal3;
@@ -95,7 +97,7 @@ namespace Candia2
 		_Q0 = q0;
 		_Qf = qf;
 		_alpha0 = 0.35;
-		_alphaqed0 = 0.008539696327675218;
+		_alphaqed0 = 0.007476249785082996;
 		_nfi = 4;
 		_nff = 4;
 	}

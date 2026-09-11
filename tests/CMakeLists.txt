@@ -2,7 +2,6 @@ option(CANDIA_BUILD_TESTS "Build the 'tests', which are effectively just a more 
 if (CANDIA_BUILD_TESTS)
   add_subdirectory(main)
   add_subdirectory(plot-generation)
-  add_subdirectory(qed)
   if (CANDIA_WITH_LHAPDF)
 	add_subdirectory(testing)
 	add_subdirectory(p3ns-exact)

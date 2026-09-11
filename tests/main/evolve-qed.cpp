@@ -123,7 +123,7 @@ int main(int argc, char *argv[]) {
 	solver.getOptions().try_qed = true;
 	
 	auto t0 = chrono::high_resolution_clock::now();
-	auto F = solver.evolve();
+	auto F = solver.evolveQED();
 	auto tf = chrono::high_resolution_clock::now();
 	chrono::duration<double, ratio<1>> secs = tf-t0;
 	log(LOG_INFO, "evolve.cpp", "Evolution took {}.", secs);

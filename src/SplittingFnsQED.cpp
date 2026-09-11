@@ -41,7 +41,6 @@ namespace Candia2
 		double x1 = 1.0-x;
 		double lx = std::log(x);
 		double lx2 = lx*lx;
-		double lx1 = std::log(x1);
 
 		return ((3.0 + 7.0*x)/2.0)*lx + ((1.0+x)/2.0)*lx2 + 5.0*x1;
 	}
@@ -152,8 +151,6 @@ namespace Candia2
 	}
 	double P11qqbarV::plus_nofac(double x) const
 	{
-		double lx = std::log(x);
-		double lx1 = std::log1p(-x);
 		return 2.0*(2.0*pqq(-x)*S2(x));
 	}
 
