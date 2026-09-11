@@ -43,7 +43,7 @@ int main()
 	double dnum = static_cast<double>(num);
     auto qvals_view =
 		std::views::iota(uint{0}, num)
-		| std::views::transform([&](uint i){ return std::pow(std::pow(10.0, log_q0+(log_qf-log_q0)*static_cast<double>(i)/(num-1)), 2); });
+		| std::views::transform([&](uint i){ return std::pow(std::pow(10.0, log_q0+(log_qf-log_q0)*static_cast<double>(i)/(dnum-1)), 2); });
 	std::vector<double> qvals(qvals_view.begin(), qvals_view.end());
 
 	auto* ct25nnlo = LHAPDF::mkPDF("CT25aN3LO", 0);
@@ -83,8 +83,8 @@ int main()
 	std::ofstream outfile(outfile_path);
 	for (uint qi=0; qi<qvals.size(); ++qi) {
 		double q = qvals[qi];
-		double tau = q/ECM;
-		double fac = 1.0/q;
+		// double tau = q/ECM;
+		// double fac = 1.0/q;
 		double xaxis_val = std::sqrt(q/ECM);
 
 		unc_type msht_lumis = computeErrorForCalcedVals(msht, msht_gg_lumis[qi]);

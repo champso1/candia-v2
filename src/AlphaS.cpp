@@ -279,11 +279,8 @@ namespace Candia2
 			double qf = _masses[i+1];
 		    double a0 = _post[i];
 			for (double q : qvals_sorted) {
-				bool found = false;
-				if (q >= q0 && q < qf) {
+				if (q >= q0 && q < qf)
 					vals.emplace_back(q, evaluate(q0, q, a0));
-					found = true;
-				}
 			}
 		}
 		if (vals.empty())

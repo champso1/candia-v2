@@ -8,7 +8,6 @@ using out_type = std::vector<ArrayGrid>;
 
 static constexpr char const* DATAFILEDIR = "data";
 
-static void usage();
 static void outputData(std::vector<ArrayGrid> const& F, Grid const& grid, std::string filename);
 static std::vector<ArrayGrid> calculate_ratios(
 	std::vector<ArrayGrid> const& exact,
@@ -75,7 +74,12 @@ int main()
 static void outputData(
 	std::vector<ArrayGrid> const& F, Grid const& grid, std::string filename)
 {
-	fs::path datafile_path(filename);
+	fs::path datadir_path(DATAFILEDIR);
+	if (!fs::exists(datadir_path)) {
+		if (!fs::create_directory(DATAFILEDIR))
+			log(LOG_ERROR, "p3ns-exact.cpp", "Failed to create datafiledir: {}", datadir_path.string());
+	}
+	fs::path datafile_path = datadir_path/filename;
 	ofstream outfile(datafile_path);
 
 	// print them out
@@ -101,7 +105,7 @@ static std::vector<ArrayGrid> calculate_ratios(
 	auto calc_qnsminus1d = [](std::vector<ArrayGrid> const& A, uint k, uint j){
 		return (A[1][k] - A[1+6][k]) - (A[j][k] - A[j+6][k]);
 	};	
-	auto calc_lm = [](std::vector<ArrayGrid> const& A, uint k, uint j){
+	auto calc_lm = [](std::vector<ArrayGrid> const& A, uint k){
 		return (A[2+6][k] - A[1+6][k]);
 	};
 	
@@ -119,9 +123,9 @@ static std::vector<ArrayGrid> calculate_ratios(
 			ratios[2][k] = calc_qnsplus1d(approx_imod1, k, 2)/calc_qnsplus1d(exact, k, 2);
 			ratios[3][k] = calc_qnsplus1d(approx_imod2, k, 2)/calc_qnsplus1d(exact, k, 2);
 		} else if (type == 2) {
-			ratios[1][k] = calc_lm(approx_central, k, 2)/calc_lm(exact, k, 2);
-			ratios[2][k] = calc_lm(approx_imod1, k, 2)/calc_lm(exact, k, 2);
-			ratios[3][k] = calc_lm(approx_imod2, k, 2)/calc_lm(exact, k, 2);
+			ratios[1][k] = calc_lm(approx_central, k)/calc_lm(exact, k);
+			ratios[2][k] = calc_lm(approx_imod1, k)/calc_lm(exact, k);
+			ratios[3][k] = calc_lm(approx_imod2, k)/calc_lm(exact, k);
 		}
 	}
 	

@@ -54,12 +54,19 @@ namespace Candia2
 	constexpr double Zeta5   = 1.0369277551433699263;
 	constexpr double Zeta6   = PI_6/945.0;
 	constexpr double Zeta7   = 1.0083492773819228268;
-	constexpr std::array<double,6> Q_QUARK{2.0/3.0, -1.0/3.0, -1.0/3.0, 2.0/3.0, 2.0/3.0, -1.0/3.0};
+	constexpr std::array<double,6> Q_QUARK{2.0/3.0, -1.0/3.0, -1.0/3.0, 2.0/3.0, -1.0/3.0, 2.0/3.0};
+	constexpr double QUP2 = (2.0/3.0)*(2.0/3.0);
+	constexpr double QDOWN2 = (-1.0/3.0)*(-1.0/3.0);
 
 	constexpr double MTAU = 1.777;
 	constexpr double ALPHAQED_MTAU = 1.0/133.4;
 	/** @} */
 
+	// TODO: these really should probably be removed
+	// DISTS is now StandardPartonIndices::Count
+	// (more verbose, but it won't need to be manually changed ever)
+	// DEFUALT_{ITERATIONS,TRUNC_IDX} aren't really
+	// INTERP_POINTS is very tricky actually, but ideally it would be configurable.
 	/**
 	*  @defgroup defaults Program Defaults
 	*  @{
@@ -68,9 +75,11 @@ namespace Candia2
 	constexpr const uint INTERP_POINTS = 4;
 	constexpr const uint DEFAULT_ITERATIONS = 10;
 	constexpr const uint DEFAULT_TRUNC_IDX = 5;
-	constexpr const uint NUM_SUBTRACT_PDFS = 2;
 	/** @{ */
 
+	/**
+	 *  @brief enumeration providing convenient access to output PDF array for pure QCD evolution (at the cost of code verbosity)
+	 */
 	enum class StandardPartonIndices : uint
 	{
 		G=0,
@@ -113,7 +122,9 @@ namespace Candia2
 		COUNT,
 	};
 
-
+	/**
+	 *  @brief enumeration providing convenient access to output PDF array for QCD&QED evolution (at the cost of code verbosity)
+	 */
 	enum class QEDPartonIndices : uint
 	{
 		G=0,

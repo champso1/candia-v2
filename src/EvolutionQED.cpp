@@ -16,28 +16,22 @@ namespace Candia2
 		double L0QED, double L0QCD)
 	{
 		log(LOG_DEBUG, "DGLAP", "Performing the evolution with QED effects");
+		auto const& alphaqed = _alpha_qed.value();
 
+		// qcd kernels
 		auto& p0ns = getExpression(ExprName::P0ns);
 		auto& p0qq = getExpression(ExprName::P0qq);
 		auto& p0qg = getExpression(ExprName::P0qg);
 		auto& p0gq = getExpression(ExprName::P0gq);
 		auto& p0gg = getExpression(ExprName::P0gg);
 
+		// qed kernels
 		auto& p0ff = getExpression(ExprName::P0ff);
 		auto& p0uu = getExpression(ExprName::P0uu);
 		auto& p0dd = getExpression(ExprName::P0dd);
 		auto& p0ll = getExpression(ExprName::P0ll);
-
 		auto& p0fy = getExpression(ExprName::P0fy);
-		auto& p0uy = getExpression(ExprName::P0uy);
-		auto& p0dy = getExpression(ExprName::P0dy);
-		auto& p0ly = getExpression(ExprName::P0ly);
-
 		auto& p0yf = getExpression(ExprName::P0yf);
-		auto& p0yu = getExpression(ExprName::P0yu);
-		auto& p0yd = getExpression(ExprName::P0yd);
-		auto& p0yl = getExpression(ExprName::P0yl);
-		
 		auto& p0yy = getExpression(ExprName::P0yy);
 
 		auto deltaud = static_cast<uint>(QEDPartonIndices::DELTAUD);
@@ -47,15 +41,27 @@ namespace Candia2
 		auto sigmal = static_cast<uint>(QEDPartonIndices::SIGMAL);
 		std::array s_dists{deltaud, sigma, gluon, photon, sigmal};
 
+		// most of these are zero with our initial conditions
+		// but I wanted to go ahead and add all of them so that
+		// once the initial conditions allow non-vanishing valence lepton distributions
+		// i won't forget
 		std::array ns_dists{
 			std::vector{
 				static_cast<uint>(QEDPartonIndices::UV),
+				static_cast<uint>(QEDPartonIndices::CV),
+				static_cast<uint>(QEDPartonIndices::DELTAUC),
 			},
 			std::vector{
 				static_cast<uint>(QEDPartonIndices::DV),
-				static_cast<uint>(QEDPartonIndices::DELTADS),	
+				static_cast<uint>(QEDPartonIndices::SV),
+				static_cast<uint>(QEDPartonIndices::BV),
+				static_cast<uint>(QEDPartonIndices::DELTADS),
+				static_cast<uint>(QEDPartonIndices::DELTASB),
 			},
 			std::vector{
+				static_cast<uint>(QEDPartonIndices::EV),
+				static_cast<uint>(QEDPartonIndices::MUV),
+				static_cast<uint>(QEDPartonIndices::TAUV),
 				static_cast<uint>(QEDPartonIndices::DELTAL2),
 				static_cast<uint>(QEDPartonIndices::DELTAL3),	
 			}
@@ -72,13 +78,15 @@ namespace Candia2
 
 		// for nf=4, we have an equal number of up/down quarks
 		// so the numerator, Nup-Ndown = 0, and deltaNf = 0
-		double deltaNf = 0;
+		double deltaNf = static_cast<double>(alphaqed.numUp()-alphaqed.numDown())/_nf;
 		double beta0qcd = _alpha_s.beta0();
-		double beta0qed = _alpha_qed.value().beta0();
+		double beta0qed = alphaqed.beta0();
 		double cp = 0.5*((2./3.)*(2./3.) + (-1./3.)*(-1./3.));
 		double cm = 0.5*((2./3.)*(2./3.) - (-1./3.)*(-1./3.));
 		double fac_qcd = -2.0/beta0qcd;
 		double fac_qed = -2.0/beta0qed;
+		fac_qed = 0.0;
+		L0QED = 0;
 
 		// singlet
 		{

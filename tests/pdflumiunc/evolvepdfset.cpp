@@ -17,7 +17,7 @@ int main()
 	double dnum = static_cast<double>(num);
     auto qvals_view =
 		std::views::iota(uint{0}, num)
-		| std::views::transform([&](uint i){ return std::pow(10.0, log_q0+(log_qf-log_q0)*static_cast<double>(i)/(num-1)); });
+		| std::views::transform([&](uint i){ return std::pow(10.0, log_q0+(log_qf-log_q0)*static_cast<double>(i)/(dnum-1)); });
 	std::vector<double> qvals(qvals_view.begin(), qvals_view.end());
 	
 	getLogOptions().verbosity = LOG_DEBUG;

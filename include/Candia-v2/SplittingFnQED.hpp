@@ -18,11 +18,12 @@ namespace Candia2
 		inline static void update(uint nf, double beta0, double log_muf2_mur2, uint nl)
 		{
 			SplittingFunction::update(nf, beta0, log_muf2_mur2);
+			
 			_nl = nl;
-
 			_totalchargefac = _nl;
 			for (uint i=0; i<_nf; ++i)
-				_totalchargefac += NC*Q_QUARK[i];
+				_totalchargefac += NC*Q_QUARK[i]*Q_QUARK[i];
+			log(LOG_DEBUG, "SplitFuncQED::update()", "Setting nl={}, totalchargefac={}", nl, _totalchargefac);
 		}
 
 	protected:

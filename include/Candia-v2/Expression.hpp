@@ -72,7 +72,7 @@ namespace Candia2
 		 *  @param grid_points The array of grid points.
 		 *  @note this function currently does nothing at the use for a regular cache has not yet manifested
 		 */
-		inline virtual void fill(array_type const& grid_points)
+		inline virtual void fill([[maybe_unused]] array_type const& grid_points)
 		{
 		    log(LOG_WARNING, "SplittingFunction::fill()", "Not used ATM -- this method does nothing");
 		}

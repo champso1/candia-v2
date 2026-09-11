@@ -11,7 +11,7 @@ using namespace Candia2;
 #include <format>
 #include <string>
 
-int main(int argc, char** argv)
+int main()
 {
 	getLogOptions().verbosity = LOG_INFO;
 	LHAPDF::setVerbosity(0);
@@ -27,9 +27,9 @@ int main(int argc, char** argv)
 	
 	LesHouchesDistribution dist(Qf);
 	double mc = dist.masses(DIST_C);
-	double mb = dist.masses(DIST_B);
+	// double mb = dist.masses(DIST_B);
 	double mc2 = mc*mc;
-	double mb2 = mb*mb;
+	// double mb2 = mb*mb;
 	AlphaS alphas(3, dist.Q0(), dist.Qf(), dist.alpha0(), 1.0);
 	alphas.setVFNS(dist.masses(), dist.nfi(), dist.nff());
 	alphas.calculateThresholdValues();
@@ -47,19 +47,19 @@ int main(int argc, char** argv)
 	log(LOG_INFO, "subpdfs.cpp", "using alphas(nf={})/4pi = {}, mc={}, L=log(mc2/mu2)={}", nf, as, mc, L);
 
 	auto zero_func = [](double,double){ return 0.0; };
-	auto a1qg_reg_func = [as](double lm, double nf, double x) {
+	auto a1qg_reg_func = [](double lm, double nf, double x) {
 		auto omg_reg = ome::AQg_reg[1];
 		return omg_reg(lm, nf, x); };
-	auto a2hq_reg_func = [as](double lm, double nf, double x) {
+	auto a2hq_reg_func = [](double lm, double nf, double x) {
 		auto omg_reg = ome::AQqPS_reg[2];
 		return omg_reg(lm, nf, x); };
-	auto a2hg_reg_func = [as](double lm, double nf, double x) {
+	auto a2hg_reg_func = [](double lm, double nf, double x) {
 		auto omg_reg = ome::AQg_reg[2];
 		return omg_reg(lm, nf, x); };
-	auto a3hq_reg_func = [as](double lm, double nf, double x) {
+	auto a3hq_reg_func = [](double lm, double nf, double x) {
 		auto omg_reg = ome::AQqPS_reg[3];
 		return omg_reg(lm, nf, x); };
-	auto a3hg_reg_func = [as](double lm, double nf, double x) {
+	auto a3hg_reg_func = [](double lm, double nf, double x) {
 		auto omg_reg = ome::AQg_reg[3];
 		return omg_reg(lm, nf, x); };
     

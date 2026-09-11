@@ -23,6 +23,7 @@ endif()
 set(sources
   src/AlphaS.cpp
   src/Candia.cpp
+  src/Couplings.cpp
   src/Distribution.cpp
   src/Evolution.cpp
   src/EvolutionQED.cpp

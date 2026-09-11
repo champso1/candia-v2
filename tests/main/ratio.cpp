@@ -39,7 +39,7 @@ int main(int argc, char *argv[])
 	std::vector<fs::path> filepaths{};
 	std::vector<std::string> titles{};
 	std::vector<ReadCandiaFileResult> addfiles_results{};
-	for (uint i=4; i<argc; i+=2) {
+	for (int i=4; i<argc; i+=2) {
 		filepaths.emplace_back(argv[i]);
 		if (!fs::exists(filepaths.back()))
 			log(LOG_ERROR, "ratio.cpp", "additional file doesn't exist ({})", filepaths.back().string());

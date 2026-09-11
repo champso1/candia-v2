@@ -5,7 +5,6 @@ using namespace std;
 namespace fs = filesystem;
 
 #include "Candia-v2/Candia.hpp"
-#include "Candia-v2/LHAPDFDistribution.hpp"
 using namespace Candia2;
 using out_type = std::vector<ArrayGrid>;
 
@@ -19,8 +18,8 @@ static void usage()
 	cout << "    <iterations>: number of total iterations to perform.\n";
 	cout << "    <trunc_idx>: number of truncation iterations to perform (for each main iteration!)\n";
 	cout << "    <mur2_muf2>: ratio of mu_R^2 / mu_F^2.\n";
-	cout << "    <use_trunc>: 0=use exact, 1=use truncated";
-	cout << "    <debug>: 0=do not show debug messages, 1=show debug messages";
+	cout << "    <use_trunc>: 0=use exact, 1=use truncated\n";
+	cout << "    <debug>: 0=do not show debug messages, 1=show debug messages\n";
 	cout << "    [title]: optional -- gives a title for the resulting datafile and logfile\n";
 	cout << "-------------------------------------------------------\n\n";
 	throw std::runtime_error("invalid cli arguments");
