@@ -6,7 +6,9 @@ add_executable(subpdfs subpdfs.cpp)
 target_include_directories(subpdfs PUBLIC ${LHAPDF_INCLUDE_DIR})
 target_link_libraries(subpdfs PUBLIC candia ${LHAPDF_LIBRARIES} libome::libome LHAPDF::LHAPDF)
 
-set(lhapdf-datafile_anc
-  infofile.in
-  plot.gplt)
-file(COPY ${lhapdf-datafile_anc} DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+if(want_lhapdf_datafile OR want_subpdfs)
+  set(lhapdf-datafile_anc
+    infofile.in
+    plot.gplt)
+  file(COPY ${lhapdf-datafile_anc} DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+endif()
