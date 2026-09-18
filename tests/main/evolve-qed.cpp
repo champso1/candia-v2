@@ -11,8 +11,9 @@ static void usage()
 	cout << "[ERROR] evolve-qed.cpp: Invalid arguments.\n";
 	cout << "Usage:\n";
 	cout << "-------------------------------------------------------\n";
-	cout << "./evolve-qed <iterations> [title]\n";
+	cout << "./evolve-qed <iterations> <ffns-nf> [title]\n";
 	cout << "    <iterations>: number of total iterations to perform.\n";
+	cout << "    <ffns-nf>:    number of fixed (quark) flavors.\n";
 	cout << "    [title]: optional -- gives a title for the resulting datafile and logfile\n";
 	cout << "-------------------------------------------------------\n\n";
 	throw std::runtime_error("invalid cli arguments");
@@ -75,11 +76,12 @@ static void outputData(
 }
 
 int main(int argc, char *argv[]) {
-	if (argc != 2 && argc != 3)
+	if (argc != 3 && argc != 4)
 		usage();
 
 	uint order = 0;
 	uint iterations = stoi(argv[1]);
+	uint ffns_nf = stoi(argv[2]);
 	uint trunc_idx = 0;
 	double mur2_muf2 = 1.0;
 	double Qf = 100.0;
@@ -116,7 +118,7 @@ int main(int argc, char *argv[]) {
 
 	QEDDistribution dist(Qf);
 	AlphaS alphas(order, dist.Q0(), dist.Qf(), dist.alpha0(), mur2_muf2);
-	alphas.setFFNS(4);
+	alphas.setFFNS(ffns_nf);
 	AlphaQED alphaqed(order, dist.Q0(), dist.Qf(), dist.alphaqed0(), mur2_muf2);
 
 	DGLAPSolver solver(order, grid, alphas, alphaqed, Qf, iterations, trunc_idx, dist, mur2_muf2);

@@ -48,20 +48,20 @@ namespace Candia2
 		std::array ns_dists{
 			std::vector{
 				static_cast<uint>(QEDPartonIndices::UV),
-				static_cast<uint>(QEDPartonIndices::CV),
-				static_cast<uint>(QEDPartonIndices::DELTAUC),
+				// static_cast<uint>(QEDPartonIndices::CV),
+				// static_cast<uint>(QEDPartonIndices::DELTAUC),
 			},
 			std::vector{
 				static_cast<uint>(QEDPartonIndices::DV),
-				static_cast<uint>(QEDPartonIndices::SV),
-				static_cast<uint>(QEDPartonIndices::BV),
-				static_cast<uint>(QEDPartonIndices::DELTADS),
-				static_cast<uint>(QEDPartonIndices::DELTASB),
+				// static_cast<uint>(QEDPartonIndices::SV),
+				// static_cast<uint>(QEDPartonIndices::BV),
+				// static_cast<uint>(QEDPartonIndices::DELTADS),
+				// static_cast<uint>(QEDPartonIndices::DELTASB),
 			},
 			std::vector{
-				static_cast<uint>(QEDPartonIndices::EV),
-				static_cast<uint>(QEDPartonIndices::MUV),
-				static_cast<uint>(QEDPartonIndices::TAUV),
+				// static_cast<uint>(QEDPartonIndices::EV),
+				// static_cast<uint>(QEDPartonIndices::MUV),
+				// static_cast<uint>(QEDPartonIndices::TAUV),
 				static_cast<uint>(QEDPartonIndices::DELTAL2),
 				static_cast<uint>(QEDPartonIndices::DELTAL3),	
 			}
@@ -81,12 +81,20 @@ namespace Candia2
 		double deltaNf = static_cast<double>(alphaqed.numUp()-alphaqed.numDown())/_nf;
 		double beta0qcd = _alpha_s.beta0();
 		double beta0qed = alphaqed.beta0();
-		double cp = 0.5*((2./3.)*(2./3.) + (-1./3.)*(-1./3.));
-		double cm = 0.5*((2./3.)*(2./3.) - (-1./3.)*(-1./3.));
+		constexpr double cp = 0.5*((2./3.)*(2./3.) + (-1./3.)*(-1./3.));
+		constexpr double cm = 0.5*((2./3.)*(2./3.) - (-1./3.)*(-1./3.));
 		double fac_qcd = -2.0/beta0qcd;
 		double fac_qed = -2.0/beta0qed;
 		fac_qed = 0.0;
 		L0QED = 0;
+
+		log(LOG_DEBUG, "evolveQED()", "{:>10} = {: }", "deltaNf", deltaNf);
+		log(LOG_DEBUG, "evolveQED()", "{:>10} = {: }", "beta0QED", beta0qed);
+		log(LOG_DEBUG, "evolveQED()", "{:>10} = {: }", "beta0QCD", beta0qcd);
+		log(LOG_DEBUG, "evolveQED()", "{:>10} = {: }", "cp", cp);
+		log(LOG_DEBUG, "evolveQED()", "{:>10} = {: }", "cm", cm);
+		log(LOG_DEBUG, "evolveQED()", "{:>10} = {: }", "fac_qcd", fac_qcd);
+		log(LOG_DEBUG, "evolveQED()", "{:>10} = {: }", "fac_qed", fac_qed);
 
 		// singlet
 		{
@@ -185,9 +193,6 @@ namespace Candia2
 				auto& p0ff = ns_splitfuncs[i];
 
 				for (uint j : dists) {
-					double fac_qcd = -2.0/beta0qcd;
-					double fac_qed = -2.0/beta0qed;
-			
 					for (uint s=1; s<_iterations; s++) {
 						for (uint n=1; n<=s; n++) {
 							double pows = std::pow(L0QED,n)*std::pow(L0QCD,s-n)/factorial(n)/factorial(s-n);
