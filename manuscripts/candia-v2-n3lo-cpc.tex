@@ -393,8 +393,8 @@ The ansatz in Eq.~(\ref{x-ansatz}) can be extended to all orders in QCD~\cite{Ca
 %
 where $s=n+m+\ell+k$ and $t=n+m+\ell$, and the coefficients $D_{t,m,n}^{s}(x)$ are defined as
 \begin{equation}
-D_{t,m,n}^{s}(x)= a_{n}(x)\otimes
-b_{m-n}(x)\otimes c_{t-m}(x) \otimes d_{s-t}(x) \otimes f(x,\mu_0^2),
+D_{t,m,n}^{s}(x)= a_{0,n}(x)\otimes
+a_{1,m-n}(x)\otimes a_{2,t-m}(x) \otimes a_{3,s-t}(x) \otimes f(x,\mu_0^2),
 \end{equation}
 and are determined by solving the four recursion relations at N$^3LO$
 %
@@ -472,7 +472,7 @@ in $x$-space given by
 %
 where $\kappa$ represents the truncation index that defines the $\alpha_s$ accuracy of the singlet solution or the NS one, in the case of scalar equations. In general, $\kappa\geq k$ and these two indices are independent.     
 
-At N$^3$LO, the recursion relation for the ${\bf S}^{i}_{n}(x)$ coefficients is given by
+At N$^3$LO, the recursion relation for the ${\bf S}^{i}_{n}(x)$ coefficients with $i\geq 3$ is given by
 
 \begin{align}
   \vv{S}_{n+1}^i(x) = &-\frac{\beta_1}{4\pi\beta_0}\vv{S}_{n+1}^{i-1}(x)
@@ -485,9 +485,11 @@ At N$^3$LO, the recursion relation for the ${\bf S}^{i}_{n}(x)$ coefficients is 
 &-\frac{2}{\beta_0}[\vv{P}^{(0)}\otimes\vv{S}_n^i](x)
 -\frac{1}{\pi\beta_0}[\vv{P}^{(1)}\otimes\vv{S}_n^{i-1}](x)\nonumber\\
 &-\frac{1}{2\pi^2\beta_0}[\vv{P}^{(2)}\otimes\vv{S}_n^{i-2}](x)
--\frac{1}{4\pi^3\beta_0}[\vv{P}^{(3)}\otimes\vv{S}_n^{i-3}](x).
+-\frac{1}{4\pi^3\beta_0}[\vv{P}^{(3)}\otimes\vv{S}_n^{i-3}](x)\,,
 \label{eq:singlet-n3lo}
 \end{align}
+
+which needs to be combined with the $i=2$, 1, and 0 pieces corresponding to the NNLO, NLO, and LO relations respectively, from Ref.~\cite{Hampson:2025pvi}.
 
 These recursion relations generate truncated solutions at arbitrary order $\kappa$ that are equivalent those obtained using the $U$-matrix method~\cite{Blumlein:1997em,Vogt:2004ns,Cafarella:2005zj}.  
 
@@ -524,7 +526,7 @@ In Fig.~\ref{g-uv-PDFs}, we illustrate the results for the $Q=100$ GeV \texttt{C
 \label{sub-ref-PDFs}
 
 In the calculation of hadronic cross sections whose domain is defined over a wide range of energies, General Mass Variable Flavor Number (GMVFN) schemes are factorization schemes that organize heavy-quark
-contributions so as to interpolate between the fixed-flavor description near threshold and the massless variable-flavor description at scales much larger than the heavy-quark mass. For example, in the ACOT~\cite{Aivazis:1993kh,Aivazis:1993pi,Tung:2001mv,Kramer:2000hn,Guzzi:2011ew,Guzzi:2024can} scheme, the hadronic cross section may be written schematically as
+contributions so as to interpolate between the fixed-flavor description near threshold and the massless variable-flavor description at scales much larger than the heavy-quark mass. For example, in a GMVFN scheme such as the ACOT~\cite{Aivazis:1993kh,Aivazis:1993pi,Tung:2001mv,Kramer:2000hn,Guzzi:2011ew,Guzzi:2024can} scheme, the hadronic cross section may be written schematically as
 \begin{equation}
   \dd\sigma^{\GMVFN}
   = \dd\sigma^{\FC}+\dd\sigma^{\FE}-\dd\sigma^{\Sub} \, ,
@@ -580,9 +582,7 @@ achieved by defining \emph{residual PDFs}
 \end{align}
 The residual $\df_Q$ is the part of the evolved heavy-quark PDF that is not already accounted for by the fixed-order collinear subtraction through the specified perturbative order.  With these definitions,  
 FE and SUB contributions are combined directly using residual
-PDFs.
-
-This combination facilitates the numerical implementation of different GMVFN prescriptions \cite{Buza:1996wv,Thorne:2006qt,}. The same subtraction or residual PDF grids can be convoluted with different partonic hard cross sections, while different choices for the treatment of $m_Q$ in the FE hard parts correspond to scheme choices that differ only by higher-order terms once the mandatory subtraction structure is preserved. 
+PDFs. This combination aims to facilitate the numerical implementation of GMVFN schemes currently in use \cite{Aivazis:1993kh,Aivazis:1993pi,Tung:2001mv,Kramer:2000hn,Guzzi:2011ew,Guzzi:2024can,Buza:1996wv,Thorne:1997ga,Thorne:2006qt,Cacciari:1998it,Forte:2010ta,Bonvini:2015pxa,Bonvini:2016fgf}. The same subtraction or residual PDF grids can be convoluted with the FE contributions where different approximations in the treatment of mass effects are allowed and correspond to different scheme choices.
 
 In Fig.~\ref{sub-PDFs}, we show the charm- and bottom-quark subtraction PDFs evolved with \texttt{Candia-v2} at $Q=4$ GeV ($n_f=4$) and $Q=10$ GeV ($n_f=5$) respectively, which are compared to the charm and bottom PDFs from the Les Houches toy model of Ref.~\cite{Dittmar:2005ed} evolved at the same energies and $n_f$'s. The generation of subtraction and residual PDFs in \texttt{Candia-v2} is very simple and the procedure is outlined in detail in Sec.~\ref{subsec:subpdf-access}.
 
@@ -602,7 +602,7 @@ In Fig.~\ref{sub-PDFs}, we show the charm- and bottom-quark subtraction PDFs evo
 \section{Description of the Program}
 \label{sec:prog-desc}
 
-In this section we describe the requirements to acquire, build, and use \texttt{Candia-v2}, followed by discussions on the pertinent parts of the library relevant for the user as well as the internals relevant for developers or users more interested in the deeper functionality of the code.
+In this section we describe the requirements to acquire, build, and use \texttt{Candia-v2}, followed by discussions on the different parts of the library. 
 
 \subsection{Requirements and Dependencies}
 \label{subsec:reqs-and-deps}
@@ -625,7 +625,7 @@ The optional dependencies are enabled by passing \texttt{CMake} flags when confi
 \subsubsection{A Note on System and Compiler Choices}
 \label{subsubsec:compilers}
 
-The two mainstream platform independent compiler suites, namely \texttt{GCC} and \texttt{LLVM CLang}, have been tested for compiling and using \texttt{Candia-v2} on Linux machines, MacOS machines, and Windows machines inside of Windows Subsystem for Linux (WSL).
+The two mainstream platform-independent compiler suites, namely \texttt{GCC} and \texttt{LLVM CLang}, have been tested for compiling and using \texttt{Candia-v2} on Linux machines, MacOS machines, and Windows machines inside of Windows Subsystem for Linux (\texttt{WSL}).
 The Apple \texttt{CLang} compiler's standard library implementation does not natively include support for \texttt{C++} execution policies, so \texttt{GCC} or \texttt{LLVM CLang} are recommended on MacOS.
 Windows is not supported natively nor recommended due to GSL and \texttt{LHAPDF} being autotools-based, as well as the lack of a \texttt{Fortran} compiler within \texttt{Visual Studio}.
 Therefore, if using a Windows machine, we highly recommend using \texttt{WSL}.
@@ -636,7 +636,7 @@ Therefore, if using a Windows machine, we highly recommend using \texttt{WSL}.
 
 The code is publicly available at \href{GitHub}{https://github.com/champso1/candia-v2}.
 There are several active branches in which various new features and/or fixes are being addressed, but by default the \texttt{main} branch contains the most stable version, and the \texttt{dev} branch contains the most recent version.
-While one can at any time build from the \texttt{main} branch (and most of the time from the \texttt{dev} branch), it is preferable to checkout the corresponding tag from the cloned repository via \mintinline{bash}{git checkout <tag>}, e.g. \mintinline{bash}{git checkout v1.7.0}.
+While one can at any time build from the \texttt{main} branch, it is preferable to checkout the corresponding tag from the cloned repository via \mintinline{bash}{git checkout <tag>}, e.g., \mintinline{bash}{git checkout v1.7.0}.
 After acquiring the source code, one follows the standard \texttt{CMake} building process:
 % 
 \begin{minted}{bash}
@@ -671,7 +671,7 @@ we have defined an alias for an unsigned integer type called \mintinline{cpp}{ui
 using uint = unsigned int;
 \end{minted}
 
-Listing~\ref{lst:ex-prog} contains a full \texttt{C++} program that performs the N$^3$LO DGLAP evolution at $\mu=100$ GeV using the Les Houches standard benchmark initial conditions~\cite{Dittmar:2005ed}.
+Listing~\ref{lst:ex-prog} contains a full \texttt{C++} program that performs the N$^3$LO DGLAP evolution at the energy scale $\mu=100$ GeV using the Les Houches standard benchmark initial conditions~\cite{Dittmar:2005ed}.
 % 
 \begin{listing}
   \inputminted[frame=lines,linenos]{cpp}{res/example.cpp}
@@ -725,7 +725,7 @@ This section illustrates a lower-level description of the various classes compos
 
 The \mintinline{cpp}{ArrayGrid} class is the underlying array type used for PDFs 
 or any quantity defined on the $x$-grid, which is described in the next section. The motivation for creating a new class, rather than utilizing nested \mintinline{cpp}{std::vector} 
-instances, is to avoid the memory fragmentation issues associated with the large numbers of nested arrays 
+instances, is to avoid the memory fragmentation issues associated with large numbers of nested arrays 
 required for higher-order coefficients. \mintinline{cpp}{ArrayGrid} is an alias for the base 
 class \mintinline{cpp}{ArrayGridBase<type, D>}, where \mintinline{cpp}{type} represents the 
 underlying data type and \mintinline{cpp}{D} denotes the number of dimensions:
@@ -748,7 +748,7 @@ ArrayGridBase::ArrayGridBase(
 
 where \mintinline{cpp}{sizes} is an array of length $D$ which contains the size of each dimension.
 
-Accessing elements is used by calling
+Accessing elements in the array is done by calling
 
 \begin{minted}{cpp}
 template <typename... TArgs>
@@ -760,7 +760,7 @@ This method supports either $D-1$ arguments, in which case a \mintinline{cpp}{st
 \subsubsection{The Grid Class}
 \label{subsec:grid-class}
 
-The $x$-grid where the PDFs are defined and on which interpolations and convolutions are done is handled by the \mintinline{cpp}{Grid} class. By default, the grid is filled in three separate segments, which is done in order to best handle the unstable behavior of PDFs and splitting functions in the extreme $x \rightarrow 0$ and $x \rightarrow 1$ kinematic regions. By default, there are 100 points in the first segment, 50 in the second, and 25 in the last, which can be changed by passing the corresponding arguments to the constructor.
+The $x$-grid where the PDFs are defined and on which interpolations and convolutions are done is handled by the \mintinline{cpp}{Grid} class. By default, the grid is filled in three separate segments, which is done in order to best handle the sensitive behavior of PDFs and splitting functions in the extreme $x \rightarrow 0$ and $x \rightarrow 1$ kinematic regions. By default, there are 100 points in the first segment, 50 in the second, and 25 in the last, which can be changed by passing the corresponding arguments to the constructor.
 
 The constructor has the following signature:
 
@@ -1011,8 +1011,7 @@ average. For the non-singlet sector, the exact analytic expressions are also ava
 
 By default, the solver utilizes the average of the envelopes for all singlet splitting 
 functions, and the exact expressions for the non-singlet splitting functions.
-This behavior can be 
-customized using the \mintinline{cpp}{.setP3ApproximationTypes()} method. For example, to 
+The \mintinline{cpp}{.setP3ApproximationTypes()} method is used to customize this behavior. For example, to 
 select the first envelope for $P^{(3)}_{qg}$ while retaining the default average for the 
 remaining singlet functions, and to enforce the envelope average for $P_{\mathrm{NS}}^{(3),+}$
 as opposed to the exact expression, the configuration would be specified as follows:
@@ -1023,7 +1022,7 @@ solver.setP3ApproximationTypes({
 });
 \end{minted}
 
-An additional set of configuration options, primarily intended for benchmarking 
+An additional set of options, primarily intended for benchmarking 
 and compatibility verification, can be accessed via the \mintinline{cpp}{.getOptions()} 
 method. This method returns the configuration structure detailed in Listing~\ref{lst:dglap-options}. 
 These parameters permit the selective activation of various N$^3$LO components
@@ -1109,7 +1108,7 @@ Several bugs present in the original \texttt{Candia} code have been fixed in \te
  
 Third, the initial conditions for the coupling evolution were misconfigured. The intent of the Les Houches benchmarking initial conditions is to initiate the evolution at $n_f=3$, immediately \textit{below} the charm-quark mass threshold, in order to trigger matching instantaneously for both the coupling and the PDFs. However, the initial reference value $\alpha_0=0.35$ was inadvertently assigned \textit{above} the charm-quark  threshold, systematically altering the evolved values of $\alpha_s(Q^2)$. Finally, a minor typographical error in the definition of $A_{gg}^{(2)}$ was corrected, though its numerical impact on the overall evolution was found to be negligible.
 
-In addition to critical bug fixes, several improvements have been implemented in \texttt{Candia-v2}. The most significant development is  the implementation of parallel computing to distribute the computation of the evolution equations for the decoupled non-singlet PDFs across independent execution threads. In the singlet sector, DGLAP equations are coupled and the CPU-intensive numerical computations from the convolutions are refactored to allow the utilization of \texttt{C++} execution policies within the algorithms library. This allows the compiler to optimize loop iterations dynamically via parallelization, vectorization, or a combination of the two.
+In addition to critical bug fixes, several improvements have been implemented in \texttt{Candia-v2}. The most significant development is  the implementation of parallel computing to distribute the computation of the evolution equations for the decoupled non-singlet PDFs across independent execution threads. In the singlet sector, DGLAP equations are coupled and the CPU-intensive numerical computations from the convolutions are refactored to allow the utilization of \texttt{C++} execution policies within the \mintinline{cpp}{<algorithms>} library. This allows the compiler to optimize loop iterations dynamically via parallelization, vectorization, or a combination of the two.
 
 The second major enhancement involves optimized memory management. Based on the recursive structure of the algorithm, the code only retains data from adjacent iterations in memory. This drastically reduces the total memory usage, especially at higher perturbative orders. Finally, the specific formulation of the numerical convolution eliminates the need to repeatedly evaluate the $x$-dependent components of the $P_2$ and $P_3$ kernel terms, which correspond to the coefficients of the plus distribution and the Dirac delta function, respectively. Consequently, these terms are computed only once per active flavor number $n_f$ and are subsequently cached, accelerating the evaluation of the splitting functions.
 
@@ -1119,7 +1118,7 @@ The second major enhancement involves optimized memory management. Based on the 
 We have presented \texttt{Candia-v2}, a modernized and extended implementation
 of the \texttt{Candia} algorithm for solving the DGLAP evolution equations
 directly in Bjorken-$x$ space. The new version supersedes the original
-\textsc{Candia} code by providing a \texttt{C++} interface, improved memory management,
+\texttt{Candia} code by providing a \texttt{C++} interface, improved memory management,
 parallelized components, and a more flexible API.
 
 The main physics extension of \texttt{Candia-v2} is the implementation of PDF
@@ -1127,7 +1126,7 @@ evolution through approximate N$^3$LO accuracy in QCD. The code includes the cur
 available four-loop DGLAP splitting functions, using exact results in the
 non-singlet sector and state-of-the-art approximations in the singlet sector.
 Heavy-quark threshold matching is implemented with operator matrix elements up
-to three loops, interfaced through \textsc{libome}. 
+to three loops, interfaced through \texttt{libome}. 
 
 In addition to standard PDF evolution, \texttt{Candia-v2} provides direct access
 to subtraction and residual heavy-quark PDFs. These quantities provide reusable, process-independent building blocks that facilitate the implementation of a large variety of GMVFN schemes with improved numerical accuracy.
