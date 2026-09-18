@@ -49,13 +49,21 @@ namespace Candia2
 			double x = grid_points[k];
 
 			// this is a clusterfuck
-			double u = xuv(x) + 0.9*xub(x);
-			double d = xdv(x) + 0.9*xdb(x);
+			// double u = xuv(x) + 0.9*xub(x);
+			// double d = xdv(x) + 0.9*xdb(x);
+			// double s = xs(x);
+			// double ub = 0.9*xub(x);
+			// double db = 0.9*xdb(x);
+			// double sb = xsb(x);
+			// double g = xg(x)*0.99;
+			double u = xuv(x) + xub(x);
+			double d = xdv(x) + xdb(x);
 			double s = xs(x);
-			double ub = 0.9*xub(x);
-			double db = 0.9*xdb(x);
+			double ub = xub(x);
+			double db = xdb(x);
 			double sb = xsb(x);
-			double g = xg(x)*0.99;
+			double g = xg(x);
+			
 
 			double sigma =
 				u + ub +

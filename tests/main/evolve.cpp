@@ -80,7 +80,7 @@ static void outputData(
 }
 
 int main(int argc, char *argv[]) {
-	if (argc != 7 && argc != 8 && argc != 1)
+	if (argc != 7 && argc != 8)
 		usage();
 
 	uint order = stoi(argv[1]);
@@ -119,7 +119,7 @@ int main(int argc, char *argv[]) {
 	log_options.use_log_output_stream = true;
 	log_options.log_output_stream = log_output_file;
 
-	log_options.verbosity = LOG_ERROR;
+	log_options.verbosity = LOG_INFO;
 
 	std::vector<double> xtab{1e-5, 1e-4, 1e-3, 1e-2, 0.1, 0.3, 0.5, 0.7, 0.9, 1.0};
 	Grid grid(xtab);
@@ -127,8 +127,8 @@ int main(int argc, char *argv[]) {
 	LesHouchesDistribution dist(Qf);
 	// LHAPDFDistribution dist(make_lhapdf_pdf("CT18NNLO"), 1.295, 100.0);
 	AlphaS alphas(order, dist.Q0(), Qf, dist.alpha0(), mur2_muf2);
-	alphas.setVFNS(dist.masses(), dist.nfi(), dist.nff());
-	// alphas.setFFNS(4);
+	// alphas.setVFNS(dist.masses(), dist.nfi(), dist.nff());
+	alphas.setFFNS(4);
 
 	DGLAPSolver solver(order, grid, alphas, Qf, iterations, trunc_idx, dist, mur2_muf2);
 	solver.setP3ApproximationTypes({

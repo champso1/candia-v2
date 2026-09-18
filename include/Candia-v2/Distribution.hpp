@@ -206,8 +206,7 @@ namespace Candia2
 		
 	    inline double alphaqed0() const { return _alphaqed0; }
 		
-
-	    inline value_type xuv(value_type x) const
+		inline value_type xuv(value_type x) const
 		{
 			return 5.1072*std::pow(x, 0.8)*std::pow(1.0-x, 3.0);
 		}
@@ -218,7 +217,7 @@ namespace Candia2
 
 		inline value_type xg (value_type x) const override
 		{
-		    return 1.7*std::pow(x, -0.1)*std::pow(1.0-x, 5.0);
+			return 1.7*std::pow(x, -0.1)*std::pow(1.0-x, 5.0);
 		}
 		inline value_type xu (value_type x) const override
 		{
@@ -241,7 +240,6 @@ namespace Candia2
 			return 0.2*(xub(x) + xdb(x));
 		}
 		inline value_type xsb(value_type x) const override { return xs(x); }
-
 
 		virtual void fillCoeffs(
 			accessor_type const& s_accessor,

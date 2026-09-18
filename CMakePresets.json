@@ -16,7 +16,8 @@
                 "CANDIA_BUILD_DOCS": "NO",
                 "CANDIA_BUILD_MANUSCRIPTS": "NO",
                 "CANDIA_WITH_LHAPDF": "YES",
-				"CANDIA_LHAPDF_DIR": "$env{HOME}/.local"
+				"CANDIA_LHAPDF_DIR": "$env{HOME}/.local",
+                "CANDIA_TEST_TARGETS": "evolve;evolve-qed"
             }
         },
 		{

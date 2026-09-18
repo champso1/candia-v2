@@ -537,8 +537,10 @@ namespace Candia2
 			SplittingFunction::update(_nf, _alpha_s.beta0(), _log_muf2_mur2);
 			SplitFuncQED::update(_nf, _alpha_s.beta0(), _log_muf2_mur2, _nl);
 			OpMatElem::update(_log_muf2_mur2, _nf);
-			for (auto& expr : _expressions)
-				expr->preCalc();
+			for (auto& expr : _expressions) {
+				if (expr)
+					expr->preCalc();
+			}
 			
 			log(LOG_DEBUG, "DGLAP", "Retrieving values of alpha_s, and calculating all logarithm factors");
 			bool resum_tab = _alpha_s.resumTabulated();
@@ -680,8 +682,10 @@ namespace Candia2
 			log(LOG_DEBUG, "DGLAP", "Loading relevant splitting function / OME values into cache");
 			SplittingFunction::update(_nf, _alpha_s.beta0(), _log_muf2_mur2);
 			OpMatElem::update(_log_muf2_mur2, _nf);
-			for (auto& expr : _expressions)
-				expr->preCalc();
+			for (auto& expr : _expressions) {
+				if (expr)
+					expr->preCalc();
+			}
 			
 			log(LOG_DEBUG, "DGLAP", "Retrieving values of alpha_s, and calculating all logarithm factors");
 			bool resum_tab = _alpha_s.resumTabulated();
