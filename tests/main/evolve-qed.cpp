@@ -88,8 +88,8 @@ int main(int argc, char *argv[]) {
 
 	std::string datafile_name{};
 	
-	if (argc == 3) {
-		datafile_name = argv[2];
+	if (argc == 4) {
+		datafile_name = argv[3];
 		datafile_name += ".dat";
 	}
 
