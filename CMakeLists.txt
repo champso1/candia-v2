@@ -19,6 +19,8 @@ endif()
 # build all vendor projects first before touching candia
 add_subdirectory(vendor)
 
+# also check for LHAPDF first
+
 set(sources
   src/AlphaS.cpp
   src/Candia.cpp
@@ -100,11 +102,7 @@ target_include_directories(candia PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:include>)
 
-add_subdirectory(examples)
-add_subdirectory(tests)
-
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/share/cmake")
-
 option(CANDIA_WITH_LHAPDF "Compile in LHAPDF interface" OFF)
 option(CANDIA_LHAPDF_DIR "Path to the installation root/prefix of LHAPDF." "/usr/local")
 if (CANDIA_WITH_LHAPDF)
@@ -121,7 +119,14 @@ if (CANDIA_WITH_LHAPDF)
   target_sources(candia PRIVATE src/LHAPDFDistribution.cpp)
 endif()
 
+add_subdirectory(examples)
+add_subdirectory(tests)
 
+
+
+# =========================
+# OTHER NON-CODE-RELATED
+# =========================
 option(CANDIA_BUILD_MANUSCRIPTS "Use pdflatex/bibtex to compile the available manuscripts" OFF)
 if (CANDIA_BUILD_MANUSCRIPTS)
   message("candia-v2: building manuscripts")

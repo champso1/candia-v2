@@ -1,24 +1,25 @@
-set(names "evolve" "read" "compare" "ratio" "precision" "plot" "scaleratio" "test-all")
-add_executable(compare compare.cpp util.cpp)
-add_executable(evolve evolve.cpp)
-add_executable(plot plot.cpp)
-add_executable(precision precision.cpp util.cpp)
-add_executable(ratio ratio.cpp util.cpp)
-add_executable(read read.cpp util.cpp)
-add_executable(scaleratio scaleratio.cpp util.cpp)
-add_executable(test-all test-all.cpp util.cpp)
-foreach(name ${names})
-  target_include_directories(${name} PRIVATE ${CMAKE_SOURCE_DIR}/include)
-  target_link_libraries(${name} PRIVATE candia)
-  target_sources(${name} PRIVATE
-    FILE_SET main_headers
-    TYPE HEADERS
-    BASE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}
-    FILES util.hpp)
-endforeach()
+add_library(tests_main_util STATIC util.cpp)
+target_sources(tests_main_util PUBLIC
+  FILE_SET main_headers
+  TYPE HEADERS
+  BASE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}
+  FILES util.hpp)
+target_include_directories(tests_main_util PUBLIC ${CMAKE_SOURCE_DIR}/include)
+target_link_libraries(tests_main_util PUBLIC candia)
 
-find_package(yaml-cpp REQUIRED)
-target_link_libraries(evolve PRIVATE yaml-cpp::yaml-cpp)
+set(tests_main_executables
+  evolve
+  read
+  compare
+  ratio
+  precision
+  plot
+  scaleratio
+  test-all)
+foreach(target IN LISTS ${tests_main_executables})
+  add_executable(${target} ${target}.cpp)
+  target_link_libraries(${target} PRIVATE tests_main_util)
+endforeach()
 
 set(resources
   evolve.config.yaml.in
