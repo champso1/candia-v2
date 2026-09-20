@@ -165,3 +165,28 @@ configure_package_config_file(
 install(
   FILES ${CMAKE_CURRENT_BINARY_DIR}/candiaConfig.cmake
   DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/candia)
+
+
+# ====================
+# SOURCE TARBALL (CPack)
+# ====================
+# github's auto-generated release tarballs do not include submodules,
+# so we have to do that manually
+# this allows either `cmake --build . --target package_source`
+# or `cpack --config CPackSourceConfig.cmake` (from build dir)
+set(CPACK_PACKAGE_NAME "candia-v2")
+set(CPACK_PACKAGE_VERSION ${PROJECT_VERSION})
+set(CPACK_SOURCE_GENERATOR "TGZ")
+set(CPACK_SOURCE_PACKAGE_FILE_NAME "candia-v2-${PROJECT_VERSION}-src")
+set(CPACK_SOURCE_IGNORE_FILES
+  "/\\\\.git$"
+  "/\\\\.git/"
+  "/\\\\.cache/"
+  "/\\\\.vscode/"
+  "/build[^/]*/"
+  "/install/"
+  "/bin/"
+  "/manuscripts/temp/"
+  "/manuscripts/cpc-src/"
+  "\\\\.tar\\\\.gz$")
+include(CPack)
