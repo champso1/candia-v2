@@ -278,5 +278,55 @@ namespace ome
 								},0)
 						},0)
 				},2);
+
+
+
+		
+
+		const candia_ome_type AggQ(
+			AggQ_reg.get_view(),
+			candia_AggQ_plus.get_view(),
+			AggQ_delta.get_view()
+		);
+	    const candia_ome_type AgqQ(
+			AgqQ_reg.get_view(),
+			std::nullopt,
+			std::nullopt
+		);
+	    const candia_ome_type AQg(
+			AQg_reg.get_view(),
+			std::nullopt,
+			std::nullopt
+		);
+	    const candia_ome_type AqgQ(
+			AqgQ_reg.get_view(),
+			std::nullopt,
+			std::nullopt
+		);
+	    const candia_ome_type AQqPS(
+		    AQqPS_reg.get_view(),
+			std::nullopt,
+			std::nullopt
+		);
+		const candia_ome_type AQqPSs(
+		    AQqPSs_reg.get_view(),
+			std::nullopt,
+			std::nullopt
+		);
+		const candia_ome_type AqqQNSEven(
+			AqqQNSEven_reg.get_view(),
+			candia_AqqQNSEven_plus.get_view(),
+			AqqQNSEven_delta.get_view()
+		);
+		const candia_ome_type AqqQNSOdd(
+			AqqQNSOdd_reg.get_view(),
+			candia_AqqQNSOdd_plus.get_view(),
+			AqqQNSOdd_delta.get_view()
+		);
+		const candia_ome_type AqqQPS(
+			AqqQPS_reg.get_view(),
+			std::nullopt,
+			std::nullopt
+		);
 	}
 }

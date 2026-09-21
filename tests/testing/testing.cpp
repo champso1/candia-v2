@@ -1,105 +1,134 @@
-#include "Candia-v2/Candia.hpp"
+#include "Candia-v2/Grid.hpp"
 #include "Candia-v2/OperatorMatrixElements.hpp"
-#include <iomanip>
-#include <limits>
 using namespace Candia2;
 
-#include "LHAPDF/LHAPDF.h"
+#include <fstream>
+#include <array>
+#include <iomanip>
+#include <limits>
+#include <string_view>
+#include <ranges>
 
-constexpr double Q  = 10.0;
-constexpr double Q2 = Q*Q;
+static void genfile();
+static void compare_files(std::string_view name, std::string_view type);
+
+static std::array ome_names{
+	"AqqQNSEven",
+	"AqqQNSOdd",
+	"AgqQ",
+	"AggQ",
+	"AQqPS",
+	"AQg",
+	"AqqQPS",
+	"AqgQ",
+	"AQqPSs"
+};
+static std::array ome_types{
+	"reg", "plus", "delta"
+};
 
 int main()
 {
-	LHAPDF::PDF* pdf = LHAPDF::mkPDF("CT18NLO", 0);
-	
-	double as = pdf->alphasQ(10.0);
-	double as2 = as*as;
-	double as3 = as2*as;
-	double mb = pdf->quarkMass(5);
-	double mb2 = mb*mb;
-	double L = std::log(Q2/mb2);
-		
-	OpMatElemN3LO::update(-L, 5);
-
-	auto zero_func = [](double,double){ return 0.0; };
-		
-	// auto& p1qg = getExpression("P1qg");
-	auto a1qg_reg_func = [as](double lm, double nf, double x) {
-		auto trunced = ome::AQg_reg.truncate(1);
-		return trunced(as, lm, nf, x); };
-	OpMatElemCustom a1hg(a1qg_reg_func, zero_func, zero_func);
-
-	auto a2hq_reg_func = [as](double lm, double nf, double x) {
-		auto trunced = ome::AQqPS_reg.truncate(2);
-		return trunced(as, lm, nf, x); };
-	OpMatElemCustom a2hq(a2hq_reg_func, zero_func, zero_func);
-		
-	auto a2hg_reg_func = [as](double lm, double nf, double x) {
-		auto trunced = ome::AQg_reg.truncate(2);
-		return trunced(as, lm, nf, x); };
-	OpMatElemCustom a2hg(a2hg_reg_func, zero_func, zero_func);
-
-	auto a3hq_reg_func = [as](double lm, double nf, double x) {
-		auto trunced = ome::AQqPS_reg.truncate(3);
-		return trunced(as, lm, nf, x); };
-	OpMatElemCustom a3hq(a3hq_reg_func, zero_func, zero_func);
-		
-	auto a3hg_reg_func = [as](double lm, double nf, double x) {
-		auto trunced = ome::AQg_reg.truncate(3);
-		return trunced(as, lm, nf, x); };
-	OpMatElemCustom a3hg(a3hg_reg_func, zero_func, zero_func);
-
-	Grid grid({1e-5, 1e-4, 1e-3, 1e-2, 0.1, 0.3, 0.5, 0.7, 0.9, 1.0});
-
-	ArrayGrid g(grid.size()-1), b(grid.size()-1);
-	for (uint k=0; k<grid.size()-1; ++k) {
-		g[k] = pdf->xfxQ(21, grid[k], Q);
-		b[k] = pdf->xfxQ(5, grid[k], Q);
+	genfile();
+	for (auto&& name : ome_names) {
+		for (auto&& type : ome_types)
+			compare_files(name, type);
 	}
+	// compare_files("AggQ", "plus");
+	// auto AggQ = ome::Candia2::AggQ;
+	// std::cout << (AggQ.has_plus() ? "true" : "false") << '\n';
+}
 
-	ArrayGrid sigma(grid.size()-1);
-	for (uint k=0; k<grid.size()-1; ++k) {
-		sigma[k] = 0.0;
-		for (uint i=1; i<=5; ++i) {
-			sigma[k] += pdf->xfxQ(i, grid[k], Q) + pdf->xfxQ(-i, grid[k], Q);
+static void genfile()
+{
+    auto AqqQNSEven = OpMatElemN3LO(ome::Candia2::AqqQNSEven);
+	auto AqqQNSOdd = OpMatElemN3LO(ome::Candia2::AqqQNSOdd);
+	auto AgqQ = OpMatElemN3LO(ome::Candia2::AgqQ);
+	auto AggQ = OpMatElemN3LO(ome::Candia2::AggQ);
+	auto AQqPS = OpMatElemN3LO(ome::Candia2::AQqPS);
+	auto AQg = OpMatElemN3LO(ome::Candia2::AQg);
+	auto AqqQPS = OpMatElemN3LO(ome::Candia2::AqqQPS);
+	auto AqgQ = OpMatElemN3LO(ome::Candia2::AqgQ);
+	auto AQqPSs = OpMatElemN3LO(ome::Candia2::AQqPSs);
+	OpMatElem::update(0, 4);
+
+	std::array all_omes{
+		std::make_pair(AqqQNSEven, "AqqQNSEven"),
+		std::make_pair(AqqQNSOdd, "AqqQNSOdd"),
+		std::make_pair(AgqQ, "AgqQ"),
+		std::make_pair(AggQ, "AggQ"),
+		std::make_pair(AQqPS, "AQqPS"),
+		std::make_pair(AQg, "AQg"),
+		std::make_pair(AqqQPS, "AqqQPS"),
+		std::make_pair(AqgQ, "AqgQ"),
+		std::make_pair(AQqPSs, "AQqPSs"),
+	};
+	std::array ome_types{"reg", "plus", "delta"};
+
+	std::vector<double> xtab{1e-5, 1e-4, 1e-3, 1e-2, 0.1, 0.3, 0.5, 0.7, 0.9, 1.0};
+	Grid grid(xtab);
+
+	namespace rv = std::views;
+	auto ome_type_view =
+		rv::iota(uint{0}, ome_types.size())
+		| rv::transform([&](uint i){ return std::make_pair(i, ome_types[i]); });
+
+	for (auto&& [ome,name] : all_omes) {
+		for (auto&& [i,type] : ome_type_view) {
+			std::ofstream outfile(std::format("data/out-new-{}-{}.dat", name, type));
+			outfile << std::scientific << std::setprecision(std::numeric_limits<double>::max_digits10);
+			for (auto [k,x] : grid.enumerate()) {
+				outfile << x << ' ';
+				switch (i) {
+					case 0: outfile << ome.calcRegular(x) << '\n'; break;
+					case 1: outfile << ome.calcPlus() << '\n'; break;
+					case 2: outfile << ome.calcDelta() << '\n'; break;
+				}
+			}
 		}
 	}
+}
 
-	std::vector<ArrayGrid> subpdfs(10, ArrayGrid(grid.size()-1));
-	for (uint k=0; k<grid.size()-1; ++k) {
-		double ftilde1 = as*grid.convolution(g, a1hg, k);
-		double ftilde2 = as2*(
-			grid.convolution(sigma, a2hq, k) +
-			grid.convolution(g, a2hg, k)
-		);
-		double ftilde3 = as3*(
-			grid.convolution(sigma, a3hq, k) +
-			grid.convolution(g, a3hg, k)
-		);
+static void compare_files(std::string_view name, std::string_view type)
+{
+	namespace rv = std::views;
 
-		subpdfs[0][k] = ftilde1;
-		subpdfs[1][k] = ftilde2;
-		subpdfs[2][k] = ftilde3;
-			
-		subpdfs[3][k] = ftilde1 + ftilde2;
-		subpdfs[4][k] = ftilde1 + ftilde2 + ftilde3;
-			
-		subpdfs[5][k] = std::abs(b[k] - ftilde1);
-		subpdfs[6][k] = std::abs(b[k] - ftilde2);
-		subpdfs[7][k] = std::abs(b[k] - ftilde3);
-		subpdfs[8][k]  = std::abs(b[k] - subpdfs[3][k]);
-		subpdfs[9][k]  = std::abs(b[k] - subpdfs[4][k]);
-	}
+	std::filesystem::path new_path(std::format("data/out-new-{}-{}.dat", name, type));
+	std::filesystem::path old_path(std::format("data/out-old-{}-{}.dat", name, type));
 
-	std::ofstream outfile("out.dat");
-	outfile << std::scientific;
-	for (uint k=0; k<grid.size()-1; ++k) {
-		outfile << grid[k] << ' ';
-		outfile << b[k] << ' ';
-		for (auto const& subpdf : subpdfs)
-			outfile << subpdf[k] << ' ';
-		outfile << '\n';
+	auto extract_sheisse = [](std::filesystem::path const& infile_path) {
+		auto line_text = read_file(infile_path);
+		auto view = std::string_view(line_text)
+			| rv::split('\n')
+			| rv::transform(
+				[](auto&& line){
+					auto line_str = std::string(line.begin(), line.end());
+					std::istringstream iss_line(line_str);
+					double val;
+					iss_line >> val;
+					iss_line >> val;
+					return val;
+				});
+		return std::vector<double>(view.begin(), view.end());
+	};
+
+	std::vector<double> new_data = extract_sheisse(new_path);
+	std::vector<double> old_data = extract_sheisse(old_path);
+
+	std::vector<double> xtab{1e-5, 1e-4, 1e-3, 1e-2, 0.1, 0.3, 0.5, 0.7, 0.9, 1.0};
+	Grid grid(xtab);
+
+	auto percent_diff = [](double x, double y) {
+		double avg = std::abs(x+y)/2.0;
+		return std::abs(x-y)/avg * 100.0;
+	};
+
+	std::ofstream all_output("results.txt");
+	for (auto [k,x] : grid.enumerate()) {
+		auto new_datapoint = new_data[k];
+		auto old_datapoint = old_data[k];
+		
+		if (percent_diff(new_datapoint, old_datapoint) > 0.01)
+			std::cout << "FAIL(" << name << "/" << type << "): x=" << x << ", new = " << new_datapoint << ", old = " << old_datapoint << '\n';
 	}
 }
-	

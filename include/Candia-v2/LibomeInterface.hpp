@@ -102,61 +102,18 @@ namespace ome
 				ome_as_const_view<double>>;
 
 		extern const candia_as_plus<double> candia_AggQ_plus;
-	    const candia_ome_type AggQ(
-			AggQ_reg.get_view(),
-			candia_AggQ_plus.get_view(),
-			AggQ_delta.get_view()
-		);
-		
-		const candia_ome_type AgqQ(
-			AgqQ_reg.get_view(),
-			std::nullopt,
-			std::nullopt
-		);
-		
-		const candia_ome_type AQg(
-			AQg_reg.get_view(),
-			std::nullopt,
-			std::nullopt
-		);
-		
-		const candia_ome_type AqgQ(
-			AqgQ_reg.get_view(),
-			std::nullopt,
-			std::nullopt
-		);
-		
-		const candia_ome_type AQqPS(
-		    AQqPS_reg.get_view(),
-			std::nullopt,
-			std::nullopt
-		);
-		
-		const candia_ome_type AQqPSs(
-		    AQqPSs_reg.get_view(),
-			std::nullopt,
-			std::nullopt
-		);
-
 		extern const candia_as_plus<double> candia_AqqQNSEven_plus;
-		const candia_ome_type AqqQNSEven(
-			AqqQNSEven_reg.get_view(),
-			candia_AqqQNSEven_plus.get_view(),
-			AqqQNSEven_delta.get_view()
-		);
-		
 		extern const candia_as_plus<double> candia_AqqQNSOdd_plus;
-		const candia_ome_type AqqQNSOdd(
-			AqqQNSOdd_reg.get_view(),
-			candia_AqqQNSOdd_plus.get_view(),
-			AqqQNSOdd_delta.get_view()
-		);
 		
-		const candia_ome_type AqqQPS(
-			AqqQPS_reg.get_view(),
-			std::nullopt,
-			std::nullopt
-		);
+	    extern const candia_ome_type AggQ;
+		extern const candia_ome_type AgqQ;
+		extern const candia_ome_type AQg;
+		extern const candia_ome_type AqgQ;
+		extern const candia_ome_type AQqPS;
+	    extern const candia_ome_type AQqPSs;
+		extern const candia_ome_type AqqQNSEven;
+	    extern const candia_ome_type AqqQNSOdd;
+	    extern const candia_ome_type AqqQPS;
 	}
 }
 
