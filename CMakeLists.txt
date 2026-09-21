@@ -181,7 +181,7 @@ install(
 # or `cpack --config CPackSourceConfig.cmake` (from build dir)
 set(CPACK_PACKAGE_NAME "candia-v2")
 set(CPACK_PACKAGE_VERSION ${PROJECT_VERSION})
-set(CPACK_SOURCE_GENERATOR "TGZ")
+set(CPACK_SOURCE_GENERATOR "TGZ;ZIP")
 set(CPACK_SOURCE_PACKAGE_FILE_NAME "candia-v2-${PROJECT_VERSION}-src")
 set(CPACK_SOURCE_IGNORE_FILES
   "/\\\\.git$"
