@@ -1,6 +1,6 @@
 add_executable(p3ns-exact p3ns-exact.cpp)
 target_include_directories(p3ns-exact PUBLIC)
-target_link_libraries(p3ns-exact PUBLIC candia ome)
+target_link_libraries(p3ns-exact PUBLIC candia)
 
 file(COPY
   plot.sh

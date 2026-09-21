@@ -17,9 +17,8 @@ if (NOT CMAKE_INSTALL_PREFIX)
 endif()
 
 # build all vendor projects first before touching candia
-add_subdirectory(vendor)
+# add_subdirectory(vendor)
 
-# also check for LHAPDF first
 
 set(sources
   src/AlphaS.cpp
@@ -31,6 +30,7 @@ set(sources
   src/HFT.cpp
 #  src/LHAPDFDistribution.cpp
   src/LHAPDFGrid.cpp
+  src/LibomeInterface.cpp
   src/Math.cpp
   src/OperatorMatrixElements.cpp
   src/RecRel.cpp
@@ -48,6 +48,7 @@ set(headers
   include/Candia-v2/Grid.hpp
 #  include/Candia-v2/LHAPDFDistribution.hpp
   include/Candia-v2/LHAPDFGrid.hpp
+  include/Candia-v2/LibomeInterface.hpp
   include/Candia-v2/Math.hpp
   include/Candia-v2/OperatorMatrixElements.hpp
   include/Candia-v2/Options.hpp
@@ -55,12 +56,14 @@ set(headers
   include/Candia-v2/SplittingFn.hpp)
 
 enable_language(Fortran)
-add_library(hplog STATIC src/fortran/hplog5.f)
+
+set(hplog_src src/fortran/hplog5.f)
+add_library(hplog OBJECT ${hplog_src})
 
 set(nnlo_splitfuncs_fortran_src
   src/fortran/mvv_p2/xpij2p.f
   src/fortran/mvv_p2/xpns2p.f)
-add_library(nnlo_splitfuncs_fortran STATIC ${nnlo_splitfuncs_fortran_src})
+add_library(nnlo_splitfuncs_fortran OBJECT ${nnlo_splitfuncs_fortran_src})
 
 set(n3lo_splitfuncs_fortran_src
   src/fortran/mvv_p3/xpgg3a.f90
@@ -73,7 +76,7 @@ set(n3lo_splitfuncs_fortran_src
   src/fortran/mvv_p3/xpns3s.f90
   src/fortran/mvv_p3/xpps3a.f90
   src/fortran/mvv_p3/xpqg3a.f90)
-add_library(n3lo_splitfuncs_fortran STATIC ${n3lo_splitfuncs_fortran_src})
+add_library(n3lo_splitfuncs_fortran OBJECT ${n3lo_splitfuncs_fortran_src})
 
 add_library(candia STATIC)
 
@@ -92,10 +95,11 @@ find_package(TBB REQUIRED)
 find_package(Threads REQUIRED)
 
 target_link_libraries(candia PRIVATE
-  hplog
-  nnlo_splitfuncs_fortran
-  n3lo_splitfuncs_fortran
-  ome
+  $<TARGET_OBJECTS:hplog>
+  $<TARGET_OBJECTS:nnlo_splitfuncs_fortran>
+  $<TARGET_OBJECTS:n3lo_splitfuncs_fortran>
+  ${CMAKE_Fortran_IMPLICIT_LINK_LIBRARIES})
+target_link_libraries(candia PRIVATE
   Threads::Threads
   TBB::tbb)
 target_include_directories(candia PUBLIC
@@ -118,6 +122,12 @@ if (CANDIA_WITH_LHAPDF)
     FILES include/Candia-v2/LHAPDFDistribution.hpp)
   target_sources(candia PRIVATE src/LHAPDFDistribution.cpp)
 endif()
+
+# find libome
+find_package(LIBOME REQUIRED)
+target_include_directories(candia PUBLIC ${LIBOME_INCLUDE_DIRS})
+target_link_libraries(candia PUBLIC ${LIBOME_LIBRARIES})
+
 
 add_subdirectory(examples)
 add_subdirectory(tests)
@@ -152,7 +162,7 @@ endif()
 # INSTALLATION
 # ====================
 include(GNUInstallDirs)
-install(TARGETS candia hplog nnlo_splitfuncs_fortran n3lo_splitfuncs_fortran
+install(TARGETS candia
   EXPORT candiaTargets
   FILE_SET cxx_headers DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
 install(EXPORT candiaTargets

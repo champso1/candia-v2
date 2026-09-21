@@ -222,15 +222,15 @@ namespace Candia2
 			}
 		}
 
-		createExpression<OpMatElemN3LO>(ExprName::A3nsm, ome::AqqQNSEven);
-		createExpression<OpMatElemN3LO>(ExprName::A3nsp, ome::AqqQNSOdd);
-		createExpression<OpMatElemN3LO>(ExprName::A3gq, ome::AgqQ);
-		createExpression<OpMatElemN3LO>(ExprName::A3gg, ome::AggQ);
-		createExpression<OpMatElemN3LO>(ExprName::A3hq, ome::AQqPS);
-		createExpression<OpMatElemN3LO>(ExprName::A3hg, ome::AQg);
-		createExpression<OpMatElemN3LO>(ExprName::A3psqq, ome::AqqQPS);
-		createExpression<OpMatElemN3LO>(ExprName::A3sqg, ome::AqgQ);
-		createExpression<OpMatElemN3LO>(ExprName::A3PSshq, ome::AQqPSs);
+		createExpression<OpMatElemN3LO>(ExprName::A3nsm, ome::Candia2::AqqQNSEven);
+		createExpression<OpMatElemN3LO>(ExprName::A3nsp, ome::Candia2::AqqQNSOdd);
+		createExpression<OpMatElemN3LO>(ExprName::A3gq, ome::Candia2::AgqQ);
+		createExpression<OpMatElemN3LO>(ExprName::A3gg, ome::Candia2::AggQ);
+		createExpression<OpMatElemN3LO>(ExprName::A3hq, ome::Candia2::AQqPS);
+		createExpression<OpMatElemN3LO>(ExprName::A3hg, ome::Candia2::AQg);
+		createExpression<OpMatElemN3LO>(ExprName::A3psqq, ome::Candia2::AqqQPS);
+		createExpression<OpMatElemN3LO>(ExprName::A3sqg, ome::Candia2::AqgQ);
+		createExpression<OpMatElemN3LO>(ExprName::A3PSshq, ome::Candia2::AQqPSs);
 
 		log(LOG_DEBUG, "DGLAPSolver::loadAllExpressions()", "Using the following P3 approximation types:");
 		for (uint i=static_cast<uint>(ExprName::P3nsm); i<=static_cast<uint>(ExprName::P3gg); ++i) {

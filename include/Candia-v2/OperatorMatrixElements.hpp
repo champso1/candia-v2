@@ -7,8 +7,7 @@
 
 #include "Candia-v2/Common.hpp"
 #include "Candia-v2/Expression.hpp"
-
-#include <ome/ome.h>
+#include "Candia-v2/LibomeInterface.hpp"
 
 namespace Candia2
 {
@@ -99,7 +98,7 @@ namespace Candia2
 	{
 	public:
 		/** Alias for underlying libome type */
-		using ome_type = ome::rpd_distribution<ome::ome_as_view<double>, ome::ome_as_plus_view<double>, ome::ome_as_const_view<double>>;
+		using ome_type = ome::Candia2::candia_ome_type;
 	private:
 		ome_type _ome; //!< underlying libome interface
 

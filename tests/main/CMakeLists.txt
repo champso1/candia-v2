@@ -16,13 +16,12 @@ set(tests_main_executables
   plot
   scaleratio
   test-all)
-foreach(target IN LISTS ${tests_main_executables})
+foreach(target IN LISTS tests_main_executables)
   add_executable(${target} ${target}.cpp)
   target_link_libraries(${target} PRIVATE tests_main_util)
 endforeach()
 
 set(resources
-  evolve.config.yaml.in
   plot-scripts
   hoppet-data
   pegasus-data

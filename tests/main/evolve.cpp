@@ -9,8 +9,6 @@ namespace fs = filesystem;
 using namespace Candia2;
 using out_type = std::vector<ArrayGrid>;
 
-#include "yaml-cpp/yaml.h"
-
 static void usage()
 {
 	cout << "[ERROR] evolve.cpp: Invalid arguments.\n";
@@ -82,67 +80,19 @@ static void outputData(
 	}
 }
 
-struct CfgFileArgs final
-{
-	uint order;
-	uint iterations;
-	uint trunc_idx;
-	double mur2_muf2;
-	double Qf;
-	bool use_trunc;
-	bool debug;
-	std::string title;
-};
-
-static CfgFileArgs read_options_from_yaml()
-{
-	YAML::Node configfile = YAML::LoadFile("evolve.config.yaml");
-    return {
-		.order = configfile["order"].as<uint>(),
-		.iterations = configfile["iterations"].as<uint>(),
-		.trunc_idx = configfile["trunc_idx"].as<uint>(),
-		.mur2_muf2 = configfile["mur2_muf2"].as<double>(),
-		.Qf = configfile["Qf"].as<double>(),
-		.use_trunc = configfile["use_trunc"].as<bool>(),
-		.debug = configfile["debug"].as<bool>(),
-		.title = configfile["title"].as<std::string>(),
-	};
-}
-
 int main(int argc, char *argv[]) {
-	if (argc != 7 && argc != 8 && argc != 1)
+	if (argc != 7 && argc != 8)
 		usage();
 
-	uint order;
-	uint iterations;
-	uint trunc_idx;
-	double mur2_muf2;
-	bool use_trunc;
-	bool debug;
-	double Qf;
-
+	uint order = stoi(argv[1]);
+	uint iterations = stoi(argv[2]);
+	uint trunc_idx = stoi(argv[3]);
+	double mur2_muf2 = stold(argv[4]);
+	bool use_trunc = stoi(argv[5]) == 1;
+	bool debug = stoi(argv[6]) == 1;
+	double Qf = 100.0;
 	std::string datafile_name{};
 
-	if (argc == 1) {
-		auto args = read_options_from_yaml();
-		order = args.order;
-		iterations = args.iterations;
-		trunc_idx = args.trunc_idx;
-		mur2_muf2 = args.mur2_muf2;
-		use_trunc = args.use_trunc;
-		debug = args.debug;
-		Qf = args.Qf;
-		datafile_name = args.title + ".dat";
-	} else {
-		order = stoi(argv[1]);
-		iterations = stoi(argv[2]);
-		trunc_idx = stoi(argv[3]);
-		mur2_muf2 = stold(argv[4]);
-		use_trunc = stoi(argv[5]) == 1;
-		debug = stoi(argv[6]) == 1;
-		Qf = 100.0;
-	}
-	
 	if (argc == 8) {
 		datafile_name = argv[7];
 		datafile_name += ".dat";
@@ -169,7 +119,7 @@ int main(int argc, char *argv[]) {
 	log_options.use_log_output_stream = true;
 	log_options.log_output_stream = log_output_file;
 
-	log_options.verbosity = LOG_ERROR;
+	log_options.verbosity = LOG_INFO;
 
 	std::vector<double> xtab{1e-5, 1e-4, 1e-3, 1e-2, 0.1, 0.3, 0.5, 0.7, 0.9, 1.0};
 	Grid grid(xtab);
