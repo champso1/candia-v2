@@ -7,8 +7,8 @@
 
 ### Prerequisites
 
-- libome: fast interface to OMEs. included as a submodule to this repository
-- GSL: GNU Scientific Library
+- libome: fast interface to OMEs. Can be installed from [here](https://gitlab.com/libome/libome). 
+- GSL: GNU Scientific Library (also required by libome)
 - tbb: Intel Threading Building Blocks -- allows usage of C++ execution policies to parallelize/vectorize C++ algorithm loops
 - Compiler with C++20 support, see [here](#compiler-and-system-support) for info about compiler/system choice
 - LHAPDF (optional): for interface to/from LHAPDF grids.
@@ -18,14 +18,14 @@
 
 #### Compiler and System Support
 
-Windows is in general not supported except for Windows Subsystem for Linux. MacOS is supported but LLVM's CLang or GCC are required, because as far as we are aware, Apple's CLang's `libc++` doesn't implement C++ execution policies. Further, it is best to compile GSL and LHAPDF (if using the LHAPDF interface) using the same GCC version to avoid weird compile errors with `Candia-v2`.
+Windows is in general not supported except for Windows Subsystem for Linux. MacOS is supported but LLVM's CLang or GCC are required, because as far as we are aware, Apple's CLang's `libc++` doesn't implement C++ execution policies yet. Further, it is best to compile GSL, LHAPDF (if using the LHAPDF interface), and libome using the same GCC/CLang version to avoid weird compilation errors with `Candia-v2`.
 
 ### Compiling
 
 Compiling follows the standard CMake procedure:
 
 ```bash
-git clone https://github.com/champso1/candia-v2.git --recurse-submodules
+git clone https://github.com/champso1/candia-v2.git
 mkdir build
 cd build
 cmake .. [options]
@@ -34,10 +34,10 @@ cmake --build .
 ```
 
 Among standard CMake options like `-DCMAKE_BUILD_TYPE` or `-DCMAKE_INSTALL_PREFIX` are the following `Candia-v2` specific options (all of which are prefixed with `CANDIA_`):
+- `CANDIA_LIBOME_DIR` (default: '/usr/local'): installation prefix for libome
 - `CANDIA_WITH_LHAPDF` (default: FALSE): compile LHAPDF support. 
 - `CANDIA_LHAPDF_DIR` (default: '/usr/local'): if LHAPDF is installed in a nonstandard location (i.e. not /usr/local), then specify its installation prefix here. this variable is ignored if `CANDIA_WITH_LHAPDF` is FALSE.
 - `CANDIA_BUILD_DOCS` (default: FALSE): use Doxygen to build the code documentation
-- `CANDIA_BUILD_MANUSCRIPTS` (default: FALSE): use LaTeX to build the manuscripts in the `manuscripts/` directory
 - `CANDIA_BUILD_EXAMPLES` (default: TRUE): build the two examples in the `examples/` directory
 - `CANDIA_BUILD_TESTS` (default: FALSE): build the "tests" in the `tests/` directory. These aren't traditional tests, but rather a more extensive set of C++ files to perform e.g. benchmarking, plot generation, table creation, etc.
 
@@ -46,7 +46,7 @@ Running `cmake --install <build-dir>` will perform standard installation to the 
 
 ## Usage
 
-The `examples/` directory contains two files that illustrate the basic functionality of the library. The two main forms of output are basic PDFs from a single evolution, or an LHAPDF PDF from a set of evolutions to multiple different final energies. The former is exhibited in `evolve_dglap.cpp` and the latter in `lhapdf_grid.cpp`.
+The `examples/` directory contains two files that illustrate the basic functionality of the library. The two main forms of output are basic PDFs from a single evolution, or an LHAPDF PDF from a set of evolutions to multiple different final energies. The former is exhibited in `evolve_dglap.cpp` and the latter in `lhapdf_grid.cpp`. Note that the latter will not be compiled if `CANDIA_WITH_LHAPDF` is disabled.
 
 ## Usage from Other CMake Projects
 

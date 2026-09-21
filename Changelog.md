@@ -1,3 +1,9 @@
+# 1.8.0 (from 1.7.0) <date>
+	- libome is no longer packaged as a submodule. Previously, this was done because we needed a slight modification to some of its behavior to be compatible with how we do convolutions, but this can get very messy very easily, for instance if the user has their own installation of libome, if there are updates we have to manually patch them in to our fork, etc. So, it is now a separate dependency (i.e. the user must install it themself), and the patch is applied by defining our own "custom" OMEs in LibomeInterface.{hpp,cpp} (whose results have been tested to match the original behavior). We have added `CANDIA_LIBOME_DIR` as a variable to point to the installation prefix.
+	- Fixed some bugs with missing guards to test if LHAPDF is desired&found before compiling certain files, like the `lhapdf_grid.cpp` example.
+	- All tests now require LHAPDF support to avoid similar issues to what the above point fixed.
+	- Removed `yaml-cpp` as a dependency from `tests/main` since it wasn't useful for the end user and wasn't documented or used purposefully.
+
 # 1.7.0 (from 1.6.0) July 11, 2026:
 	- Using the exact P3ns splitting functions is now the default, and the `.useP3Exact()` method is removed, with all approximation specifications moving to the `.setP3ApproximationTypes()` method.
 	- Specifying to evolve with truncated ansatz is moved from `DGLAPOptions` to just being a new method, `.evolveTrunc()`, with `.evolve()` performing the exact only
