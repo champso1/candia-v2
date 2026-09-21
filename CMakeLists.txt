@@ -137,13 +137,6 @@ add_subdirectory(tests)
 # =========================
 # OTHER NON-CODE-RELATED
 # =========================
-option(CANDIA_BUILD_MANUSCRIPTS "Use pdflatex/bibtex to compile the available manuscripts" OFF)
-if (CANDIA_BUILD_MANUSCRIPTS)
-  message("candia-v2: building manuscripts")
-  add_subdirectory(manuscripts)
-endif()
-
-
 option(CANDIA_BUILD_DOCS "Build Doxygen documentation" OFF)
 if(CANDIA_BUILD_DOCS)
   find_package(Doxygen)
