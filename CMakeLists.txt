@@ -58,13 +58,9 @@ set(headers
 enable_language(Fortran)
 
 set(hplog_src src/fortran/hplog5.f)
-add_library(hplog OBJECT ${hplog_src})
-
 set(nnlo_splitfuncs_fortran_src
   src/fortran/mvv_p2/xpij2p.f
   src/fortran/mvv_p2/xpns2p.f)
-add_library(nnlo_splitfuncs_fortran OBJECT ${nnlo_splitfuncs_fortran_src})
-
 set(n3lo_splitfuncs_fortran_src
   src/fortran/mvv_p3/xpgg3a.f90
   src/fortran/mvv_p3/xpgg3a_2410.f90
@@ -76,15 +72,19 @@ set(n3lo_splitfuncs_fortran_src
   src/fortran/mvv_p3/xpns3s.f90
   src/fortran/mvv_p3/xpps3a.f90
   src/fortran/mvv_p3/xpqg3a.f90)
-add_library(n3lo_splitfuncs_fortran OBJECT ${n3lo_splitfuncs_fortran_src})
 
-add_library(candia STATIC)
+add_library(candia SHARED)
 
 option(CANDIA_ENABLE_WARNINGS "Enable compilation with max warnings e.g. -Wall -Wextra and -Wpedantic")
 if (CANDIA_ENABLE_WARNINGS)
   target_compile_options(candia PUBLIC -Wall -Wextra -Wpedantic)
 endif()
 target_sources(candia PRIVATE ${sources})
+target_sources(candia PRIVATE
+  ${hplog_src}
+  ${nnlo_splitfuncs_fortran_src}
+  ${n3lo_splitfuncs_fortran_src}
+)
 target_sources(candia PUBLIC
   FILE_SET cxx_headers
   TYPE HEADERS
@@ -95,11 +95,7 @@ find_package(TBB REQUIRED)
 find_package(Threads REQUIRED)
 
 target_link_libraries(candia PRIVATE
-  $<TARGET_OBJECTS:hplog>
-  $<TARGET_OBJECTS:nnlo_splitfuncs_fortran>
-  $<TARGET_OBJECTS:n3lo_splitfuncs_fortran>
-  ${CMAKE_Fortran_IMPLICIT_LINK_LIBRARIES})
-target_link_libraries(candia PRIVATE
+  ${CMAKE_Fortran_IMPLICIT_LINK_LIBRARIES}
   Threads::Threads
   TBB::tbb)
 target_include_directories(candia PUBLIC
@@ -124,9 +120,8 @@ if (CANDIA_WITH_LHAPDF)
 endif()
 
 # find libome
-find_package(LIBOME REQUIRED)
-target_include_directories(candia PUBLIC ${LIBOME_INCLUDE_DIRS})
-target_link_libraries(candia PUBLIC ${LIBOME_LIBRARIES})
+find_package(libome REQUIRED)
+target_link_libraries(candia PRIVATE libome::libome)
 
 
 add_subdirectory(examples)
@@ -163,15 +158,19 @@ install(EXPORT candiaTargets
   FILE candiaTargets.cmake
   DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/candia)
 
-set(INSTALL_INCLUDE_DIR ${CMAKE_INSTALL_INCLUDEDIR})
 include(CMakePackageConfigHelpers)
 configure_package_config_file(
   ${CMAKE_CURRENT_SOURCE_DIR}/share/cmake/Config.cmake.in
   ${CMAKE_CURRENT_BINARY_DIR}/candiaConfig.cmake
-  INSTALL_DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/candia
-  PATH_VARS INSTALL_INCLUDE_DIR)
+  INSTALL_DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/candia)
+write_basic_package_version_file(
+  ${CMAKE_CURRENT_BINARY_DIR}/candiaConfigVersion.cmake
+  VERSION ${PROJECT_VERSION}
+  COMPATIBILITY SameMajorVersion)
 install(
-  FILES ${CMAKE_CURRENT_BINARY_DIR}/candiaConfig.cmake
+  FILES
+    ${CMAKE_CURRENT_BINARY_DIR}/candiaConfig.cmake
+    ${CMAKE_CURRENT_BINARY_DIR}/candiaConfigVersion.cmake
   DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/candia)
 
 

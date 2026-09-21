@@ -1,13 +1,10 @@
 # boiler plate, filled it automatically
 @PACKAGE_INIT@
 
-include(CMakeFindDependencyMacro)
-find_dependency(GSL REQUIRED)
-find_dependency(Threads REQUIRED)
-find_dependency(TBB REQUIRED)
+# include(CMakeFindDependencyMacro)
+# find_dependency(Threads REQUIRED)
+# find_dependency(TBB REQUIRED)
 
 # include the exported targets, all the important stuff
 include("${CMAKE_CURRENT_LIST_DIR}/candiaTargets.cmake")
-set_and_check(CANDIA_INCLUDE_DIR "@PACKAGE_INSTALL_INCLUDE_DIR@")
-set(CANDIA_LIBRARIES candia::candia candia::hplog candia::n3lo_splitfuncs_fortran candia::ome)
 check_required_components(candia)
