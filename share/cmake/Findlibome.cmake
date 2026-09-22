@@ -2,7 +2,7 @@ include(FindPackageHandleStandardArgs)
 
 find_package(PkgConfig QUIET)
 if (PkgConfig_FOUND)
-  pkg_check_modules(PC_libome IMPORTED_TARGET libome QUIET)
+  pkg_check_modules(PC_libome libome QUIET)
 endif()
 
 find_path(libome_INCLUDE_DIR

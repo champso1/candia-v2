@@ -91,25 +91,26 @@ target_sources(candia PUBLIC
   BASE_DIRS ${CMAKE_SOURCE_DIR}/include
   FILES ${headers})
 
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/share/cmake")
 find_package(TBB REQUIRED)
 find_package(Threads REQUIRED)
+find_package(libome REQUIRED)
 
 target_link_libraries(candia PRIVATE
   ${CMAKE_Fortran_IMPLICIT_LINK_LIBRARIES}
   Threads::Threads
-  TBB::tbb)
+  TBB::tbb
+  libome::libome)
 target_include_directories(candia PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:include>)
 
-list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/share/cmake")
 option(CANDIA_WITH_LHAPDF "Compile in LHAPDF interface" OFF)
 option(CANDIA_LHAPDF_DIR "Path to the installation root/prefix of LHAPDF." "/usr/local")
 if (CANDIA_WITH_LHAPDF)
   find_package(LHAPDF REQUIRED)
   message("candia-v2: Compiling with LHAPDF support.")
-  target_include_directories(candia PUBLIC ${LHAPDF_INCLUDE_DIR})
-  target_link_libraries(candia PUBLIC ${LHAPDF_LIBRARIES})
+  target_link_libraries(candia PRIVATE LHAPDF::LHAPDF)
 
   target_sources(candia PUBLIC
     FILE_SET cxx_headers
@@ -119,10 +120,6 @@ if (CANDIA_WITH_LHAPDF)
   target_sources(candia PRIVATE src/LHAPDFDistribution.cpp)
 endif()
 
-# find libome
-find_package(libome REQUIRED)
-target_link_libraries(candia PRIVATE libome::libome)
-
 
 add_subdirectory(examples)
 add_subdirectory(tests)
@@ -130,7 +127,7 @@ add_subdirectory(tests)
 
 
 # =========================
-# OTHER NON-CODE-RELATED
+# NON-CODE-RELATED
 # =========================
 option(CANDIA_BUILD_DOCS "Build Doxygen documentation" OFF)
 if(CANDIA_BUILD_DOCS)

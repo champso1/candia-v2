@@ -5,7 +5,7 @@ target_sources(tests_main_util PUBLIC
   BASE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}
   FILES util.hpp)
 target_include_directories(tests_main_util PUBLIC ${CMAKE_SOURCE_DIR}/include)
-target_link_libraries(tests_main_util PUBLIC candia)
+target_link_libraries(tests_main_util PUBLIC candia LHAPDF::LHAPDF)
 
 set(tests_main_executables
   evolve
