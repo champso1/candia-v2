@@ -12,11 +12,12 @@
                 "CMAKE_C_COMPILER": "clang",
                 "CMAKE_CXX_COMPILER": "clang++",
                 "CMAKE_CONFIGURATION_TYPES": "Release;Debug;RelWithDebInfo",
+				"CANDIA_BUILD_EXAMPLES": "YES",
 				"CANDIA_BUILD_TESTS": "YES",
                 "CANDIA_BUILD_DOCS": "NO",
-                "CANDIA_BUILD_MANUSCRIPTS": "NO",
                 "CANDIA_WITH_LHAPDF": "YES",
-				"CANDIA_LHAPDF_DIR": "$env{HOME}/.local"
+				"LHAPDF_ROOT": "$env{HOME}/.local",
+				"libome_ROOT": "$env{HOME}/.local"
             }
         },
 	{
@@ -30,11 +31,12 @@
                 "CMAKE_C_COMPILER": "clang",
                 "CMAKE_CXX_COMPILER": "clang++",
                 "CMAKE_BUILD_TYPE": "RelWithDebInfo",
+				"CANDIA_BUILD_EXAMPLES": "YES",
 				"CANDIA_BUILD_TESTS": "YES",
                 "CANDIA_BUILD_DOCS": "NO",
-                "CANDIA_BUILD_MANUSCRIPTS": "NO",
                 "CANDIA_WITH_LHAPDF": "YES",
-				"CANDIA_LHAPDF_DIR": "$env{HOME}/.local"
+				"LHAPDF_ROOT": "$env{HOME}/.local",
+				"libome_ROOT": "$env{HOME}/.local"
             }
         },
 		{
@@ -44,15 +46,16 @@
             "generator": "Ninja Multi-Config",
             "binaryDir": "${sourceDir}/bin/${presetName}",
             "cacheVariables": {
-                "CMAKE_INSTALL_PREFIX": "${sourceDir}/install/${presetName}",
+                "CMAKE_INSTALL_PREFIX": "${sourceDir}/install",
                 "CMAKE_C_COMPILER": "gcc",
                 "CMAKE_CXX_COMPILER": "g++",
                 "CMAKE_CONFIGURATION_TYPES": "Release;Debug;RelWithDebInfo",
+				"CANDIA_BUILD_EXAMPLES": "YES",
 				"CANDIA_BUILD_TESTS": "YES",
                 "CANDIA_BUILD_DOCS": "NO",
-                "CANDIA_BUILD_MANUSCRIPTS": "NO",
                 "CANDIA_WITH_LHAPDF": "YES",
-				"CANDIA_LHAPDF_DIR": "$env{HOME}/.local"
+				"LHAPDF_ROOT": "$env{HOME}/.local",
+				"libome_ROOT": "$env{HOME}/.local"
             }
         },
 		{
@@ -62,26 +65,26 @@
             "generator": "Unix Makefiles",
             "binaryDir": "${sourceDir}/build",
             "cacheVariables": {
-                "CMAKE_INSTALL_PREFIX": "${sourceDir}/install/${presetName}",
+               "CMAKE_INSTALL_PREFIX": "${sourceDir}/install/",
                 "CMAKE_C_COMPILER": "clang",
                 "CMAKE_CXX_COMPILER": "clang++",
                 "CMAKE_BUILD_TYPE": "Debug",
+				"CANDIA_BUILD_EXAMPLES": "YES",
 				"CANDIA_BUILD_TESTS": "YES",
                 "CANDIA_BUILD_DOCS": "NO",
-                "CANDIA_BUILD_MANUSCRIPTS": "NO",
                 "CANDIA_WITH_LHAPDF": "YES",
-				"CANDIA_LHAPDF_DIR": "$env{HOME}/.local",
-				"CANDIA_LIBOME_DIR": "$env{HOME}/software/libome/install"
+				"LHAPDF_ROOT": "$env{HOME}/.local",
+				"libome_ROOT": "$env{HOME}/.local"
             }
 		},
-	{
+		{
             "name": "clang-relwithdebinfo-testing",
             "displayName": "clang-relwithdebinfo",
             "description": "Using compilers: C = clang, CXX = clang++",
             "generator": "Unix Makefiles",
             "binaryDir": "${sourceDir}/bin/${presetName}",
             "cacheVariables": {
-                "CMAKE_INSTALL_PREFIX": "${sourceDir}/install/${presetName}",
+                "CMAKE_INSTALL_PREFIX": "${sourceDir}/install/",
                 "CMAKE_C_COMPILER": "clang",
                 "CMAKE_CXX_COMPILER": "clang++",
                 "CMAKE_BUILD_TYPE": "RelWithDebInfo",
@@ -89,10 +92,9 @@
 				"CANDIA_BUILD_TESTS": "YES",
                 "CANDIA_BUILD_DOCS": "NO",
                 "CANDIA_WITH_LHAPDF": "YES",
-				"CANDIA_LHAPDF_DIR": "$env{HOME}/.local",
-				"libome_ROOT": "$env{HOME}/.local",
-				"CANDIA_libome_DIR": "$env{HOME}/.local"
+				"LHAPDF_ROOT": "$env{HOME}/.local",
+				"libome_ROOT": "$env{HOME}/.local"
             }
-        }
+		}
     ]
 }
