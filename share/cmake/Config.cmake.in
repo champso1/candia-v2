@@ -1,9 +1,25 @@
 # boiler plate, filled it automatically
 @PACKAGE_INIT@
 
-# include(CMakeFindDependencyMacro)
-# find_dependency(Threads REQUIRED)
-# find_dependency(TBB REQUIRED)
+include(CMakeFindDependencyMacro)
+
+if(@CANDIA_WITH_LHAPDF@)
+  # we need to use the FindLHAPDF.cmake script
+  # the path for which we need to add to CMAKE_MODULE_PATH
+  # this whole kit and kaboodle is to make sure we are
+  # also able to restore the CMAKE_MODULE_PATH
+  # after using it to not contaminate what the user
+  # may have set themselves
+  
+  set(_PREV_CMAKE_MODULE_PATH "${CMAKE_MODULE_PATH}")
+  list(PREPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}")
+  
+  find_dependency(LHAPDF REQUIRED)
+
+  # now restore
+  set(CMAKE_MODULE_PATH "${_PREV_CMAKE_MODULE_PATH}")
+  unset(_PREV_CMAKE_MODULE_PATH)
+endif()
 
 # include the exported targets, all the important stuff
 include("${CMAKE_CURRENT_LIST_DIR}/candiaTargets.cmake")

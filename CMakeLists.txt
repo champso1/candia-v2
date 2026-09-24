@@ -110,7 +110,14 @@ option(CANDIA_LHAPDF_DIR "Path to the installation root/prefix of LHAPDF." "/usr
 if (CANDIA_WITH_LHAPDF)
   find_package(LHAPDF REQUIRED)
   message("candia-v2: Compiling with LHAPDF support.")
-  target_link_libraries(candia PRIVATE LHAPDF::LHAPDF)
+  target_link_libraries(candia PUBLIC LHAPDF::LHAPDF)
+
+  # above, PUBLIC was necessary because we are "exposing" LHAPDF headers
+  # and such in the public interface in LHAPDFDistribution.hpp
+  # so down the line, in the installation interface,
+  # users linking with candia::candia should have LHAPDF
+  # found (handled by the installed FindLHAPDF.cmake script)
+  # and linked automatically
 
   target_sources(candia PUBLIC
     FILE_SET cxx_headers
@@ -168,16 +175,14 @@ install(
   FILES
     ${CMAKE_CURRENT_BINARY_DIR}/candiaConfig.cmake
     ${CMAKE_CURRENT_BINARY_DIR}/candiaConfigVersion.cmake
+    ${CMAKE_SOURCE_DIR}/share/cmake/FindLHAPDF.cmake
   DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/candia)
 
 
 # ====================
 # SOURCE TARBALL (CPack)
 # ====================
-# github's auto-generated release tarballs do not include submodules,
-# so we have to do that manually
-# this allows either `cmake --build . --target package_source`
-# or `cpack --config CPackSourceConfig.cmake` (from build dir)
+# make better looking tarballs for github releases
 set(CPACK_PACKAGE_NAME "candia-v2")
 set(CPACK_PACKAGE_VERSION ${PROJECT_VERSION})
 set(CPACK_SOURCE_GENERATOR "TGZ;ZIP")

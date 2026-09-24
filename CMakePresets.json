@@ -88,12 +88,12 @@
                 "CMAKE_C_COMPILER": "clang",
                 "CMAKE_CXX_COMPILER": "clang++",
                 "CMAKE_BUILD_TYPE": "RelWithDebInfo",
-				"CANDIA_BUILD_EXAMPLES": "YES",
-				"CANDIA_BUILD_TESTS": "YES",
+		"CANDIA_BUILD_EXAMPLES": "YES",
+		"CANDIA_BUILD_TESTS": "NO",
                 "CANDIA_BUILD_DOCS": "NO",
                 "CANDIA_WITH_LHAPDF": "YES",
-				"LHAPDF_ROOT": "$env{HOME}/.local",
-				"libome_ROOT": "$env{HOME}/.local"
+		"LHAPDF_ROOT": "$env{HOME}/.local",
+		"libome_ROOT": "$env{HOME}/.local"
             }
 		}
     ]

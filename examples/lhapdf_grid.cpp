@@ -39,7 +39,7 @@ int main()
 	// we can add the current directory to the search paths with this function
 	// also remove the LHAPDF splash text
 	LHAPDF::setVerbosity(0);
-	LHAPDF::paths().emplace_back(".");
+	LHAPDF::pathsPrepend(".");
 	LHAPDF::PDF* testpdf = LHAPDF::mkPDF("testpdf", 0);
 
 	// just print back the gluon at x=0.1,Q=75.0 to see if it works
