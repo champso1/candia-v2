@@ -73,7 +73,7 @@ set(n3lo_splitfuncs_fortran_src
   src/fortran/mvv_p3/xpps3a.f90
   src/fortran/mvv_p3/xpqg3a.f90)
 
-add_library(candia SHARED)
+add_library(candia)
 
 option(CANDIA_ENABLE_WARNINGS "Enable compilation with max warnings e.g. -Wall -Wextra and -Wpedantic")
 if (CANDIA_ENABLE_WARNINGS)
@@ -101,6 +101,7 @@ target_link_libraries(candia PRIVATE
   Threads::Threads
   TBB::tbb
   libome::libome)
+target_link_libraries(candia PUBLIC libome::libome)
 target_include_directories(candia PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:include>)
@@ -153,6 +154,13 @@ endif()
 # ====================
 # INSTALLATION
 # ====================
+get_target_property(_LIB_TYPE candia TYPE)
+if(_LIB_TYPE STREQUAL "STATIC_LIBRARY")
+  set(CANDIA_BUILT_AS_STATIC TRUE)
+else()
+  set(CANDIA_BUILT_AS_STATIC FALSE)
+endif()
+
 include(GNUInstallDirs)
 install(TARGETS candia
   EXPORT candiaTargets
@@ -176,6 +184,7 @@ install(
     ${CMAKE_CURRENT_BINARY_DIR}/candiaConfig.cmake
     ${CMAKE_CURRENT_BINARY_DIR}/candiaConfigVersion.cmake
     ${CMAKE_SOURCE_DIR}/share/cmake/FindLHAPDF.cmake
+	${CMAKE_SOURCE_DIR}/share/cmake/Findlibome.cmake
   DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/candia)
 
 
