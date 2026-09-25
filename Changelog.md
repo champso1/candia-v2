@@ -6,7 +6,7 @@
 	- All tests now require LHAPDF support to avoid similar issues to what the above point fixed.
 	- Removed `yaml-cpp` as a dependency from `tests/main` since it wasn't useful for the end user and wasn't documented or used purposefully.
 	- Fixed `lhapdf_grid.cpp` example to use a better LHAPDF function to add the current directory to the PDF set search path.
-	- Overall cleanup of the installation interface to, e.g. pull in LHAPDF automatically based on if the user originally compiled the library with LHAPDF support.
+	- Overall cleanup of the installation interface to, e.g., allow choosing between shared/static library, automatically bringing in LHAPDF if the user added it during compilation, etc.
 
 # 1.7.0 (from 1.6.0) July 11, 2026:
 	- Using the exact P3ns splitting functions is now the default, and the `.useP3Exact()` method is removed, with all approximation specifications moving to the `.setP3ApproximationTypes()` method.
