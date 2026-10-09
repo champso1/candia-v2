@@ -1,0 +1,15 @@
+\documentclass{article}
+\usepackage{graphicx}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{mathtools}
+\usepackage{xcolor}
+\usepackage{booktabs}
+
+\begin{document}
+\begin{table}[htp]
+\scriptsize
+\noindent\makebox[\textwidth][c]{
+\begin{tabular}{c^C^}
+\toprule
+$x$ 

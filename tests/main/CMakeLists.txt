@@ -26,6 +26,7 @@ set(resources
   hoppet-data
   pegasus-data
   tex-table
+  tex-table2
   benchmark-data
   backup.sh
 )

@@ -119,8 +119,8 @@ int main(int argc, char *argv[]) {
 	log_options.use_log_output_stream = true;
 	log_options.log_output_stream = log_output_file;
 
-	std::vector<double> xtab{1e-5, 1e-4, 1e-3, 1e-2, 0.1, 0.3, 0.5, 0.7, 0.9, 1.0};
-	Grid grid(xtab);
+	std::vector<double> xtab{1e-7, 1e-6, 1e-5, 1e-4, 1e-3, 1e-2, 0.1, 0.3, 0.5, 0.7, 0.9, 1.0};
+	Grid grid(xtab, {.log_size=200});
 
 	LesHouchesDistribution dist(Qf);
 	// LHAPDFDistribution dist(make_lhapdf_pdf("CT18NNLO"), 1.295, 100.0);

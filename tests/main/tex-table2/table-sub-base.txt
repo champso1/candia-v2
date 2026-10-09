@@ -1,0 +1,3 @@
+\midrule
+\multicolumn{^COLS^}{c}{$\mu_{\rm R}^2 = ^KR^\mu_{\rm F}^2$} \\
+\midrule
