@@ -1,0 +1,22 @@
+set terminal pdf enhanced notransparent
+set output "out.pdf"
+
+set border lw 2
+set size ratio 0.65
+
+set title "Convergence of Logarithmic Expansions for the Gluon"
+set xlabel "Iterations"
+set ylabel "%-Difference Between i-th and (i-1)-th Iterations"
+set yrange [-3:50]
+set xzeroaxis
+
+set style line 1 lc rgb '#1f77b4' dt 1 lw 3 # Solid Blue
+set style line 2 lc rgb '#d62728' dt 2 lw 3 # Dashed Red
+set style line 3 lc rgb '#2ca02c' dt 3 lw 3 # Dotted Green
+set style line 4 lc rgb '#ff7f0e' dt 4 lw 3 # Dash-Dot Orange
+set style line 5 lc rgb 'purple'  dt 5 lw 3  # Dash-Dot Purple
+
+plot 'out.dat' u 1:2 w lines ls 1 title "f_g(x=1e-7)", \
+     ''        u 1:3 w lines ls 2 title "f_g(x=1e-3)", \
+     ''        u 1:4 w lines ls 3 title "f_g(x=0.1)", \
+     ''        u 1:5 w lines ls 4 title "f_g(x=0.5)"
