@@ -20,6 +20,7 @@
 #include <array>
 #include <filesystem>
 #include <fstream>
+#include <stdexcept>
 
 using uint = unsigned;
 
@@ -120,35 +121,43 @@ namespace Candia2
 	/** @brief returns the global options for setting values */
 	inline LogOptions& getLogOptions() { return _log_options; }
 
+	/** @brief Exception thrown for unrecoverable errors, i.e. every message logged with @a LOG_ERROR */
+	class Error : public std::runtime_error
+	{
+	public:
+		using std::runtime_error::runtime_error;
+	};
+
 	/**
 	 *  @brief Prints a message to standard out and possibly an additional stream with a nice prefix.
 	 *  @param log_type a type as in the enum @a LogType
 	 *  @param prefix an identifier of some kind to include within the message, often a function name
 	 *  @param fmt_string the format string of the log message, as used in std::format
 	 *  @param args args used to format the string, as used in std::format
+	 *  @throws Error if @a log_type is @a LOG_ERROR (regardless of the verbosity)
 	 */
 	template <typename... TArgs>
 	void log(int log_type, std::string_view prefix, std::format_string<TArgs...> fmt_string, TArgs&& ...args)
 	{
-		if (getLogOptions().verbosity == LOG_NONE)
+		int verbosity = getLogOptions().verbosity;
+		bool shown = verbosity != LOG_NONE
+			// we treat LOG_THREAD identical to LOG_INFO so we must handle that
+			&& !(log_type == LOG_THREAD && verbosity > LOG_INFO)
+			&& log_type >= verbosity;
+		if (!shown && log_type != LOG_ERROR)
 			return;
 
-		// we treat LOG_THREAD identical to LOG_INFO so we must handle that
-		if (log_type == LOG_THREAD && getLogOptions().verbosity > LOG_INFO)
-			return;
-
-		if (log_type < getLogOptions().verbosity)
-			return;
-			
 		std::string log_text = std::vformat(fmt_string.get(), std::make_format_args(args...));
-		std::string all_text = std::format("{}[{}] {}: {}{}\n",
-			log_string_colors[log_type], log_string_reps[log_type], prefix, log_text, ANSI_COLOR_RESET);
-		if (getLogOptions().use_log_output_stream)
-			getLogOptions().log_output_stream.get() << all_text;
-		std::cout << all_text;
+		if (shown) {
+			std::string all_text = std::format("{}[{}] {}: {}{}\n",
+				log_string_colors[log_type], log_string_reps[log_type], prefix, log_text, ANSI_COLOR_RESET);
+			if (getLogOptions().use_log_output_stream)
+				getLogOptions().log_output_stream.get() << all_text;
+			std::cout << all_text;
+		}
 
 		if (log_type == LOG_ERROR)
-			exit(EXIT_FAILURE);
+			throw Error(std::format("{}: {}", prefix, log_text));
 	}
 
 	/**
