@@ -37,10 +37,10 @@ namespace Candia2
 		// probably a better way to do it but who cares
 		for (double x : _xtab) {
 			auto val1 = std::ranges::lower_bound(_points, x);
-			if (std::abs(*val1 - x) < 1e-7)
+			if (val1 != _points.end() && std::abs(*val1 - x) < 1e-7)
 				_points.erase(val1);
 			auto val2 = std::ranges::upper_bound(_points, x);
-			if (std::abs(*val2 - x) < 1e-7)
+			if (val2 != _points.end() && std::abs(*val2 - x) < 1e-7)
 				_points.erase(val2);
 		}
 		
@@ -175,8 +175,8 @@ namespace Candia2
 	constexpr auto NN = 2*INTERP_POINTS;
     int Grid::interpFindIdx(double x)
 	{
-		static const int n = static_cast<int>(size());
-		static const int max_k = static_cast<int>(n-NN);
+		const int n = static_cast<int>(size());
+		const int max_k = static_cast<int>(n-NN);
 
 		auto it = std::upper_bound(
 			_points.begin(),
