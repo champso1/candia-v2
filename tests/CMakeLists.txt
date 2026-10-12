@@ -1,7 +1,10 @@
 option(CANDIA_BUILD_TESTS "Build the 'tests', which are effectively just a more exhaustive set of executables for testing the evolution." OFF)
 if (CANDIA_BUILD_TESTS)
+  # regression tests registered with CTest; only the LHAPDF round trip needs LHAPDF
+  add_subdirectory(regression)
+
   if (NOT LHAPDF_FOUND)
-    message(" --- candia-v2: cannot build tests without LHAPDF. ensure it is installed and visible to CMake")
+    message(" --- candia-v2: the test programs in tests/ other than tests/regression need LHAPDF. ensure it is installed and visible to CMake")
   else()
     add_subdirectory(main)
     add_subdirectory(plot-generation)
