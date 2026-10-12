@@ -20,7 +20,7 @@ int main(int argc, char** argv)
 	double Qf = 4.0;
 	double Qf2 = Qf*Qf;
 
-	std::vector<double> xtab{1e-5, 1e-4, 1e-3, 1e-2, 0.1, 0.3, 0.5, 0.7, 0.9, 1.0};
+	std::vector<double> xtab{1e-5, 1e-4, 1e-3, 1e-2, 0.1, 0.3, 0.5, 0.7, 0.9};
 	Grid grid(
 		xtab,
 		{.min=1.0e-5, .log_size=500, .lin_size=200, .quad_size=100, .pivot1=0.1, .pivot2=0.9});

@@ -48,7 +48,7 @@ namespace Candia2
 		double as = _alpha_s.post(_nf+1);
 		log(LOG_DEBUG, "HFT", "Value of alpha_s post threshold: {}", as);
 
-		auto grid_idxs = std::ranges::views::iota(uint{0}, _grid.size()-1);
+		auto grid_idxs = std::ranges::views::iota(uint{0}, _grid.size());
 		
 		if (_order == 2) {
 			std::for_each(std::execution::par, grid_idxs.begin(), grid_idxs.end(), [&](uint k) {

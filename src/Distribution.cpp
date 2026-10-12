@@ -8,7 +8,7 @@ namespace Candia2
 		accessor_type const& accessor,
 		std::vector<value_type> const& grid_points) const
 	{
-		for (uint k=0; k<grid_points.size()-1; k++) {
+		for (uint k=0; k<grid_points.size(); k++) {
 			double x = grid_points[k];
 			accessor(0, k) = xg(x);
 			accessor(1, k) = xqplus(x);
@@ -19,7 +19,7 @@ namespace Candia2
 		accessor_type const& accessor,
 		std::vector<value_type> const& grid_points) const
 	{
-		for (uint k=0; k<grid_points.size()-1; k++) {
+		for (uint k=0; k<grid_points.size(); k++) {
 			double x = grid_points[k];
 			accessor(1, k) = xu(x);  // u
 			accessor(2, k) = xd(x);  // d

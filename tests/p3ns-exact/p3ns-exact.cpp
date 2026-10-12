@@ -30,7 +30,7 @@ int main()
 		log_options.verbosity = LOG_INFO;
 	
 		vector<double> xtab;
-		Grid grid({1e-5, 1e-4, 1e-3, 1e-2, 0.1, 0.3, 0.5, 0.7, 0.9, 1.0});
+		Grid grid({1e-5, 1e-4, 1e-3, 1e-2, 0.1, 0.3, 0.5, 0.7, 0.9});
 
 		LesHouchesDistribution dist(Qf);
 		AlphaS alphas(order, dist.Q0(), Qf, dist.alpha0(), mur2_muf2);
@@ -51,7 +51,7 @@ int main()
 	};
 
 	vector<double> xtab;
-	Grid grid({1e-5, 1e-4, 1e-3, 1e-2, 0.1, 0.3, 0.5, 0.7, 0.9, 1.0});
+	Grid grid({1e-5, 1e-4, 1e-3, 1e-2, 0.1, 0.3, 0.5, 0.7, 0.9});
 
 	std::vector<ArrayGrid> p3nsm_exact = run({std::make_pair(ExprName::P3nsm, P3ApproxType::Exact)});
 	std::vector<ArrayGrid> p3nsm_approx_central = run({});

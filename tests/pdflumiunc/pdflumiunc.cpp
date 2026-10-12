@@ -33,7 +33,7 @@ int main()
 	LHAPDF::setVerbosity(0);
 	getLogOptions().verbosity = LOG_INFO;
 	
-	Grid grid({1e-5, 1e-4, 1e-3, 1e-2, 0.1, 0.3, 0.5, 0.7, 0.9, 1.0});
+	Grid grid({1e-5, 1e-4, 1e-3, 1e-2, 0.1, 0.3, 0.5, 0.7, 0.9});
 
 	double q0 = 1.3;
 	double qf = 13.59e3;
@@ -116,9 +116,9 @@ getGluonFromCandiaPDF(
 	Grid const& g,
 	std::vector<double> const& qvals)
 {
-    setval_type<double> xg(qvals.size(), setval_type<double>::value_type(g.size()-1, 0.0));
+    setval_type<double> xg(qvals.size(), setval_type<double>::value_type(g.size(), 0.0));
     for (uint qi=0; qi<qvals.size(); ++qi) {
-		for (uint xi=0; xi<g.size()-1; ++xi)
+		for (uint xi=0; xi<g.size(); ++xi)
 			xg[qi][xi] = pdf->xfxQ2(21,g[xi],qvals[qi]);
 	}
 	return xg;
@@ -134,10 +134,10 @@ getGluonFromPDF(
 	const std::vector<LHAPDF::PDF*> pdfs = set.mkPDFs();
     setval_type<std::vector<double>> xg(
 		qvals.size(), std::vector<std::vector<double>>(
-			set.size(), std::vector<double>(g.size()-1, 0.0)));
+			set.size(), std::vector<double>(g.size(), 0.0)));
 	for (uint qi=0; qi<qvals.size(); ++qi) {
 		for (uint i=0; i<set.size(); ++i) {
-			for (uint xi=0; xi<g.size()-1; ++xi)
+			for (uint xi=0; xi<g.size(); ++xi)
 				xg[qi][i][xi] = pdfs[i]->xfxQ2(21,g[xi],qvals[qi]);
 		}
 	}

@@ -19,7 +19,7 @@ namespace Candia2
         for (uint j=0; j<=1; ++j)
 			std::ranges::copy(_S(0,j,0), arr.get()[j*31].begin());
 
-		auto grid_idxs = std::ranges::views::iota(uint{0}, _grid.size()-1);
+		auto grid_idxs = std::ranges::views::iota(uint{0}, _grid.size());
 
 		startLogIterations();
         switch (_order) {
@@ -44,7 +44,7 @@ namespace Candia2
 					});
 
 					for (uint j=0; j<=1; j++) {
-						for (uint k=0; k<_grid.size()-1; k++)
+						for (uint k=0; k<_grid.size(); k++)
 							arr.get()[j*31][k] += _S(0,j,1,k) * fac;
 						std::ranges::copy(_S(0,j,1), _S(0,j,0).begin());
 					}
@@ -148,7 +148,7 @@ namespace Candia2
 					logIterations(n, _iterations-1, "SingletNNLO");
 
                     // LO piece (non truncated)
-                    for (uint k=0; k<_grid.size()-1; k++) {
+                    for (uint k=0; k<_grid.size(); k++) {
                         _S(0,1,1,k) =
 							recrelS_1(_S(0,1,0), k, p0qq) +
 							recrelS_1(_S(0,0,0), k, p0qg);
@@ -159,7 +159,7 @@ namespace Candia2
 
                     // new NLO piece non-convolution
                     for (uint j=0; j<=1; j++) {
-                        for (uint k=0; k<_grid.size()-1; k++) 
+                        for (uint k=0; k<_grid.size(); k++) 
                             _S(1,j,1,k) = -_S(0,j,1,k) * _alpha_s.beta1()/(4.0*PI*_alpha_s.beta0()) - _S(1,j,0,k);
                     }
 
@@ -174,7 +174,7 @@ namespace Candia2
 
                     // new NNLO piece non-convolution
                     for (uint j=0; j<=1; j++) {
-                        for (uint k=0; k<_grid.size()-1; k++) {
+                        for (uint k=0; k<_grid.size(); k++) {
                             _S(2,j,1,k) =
                                 - (_alpha_s.beta1()/(4.0*PI*_alpha_s.beta0()))*_S(1,j,1,k)
                                 - (_alpha_s.beta2()/(16.0*PI_2*_alpha_s.beta0()))*_S(0,j,1,k)
@@ -197,7 +197,7 @@ namespace Candia2
 
                         // non-convolution piece:
                         for (uint j=0; j<=1; j++) {
-                            for (uint k=0; k<_grid.size()-1; k++) {
+                            for (uint k=0; k<_grid.size(); k++) {
                                 _S(t,j,1,k) =
                                     - (_alpha_s.beta1()/(4.0*PI*_alpha_s.beta0()))*_S(t-1,j,1,k)
                                     - (_alpha_s.beta2()/(16.0*PI_2*_alpha_s.beta0()))*_S(t-2,j,1,k)
@@ -219,7 +219,7 @@ namespace Candia2
 
                     for (uint t=0; t<=_trunc_idx; ++t) {
                         for (uint j=0; j<=1; ++j) {
-                            for (uint k=0; k<_grid.size()-1; k++)
+                            for (uint k=0; k<_grid.size(); k++)
                                 arr.get()[j*31][k] += _S(t,j,1,k) * std::pow(_alpha1, t) * std::pow(L1, n)/factorial(n);
 							std::ranges::copy(_S(t,j,1), _S(t,j,0).begin());
                         }
@@ -258,7 +258,7 @@ namespace Candia2
 					logIterations(n, _iterations-1, "SingletN3LO");
 
                     // LO piece
-                    for (uint k=0; k<_grid.size()-1; k++) {
+                    for (uint k=0; k<_grid.size(); k++) {
                         _S(0,1,1,k) =
 							recrelS_1(_S(0,1,0), k, p0qq) +
 							recrelS_1(_S(0,0,0), k, p0qg);
@@ -269,7 +269,7 @@ namespace Candia2
 
                     // new NLO piece non-convolution
                     for (uint j=0; j<=1; j++) {
-                        for (uint k=0; k<_grid.size()-1; k++)
+                        for (uint k=0; k<_grid.size(); k++)
                             _S(1,j,1,k) = -_S(0,j,1,k)*fac1 - _S(1,j,0,k);
                     }
 
@@ -285,7 +285,7 @@ namespace Candia2
 
                     // new NNLO piece non-convolution
                     for (uint j=0; j<=1; j++) {
-                        for (uint k=0; k<_grid.size()-1; k++) {
+                        for (uint k=0; k<_grid.size(); k++) {
                             _S(2,j,1,k) =
                                 - fac1*_S(1,j,1,k)
                                 - fac2*_S(0,j,1,k)
@@ -306,7 +306,7 @@ namespace Candia2
 
                     // new N3LO piece non-convolution
                     for (uint j=0; j<=1; j++) {
-                        for (uint k=0; k<_grid.size()-1; k++) {
+                        for (uint k=0; k<_grid.size(); k++) {
                             _S(3,j,1,k) =
                                 - fac1*_S(2,j,1,k)
                                 - fac2*_S(1,j,1,k)
@@ -331,7 +331,7 @@ namespace Candia2
 
                         // non-convolution piece:
                         for (uint j=0; j<=1; j++) {
-                            for (uint k=0; k<_grid.size()-1; k++) {
+                            for (uint k=0; k<_grid.size(); k++) {
                                 _S(t,j,1,k) =
                                     - fac1*_S(t-1,j,1,k)
                                     - fac2*_S(t-2,j,1,k)
@@ -355,7 +355,7 @@ namespace Candia2
 
                     for (uint t=0; t<=_trunc_idx; ++t) {
                         for (uint j=0; j<=1; ++j) {
-                            for (uint k=0; k<_grid.size()-1; k++)
+                            for (uint k=0; k<_grid.size(); k++)
                                 arr.get()[j*31][k] += _S(t,j,1,k) * std::pow(_alpha1, t) * std::pow(L1, n)/factorial(n);
 							std::ranges::copy(_S(t,j,1), _S(t,j,0).begin());
                         }
@@ -494,7 +494,7 @@ namespace Candia2
 		
         for (uint n=1; n<_iterations; n++) {
 			logThreadIterations(j, n, _iterations-1, "NonSingletLO");
-			for (uint k=0; k<_grid.size()-1; k++) {
+			for (uint k=0; k<_grid.size(); k++) {
 				_A(j,1,k) = recrelLO(_A(j,0), k, p0ns);
                 arr.get()[j][k] += _A(j,1,k)*std::pow(L1, n)/factorial(n);
             }
@@ -514,13 +514,13 @@ namespace Candia2
         for (uint s=1; s<_iterations; s++) {
             logThreadIterations(j, s, _iterations-1, "NonSingletNLO");
 			for (uint n=1; n<=s; n++) {
-				for (uint k=0; k<_grid.size()-1;k++) {
+				for (uint k=0; k<_grid.size();k++) {
 					_B(j,1,n,k) = recrelNLO_1(_B(j,0,n-1), k, p0ns);
 					arr.get()[j][k] += _B(j,1,n,k)*std::pow(L1,n)*std::pow(L2,s-n)/factorial(n)/factorial(s-n);
 				}
 			}
 			
-            for (uint k=0; k<_grid.size()-1;k++) {
+            for (uint k=0; k<_grid.size();k++) {
                 uint n = 0;
                 double res = recrelNLO_2(_B(j,0,0), k, p0ns, p1);
                 _B(j,1,0,k) = -_B(j,1,1,k) + res;
@@ -550,7 +550,7 @@ namespace Candia2
 			// recrel #1:
 			for (uint t=1; t<=s; t++) {
 				for (uint n=1; n<=t; n++) {
-					for (uint k=0; k<_grid.size()-1; k++) {
+					for (uint k=0; k<_grid.size(); k++) {
 						_C(j,1,t,n,k) = recrelNNLO_1(_C(j,0,t-1,n-1), k, p0ns);
 
 						double orig = _C(j,1,t,n,k);
@@ -564,7 +564,7 @@ namespace Candia2
 			}
 
 			// recrel #2:
-            for (uint k=0; k<_grid.size()-1; k++) {
+            for (uint k=0; k<_grid.size(); k++) {
 				double fac1 = -0.5*_C(j,1,s,1,k);
 				double fac2 = recrelNNLO_2(_C(j,0,s-1,0), k, p0ns, p1, p2);
 				_C(j,1,s,0,k) = fac1 + fac2;
@@ -581,7 +581,7 @@ namespace Candia2
 
 			// recrel #3:
 			for (int t=s-1; t>=0; t--) {
-				for (uint k=0; k<_grid.size()-1; k++) {
+				for (uint k=0; k<_grid.size(); k++) {
 					double fac1 = -2.0*_alpha_s.beta1()*(_C(j,1,t+1,0,k) + _C(j,1,t+1,1,k));
 					double fac2 = recrelNNLO_3(_C(j,0,t,0), k, p0ns, p1);
 					_C(j,1,t,0,k) = fac1 + fac2;
@@ -630,7 +630,7 @@ namespace Candia2
 			for (uint t=1; t<=s; t++) {
 				for (uint m=1; m<=t; m++) {
 					for (uint n=1; n<=m; n++) {
-						for (uint k=0; k<_grid.size()-1; k++) {
+						for (uint k=0; k<_grid.size(); k++) {
 							_D(j,1,t,m,n,k) = recrelN3LO_1(_D(j,0,t-1,m-1,n-1), k, p0ns);
 
 							double orig = _D(j,1,t,m,n,k);
@@ -653,7 +653,7 @@ namespace Candia2
 			}
 
 			// recrel #2:
-            for (uint k=0; k<_grid.size()-1; k++) {
+            for (uint k=0; k<_grid.size(); k++) {
 				double fac1 = (
 					0.5*(16.0*PI_2*_alpha_s.beta1() + 4*PI*r1*_alpha_s.beta2() - (c + b*r1)*_alpha_s.beta3())
 				) * _D(j,1,s,s,1,k);
@@ -681,7 +681,7 @@ namespace Candia2
 
 			// recrel #3:
 			for (int m=s-1; m>=0; m--) {
-				for (uint k=0; k<_grid.size()-1; k++) {
+				for (uint k=0; k<_grid.size(); k++) {
                     double fac1 = -(
                         16.0*PI_2*_alpha_s.beta1() + 4.0*PI*r1*_alpha_s.beta2() + r1*r1*_alpha_s.beta3()
                     ) * _D(j,1,s,m+1,1,k);
@@ -710,7 +710,7 @@ namespace Candia2
 			// recrel #4:
 			for (int t=s-1; t>=0; t--) {
 				for (int m=t; m>=0; m--) {
-					for (uint k=0; k<_grid.size()-1; k++) {
+					for (uint k=0; k<_grid.size(); k++) {
 						double fac1a = -2.0*b*gamma;
 						double fac1b = 32*PI_2*(b+r1)*_alpha_s.beta1() - 8*PI*c*_alpha_s.beta2() - 2*c*r1*_alpha_s.beta3();
 						double fac1 = fac1a*_D(j,1,t+1,m+1,0,k) + fac1b*_D(j,1,t+1,m+1,1,k);
@@ -860,7 +860,7 @@ namespace Candia2
 			logThreadIterations(j, n, _iterations-1, "NonSingletLO (trunc)");
 			double fac = std::pow(L1, n)/factorial(n);
 
-			for (uint k=0; k<_grid.size()-1; k++) {
+			for (uint k=0; k<_grid.size(); k++) {
 				_S_NS(0,j,1,k) = recrelS_1(_S_NS(0,j,0), k, p0ns);
 
 				arr.get()[j][k] += _S_NS(0,j,1,k)*fac;
@@ -882,11 +882,11 @@ namespace Candia2
 			double fac = std::pow(L1, n)/factorial(n);
 
 			// LO piece
-			for (uint k=0; k<_grid.size()-1; k++)
+			for (uint k=0; k<_grid.size(); k++)
 				_S_NS(0,j,1,k) = recrelS_1(_S_NS(0,j,0), k, p0ns);
 
 			// NLO
-			for (uint k=0; k<_grid.size()-1; k++) {
+			for (uint k=0; k<_grid.size(); k++) {
 				_S_NS(1,j,1,k) = -_S_NS(0,j,1,k) * _alpha_s.beta1()/(4.0*PI*_alpha_s.beta0()) - _S_NS(1,j,0,k);
 				_S_NS(1,j,1,k) += recrelS_2(_S_NS(1,j,0), _S_NS(0,j,0), k, p0ns, p1);
 			}
@@ -894,7 +894,7 @@ namespace Candia2
 			// truncation terms
 			for (uint t=2; t<=_trunc_idx; ++t) {
 				double T = static_cast<double>(t);
-				for (uint k=0; k<_grid.size()-1; k++) {
+				for (uint k=0; k<_grid.size(); k++) {
 					_S_NS(t,j,1,k) =
 						- (_alpha_s.beta1()/(4.0*PI*_alpha_s.beta0()))*_S_NS(t-1,j,1,k)
 						- T*_S_NS(t,j,0,k)
@@ -906,7 +906,7 @@ namespace Candia2
 			// resum
 			for (uint t=0; t<=_trunc_idx; ++t) {
 				double a = std::pow(_alpha1, t);
-				for (uint k=0; k<_grid.size()-1; k++)
+				for (uint k=0; k<_grid.size(); k++)
 					arr.get()[j][k] += _S_NS(t,j,1,k)*a*fac;
 			}
 
@@ -927,17 +927,17 @@ namespace Candia2
 			double fac = std::pow(L1, n)/factorial(n);
 
 			// LO piece
-			for (uint k=0; k<_grid.size()-1; k++)
+			for (uint k=0; k<_grid.size(); k++)
 				_S_NS(0,j,1,k) = recrelS_1(_S_NS(0,j,0), k, p0ns);
 
 			// NLO
-			for (uint k=0; k<_grid.size()-1; k++) {
+			for (uint k=0; k<_grid.size(); k++) {
 				_S_NS(1,j,1,k) = -_S_NS(0,j,1,k) * _alpha_s.beta1()/(4.0*PI*_alpha_s.beta0()) - _S_NS(1,j,0,k);
 				_S_NS(1,j,1,k) += recrelS_2(_S_NS(1,j,0), _S_NS(0,j,0), k, p0ns, p1);
 			}
 
 			// NNLO
-			for (uint k=0; k<_grid.size()-1; k++) {
+			for (uint k=0; k<_grid.size(); k++) {
 				_S_NS(2,j,1,k) =
 					- (_alpha_s.beta1()/(4.0*PI*_alpha_s.beta0()))*_S_NS(1,j,1,k)
 					- (_alpha_s.beta2()/(16.0*PI_2*_alpha_s.beta0()))*_S_NS(0,j,1,k)
@@ -948,7 +948,7 @@ namespace Candia2
 
 			for (uint t=3; t<=_trunc_idx; ++t) {
 				double T = static_cast<double>(t);
-				for (uint k=0; k<_grid.size()-1; k++) {
+				for (uint k=0; k<_grid.size(); k++) {
 					_S_NS(t,j,1,k) =
 						- (_alpha_s.beta1()/(4.0*PI*_alpha_s.beta0()))*_S_NS(t-1,j,1,k)
 						- (_alpha_s.beta2()/(16.0*PI_2*_alpha_s.beta0()))*_S_NS(t-2,j,1,k)
@@ -962,7 +962,7 @@ namespace Candia2
 			// resum
 			for (uint t=0; t<=_trunc_idx; ++t) {
 				double a = std::pow(_alpha1, t);
-				for (uint k=0; k<_grid.size()-1; k++)
+				for (uint k=0; k<_grid.size(); k++)
 					arr.get()[j][k] += _S_NS(t,j,1,k)*a*fac;
 			}
 
@@ -990,17 +990,17 @@ namespace Candia2
 			double fac = std::pow(L1, n)/factorial(n);
 
 			// LO piece
-			for (uint k=0; k<_grid.size()-1; k++)
+			for (uint k=0; k<_grid.size(); k++)
 				_S_NS(0,j,1,k) = recrelS_1(_S_NS(0,j,0), k, p0ns);
 
 			// NLO
-			for (uint k=0; k<_grid.size()-1; k++) {
+			for (uint k=0; k<_grid.size(); k++) {
 				_S_NS(1,j,1,k) = -_S_NS(0,j,1,k) * beta1/(4.0*PI*beta0) - _S_NS(1,j,0,k);
 				_S_NS(1,j,1,k) += recrelS_2(_S_NS(1,j,0), _S_NS(0,j,0), k, p0ns, p1);
 			}
 
 			// NNLO
-			for (uint k=0; k<_grid.size()-1; k++) {
+			for (uint k=0; k<_grid.size(); k++) {
 				_S_NS(2,j,1,k) =
 					- (beta1/(4.0*PI*beta0))*_S_NS(1,j,1,k)
 					- (beta2/(16.0*PI_2*beta0))*_S_NS(0,j,1,k)
@@ -1010,7 +1010,7 @@ namespace Candia2
 			}
 
 			// N3LO
-			for (uint k=0; k<_grid.size()-1; k++) {
+			for (uint k=0; k<_grid.size(); k++) {
 				_S_NS(3,j,1,k) =
 					- (beta1/(4.0*PI*beta0))*_S_NS(2,j,1,k)
 					- (beta2/(16.0*PI_2*beta0))*_S_NS(1,j,1,k)
@@ -1026,7 +1026,7 @@ namespace Candia2
 
 			for (uint t=4; t<=_trunc_idx; ++t) {
 				double T = static_cast<double>(t);
-				for (uint k=0; k<_grid.size()-1; k++) {
+				for (uint k=0; k<_grid.size(); k++) {
 					_S_NS(t,j,1,k) =
 						- (beta1/(4.0*PI*beta0))*_S_NS(t-1,j,1,k)
 						- (beta2/(16.0*PI_2*beta0))*_S_NS(t-2,j,1,k)
@@ -1045,7 +1045,7 @@ namespace Candia2
 			// resum
 			for (uint t=0; t<=_trunc_idx; ++t) {
 				double a = std::pow(_alpha1, t);
-				for (uint k=0; k<_grid.size()-1; k++)
+				for (uint k=0; k<_grid.size(); k++)
 					arr.get()[j][k] += _S_NS(t,j,1,k)*a*fac;
 			}
 

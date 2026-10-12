@@ -330,7 +330,7 @@ namespace Candia2
 		}
 
         double Nf = static_cast<double>(_nf);
-		for (uint k=0; k<_grid.size()-1;k++) {
+		for (uint k=0; k<_grid.size();k++) {
 			if (_order>=2) {
 				resum[13](k) = resum[25](k);
 				for (uint j=26; j<=24+_nf; j++)
@@ -387,7 +387,7 @@ namespace Candia2
 		}
 
         double Nf = static_cast<double>(_nf);
-		for (uint k=0; k<_grid.size()-1;k++) {
+		for (uint k=0; k<_grid.size();k++) {
 			if (_order>=2) {
 				resum[13](k)=resum[25](k);
 				for (uint j=26; j<=24+_nf; j++)

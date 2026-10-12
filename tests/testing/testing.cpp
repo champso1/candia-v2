@@ -65,7 +65,7 @@ static void genfile()
 	};
 	std::array ome_types{"reg", "plus", "delta"};
 
-	std::vector<double> xtab{1e-5, 1e-4, 1e-3, 1e-2, 0.1, 0.3, 0.5, 0.7, 0.9, 1.0};
+	std::vector<double> xtab{1e-5, 1e-4, 1e-3, 1e-2, 0.1, 0.3, 0.5, 0.7, 0.9};
 	Grid grid(xtab);
 
 	namespace rv = std::views;
@@ -115,7 +115,7 @@ static void compare_files(std::string_view name, std::string_view type)
 	std::vector<double> new_data = extract_sheisse(new_path);
 	std::vector<double> old_data = extract_sheisse(old_path);
 
-	std::vector<double> xtab{1e-5, 1e-4, 1e-3, 1e-2, 0.1, 0.3, 0.5, 0.7, 0.9, 1.0};
+	std::vector<double> xtab{1e-5, 1e-4, 1e-3, 1e-2, 0.1, 0.3, 0.5, 0.7, 0.9};
 	Grid grid(xtab);
 
 	auto percent_diff = [](double x, double y) {

@@ -1,6 +1,7 @@
 #include "util.hpp"
 #include "Candia-v2/Common.hpp"
 
+#include <algorithm>
 #include <cmath>
 
 std::string percentToLatex(double percent)
@@ -98,14 +99,16 @@ ReadCandiaFileResult read_candia_file(fs::path const &path, uint size)
 		}
 
 	}
-	dist_type dists_ntabbed(size, std::vector<double>(ntab.size()-1, 0.0));
+	// older output files included x=1 in xtab, which is not a real grid point; skip it
+	uint num_xtab = static_cast<uint>(std::ranges::count_if(xtab, [](double x){ return x < 1.0; }));
+	dist_type dists_ntabbed(size, std::vector<double>(num_xtab, 0.0));
 	for (uint i=0; i<size; ++i) {
-		for (uint j=0; j<ntab.size()-1; ++j) {
+		for (uint j=0; j<num_xtab; ++j) {
 			uint idx = ntab[j];
 			dists_ntabbed[i][j] = dists[i][idx];
 		}
 	}
-	return {xtab_type(xtab.begin(), xtab.end()-1), dists, dists_ntabbed, grid_points};
+	return {xtab_type(xtab.begin(), xtab.begin()+num_xtab), dists, dists_ntabbed, grid_points};
 }
 
 dist_type fix_dists(dist_type const& dists, int type)

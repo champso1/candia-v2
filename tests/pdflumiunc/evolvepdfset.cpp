@@ -22,7 +22,7 @@ int main()
 	
 	getLogOptions().verbosity = LOG_DEBUG;
 	LHAPDFDistribution dist(make_lhapdf_pdf("CT25NNLO"), q0, qf);
-	Grid grid({1e-5, 1e-4, 1e-3, 1e-2, 0.1, 0.3, 0.5, 0.7, 0.9, 1.0});
+	Grid grid({1e-5, 1e-4, 1e-3, 1e-2, 0.1, 0.3, 0.5, 0.7, 0.9});
 
 	uint order = 3;
 	uint iterations = 15;

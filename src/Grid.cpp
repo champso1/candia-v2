@@ -22,6 +22,10 @@ namespace Candia2
 			std::ranges::sort(_xtab);
 		}
 
+		// the grid never contains x=1, since the expressions are singular there
+		if (auto n = std::erase_if(_xtab, [](double x){ return x >= 1.0; }); n > 0)
+			log(LOG_WARNING, "Grid", "Removed {} xtab value(s) >= 1; the grid does not contain x=1", n);
+
 		fillPoints();
 		initGauLeg(gridfiller_args.min, 1.0, _Xi, _Wi);
 		setupMappings();

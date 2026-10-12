@@ -19,7 +19,7 @@ int main()
 	LesHouchesDistribution dist(qf);
 	std::vector<double> qvals{10.0, 50.0, 100.0};
 	
-	Grid grid({1e-5, 1e-4, 1e-3, 1e-2, 0.1, 0.3, 0.5, 0.7, 0.9, 1.0});
+	Grid grid({1e-5, 1e-4, 1e-3, 1e-2, 0.1, 0.3, 0.5, 0.7, 0.9});
 
 	uint order = 3;
 	uint iterations = 10;
