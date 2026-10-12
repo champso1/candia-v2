@@ -17,11 +17,18 @@ namespace Candia2
 		AlphaS alphas_all(_order, q0, qf, _dist.alpha0(), _mur2_muf2);
 		alphas_all.setVFNS(_dist.masses(), _dist.nfi(), _dist.nff());
 		std::vector<std::pair<double,double>> as_qvals = alphas_all.getValues(qvals);
-		std::vector<double> as_vals(as_qvals.size());
+		// getValues sorts the energies, so take both columns from its result
+		// to keep them paired
+		std::vector<double> as_qs(as_qvals.size()), as_vals(as_qvals.size());
+		std::ranges::transform(
+			as_qvals, std::ranges::begin(as_qs),
+			[](std::pair<double,double> const& p) -> double { return p.first; });
 		std::ranges::transform(
 			as_qvals, std::ranges::begin(as_vals),
 			[](std::pair<double,double> const& p) -> double { return p.second; });
-		_as_qs = std::move(qvals);
+		if (as_qs.size() != qvals.size())
+			log(LOG_ERROR, "LHAPDFGrid", "Could only compute alpha_s at {} of the {} requested energies", as_qs.size(), qvals.size());
+		_as_qs = std::move(as_qs);
 		_as_vals = std::move(as_vals);
 
 		_xvals = _grid.points();
