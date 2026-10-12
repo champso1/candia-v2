@@ -42,7 +42,6 @@ int main(int argc, char** argv)
 	uint nf = 5;
 
 	double L = std::log(mc2/Qf2);
-	OpMatElemN3LO::update(L, nf);
 
 	log(LOG_INFO, "subpdfs.cpp", "using alphas(nf={})/4pi = {}, mc={}, L=log(mc2/mu2)={}", nf, as, mc, L);
 
@@ -68,6 +67,8 @@ int main(int argc, char** argv)
 	OpMatElemCustom a2hg(a2hg_reg_func, zero_func, zero_func);
 	OpMatElemCustom a3hq(a3hq_reg_func, zero_func, zero_func);
 	OpMatElemCustom a3hg(a3hg_reg_func, zero_func, zero_func);
+	for (OpMatElemCustom* ome : {&a1hg, &a2hq, &a2hg, &a3hq, &a3hg})
+		ome->update(L, nf);
 	
 
 	ArrayGrid

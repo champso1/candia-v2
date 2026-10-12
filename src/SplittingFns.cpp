@@ -9,9 +9,6 @@
 
 namespace Candia2
 {
-	uint SplittingFunction::_nf = 4;      //!< number of active/currently massless flavors
-	double SplittingFunction::_beta0; //!< \f$\beta_0\f$ value for P0gg calculation
-	double SplittingFunction::_log_muf2_mur2 = 0;    //!< log of mu_f/mu_r
 	
 	double P0ns::calcRegular(double x) const
 	{

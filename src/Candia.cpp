@@ -482,10 +482,13 @@ namespace Candia2
 			// update all values
 			_alpha_s.update(_nf);
 			log(LOG_DEBUG, "DGLAP", "Loading relevant splitting function / OME values into cache");
-			SplittingFunction::update(_nf, _alpha_s.beta0(), _log_muf2_mur2);
-			OpMatElem::update(_log_muf2_mur2, _nf);
-			for (auto& expr : _expressions)
+			for (auto& expr : _expressions) {
+				if (auto* sf = dynamic_cast<SplittingFunction*>(expr.get()))
+					sf->update(_nf, _alpha_s.beta0(), _log_muf2_mur2);
+				else if (auto* ome = dynamic_cast<OpMatElem*>(expr.get()))
+					ome->update(_log_muf2_mur2, _nf);
 				expr->preCalc();
+			}
 			
 			log(LOG_DEBUG, "DGLAP", "Retrieving values of alpha_s, and calculating all logarithm factors");
 			bool resum_tab = _alpha_s.resumTabulated();
@@ -647,7 +650,8 @@ namespace Candia2
 		// charm
 		if (mc2 >= qf2) {
 			double L = std::log(mc2/qf2);
-			OpMatElemN3LO::update(L, _nf);
+			for (OpMatElemCustom* ome : {&a1hg, &a2hq, &a2hg, &a3hq, &a3hg})
+				ome->update(L, _nf);
 			
 			for (uint k=0; k<_grid.size(); ++k) {
 				double ftilde1 = as*_grid.convolution(_F[0], a1hg, k);
@@ -678,7 +682,8 @@ namespace Candia2
 		// bottom
 		if (mb2 >= qf2) {
 		    double L = std::log(mb2/qf2);
-			OpMatElemN3LO::update(L, _nf);
+			for (OpMatElemCustom* ome : {&a1hg, &a2hq, &a2hg, &a3hq, &a3hg})
+				ome->update(L, _nf);
 			
 			for (uint k=0; k<_grid.size(); ++k) {
 				double ftilde1 = as*_grid.convolution(_F[0], a1hg, k);

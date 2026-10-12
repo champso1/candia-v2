@@ -50,7 +50,8 @@ static void genfile()
 	auto AqqQPS = OpMatElemN3LO(ome::Candia2::AqqQPS);
 	auto AqgQ = OpMatElemN3LO(ome::Candia2::AqgQ);
 	auto AQqPSs = OpMatElemN3LO(ome::Candia2::AQqPSs);
-	OpMatElem::update(0, 4);
+	for (OpMatElem* ome : {&AqqQNSEven, &AqqQNSOdd, &AgqQ, &AggQ, &AQqPS, &AQg, &AqqQPS, &AqgQ, &AQqPSs})
+		ome->update(0, 4);
 
 	std::array all_omes{
 		std::make_pair(AqqQNSEven, "AqqQNSEven"),

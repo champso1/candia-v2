@@ -18,11 +18,21 @@ namespace Candia2
 	class SplittingFunction : public Expression
 	{
 	protected:
-		static uint _nf;      //!< number of active/currently massless flavors
-		static double _beta0; //!< \f$\beta_0\f$ value for P0gg calculation
-		static double _log_muf2_mur2;    //!< log of mu_f/mu_r
+		uint _nf{4};      //!< number of active/currently massless flavors
+		double _beta0{}; //!< \f$\beta_0\f$ value for P0gg calculation
+		double _log_muf2_mur2{};    //!< log of mu_f/mu_r
 		P3ApproxType _imod{P3ApproxType::ImodAvg}; //!< approximation type for n3lo splitting functions
-		static double flagNLP; //!< random flag enclosed in exact p3 splitting functions
+		static constexpr double flagNLP = 1.0; //!< flag enclosing the next-to-leading-power terms in the exact p3 splitting functions
+
+		/** maps @a _imod onto the IMOD convention of the Fortran routines (1 = set A, 2 = set B, anything else = average) */
+		inline int fortranImod() const
+		{
+			switch (_imod) {
+				case P3ApproxType::Imod1: return 1;
+				case P3ApproxType::Imod2: return 2;
+				default: return 0;
+			}
+		}
 	public:
 		SplittingFunction() = default; //!< default constructor
 		virtual ~SplittingFunction() = default; //!< default deconstructor
@@ -31,8 +41,8 @@ namespace Candia2
 		{
 		}
 
-		/** updates the global value of nf and \f$\beta_0\f$ */
-		inline static void update(uint nf, double beta0, double log_muf2_mur2)
+		/** updates this expression's value of nf and \f$\beta_0\f$; call @a preCalc() afterwards */
+		inline void update(uint nf, double beta0, double log_muf2_mur2)
 		{
 			_nf = nf;
 			_beta0 = beta0;
@@ -40,15 +50,6 @@ namespace Candia2
 			log(LOG_DEBUG, "SplittingFunction::update()",
 				"Setting nf={}, beta0={}, log_muf2_mur2={}",
 				_nf, _beta0, _log_muf2_mur2);
-		}
-
-		inline int fortranImod() const 
-		{
-			switch (_imod) {
-				case P3ApproxType::Imod1: return 1;
-				case P3ApproxType::Imod2: return 2;
-				default: return 0;
-			}
 		}
 	};
 

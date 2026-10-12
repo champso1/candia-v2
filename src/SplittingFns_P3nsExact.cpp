@@ -6,7 +6,6 @@
 
 namespace Candia2
 {
-	double SplittingFunction::flagNLP = 1.0;
 	
 	namespace p3_exact
 	{
