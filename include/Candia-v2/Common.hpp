@@ -169,11 +169,13 @@ namespace Candia2
 	}
 
 	inline std::unordered_map<uint, uint> log_threads_line_offset{};
+	inline std::mutex log_threads_mutex; //!< guards @a log_threads_line_offset and the threaded progress output
 	inline void registerThreadLogs(std::vector<uint> const& ids)
 	{
 		if (getLogOptions().verbosity == LOG_NONE || getLogOptions().verbosity > LOG_INFO)
 			return;
-			
+
+		std::lock_guard<std::mutex> guard{log_threads_mutex};
 		for (uint i=0; i<ids.size(); ++i) {
 			log_threads_line_offset[ids[i]] = ids.size()-i;
 			std::cout << '\n';
@@ -184,9 +186,9 @@ namespace Candia2
 		if (getLogOptions().verbosity == LOG_NONE || getLogOptions().verbosity > LOG_INFO)
 			return;
 
+		std::lock_guard<std::mutex> guard{log_threads_mutex};
 		log_threads_line_offset.clear();
 	}
-	inline std::mutex log_threads_mutex;
 	/**
 	 *  @brief Prints messages to standard out for threaded iterations in a nice way that doesn't flood stdout
 	 *  @param thread_idx used in threaded printing, 
@@ -202,7 +204,12 @@ namespace Candia2
 		
 		auto log_type = LOG_THREAD;
 
-		auto count = log_threads_line_offset[thread_idx];
+		uint count{};
+		{
+			std::lock_guard<std::mutex> guard{log_threads_mutex};
+			if (auto it = log_threads_line_offset.find(thread_idx); it != log_threads_line_offset.end())
+				count = it->second;
+		}
 		auto ansi_jump_up   = ANSI_LINEFEED_UP(count);
 		auto ansi_jump_down = ANSI_LINEFEED_DOWN(count);
 		double ratio = static_cast<double>(val)/static_cast<double>(end);
