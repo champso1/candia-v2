@@ -103,42 +103,25 @@ namespace Candia2
 		std::vector<value_type> _data{};
 	public:
 		ArrayGridBase() = default;
-		virtual ~ArrayGridBase() = default;
 		explicit ArrayGridBase(uint size) : _data(size, 0.0) {}
-		ArrayGridBase(ArrayGridBase const& other)
-			: _data{other._data}
-		{}
-		ArrayGridBase(ArrayGridBase&& other)
-			: _data{other._data}
-		{
-			other._data.clear();
-		}
+		ArrayGridBase(ArrayGridBase const& other) = default;
+		ArrayGridBase(ArrayGridBase&& other) noexcept = default;
+		ArrayGridBase& operator=(ArrayGridBase const& other) = default;
+		ArrayGridBase& operator=(ArrayGridBase&& other) noexcept = default;
+
 		template <typename TIterator>
 		ArrayGridBase(TIterator begin, TIterator end)
-		{
-			_data = std::vector<value_type>(begin, end);
-		}
+			: _data(begin, end)
+		{}
 
 		template <typename TContainer>
-		ArrayGridBase(TContainer const& container)
+		explicit ArrayGridBase(TContainer const& container)
 			: _data(container)
 		{}
 
 		ArrayGridBase(std::span<value_type> view)
 			: _data(view.begin(), view.end())
 		{}
-
-		void operator=(ArrayGridBase const& other)
-		{
-			_data.resize(other._data.size());
-			std::ranges::copy(other._data, _data.begin());
-		}
-		void operator=(ArrayGridBase&& other)
-		{
-			_data.resize(other._data.size());
-			std::ranges::copy(other._data, _data.begin());
-			other._data.clear();
-		}
 
 		inline auto size() const { return _data.size(); }
 		inline auto empty() const { return _data.empty(); }
