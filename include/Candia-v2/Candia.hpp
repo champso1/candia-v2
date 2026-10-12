@@ -130,14 +130,14 @@ namespace Candia2
 		 *  @{
 		 */
 		inline double& getSingletCoeffValue(uint j, uint k) {
-			assert(_evol_type != EvolType::None, "invalid evolution type (found None)");
+			ensure(_evol_type != EvolType::None, "invalid evolution type (found None)");
 			if (_evol_type == EvolType::Exact)
 				return _S(0,j,0,k);
 			else
 				return _S_NS(0,j,0,k);
 		}
 		inline ArrayGridView getSingletCoeffArray(uint j) {
-			assert(_evol_type != EvolType::None, "invalid evolution type (found None)");
+			ensure(_evol_type != EvolType::None, "invalid evolution type (found None)");
 			if (_evol_type == EvolType::Exact)
 				return _S(0,j,0);
 			else
@@ -145,7 +145,7 @@ namespace Candia2
 		}
 		
 	    inline double& getNonSingletCoeffValue(uint j, uint k) {
-			assert(_evol_type != EvolType::None, "invalid evolution type (found None)");
+			ensure(_evol_type != EvolType::None, "invalid evolution type (found None)");
 			if (_evol_type == EvolType::Truncated)
 				return _S_NS(0,j,0,k);
 			switch (_order) {
@@ -158,7 +158,7 @@ namespace Candia2
 		}
 
 		inline ArrayGridView getNonSingletCoeffArray(uint j) {
-			assert(_evol_type != EvolType::None, "invalid evolution type (found None)");
+			ensure(_evol_type != EvolType::None, "invalid evolution type (found None)");
 			if (_evol_type == EvolType::Truncated)
 				return _S_NS(0,j,0);
 			switch (_order) {

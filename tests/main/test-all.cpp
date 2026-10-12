@@ -93,7 +93,7 @@ static std::vector<fs::path> create_datafiles(
 		}
 	}
 
-	assert(!datafile_list.empty(), "test-all.cpp: returned 0 datafiles");
+	ensure(!datafile_list.empty(), "test-all.cpp: returned 0 datafiles");
 	return datafile_list;
 }
 
@@ -189,7 +189,7 @@ static bool compare_files(fs::path const& candia_file, fs::path const& other_fil
 		std::views::iota(uint{0}, dists.size()) |
 		std::views::transform([&](auto i){ return std::make_pair(i, dists[i]); });
 
-	assert(
+	ensure(
 		(
 			xtab.size() == candia_dists(0).size()
 		) && (

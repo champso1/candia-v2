@@ -39,7 +39,7 @@ namespace Candia2
 		 *  @param n1,n2 The required range of inidices.
 		 *         The allowed ranges are (0,1), (-1,0), (-1,1)
 		 */
-		double hplog5(
+		void hplog5(
 			double* x, int* nw,
 			dcomplex* Hc1, dcomplex* Hc2, dcomplex* Hc3, dcomplex* Hc4, dcomplex* Hc5,
 			double* Hr1, double* Hr2, double* Hr3, double* Hr4, double* Hr5,

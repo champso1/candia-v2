@@ -50,7 +50,7 @@ namespace ome
 				using std::log;
 				using std::pow;
 				int min_power = target_function_.min_power();
-				assert((min_power >= 0, "Only non-negative exponents are supported"));
+				assert(min_power >= 0 && "Only non-negative exponents are supported");
 
 				numeric_type log_omx = log(static_cast<numeric_type>(1)-x);
 

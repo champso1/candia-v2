@@ -269,7 +269,7 @@ namespace Candia2
 	}
 
 	template <typename... TArgs>
-	void assert(bool stmnt, std::format_string<TArgs...> fmt_string, TArgs&&... args)
+	void ensure(bool stmnt, std::format_string<TArgs...> fmt_string, TArgs&&... args)
 	{
 		if (!stmnt)
 			log(LOG_ERROR, "ASSERT", fmt_string, std::forward<TArgs>(args)...);
