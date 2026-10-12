@@ -125,7 +125,7 @@ namespace Candia2
 		std::vector<std::pair<double,double>> getValues(std::vector<double> const& qvals);
 
 	private:
-		void assertNf() const; //!< asserts whether the current value of @a nf is valid
+		void assertNf(uint nf) const; //!< asserts whether @a nf is a valid index into the per-flavor arrays
 		void assertScheme() const;  //!< asserts whether the user's choice(s) given the current scheme is(are) valid
 
 		double postMatch(double alpha, uint nf); //!< calculates \f$\alpha_s\f$ post threshold given the value pre-threshold

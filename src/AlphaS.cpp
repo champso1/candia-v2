@@ -7,10 +7,10 @@
 
 namespace Candia2
 {
-    void AlphaS::assertNf() const
+    void AlphaS::assertNf(uint nf) const
 	{
-		if (_nf > 8)
-			log(LOG_ERROR, "AlphaS::assertNf()", "Found nf value of {}, expected < 8", _nf);
+		if (nf >= _masses.size())
+			log(LOG_ERROR, "AlphaS::assertNf()", "Found nf value of {}, expected < {}", nf, _masses.size());
 	}
 
 	void AlphaS::assertScheme() const
@@ -72,21 +72,21 @@ namespace Candia2
 	
 	double AlphaS::masses(uint nf) const
 	{
-		assertNf();
+		assertNf(nf);
 		assertScheme();
 		return _masses[nf];
 	}
 
 	double AlphaS::pre(uint nf) const
 	{
-		assertNf();
+		assertNf(nf);
 		assertScheme();
 		return _pre[nf];
 	}
 
 	double AlphaS::post(uint nf) const
 	{
-		assertNf();
+		assertNf(nf);
 		assertScheme();
 		return _post[nf];
 	}
@@ -278,12 +278,11 @@ namespace Candia2
 			double q0 = _masses[i];
 			double qf = _masses[i+1];
 		    double a0 = _post[i];
+			// the last interval is closed so that q == Qf is included
+			bool last_interval = (i == _nff);
 			for (double q : qvals_sorted) {
-				bool found = false;
-				if (q >= q0 && q < qf) {
+				if (q >= q0 && (q < qf || (last_interval && q == qf)))
 					vals.emplace_back(q, evaluate(q0, q, a0));
-					found = true;
-				}
 			}
 		}
 		if (vals.empty())
