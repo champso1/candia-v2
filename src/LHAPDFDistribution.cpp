@@ -21,12 +21,14 @@ namespace Candia2
 	{
 		for (uint k=0; k<grid_points.size()-1; k++) {
 			double x = grid_points[k];
-			accessor(1, k) = xu(x);  // u
-			accessor(2, k) = xd(x);  // d
+			accessor(2, k) = xu(x);  // u
+			accessor(1, k) = xd(x);  // d
 			accessor(3, k) = xs(x);  // s
+			accessor(4, k) = xc(x);  // c
 			accessor(7, k) = xub(x); // ub
 			accessor(8, k) = xdb(x); // db
-			accessor(9, k) = xs(x);  // sb ( = s)
+			accessor(9, k) = xsb(x);  // sb
+			accessor(10, k) = xcb(x);  // cb
 		}
 	}
 
@@ -42,7 +44,7 @@ namespace Candia2
 		for (uint i : {3, 4, 5, 6})
 			_masses[i] = _pdf->quarkMass(i);
 
-		for (_nfi=1; _nfi<=_masses.size(); ++_nfi) {
+		for (_nfi=1; _nfi<=6; ++_nfi) {
 			if (Q0 <= _masses[_nfi])
 				break;
 		}
