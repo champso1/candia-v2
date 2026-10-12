@@ -70,10 +70,10 @@ namespace Candia2
 			map_emplacer(-5, F[11].view());
 			map_emplacer(-4, F[10].view());
 			map_emplacer(-3, F[9].view());
-			map_emplacer(-2, F[8].view());
-			map_emplacer(-1, F[7].view());
-			map_emplacer(1, F[1].view());
-			map_emplacer(2, F[2].view());
+			map_emplacer(-2, F[7].view());
+			map_emplacer(-1, F[8].view());
+			map_emplacer(1, F[2].view());
+			map_emplacer(2, F[1].view());
 			map_emplacer(3, F[3].view());
 			map_emplacer(4, F[4].view());
 			map_emplacer(5, F[5].view());
