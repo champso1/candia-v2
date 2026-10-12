@@ -821,12 +821,12 @@ namespace Candia2
 				- 6.473971e+2 * dl - 6.641219e+1 * dl2 - 5.353347 * dl3 - 5.925926 * dl4
 				- 3.950617e-1 * dl5 + 1.970002e+1 * omx * dlm - 3.435474 * omx * dlm2;
 
-			// if (_imod == P3ApproxType::Imod1)
-				// res1 = nf * p3nsa11 + nf2 * p3nssa2;
-			// else if (_imod == P3ApproxType::Imod2)
-				// res1 = nf * p3nsa12 + nf2 * p3nssa2;
-			// else
-				res1 = 0.5 * nf * ( p3nsa11 + p3nsa12 ) + nf2 * p3nssa2; // 
+			if (_imod == P3ApproxType::Imod1)
+				res1 = nf * p3nsa11 + nf2 * p3nssa2;
+			else if (_imod == P3ApproxType::Imod2)
+				res1 = nf * p3nsa12 + nf2 * p3nssa2;
+			else
+				res1 = 0.5 * nf * ( p3nsa11 + p3nsa12 ) + nf2 * p3nssa2;
 		}
 
 		{
@@ -1841,7 +1841,7 @@ namespace Candia2
 		double res{};
 		if (_imod == P3ApproxType::Imod1)
 		    res = p3ggapp1;
-		if (_imod == P3ApproxType::Imod2)
+		else if (_imod == P3ApproxType::Imod2)
 			res = p3ggapp2;
 		else
 			res = 0.5*(p3ggapp1 + p3ggapp2);

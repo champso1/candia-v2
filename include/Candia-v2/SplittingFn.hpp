@@ -41,6 +41,15 @@ namespace Candia2
 				"Setting nf={}, beta0={}, log_muf2_mur2={}",
 				_nf, _beta0, _log_muf2_mur2);
 		}
+
+		inline int fortranImod() const 
+		{
+			switch (_imod) {
+				case P3ApproxType::Imod1: return 1;
+				case P3ApproxType::Imod2: return 2;
+				default: return 0;
+			}
+		}
 	};
 
 
@@ -623,21 +632,21 @@ namespace Candia2
 			inline double calcRegular(double x) const override
 			{
 				int nf = static_cast<int>(_nf);
-				int imod = static_cast<int>(_imod);
+				int imod = fortranImod();
 				return p3nspa(&x, &nf, &imod)/16.0;
 			}
 			inline double calcPlus() const override
 			{
 				double x = 0.0;
 				int nf = static_cast<int>(_nf);
-				int imod = static_cast<int>(_imod);
+				int imod = fortranImod();
 				return p3nspb(&x, &nf, &imod)/16.0;
 			}
 			inline double calcDelta() const override
 			{
 				double x = 1.0;
 				int nf = static_cast<int>(_nf);
-				int imod = static_cast<int>(_imod);
+				int imod = fortranImod();
 				return p3nspc(&x, &nf, &imod)/16.0;
 			}
 		};
@@ -654,21 +663,21 @@ namespace Candia2
 			inline double calcRegular(double x) const override
 			{
 				int nf = static_cast<int>(_nf);
-				int imod = static_cast<int>(_imod);
+				int imod = fortranImod();
 				return p3nsma(&x, &nf, &imod)/16.0;
 			}
 			inline double calcPlus() const override
 			{
 				double x = 0.0;
 				int nf = static_cast<int>(_nf);
-				int imod = static_cast<int>(_imod);
+				int imod = fortranImod();
 				return p3nsmb(&x, &nf, &imod)/16.0;
 			}
 			inline double calcDelta() const override
 			{
 				double x = 1.0;
 				int nf = static_cast<int>(_nf);
-				int imod = static_cast<int>(_imod);
+				int imod = fortranImod();
 				return p3nsmc(&x, &nf, &imod)/16.0;
 			}
 		};
@@ -685,21 +694,21 @@ namespace Candia2
 			inline double calcRegular(double x) const override
 			{
 				int nf = static_cast<int>(_nf);
-				int imod = static_cast<int>(_imod);
+				int imod = fortranImod();
 				return (p3nsma(&x, &nf, &imod) + p3nssa(&x, &nf, &imod))/16.0;
 			}
 			inline double calcPlus() const override
 			{
 				double x = 0.0;
 				int nf = static_cast<int>(_nf);
-				int imod = static_cast<int>(_imod);
+				int imod = fortranImod();
 				return p3nsmb(&x, &nf, &imod)/16.0;
 			}
 			inline double calcDelta() const override
 			{
 				double x = 1.0;
 				int nf = static_cast<int>(_nf);
-				int imod = static_cast<int>(_imod);
+				int imod = fortranImod();
 				return p3nsmc(&x, &nf, &imod)/16.0;
 			}
 		};
@@ -716,7 +725,7 @@ namespace Candia2
 			inline double calcRegular(double x) const override
 			{
 				int nf = static_cast<int>(_nf);
-				int imod = static_cast<int>(_imod);
+				int imod = fortranImod();
 				return p3psa(&x, &nf, &imod)/16.0;
 			}
 		};
@@ -733,21 +742,21 @@ namespace Candia2
 			inline double calcRegular(double x) const override
 			{
 				int nf = static_cast<int>(_nf);
-				int imod = static_cast<int>(_imod);
+				int imod = fortranImod();
 				return (p3nspa(&x, &nf, &imod) + p3psa(&x, &nf, &imod))/16.0;
 			}
 			inline double calcPlus() const override
 			{
 				double x = 0.0;
 				int nf = static_cast<int>(_nf);
-				int imod = static_cast<int>(_imod);
+				int imod = fortranImod();
 				return p3nspb(&x, &nf, &imod)/16.0;
 			}
 			inline double calcDelta() const override
 			{
 				double x = 1.0;
 				int nf = static_cast<int>(_nf);
-				int imod = static_cast<int>(_imod);
+				int imod = fortranImod();
 				return p3nspc(&x, &nf, &imod)/16.0;
 			}
 		};
@@ -764,7 +773,7 @@ namespace Candia2
 			inline double calcRegular(double x) const override
 			{
 				int nf = static_cast<int>(_nf);
-				int imod = static_cast<int>(_imod);
+				int imod = fortranImod();
 				return p3qga(&x, &nf, &imod)/16.0;
 			}
 		};
@@ -781,7 +790,7 @@ namespace Candia2
 			inline double calcRegular(double x) const override
 			{
 				int nf = static_cast<int>(_nf);
-				int imod = static_cast<int>(_imod);
+				int imod = fortranImod();
 				return p3gqa_2512(&x, &nf, &imod)/16.0;
 			}
 		};
@@ -798,21 +807,21 @@ namespace Candia2
 			inline double calcRegular(double x) const override
 			{
 				int nf = static_cast<int>(_nf);
-				int imod = static_cast<int>(_imod);
+				int imod = fortranImod();
 				return p3gga_2410(&x, &nf, &imod)/16.0;
 			}
 			inline double calcPlus() const override
 			{
 				double x = 0.0;
 				int nf = static_cast<int>(_nf);
-				int imod = static_cast<int>(_imod);
+				int imod = fortranImod();
 				return p3ggb_2410(&x, &nf, &imod)/16.0;
 			}
 			inline double calcDelta() const override
 			{
 				double x = 1.0;
 				int nf = static_cast<int>(_nf);
-				int imod = static_cast<int>(_imod);
+				int imod = fortranImod();
 				return p3ggc_2410(&x, &nf, &imod)/16.0;
 			}
 		};
