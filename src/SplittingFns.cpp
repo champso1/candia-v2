@@ -1862,7 +1862,12 @@ namespace Candia2
 		auto nf2 = nf*nf;
 		auto nf3 = nf2*nf;
 
-		return (68587.64 - 18143.983*nf + 423.81135*nf2 + 9.0672154e-1*nf3)/16.0;
+		double b4gluon = 68587.64 - 18143.983*nf + 423.81135*nf2 + 9.0672154e-1*nf3;
+		if (_imod == P3ApproxType::Imod1)
+			b4gluon -= 0.2;
+		else if (_imod == P3ApproxType::Imod2)
+			b4gluon += 0.2;
+		return b4gluon/16.0;
 	}
 
 	void P3gg::preCalc()
