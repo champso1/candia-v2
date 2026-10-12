@@ -662,12 +662,12 @@ namespace Candia2
 				subpdfs[3][k] = ftilde1 + ftilde2;
 				subpdfs[4][k] = ftilde1 + ftilde2 + ftilde3;
 			
-				subpdfs[5][k] = _F[5][k] - ftilde1;
-				subpdfs[6][k] = _F[5][k] - ftilde2;
-				subpdfs[7][k] = _F[5][k] - ftilde3;
+				subpdfs[5][k] = _F[DIST_C][k] - ftilde1;
+				subpdfs[6][k] = _F[DIST_C][k] - ftilde2;
+				subpdfs[7][k] = _F[DIST_C][k] - ftilde3;
 				
-				subpdfs[8][k] = _F[5][k] - subpdfs[3][k];
-				subpdfs[9][k] = _F[5][k] - subpdfs[4][k];
+				subpdfs[8][k] = _F[DIST_C][k] - subpdfs[3][k];
+				subpdfs[9][k] = _F[DIST_C][k] - subpdfs[4][k];
 			}
 		}
 		// bottom
@@ -693,11 +693,11 @@ namespace Candia2
 				subpdfs[13][k] = ftilde1 + ftilde2;
 				subpdfs[14][k] = ftilde1 + ftilde2 + ftilde3;
 			
-				subpdfs[15][k] = _F[5][k] - ftilde1;
-				subpdfs[16][k] = _F[5][k] - ftilde2;
-				subpdfs[17][k] = _F[5][k] - ftilde3;
-				subpdfs[18][k]  = _F[5][k] - subpdfs[3][k];
-				subpdfs[19][k]  = _F[5][k] - subpdfs[4][k];
+				subpdfs[15][k] = _F[DIST_B][k] - ftilde1;
+				subpdfs[16][k] = _F[DIST_B][k] - ftilde2;
+				subpdfs[17][k] = _F[DIST_B][k] - ftilde3;
+				subpdfs[18][k]  = _F[DIST_B][k] - subpdfs[13][k];
+				subpdfs[19][k]  = _F[DIST_B][k] - subpdfs[14][k];
 			}
 		}
 
