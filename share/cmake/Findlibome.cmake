@@ -9,6 +9,7 @@ find_path(libome_INCLUDE_DIR
   NAMES ome/ome.h
   HINTS
     ${PC_libome_INCLUDE_DIRS}
+    ${CANDIA_LIBOME_DIR}
     ${CANDIA_libome_DIR}
     ${libome_ROOT}
   PATH_SUFFIXES include)
@@ -17,6 +18,7 @@ find_library(libome_LIBRARY
   NAMES ome
   HINTS
     ${PC_libome_LIBRARY_DIRS}
+    ${CANDIA_LIBOME_DIR}
     ${CANDIA_libome_DIR}
     ${libome_ROOT}
   PATH_SUFFIXES lib lib64)

@@ -32,9 +32,9 @@ cmake --build .
 ```
 
 Among standard CMake options like `-DCMAKE_BUILD_TYPE` or `-DCMAKE_INSTALL_PREFIX` are the following `Candia-v2` specific options (all of which are prefixed with `CANDIA_`):
-- `CANDIA_LIBOME_DIR` (default: '/usr/local'): installation prefix for libome
+- `CANDIA_LIBOME_DIR` (default: unset): installation prefix for libome, if it is not in a standard location
 - `CANDIA_WITH_LHAPDF` (default: FALSE): compile LHAPDF support. 
-- `CANDIA_LHAPDF_DIR` (default: '/usr/local'): if LHAPDF is installed in a nonstandard location (i.e. not /usr/local), then specify its installation prefix here. this variable is ignored if `CANDIA_WITH_LHAPDF` is FALSE.
+- `CANDIA_LHAPDF_DIR` (default: unset): if LHAPDF is installed in a nonstandard location (i.e. not /usr/local), then specify its installation prefix here. this variable is ignored if `CANDIA_WITH_LHAPDF` is FALSE.
 - `CANDIA_BUILD_DOCS` (default: FALSE): use Doxygen to build the code documentation
 - `CANDIA_BUILD_EXAMPLES` (default: TRUE): build the two examples in the `examples/` directory
 - `CANDIA_BUILD_TESTS` (default: FALSE): build the "tests" in the `tests/` directory. These aren't traditional tests, but rather a more extensive set of C++ files to perform e.g. benchmarking, plot generation, table creation, etc.
