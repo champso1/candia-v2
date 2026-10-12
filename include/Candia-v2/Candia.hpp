@@ -234,7 +234,7 @@ namespace Candia2
 		 */
 		inline std::vector<ArrayGrid> const& evolveTrunc()
 		{
-			log(LOG_INFO, "DGLAPSolver", "Using exact ansatz for NS sector");
+			log(LOG_INFO, "DGLAPSolver", "Using truncated ansatz for NS sector");
 			return _evolve_function(EvolType::Truncated);
 		}
 

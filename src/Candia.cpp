@@ -70,8 +70,13 @@ namespace Candia2
 		log(LOG_DEBUG, "DGLAPSolver::DGLAPSolver()", "Evolving with log(mu_R / mu_F) = log({:.1}) = {:.4}.", _mur2_muf2, _log_mur2_muf2);
 
 		if (_order == 0 && _trunc_idx != 0) {
-			_trunc_idx = 0; // LO has exact singlet solution, do not add additional terms
 			log(LOG_WARNING, "DGLAP", "Specified value of the truncation index ({}) will be set to zero.", _trunc_idx);
+			_trunc_idx = 0; // LO has exact singlet solution, do not add additional terms
+		} else if (_trunc_idx < _order) {
+			// the singlet recursion at order n writes to _S(n,...), so we need at least _order+1 slots
+			log(LOG_WARNING, "DGLAP", "Specified value of the truncation index ({}) is below the perturbative order and will be set to {}.", _trunc_idx, _order);
+			_trunc_idx = _order;
+			_S.resize({_trunc_idx+1, 2, 2, grid.size()});
 		}
 
 		_r1[1] = -0.965105642503553;
@@ -105,8 +110,8 @@ namespace Candia2
 			return vec_to_str(view);
 		};
 		log(LOG_DEBUG, "DGLAPSolver::DGLAPSolver()", "r1 array: {}", func(_r1));
-		log(LOG_DEBUG, "DGLAPSolver::DGLAPSolver()", "b  array: {}", func(_r1));
-		log(LOG_DEBUG, "DGLAPSolver::DGLAPSolver()", "c  array: {}", func(_r1));
+		log(LOG_DEBUG, "DGLAPSolver::DGLAPSolver()", "b  array: {}", func(_b));
+		log(LOG_DEBUG, "DGLAPSolver::DGLAPSolver()", "c  array: {}", func(_c));
 	    
 		setInitialConditions(initial_dist);
 		log(LOG_DEBUG, "DGLAPSolver::DGLAPSolver()", "Successfully filled coefficients with initial conditions.");
