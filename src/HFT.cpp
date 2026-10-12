@@ -51,7 +51,7 @@ namespace Candia2
 		auto grid_idxs = std::ranges::views::iota(uint{0}, _grid.size()-1);
 		
 		if (_order == 2) {
-			std::for_each(std::execution::par_unseq, grid_idxs.begin(), grid_idxs.end(), [&](uint k) {
+			std::for_each(std::execution::par, grid_idxs.begin(), grid_idxs.end(), [&](uint k) {
 				// q
 				for (uint j=1; j<=_nf; j++)
 					HFT_NNLO1(arr[j], k, arr_accessor(j));
@@ -76,7 +76,7 @@ namespace Candia2
 				auto& a3psqq = getExpression(ExprName::A3psqq);
 				auto& a3sqg  = getExpression(ExprName::A3sqg);
 				const double fac_n3lo = as*as*as/(64.0*PI_3);
-				std::for_each(std::execution::par_unseq, grid_idxs.begin(), grid_idxs.end(), [&](uint k) {
+				std::for_each(std::execution::par, grid_idxs.begin(), grid_idxs.end(), [&](uint k) {
 					const double convSPa = _grid.convolution(arr_singlet[1], a3psqq, k);
 					const double convSPb = _grid.convolution(arr_singlet[0], a3sqg, k);
 					const double SP = fac_n3lo*(convSPa + convSPb)/static_cast<double>(_nf);
@@ -93,7 +93,7 @@ namespace Candia2
 				});
 			} else {
 				log(LOG_DEBUG, "HFT", "Performing NNLO matching at N3LO");
-				std::for_each(std::execution::par_unseq, grid_idxs.begin(), grid_idxs.end(), [&](uint k) {
+				std::for_each(std::execution::par, grid_idxs.begin(), grid_idxs.end(), [&](uint k) {
 					// q
 					for (uint j=1; j<=_nf; j++)
 						HFT_NNLO1(arr[j], k, arr_accessor(j));
