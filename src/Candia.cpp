@@ -646,12 +646,16 @@ namespace Candia2
 		OpMatElemCustom a3hg(a3hg_reg_func, zero_func, zero_func);
 
 
+		// libome takes the number of light flavours, i.e. those below the heavy quark
+		constexpr uint nl_charm = DIST_C - 1;
+		constexpr uint nl_bottom = DIST_B - 1;
+
 		std::vector<ArrayGrid> subpdfs(20, ArrayGrid(_grid.size()));
 		// charm
 		if (mc2 >= qf2) {
 			double L = std::log(mc2/qf2);
 			for (OpMatElemCustom* ome : {&a1hg, &a2hq, &a2hg, &a3hq, &a3hg})
-				ome->update(L, _nf);
+				ome->update(L, nl_charm);
 			
 			for (uint k=0; k<_grid.size(); ++k) {
 				double ftilde1 = as*_grid.convolution(_F[0], a1hg, k);
@@ -683,7 +687,7 @@ namespace Candia2
 		if (mb2 >= qf2) {
 		    double L = std::log(mb2/qf2);
 			for (OpMatElemCustom* ome : {&a1hg, &a2hq, &a2hg, &a3hq, &a3hg})
-				ome->update(L, _nf);
+				ome->update(L, nl_bottom);
 			
 			for (uint k=0; k<_grid.size(); ++k) {
 				double ftilde1 = as*_grid.convolution(_F[0], a1hg, k);
