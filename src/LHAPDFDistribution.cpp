@@ -64,6 +64,11 @@ namespace Candia2
 		// because again, say, if charm mass (nf=4) = 1.3 and bottom mass (nf=5) = 4.5,
 		// if we have Qf=2, or anything up to and including 4.5,
 		// then we are good staying with _nff = 4
+		// as above, when evolving to the initial energy itself the loop ends one below _nfi
+		if (Qf < Q0)
+			log(LOG_ERROR, "LHAPDFDistribution", "final energy ({}) is below the initial energy ({})", Qf, Q0);
+		if (_nff < _nfi)
+			_nff = _nfi;
 		if (_nff < 1 || _nff > 6)
 			log(LOG_ERROR, "LHAPDFDistribution", "error finding nf (_nff={})", _nff);
 

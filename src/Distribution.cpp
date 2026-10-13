@@ -42,8 +42,14 @@ namespace Candia2
 			if (qf > _masses[_nff])
 				break;
 		}
+		// the loop above ends one below _nfi when qf is not above the mass at _nfi,
+		// i.e. when evolving to the initial energy itself: no flavours change
+		if (qf < q0)
+			log(LOG_ERROR, "LesHouchesDistribution", "final energy ({}) is below the initial energy ({})", qf, q0);
+		if (_nff < _nfi)
+			_nff = _nfi;
 		if (_nff < 1 || _nff > 6)
-			log(LOG_ERROR, "LHAPDF", "error finding nf (_nff={})", _nff);
+			log(LOG_ERROR, "LesHouchesDistribution", "error finding nf (_nff={})", _nff);
 	}
 
 } // namespace Candia2

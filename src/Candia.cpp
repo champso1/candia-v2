@@ -463,7 +463,6 @@ namespace Candia2
 		std::vector<ArrayGrid> resum_singlet(DISTS, ArrayGrid(_grid.size()));
 		std::vector<ArrayGrid> resum(DISTS, ArrayGrid(_grid.size()));
 		
-		bool performed_evolution = false;
 		for (_nf=_alpha_s.nfi(); _nf<=_alpha_s.nff(); _nf++) {
 			log(LOG_DEBUG, "DGLAP", "Setting nf={}", _nf);
 			bool last_loop = _nf == _alpha_s.nff();
@@ -545,7 +544,6 @@ namespace Candia2
 			// only do evolution if alphas are different
 			// (i.e. energy scales are different)
 			if (_alpha0 != _alpha1) {
-				performed_evolution = true;
 				log(LOG_DEBUG, "DGLAP", "Starting singlet evolution and resummation...");
 			    evolveSinglet(resum_singlet, L1);
 				log(LOG_DEBUG, "DGLAP", "Finished singlet evolution and resummation.");
@@ -578,10 +576,11 @@ namespace Candia2
 						std::ranges::copy(resum[j*31], _S(0,j,0).begin());
 				}
 			} else { // if (alpha0 != alpha1)
-				// if we've done no evolutions or anything,
-				// we want to make sure we return correctly
-				// the initial distributions
-				if (last_loop && !performed_evolution) {
+				// nothing to evolve in the last interval (e.g. Qf is the initial energy,
+				// or sits exactly on a threshold that we have just matched across),
+				// so the result is whatever is in the coefficients now:
+				// the initial distributions, or the matched ones
+				if (last_loop) {
 					fixDistributionsForce(resum);
 					_F = std::move(resum);
 					break;
