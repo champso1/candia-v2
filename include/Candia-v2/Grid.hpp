@@ -8,6 +8,11 @@
 #include "Candia-v2/Common.hpp"
 #include "Candia-v2/Expression.hpp"
 
+#include <array>
+#include <cstddef>
+#include <span>
+#include <vector>
+
 namespace Candia2
 {
 	/** @brief Struct for grouping the paramaters related to convolution/integration */
@@ -26,6 +31,44 @@ namespace Candia2
 		uint num_gauss_points{50};
 		uint num_interp_points{4};
 	};
+
+	/**
+	 *  @brief The convolution with an expression, stored as a matrix acting on the array being convoluted
+	 *
+	 *  The convolution is linear in the array, and the expression values, Gauss-Legendre points and
+	 *  interpolation stencils it uses never change, so they are evaluated once by @a Grid::buildKernel().
+	 *  Row k only has entries from about k-INTERP_POINTS onwards (the convolution at x only needs larger x),
+	 *  so only that part of each row is stored.
+	 *  @note a kernel is only valid for the grid it was built on and the state (e.g. nf) of the expression at the time
+	 */
+	class ConvolutionKernel final
+	{
+		friend class Grid;
+		std::vector<uint> _first{};         //!< first stored column of each row
+		std::vector<std::size_t> _offset{}; //!< start of each row in @a _values (one more entry than rows)
+		std::vector<double> _values{};      //!< stored part of each row, one row after another
+	public:
+		ConvolutionKernel() = default;
+
+		inline bool empty() const { return _first.empty(); }
+		inline uint size() const { return static_cast<uint>(_first.size()); }
+
+		/**
+		 *  @brief Convolution of @a A with the expression at grid index @a k
+		 *  @note equal to Grid::convolution(A, E, k) up to rounding
+		 */
+		inline double apply(std::span<double const> A, uint k) const
+		{
+			double const* row = _values.data() + _offset[k];
+			double const* a = A.data() + _first[k];
+			const std::size_t n = _offset[k+1] - _offset[k];
+			double res = 0.0;
+			for (std::size_t j=0; j<n; ++j)
+				res += row[j]*a[j];
+			return res;
+		}
+	};
+
 	/**
 	 *  @brief Class that contains the interpolation/convolution grid and methods
 	 */
@@ -152,6 +195,18 @@ namespace Candia2
 		 *  @param x the value of x to interpolate at
 		 */
 		double interpolate(std::span<double> y, double x);
+		/**
+		 *  @brief Computes the weights that @a interpolate() gives each grid value at @a x
+		 *  @param x the value of x to interpolate at
+		 *  @param weights the weights of the grid points starting at the returned index
+		 *  @return the index of the first grid point used
+		 */
+		int interpWeights(double x, std::array<double, 2*INTERP_POINTS>& weights);
+		/**
+		 *  @brief Precomputes the convolution with expression @a E at every grid point
+		 *  @param E the expression, in the state (nf, ...) it will be used in
+		 */
+		ConvolutionKernel buildKernel(Expression& E);
 		/**
 		 *  @brief Performs a convolution between an array @a A and an expression @a E
 		 *  @param A the array

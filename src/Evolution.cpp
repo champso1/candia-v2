@@ -25,10 +25,10 @@ namespace Candia2
 		startLogIterations();
         switch (_order) {
             case 0: {
-				auto& p0qq = getExpression(ExprName::P0qq);
-				auto& p0qg = getExpression(ExprName::P0qg);
-				auto& p0gq = getExpression(ExprName::P0gq);
-				auto& p0gg = getExpression(ExprName::P0gg);
+				auto& p0qq = getKernel(ExprName::P0qq);
+				auto& p0qg = getKernel(ExprName::P0qg);
+				auto& p0gq = getKernel(ExprName::P0gq);
+				auto& p0gg = getKernel(ExprName::P0gg);
 				
                 for (uint n=1; n<_iterations; n++) {
 					logIterations(n, _iterations-1, "SingletLO");
@@ -52,14 +52,14 @@ namespace Candia2
                 }
             } break;
             case 1: {
-				auto& p0qq = getExpression(ExprName::P0qq);
-				auto& p0qg = getExpression(ExprName::P0qg);
-				auto& p0gq = getExpression(ExprName::P0gq);
-				auto& p0gg = getExpression(ExprName::P0gg);
-				auto& p1qq = getExpression(ExprName::P1qq);
-				auto& p1qg = getExpression(ExprName::P1qg);
-				auto& p1gq = getExpression(ExprName::P1gq);
-				auto& p1gg = getExpression(ExprName::P1gg);
+				auto& p0qq = getKernel(ExprName::P0qq);
+				auto& p0qg = getKernel(ExprName::P0qg);
+				auto& p0gq = getKernel(ExprName::P0gq);
+				auto& p0gg = getKernel(ExprName::P0gg);
+				auto& p1qq = getKernel(ExprName::P1qq);
+				auto& p1qg = getKernel(ExprName::P1qg);
+				auto& p1gq = getKernel(ExprName::P1gq);
+				auto& p1gg = getKernel(ExprName::P1gg);
 				
 			    for (uint n=1; n<_iterations; n++) {
 					// log(LOG_INFO, "DGLAP", "NLO Singlet Iteration {}", n);
@@ -131,18 +131,18 @@ namespace Candia2
                 }
             } break;
             case 2: {
-				auto& p0qq = getExpression(ExprName::P0qq);
-				auto& p0qg = getExpression(ExprName::P0qg);
-				auto& p0gq = getExpression(ExprName::P0gq);
-				auto& p0gg = getExpression(ExprName::P0gg);
-				auto& p1qq = getExpression(ExprName::P1qq);
-				auto& p1qg = getExpression(ExprName::P1qg);
-				auto& p1gq = getExpression(ExprName::P1gq);
-				auto& p1gg = getExpression(ExprName::P1gg);
-				auto& p2qq = getExpression(ExprName::P2qq);
-				auto& p2qg = getExpression(ExprName::P2qg);
-				auto& p2gq = getExpression(ExprName::P2gq);
-				auto& p2gg = getExpression(ExprName::P2gg);
+				auto& p0qq = getKernel(ExprName::P0qq);
+				auto& p0qg = getKernel(ExprName::P0qg);
+				auto& p0gq = getKernel(ExprName::P0gq);
+				auto& p0gg = getKernel(ExprName::P0gg);
+				auto& p1qq = getKernel(ExprName::P1qq);
+				auto& p1qg = getKernel(ExprName::P1qg);
+				auto& p1gq = getKernel(ExprName::P1gq);
+				auto& p1gg = getKernel(ExprName::P1gg);
+				auto& p2qq = getKernel(ExprName::P2qq);
+				auto& p2qg = getKernel(ExprName::P2qg);
+				auto& p2gq = getKernel(ExprName::P2gq);
+				auto& p2gg = getKernel(ExprName::P2gg);
 				
                 for (uint n=1; n<_iterations; n++) {
 					// log(LOG_INFO, "DGLAP", "NNLO Singlet Iteration {}", n);
@@ -228,22 +228,22 @@ namespace Candia2
                 }
             } break;
             case 3: {
-				auto& p0qq = getExpression(ExprName::P0qq);
-				auto& p0qg = getExpression(ExprName::P0qg);
-				auto& p0gq = getExpression(ExprName::P0gq);
-				auto& p0gg = getExpression(ExprName::P0gg);
-				auto& p1qq = getExpression(ExprName::P1qq);
-				auto& p1qg = getExpression(ExprName::P1qg);
-				auto& p1gq = getExpression(ExprName::P1gq);
-				auto& p1gg = getExpression(ExprName::P1gg);
-				auto& p2qq = getExpression(ExprName::P2qq);
-				auto& p2qg = getExpression(ExprName::P2qg);
-				auto& p2gq = getExpression(ExprName::P2gq);
-				auto& p2gg = getExpression(ExprName::P2gg);
-				auto& p3qq = getExpression(ExprName::P3qq);
-				auto& p3qg = getExpression(ExprName::P3qg);
-				auto& p3gq = getExpression(ExprName::P3gq);
-				auto& p3gg = getExpression(ExprName::P3gg);
+				auto& p0qq = getKernel(ExprName::P0qq);
+				auto& p0qg = getKernel(ExprName::P0qg);
+				auto& p0gq = getKernel(ExprName::P0gq);
+				auto& p0gg = getKernel(ExprName::P0gg);
+				auto& p1qq = getKernel(ExprName::P1qq);
+				auto& p1qg = getKernel(ExprName::P1qg);
+				auto& p1gq = getKernel(ExprName::P1gq);
+				auto& p1gg = getKernel(ExprName::P1gg);
+				auto& p2qq = getKernel(ExprName::P2qq);
+				auto& p2qg = getKernel(ExprName::P2qg);
+				auto& p2gq = getKernel(ExprName::P2gq);
+				auto& p2gg = getKernel(ExprName::P2gg);
+				auto& p3qq = getKernel(ExprName::P3qq);
+				auto& p3qg = getKernel(ExprName::P3qg);
+				auto& p3gq = getKernel(ExprName::P3gq);
+				auto& p3gg = getKernel(ExprName::P3gg);
 
 				auto beta0 = _alpha_s.beta0();
 				auto beta1 = _alpha_s.beta1();
@@ -487,7 +487,7 @@ namespace Candia2
         std::reference_wrapper<std::vector<ArrayGrid>> arr, 
         uint j, double L1)
     {
-		auto& p0ns = getExpression(ExprName::P0ns);
+		auto& p0ns = getKernel(ExprName::P0ns);
 		
         for (uint n=1; n<_iterations; n++) {
 			logThreadIterations(j, n, _iterations-1, "NonSingletLO");
@@ -502,8 +502,8 @@ namespace Candia2
         std::reference_wrapper<std::vector<ArrayGrid>> arr, 
         uint j, ExprName P1, std::array<double, 2> const&  L)
     {
-		auto& p0ns = getExpression(ExprName::P0ns);
-		auto& p1   = getExpression(P1);
+		auto& p0ns = getKernel(ExprName::P0ns);
+		auto& p1   = getKernel(P1);
 		
         double L1 = L[0];
         double L2 = L[1];
@@ -534,9 +534,9 @@ namespace Candia2
         std::reference_wrapper<std::vector<ArrayGrid>> arr, 
         uint j, std::array<ExprName, 2> const& P, std::array<double, 3> const& L)
     {
-		auto& p0ns = getExpression(ExprName::P0ns);
-		auto& p1   = getExpression(P[0]);
-		auto& p2   = getExpression(P[1]);
+		auto& p0ns = getKernel(ExprName::P0ns);
+		auto& p1   = getKernel(P[0]);
+		auto& p2   = getKernel(P[1]);
 		
         double L1 = L[0];
         double L2 = L[1];
@@ -604,10 +604,10 @@ namespace Candia2
         std::reference_wrapper<std::vector<ArrayGrid>> arr, 
 			uint j, std::array<ExprName, 3> const& P, std::array<double, 4> const& L)
     {
-		auto& p0ns = getExpression(ExprName::P0ns);
-		auto& p1   = getExpression(P[0]);
-		auto& p2   = getExpression(P[1]);
-		auto& p3   = getExpression(P[2]);
+		auto& p0ns = getKernel(ExprName::P0ns);
+		auto& p1   = getKernel(P[0]);
+		auto& p2   = getKernel(P[1]);
+		auto& p3   = getKernel(P[2]);
 		
 		double L1 = L[0];
         double L2 = L[1];
@@ -847,7 +847,7 @@ namespace Candia2
 
 	void DGLAPSolver::_mt_EvolveDistribution_NST_LO(std::reference_wrapper<std::vector<ArrayGrid>> arr, uint j, double L1)
 	{
-		auto& p0ns = getExpression(ExprName::P0ns);
+		auto& p0ns = getKernel(ExprName::P0ns);
 
 		for (uint n=1; n<_iterations; n++) {
 			logThreadIterations(j, n, _iterations-1, "NonSingletLO (trunc)");
@@ -867,8 +867,8 @@ namespace Candia2
 		ExprName _p1, double L1)
 	{
 
-		auto& p0ns = getExpression(ExprName::P0ns);
-		auto& p1 =   getExpression(_p1);
+		auto& p0ns = getKernel(ExprName::P0ns);
+		auto& p1 =   getKernel(_p1);
 
 		for (uint n=1; n<_iterations; n++) {
 			logThreadIterations(j, n, _iterations-1, "NonSingletNLO (trunc)");
@@ -911,9 +911,9 @@ namespace Candia2
 	void DGLAPSolver::_mt_EvolveDistribution_NST_NNLO(std::reference_wrapper<std::vector<ArrayGrid>> arr, uint j,
 		ExprName _p1, ExprName _p2, double L1)
 	{
-		auto& p0ns = getExpression(ExprName::P0ns);
-		auto& p1 = getExpression(_p1);
-		auto& p2 = getExpression(_p2);
+		auto& p0ns = getKernel(ExprName::P0ns);
+		auto& p1 = getKernel(_p1);
+		auto& p2 = getKernel(_p2);
 
 		for (uint n=1; n<_iterations; n++) {
 			logThreadIterations(j, n, _iterations-1, "NonSingletNNLO (trunc)");
@@ -968,10 +968,10 @@ namespace Candia2
 		std::reference_wrapper<std::vector<ArrayGrid>> arr, uint j,
 		ExprName _p1, ExprName _p2, ExprName _p3, double L1)
 	{
-		auto& p0ns = getExpression(ExprName::P0ns);
-		auto& p1 =   getExpression(_p1);
-		auto& p2 =   getExpression(_p2);
-		auto& p3 =   getExpression(_p3);
+		auto& p0ns = getKernel(ExprName::P0ns);
+		auto& p1 =   getKernel(_p1);
+		auto& p2 =   getKernel(_p2);
+		auto& p3 =   getKernel(_p3);
 
 		double beta0 = _alpha_s.beta0();
 		double beta1 = _alpha_s.beta1();

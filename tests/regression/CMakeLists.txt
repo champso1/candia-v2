@@ -1,5 +1,4 @@
 # regression tests, run with `ctest` from the build directory
-# (`ctest -LE slow` skips the long N3LO benchmark)
 
 set(CANDIA_HOPPET_DATA ${PROJECT_SOURCE_DIR}/tests/main/hoppet-data)
 set(CANDIA_PEGASUS_DATA ${PROJECT_SOURCE_DIR}/tests/main/pegasus-data)
@@ -28,7 +27,6 @@ candia_benchmark_test(lo.mu20          0 2.0 0 ${CANDIA_PEGASUS_DATA}/out-lo-mu2
 candia_benchmark_test(lo.mu05          0 0.5 0 ${CANDIA_PEGASUS_DATA}/out-lo-mu05.dat  1e-4)
 candia_benchmark_test(nlo.mu20         1 2.0 0 ${CANDIA_PEGASUS_DATA}/out-nlo-mu20.dat 1e-4)
 candia_benchmark_test(nlo.mu05         1 0.5 0 ${CANDIA_PEGASUS_DATA}/out-nlo-mu05.dat 1e-4)
-set_tests_properties(benchmark.n3lo.exact PROPERTIES LABELS slow)
 
 add_test(NAME p3_consistency COMMAND regression_p3_consistency)
 add_test(NAME concurrency COMMAND regression_concurrency)

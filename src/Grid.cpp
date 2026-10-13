@@ -2,10 +2,12 @@
 
 #include "Candia-v2/Grid.hpp"
 #include "Candia-v2/Common.hpp"
+#include "Parallel.hpp"
 
 #include <algorithm>
 #include <cmath>
 #include <limits>
+#include <ranges>
 #include <set>
 
 namespace Candia2
@@ -241,6 +243,77 @@ namespace Candia2
 		}
 
 		return y;
+	}
+
+	int Grid::interpWeights(double x, std::array<double, NN>& weights)
+	{
+		// Lagrange form of the same polynomial that interpolate() evaluates with Neville's algorithm
+		constexpr int n = NN;
+		int k = interpFindIdx(x);
+		double const* xa = &(_points[k]);
+
+		for (int i=0; i<n; i++) {
+			double w = 1.0;
+			for (int m=0; m<n; m++) {
+				if (m == i)
+					continue;
+				double grid_diff = xa[i] - xa[m];
+				if (std::abs(grid_diff) < 1e-15)
+					log(LOG_ERROR, "Grid::interpWeights()", "found a denominator equal to 0.0 ({}, {}, {})", x, xa[i], xa[m]);
+				w *= (x - xa[m])/grid_diff;
+			}
+			weights[i] = w;
+		}
+		return k;
+	}
+
+	ConvolutionKernel Grid::buildKernel(Expression& E)
+	{
+		const uint n = size();
+		const double plus = E.plus();
+		const double delta = E.delta();
+
+		// the same sum as convolution(), with interpolate(A, x/y) replaced by its weights on the grid values,
+		// so row k holds the coefficient of every A[j] in the convolution at x_k
+		std::vector<std::vector<double>> rows(n);
+		std::vector<uint> first(n);
+		parallelFor(std::views::iota(uint{0}, n), [&](uint k) {
+			std::vector<double> row(n, 0.0);
+			std::array<double, NN> weights{};
+			double x = _points[k];
+			double diag = plus*std::log1p(-x) + delta;
+			int lo = static_cast<int>(k);
+
+			for (auto& mapping : getMappings(x)) {
+				for (uint i=0; i<_Xi.size(); i++) {
+					auto [y, J] = mapping(x, _Xi[i]);
+					double wJ = _Wi[i]*J;
+					double plus_part = wJ*(1.0/(1.0-y))*plus;
+					double c = wJ*E.calcRegular(y) + plus_part;
+
+					int k0 = interpWeights(x/y, weights);
+					for (int m=0; m<static_cast<int>(NN); m++)
+						row[k0+m] += c*weights[m];
+					diag -= plus_part; // the subtraction of A[k] in the plus distribution
+					lo = std::min(lo, k0);
+				}
+			}
+			row[k] += diag;
+
+			first[k] = static_cast<uint>(lo);
+			rows[k].assign(row.begin()+lo, row.end());
+		});
+
+		ConvolutionKernel kernel{};
+		kernel._first = std::move(first);
+		kernel._offset.reserve(n+1);
+		kernel._offset.push_back(0);
+		for (auto const& row : rows)
+			kernel._offset.push_back(kernel._offset.back() + row.size());
+		kernel._values.reserve(kernel._offset.back());
+		for (auto const& row : rows)
+			kernel._values.insert(kernel._values.end(), row.begin(), row.end());
+		return kernel;
 	}
 
 	double Grid::mappingFunctionBase(

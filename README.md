@@ -43,6 +43,16 @@ For the dependency installation prefixes, there is also the `<lib>_ROOT` variabl
 
 Running `cmake --install <build-dir>` will perform standard installation to the chosen directory, and will also spit out a `candiaConfig.cmake` file -- see [here](#usage-from-other-cmake-projects) for what to do with it in other CMake projects.
 
+### Testing
+
+Configuring with `-DCANDIA_BUILD_TESTS=ON` builds the regression tests in `tests/regression`, which are run with CTest from the build directory:
+
+```bash
+ctest --output-on-failure # about 5 s
+```
+
+They compare the evolution of the Les Houches toy PDFs with the hoppet/pegasus benchmark tables in `tests/main`, check the C++ against the Fortran N3LO splitting functions, check that several solvers can run concurrently, and (with LHAPDF support) write an LHAPDF grid and read it back. The other programs in `tests/` require LHAPDF.
+
 
 ## Usage
 

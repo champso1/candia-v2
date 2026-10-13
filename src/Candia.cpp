@@ -263,6 +263,22 @@ namespace Candia2
 		}
     }
 
+	void DGLAPSolver::buildKernels()
+	{
+		// the splitting functions of each order start at these names
+		constexpr std::array<ExprName, 4> order_starts{ExprName::P0ns, ExprName::P1nsm, ExprName::P2nsm, ExprName::P3nsm};
+		const uint end = (_order+1 < order_starts.size()) ?
+			static_cast<uint>(order_starts[_order+1]) :
+			_num_splitting_functions;
+
+		for (uint i=0; i<_num_splitting_functions; i++) {
+			if (i < end)
+				buildKernel(static_cast<ExprName>(i));
+			else
+				_kernels[i] = ConvolutionKernel{};
+		}
+	}
+
     void DGLAPSolver::setupCoefficients()
     {
 	    for (uint k=0; k<_grid.size(); k++) {
@@ -544,6 +560,8 @@ namespace Candia2
 			// only do evolution if alphas are different
 			// (i.e. energy scales are different)
 			if (_alpha0 != _alpha1) {
+				log(LOG_DEBUG, "DGLAP", "Precomputing the convolutions with the splitting functions...");
+				buildKernels();
 				log(LOG_DEBUG, "DGLAP", "Starting singlet evolution and resummation...");
 			    evolveSinglet(resum_singlet, L1);
 				log(LOG_DEBUG, "DGLAP", "Finished singlet evolution and resummation.");
