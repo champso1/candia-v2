@@ -27,7 +27,8 @@ namespace Candia2
 			log(LOG_WARNING, "Grid", "Removed {} xtab value(s) >= 1; the grid does not contain x=1", n);
 
 		fillPoints();
-		initGauLeg(gridfiller_args.min, 1.0, _Xi, _Wi);
+		// the nodes are in the mapping variable z, which always runs over [0, 1] (not in x)
+		initGauLeg(0.0, 1.0, _Xi, _Wi);
 		setupMappings();
 	}
 
