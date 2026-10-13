@@ -1,3 +1,21 @@
+# Unreleased
+	- Fixed several physics bugs:
+		- The Fortran N3LO splitting functions were called with the wrong IMOD (the default `ImodAvg` selected set B), `P3gg` was missing an `else` (so `Imod1` gave the average), and `P3nsv`/`P3gg::calcDelta` ignored the approximation set. The C++ and Fortran paths now agree for every approximation set.
+		- LHAPDF output and `LHAPDFDistribution` input had u and d (and ubar and dbar) swapped; `LHAPDFDistribution` also copied s into sbar and never filled charm.
+		- `calculateSubtractionPDFs` subtracted from the bottom PDF in the charm block, and the bottom block reused the charm entries.
+		- `Grid::interpFindIdx` cached the size of the first grid ever used, so a second grid of different size interpolated incorrectly.
+	- The grid no longer contains x=1 at all, and every loop now covers every grid point. Previously the last grid point was skipped everywhere, which only worked when 1.0 was in xtab. `Grid` now drops xtab values >= 1 with a warning.
+	- Errors now throw `Candia2::Error` (a `std::runtime_error`) instead of calling `exit()`, including errors raised in worker threads. They are raised regardless of verbosity.
+	- `Candia2::assert` was renamed to `Candia2::ensure`, so that including `<cassert>` before a Candia header compiles.
+	- `SplittingFunction::update` and `OpMatElem::update` are now member functions: n_f, beta0 and L_M are stored per expression rather than shared by every solver in the process, so several solvers can run at the same time.
+	- `trunc_idx` below the perturbative order is raised to the order (with a warning) instead of overflowing; several input checks and misleading log messages were fixed.
+	- `ArrayGrid` copy/move members are defaulted (moves no longer copy).
+	- CMake: `-DCMAKE_INSTALL_PREFIX` is respected, warnings from `CANDIA_ENABLE_WARNINGS` no longer leak to consumers, `CANDIA_LIBOME_DIR` and `CANDIA_LHAPDF_DIR` work as documented, and `FindLHAPDF` sets `LHAPDF_INCLUDE_DIRS`/`LHAPDF_LIBRARIES`.
+	- Added CTest regression tests in `tests/regression` (see the README).
+	- `LHAPDFGrid` now starts every evolution at the distribution's initial energy `Q0()` (previously the first requested Q, which gave an all-NaN grid in the example), splits the grid into subgrids at heavy-quark thresholds inside the Q range (keeping the discontinuity of the PDFs and of alpha_s), and generates the info file from the grid. The info-file template now only needs metadata such as `SetDesc`, `Authors` and `Reference`, and can be omitted.
+	- Evolving to the initial energy, or exactly onto a threshold with the upper number of flavours, no longer returns all-zero PDFs.
+	- The subtraction PDFs use the number of light flavours (3 for charm, 4 for bottom) in the OMEs.
+
 # 1.8.0 (from 1.7.0) September 24, 2026
 	- libome is no longer packaged as a submodule. Previously, this was done because we needed a slight modification to some of its behavior to be compatible with how we do convolutions, but this can get very messy very easily, for instance if the user has their own installation of libome, if there are updates we have to manually patch them in to our fork, etc. So, it is now a separate dependency (i.e. the user must install it themself), and the patch is applied by defining our own "custom" OMEs in LibomeInterface.{hpp,cpp} (whose results have been tested to match the original behavior). We have added `CANDIA_LIBOME_DIR` as a variable to point to the installation prefix.
 	- There are non-CANDIA-prefixed versions of the prefix directories for LHAPDF and libome, those being the general for `<lib>_ROOT`, so `libome_ROOT` and `LHAPDF_ROOT` are also available. 
