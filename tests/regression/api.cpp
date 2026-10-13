@@ -97,5 +97,29 @@ int main()
 		check(finite, "NNLO evolution with trunc_idx=0 gives finite results");
 	}
 
+	// subtraction PDFs are computed for the heavy quarks that are active at the final energy
+	// (0-9 charm, 10-19 bottom), and are zero for the others
+	for (double Qf : {3.0, 10.0}) {
+		Grid grid({1e-5, 1e-3, 0.1, 0.5, 0.9});
+		LesHouchesDistribution dist(Qf);
+		AlphaS alphas(2, dist.Q0(), Qf, dist.alpha0(), 1.0);
+		alphas.setVFNS(dist.masses(), dist.nfi(), dist.nff());
+		DGLAPSolver solver(2, grid, alphas, Qf, 4, 4, dist, 1.0);
+		auto const& F = solver.evolve();
+		auto sub = solver.calculateSubtractionPDFs();
+		auto maxAbs = [&sub](uint first, uint last) {
+			double out = 0.0;
+			for (uint i=first; i<last; ++i)
+				for (double v : sub[i])
+					out = std::max(out, std::abs(v));
+			return out;
+		};
+		const bool bottom_active = alphas.nff() >= DIST_B;
+		const uint k = grid.ntab()[1];
+		check(maxAbs(0, 10) > 0.0, "charm subtraction PDFs are computed when charm is active");
+		check((maxAbs(10, 20) > 0.0) == bottom_active, "bottom subtraction PDFs are computed only when bottom is active");
+		check(std::abs(sub[5][k] - (F[DIST_C][k] - sub[0][k])) < 1e-12, "charm subtraction PDF 5 is c - ftilde1");
+	}
+
 	return failures == 0 ? 0 : 1;
 }

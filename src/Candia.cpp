@@ -632,7 +632,6 @@ namespace Candia2
 		double mc2 = mc*mc;
 		double mb = _initial_dist.masses(DIST_B);
 		double mb2 = mb*mb;
-		double qf = _Qf;
 		double qf2 = _Qf*_Qf;
 		
 
@@ -667,9 +666,11 @@ namespace Candia2
 		constexpr uint nl_charm = DIST_C - 1;
 		constexpr uint nl_bottom = DIST_B - 1;
 
+		// the subtraction PDFs of a heavy quark are only computed if it is active at the end of the evolution;
+		// otherwise its PDF is zero and they are left at zero
 		std::vector<ArrayGrid> subpdfs(20, ArrayGrid(_grid.size()));
 		// charm
-		if (mc2 >= qf2) {
+		if (_alpha_s.nff() >= DIST_C) {
 			double L = std::log(mc2/qf2);
 			for (OpMatElemCustom* ome : {&a1hg, &a2hq, &a2hg, &a3hq, &a3hg})
 				ome->update(L, nl_charm);
@@ -701,7 +702,7 @@ namespace Candia2
 			}
 		}
 		// bottom
-		if (mb2 >= qf2) {
+		if (_alpha_s.nff() >= DIST_B) {
 		    double L = std::log(mb2/qf2);
 			for (OpMatElemCustom* ome : {&a1hg, &a2hq, &a2hg, &a3hq, &a3hg})
 				ome->update(L, nl_bottom);
