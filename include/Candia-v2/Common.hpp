@@ -190,14 +190,6 @@ namespace Candia2
 			std::cout << '\n';
 		}
 	}
-	inline void unregisterThreadLogs([[maybe_unused]] std::vector<uint> const& ids)
-	{
-		if (getLogOptions().verbosity == LOG_NONE || getLogOptions().verbosity > LOG_INFO)
-			return;
-
-		std::lock_guard<std::mutex> guard{log_threads_mutex};
-		log_threads_line_offset.clear();
-	}
 	/**
 	 *  @brief Prints messages to standard out for threaded iterations in a nice way that doesn't flood stdout
 	 *  @param thread_idx used in threaded printing, 
