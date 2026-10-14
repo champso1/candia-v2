@@ -41,7 +41,7 @@ int main(int argc, char *argv[])
 		xtab = read_candia_file_result.xtab;
 		dists_raw = read_candia_file_result.dists_ntabbed;
 	} else {
-		auto [xtab, dists] = read_other_file(datafile_path, 37);
+		std::tie(xtab, dists_raw) = read_other_file(datafile_path, 37);
 	}
 
 	auto dists = fix_dists(dists_raw, type);

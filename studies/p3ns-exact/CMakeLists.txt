@@ -1,11 +1,5 @@
 add_executable(p3ns-exact p3ns-exact.cpp)
-target_include_directories(p3ns-exact PUBLIC)
-target_link_libraries(p3ns-exact PUBLIC candia)
+target_link_libraries(p3ns-exact PRIVATE candia)
 
-file(COPY
-  plot.sh
-  p3nsp-approx-vs-exact-qns.gplt
-  p3nsp-approx-vs-exact-lm.gplt
-  p3nsm-approx-vs-exact-qns.gplt
-  p3nsm-approx-vs-exact-lm.gplt
-  DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+file(GLOB resources CONFIGURE_DEPENDS *.gplt plot.sh)
+candia_copy_to_build_dir(${CMAKE_CURRENT_SOURCE_DIR} ${resources})

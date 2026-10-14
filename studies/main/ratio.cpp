@@ -39,7 +39,7 @@ int main(int argc, char *argv[])
 	std::vector<fs::path> filepaths{};
 	std::vector<std::string> titles{};
 	std::vector<ReadCandiaFileResult> addfiles_results{};
-	for (uint i=4; i<argc; i+=2) {
+	for (int i=2; i+1<argc; i+=2) {
 		filepaths.emplace_back(argv[i]);
 		if (!fs::exists(filepaths.back()))
 			log(LOG_ERROR, "ratio.cpp", "additional file doesn't exist ({})", filepaths.back().string());
@@ -79,7 +79,7 @@ int main(int argc, char *argv[])
 		}
 
 		for (uint k=0; k<ratios.front().size(); ++k) {
-			datastream << std::setprecision(1) << basefile_data.xtab[k] << ' ';
+			datastream << std::setprecision(8) << basefile_data.grid_points[k] << ' ';
 			datastream << std::setprecision(std::numeric_limits<double>::max_digits10);
 			for (uint j=0; j<ratios.size(); ++j)
 				datastream << ratios[j][k] << ' ';
@@ -106,7 +106,7 @@ int main(int argc, char *argv[])
 		}
 
 		for (uint k=0; k<ratios.front().size(); ++k) {
-			datastream << std::setprecision(1) << basefile_data.xtab[k] << ' ';
+			datastream << std::setprecision(8) << basefile_data.grid_points[k] << ' ';
 			datastream << std::setprecision(std::numeric_limits<double>::max_digits10);
 			for (uint j=0; j<ratios.size(); ++j)
 				datastream << ratios[j][k] << ' ';

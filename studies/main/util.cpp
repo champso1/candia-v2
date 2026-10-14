@@ -11,7 +11,10 @@ std::string percentToLatex(double percent)
 
 std::string scientificToLatex(double num, int precision, bool benchmark_format)
 {
-	int exponent = std::floor(std::log10(std::abs(num)));
+	if (!std::isfinite(num))
+		return std::format("???");
+	// exact zeros (e.g. a heavy quark below its threshold) have no exponent: write them as 0 x 10^0
+	int exponent = (num == 0.0) ? 0 : static_cast<int>(std::floor(std::log10(std::abs(num))));
 	if (std::abs(exponent) > 20)
 		return std::format("???");
 	double mantissa = num / std::pow(10.0, static_cast<double>(exponent));
@@ -27,7 +30,7 @@ std::string scientificToLatex(double num, int precision, bool benchmark_format)
 
 std::string percentToLatex2(double percent)
 {
-	if (percent >= 1e-8) {
+	if (std::abs(percent) >= 1e-8) {
 		int exponent = std::floor(std::log10(std::abs(percent)));
 		double mantissa = percent / std::pow(10.0, static_cast<double>(exponent));
 		return std::format("{:.2f}e{:+}\\%", mantissa, exponent);
@@ -193,7 +196,7 @@ dist_type fix_dists(dist_type const& dists, int type)
 				dists_fixed.at(3).at(k) = 2.0*(dists[2+6][k] + dists[6+1][k]);
 				dists_fixed.at(4).at(k) = dists[3][k] - dists[6+3][k];
 				dists_fixed.at(5).at(k) = dists[3][k] + dists[6+3][k];
-				dists_fixed.at(6).at(k) = dists[4][k] + dists[6+3][k];
+				dists_fixed.at(6).at(k) = dists[4][k] + dists[6+4][k];
 				dists_fixed.at(7).at(k) = dists[0][k];
 			}
 			return dists_fixed;

@@ -81,7 +81,7 @@ do for [idx=15:38] {
     ftitle = get_title(idx)
     
     set output sprintf("plots/p3nsv-%s.pdf", fname)
-    set title sprintf("Impact of exact P3_{NS}^{+} vs. approximations on %s", ftitle)
+    set title sprintf("Impact of exact P3_{NS}^{v} vs. approximations on %s", ftitle)
     set xlabel "x" offset 0,0.7
     set ylabel ftitle 
     

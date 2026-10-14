@@ -11,8 +11,10 @@ set yrange [0.0:1.0]
 set logscale x
 set format x "%.0e"
 
-plot ARG1 using 1:($3-$9) with lines lw 2 title "xu_v(x)",\
+# usage: gnuplot -c main.gplt <evolve data file>
+# every ::3 skips the xtab, ntab and grid-point lines at the top of the file
+plot ARG1 every ::3 using 1:($3-$9) with lines lw 2 title "xu_v(x)",\
 '' using 1:($4-$10) with lines lw 2 title "xd_v(x)",\
 '' using 1:($10-$9) with lines lw 2 title "xL_-(x)",\
 '' using 1:((2.0*($10+$9))/10.0) with lines lw 2 title "xL_+(x)",\
-'' using 1:(($5+$11)/10.) with lines lw 2 title "xs_+(x)",\
+'' using 1:(($5+$11)/10.) with lines lw 2 title "xs_+(x)"

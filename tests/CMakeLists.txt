@@ -9,8 +9,9 @@ foreach(test IN ITEMS benchmark p3_consistency concurrency api)
 endforeach()
 
 # compares against the Les Houches benchmark tables at Q = 100 GeV,
-# with 13 iterations and trunc_idx 10 (the settings of the old test-all program)
-# tolerances: LO/NLO agree to ~3e-5, NNLO/N3LO currently to ~5e-4
+# with 13 iterations and trunc_idx 10 (the settings of the old test-all program);
+# at N3LO with the approximate non-singlet P3, as used for the hoppet table
+# tolerances: LO/NLO agree to ~6e-5, NNLO/N3LO currently to ~8e-4
 function(candia_benchmark_test name order mur2_muf2 truncated table tolerance)
   add_test(NAME benchmark.${name}
     COMMAND regression_benchmark ${order} 13 10 ${mur2_muf2} ${truncated} ${table} ${tolerance})

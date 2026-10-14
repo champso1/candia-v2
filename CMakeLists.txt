@@ -87,10 +87,10 @@ target_sources(candia PRIVATE
 target_sources(candia PUBLIC
   FILE_SET cxx_headers
   TYPE HEADERS
-  BASE_DIRS ${CMAKE_SOURCE_DIR}/include
+  BASE_DIRS ${PROJECT_SOURCE_DIR}/include
   FILES ${headers})
 
-list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/share/cmake")
+list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/share/cmake")
 find_package(TBB REQUIRED)
 find_package(Threads REQUIRED)
 set(CANDIA_LIBOME_DIR "" CACHE PATH "Path to the installation root/prefix of libome.")
@@ -123,7 +123,7 @@ if (CANDIA_WITH_LHAPDF)
   target_sources(candia PUBLIC
     FILE_SET cxx_headers
     TYPE HEADERS
-    BASE_DIRS ${CMAKE_SOURCE_DIR}/include
+    BASE_DIRS ${PROJECT_SOURCE_DIR}/include
     FILES include/Candia-v2/LHAPDFDistribution.hpp)
   target_sources(candia PRIVATE src/LHAPDFDistribution.cpp)
 endif()
@@ -193,8 +193,8 @@ install(
   FILES
     ${CMAKE_CURRENT_BINARY_DIR}/candiaConfig.cmake
     ${CMAKE_CURRENT_BINARY_DIR}/candiaConfigVersion.cmake
-    ${CMAKE_SOURCE_DIR}/share/cmake/FindLHAPDF.cmake
-	${CMAKE_SOURCE_DIR}/share/cmake/Findlibome.cmake
+    ${PROJECT_SOURCE_DIR}/share/cmake/FindLHAPDF.cmake
+	${PROJECT_SOURCE_DIR}/share/cmake/Findlibome.cmake
   DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/candia)
 
 

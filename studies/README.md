@@ -23,12 +23,12 @@ Compares N3LO evolutions with the exact non-singlet P3 against the approximation
 
 ## plot-generation
 
-`plot-generation <n3lo-file> <nnlo-file> <output>` writes the N3LO/NNLO ratio of b+, c+, s+, u_v, d_v and g from two `evolve` data files; `gnuplot -c plot-scripts/ratio.gplt <output> <pdf>` plots it.
+`plot-generation <n3lo-file> <nnlo-file> <output>` writes the N3LO/NNLO ratio of b+, c+, s+, u_v, d_v and g from two `evolve` data files; `gnuplot -c plot-scripts/ratio.gplt <output> <pdf>` plots it. `gnuplot -c plot-scripts/main.gplt <evolve data file>` plots the valence, sea and strange distributions of one evolution (`main.pdf`).
 
 ## lhapdf-datafile
 
-`lhapdf-datafile` writes an N3LO LHAPDF grid of the toy PDFs; `subpdfs` computes the charm subtraction PDFs from it; `plot.gplt` plots them.
+`lhapdf-datafile` writes the LHAPDF set `testpdf` (an N3LO grid of the toy PDFs from Q0 to 100 GeV, including the subtraction PDFs as PDG ids 9000+; add the directory to `LHAPDF_DATA_PATH` to use it). It also writes the charm subtraction PDFs at Q = 4 GeV to `out-c.dat` and the bottom ones at Q = 10 GeV to `out-b.dat`, which `gnuplot plot.gplt` plots.
 
 ## pdflumiunc
 
-`evolvepdfset` evolves CT25NNLO at N3LO into the LHAPDF set `CT25aN3LO`; `pdflumiunc` then compares its gg luminosity at √s = 13.6 TeV with MSHT20 aN3LO and NNPDF4.0 aN3LO (these sets must be installed), and `plot.gplt` plots the ratio.
+`evolvepdfset` evolves CT25NNLO at N3LO into the LHAPDF set `CT25aN3LO`, written to the working directory; `pdflumiunc`, run from the same directory, then compares its gg luminosity at √s = 13.6 TeV with MSHT20 aN3LO and NNPDF4.0 aN3LO (these sets must be installed), and `plot.gplt` plots the ratio.

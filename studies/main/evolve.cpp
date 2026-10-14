@@ -19,8 +19,8 @@ static void usage()
 	cout << "    <iterations>: number of total iterations to perform.\n";
 	cout << "    <trunc_idx>: number of truncation iterations to perform (for each main iteration!)\n";
 	cout << "    <mur2_muf2>: ratio of mu_R^2 / mu_F^2.\n";
-	cout << "    <use_trunc>: 0=use exact, 1=use truncated";
-	cout << "    <debug>: 0=do not show debug messages, 1=show debug messages";
+	cout << "    <use_trunc>: 0=use exact, 1=use truncated\n";
+	cout << "    <debug>: 0=do not show debug messages, 1=show debug messages\n";
 	cout << "    [title]: optional -- gives a title for the resulting datafile and logfile\n";
 	cout << "-------------------------------------------------------\n\n";
 	throw std::runtime_error("invalid cli arguments");
@@ -53,7 +53,7 @@ static void outputData(
 	outfile << "# using n=" << iterations << " iterations, "
 			<< num_grid_points << " grid points, "
 			<< "a truncation index of " << trunc_idx << ", "
-			<< "and a scale ratio mu_R/mu_F of " << setprecision(2) << kr << '\n';
+			<< "and a scale ratio mu_R^2/mu_F^2 of " << setprecision(2) << kr << '\n';
 
 	// print also the tabulated x values and their corresponding indices in the grid
 	outfile << scientific << setprecision(1);
@@ -109,8 +109,8 @@ int main(int argc, char *argv[]) {
 		if (!fs::create_directory("log"))
 			log(LOG_ERROR, "evolve.cpp", "Failed to create log output directory");
 	}
-	std::string logfile = fileprefix.str() + ".log";
-	fs::path log_path = fs::current_path()/"log"/logfile;
+	// the log file is named like the data file
+	fs::path log_path = fs::current_path()/"log"/datafile_name;
 	log_path.replace_extension(".log");
 	std::ofstream log_output_file(log_path);
 

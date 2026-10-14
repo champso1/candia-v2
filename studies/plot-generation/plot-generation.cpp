@@ -38,7 +38,7 @@ int main(int argc, char *argv[])
     auto [n3lo_data, n3lo_x] = read_datafile(n3lo_file);
 	auto [nnlo_data, nnlo_x] = read_datafile(nnlo_file);
 
-	if (n3lo_data.size() != nnlo_data.size()) {
+	if (n3lo_data.at(0).size() != nnlo_data.at(0).size()) {
 		log(LOG_ERROR, "plot-generation", "Differing number of grid points in n3lo file ({}) and nnlo file ({}).",
 			n3lo_data.at(0).size(), nnlo_data.at(0).size());
 		exit(EXIT_FAILURE);
@@ -82,6 +82,9 @@ std::tuple<vec_type, std::vector<double>> read_datafile(fs::path const& path)
 	iss = std::istringstream{line};
 	while (iss >> temp2)
 		ntab.push_back(temp2);
+
+	// skip the line with all the grid points
+	getline(file_stream, line);
 
 	// read in rest of data points
 	std::vector<double> X{};

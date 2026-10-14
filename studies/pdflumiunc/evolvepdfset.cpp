@@ -14,13 +14,12 @@ int main()
 	double log_q0 = std::log10(q0);
 	double log_qf = std::log10(qf);
 	uint num = 30;
-	double dnum = static_cast<double>(num);
     auto qvals_view =
 		std::views::iota(uint{0}, num)
 		| std::views::transform([&](uint i){ return std::pow(10.0, log_q0+(log_qf-log_q0)*static_cast<double>(i)/(num-1)); });
 	std::vector<double> qvals(qvals_view.begin(), qvals_view.end());
 	
-	getLogOptions().verbosity = LOG_DEBUG;
+	getLogOptions().verbosity = LOG_INFO;
 	LHAPDFDistribution dist(make_lhapdf_pdf("CT25NNLO"), q0, qf);
 	Grid grid({1e-5, 1e-4, 1e-3, 1e-2, 0.1, 0.3, 0.5, 0.7, 0.9});
 
@@ -37,19 +36,9 @@ int main()
 	
 	lhapdfgrid.evolveTrunc(qvals, {});
 
-	getLogOptions().verbosity = LOG_INFO;
-	log(LOG_INFO, "evolvepdfset.cpp", "finished running the however many evolutions");
 	lhapdfgrid.write();
 
-	fs::path pdfdir = fs::current_path()/pdfname;
-	fs::path lhapdfdir("/home/champson/.local/share/LHAPDF");
-	fs::path pdfdir_dest = lhapdfdir/pdfname;
-	if (!fs::exists(pdfdir_dest)) {
-		if (!fs::create_directory(pdfdir_dest))
-			log(LOG_ERROR, "evolvepdfset.cpp", "failed to create lhapdf output dir (in ~/.local/share/LHAPDF");
-	}
-	
-	log(LOG_INFO, "evolvepdfset.cpp", "{} --> {}", pdfdir.string(), pdfdir_dest.string());
-    const auto copyoptions = fs::copy_options::recursive | fs::copy_options::overwrite_existing;
-	fs::copy(pdfdir, pdfdir_dest, copyoptions);
+	// pdflumiunc, run from this directory, finds the set here; to use it elsewhere,
+	// add this directory to LHAPDF_DATA_PATH or copy the set into an LHAPDF data directory
+	log(LOG_INFO, "evolvepdfset.cpp", "wrote the LHAPDF set {}", (fs::current_path()/pdfname).string());
 }

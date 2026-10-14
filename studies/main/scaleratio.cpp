@@ -5,12 +5,13 @@ using namespace Candia2;
 
 static void usage()
 {
-	log(LOG_INFO, "scaleratio.cpp", "USAGE: ./scaleratio <data-file-mu1> <data-file-mu0.5> <data-file-mu2> <format> <type> <title>");
+	log(LOG_INFO, "scaleratio.cpp", "USAGE: ./scaleratio <data-file-mu1> <data-file-mu0.5> <data-file-mu2> [<format> <type>] <title>");
 	log(LOG_INFO, "scaleratio.cpp", "    <data-file-mu[1|0.5|2]>: datafile corresponding to mur_muf=[1|0.5|2]");
 	log(LOG_INFO, "scaleratio.cpp", "    <format>: 0=benchmark format (0.1 -> 1.0^{{-1}}");
 	log(LOG_INFO, "scaleratio.cpp", "              1=normal format (0.1 -> 1e-1)");
 	print_compare_types("scaleratio.cpp");
 	log(LOG_INFO, "scaleratio.cpp", "    <title>: title for single resulting table");
+	log(LOG_INFO, "scaleratio.cpp", "    without <format> and <type>, the normal format and type 2 are used");
 	throw std::runtime_error("invalid cli arguments");
 }
 
@@ -25,18 +26,18 @@ int main(int argc, char *argv[])
 	std::string datafile_mu2{argv[3]};
 	int format{};
 	int type{};
-	std::string title{argv[6]};
+	std::string title{};
 
-	if (argc == 4) {
+	if (argc == 5) {
 		format = 1;
 		type = 2;
+		title = argv[4];
 	} else {
 		std::from_chars(argv[4], argv[4] + 1, format);
 		std::from_chars(argv[5], argv[5] + 1, type);
+		title = argv[6];
 	}
 
-	xtab_type xtab{};
-	dist_type dists_raw{};
 	auto mu1_result = read_candia_file(datafile_mu1, 37);
 	auto mu05_result = read_candia_file(datafile_mu05, 37);
 	auto mu2_result = read_candia_file(datafile_mu2, 37);

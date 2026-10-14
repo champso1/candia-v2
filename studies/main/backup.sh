@@ -1,4 +1,4 @@
-#/bin/bash
+#!/bin/bash
 
 DELETE_ORIGINALS=false
 if [[ "$1" == "--remove-files" ]]; then
@@ -11,7 +11,15 @@ mkdir -p "$DEST_DIR"
 
 TIMESTAMP=$(date +"%Y-%m-%d_%H-%M-%S")
 FILE_NAME="back-$TIMESTAMP.tar.gz"
-TARGETS="tables diffs log latex data"
+# only the output directories that exist
+TARGETS=""
+for dir in tables diffs log latex data ratios; do
+	[[ -e "$dir" ]] && TARGETS="$TARGETS $dir"
+done
+if [[ -z "$TARGETS" ]]; then
+	echo "Nothing to back up."
+	exit 0
+fi
 
 echo "Compressing into $DEST_DIR/$FILE_NAME..."
 

@@ -27,15 +27,6 @@ plot 'out-c.dat' u 1:2 w lines ls 1 title "f_c", \
  	 ''        u 1:5 w lines ls 4 title "f̃_c^{(3)}", \
   	 ''        u 1:7 w lines ls 5 title "f̃_c^{(NNLO)}"
 
-set output 'c-subpdf-nf5.pdf'
-set ylabel "xc(x,Q^2)"
-set title "c subtraction PDFs at Q=4 GeV, Candia-v2 evolution (nf=5)"
-plot 'out-c-nf5.dat' u 1:2 w lines ls 1 title "f_c", \
-     ''        u 1:3 w lines ls 2 title "f̃_c^{(1)}", \
-	 ''        u 1:4 w lines ls 3 title "f̃_c^{(2)}", \
- 	 ''        u 1:5 w lines ls 4 title "f̃_c^{(3)}", \
-  	 ''        u 1:7 w lines ls 5 title "f̃_c^{(NNLO)}"
-
 set output 'b-subpdf.pdf'
 set ylabel "xb(x,Q^2)"
 set title "b subtraction PDFs at Q=10 GeV, Candia-v2 evolution"

@@ -53,8 +53,9 @@ int main()
 	vector<double> xtab;
 	Grid grid({1e-5, 1e-4, 1e-3, 1e-2, 0.1, 0.3, 0.5, 0.7, 0.9});
 
+	// only the varied splitting function is changed; the others keep the default (exact)
 	std::vector<ArrayGrid> p3nsm_exact = run({std::make_pair(ExprName::P3nsm, P3ApproxType::Exact)});
-	std::vector<ArrayGrid> p3nsm_approx_central = run({});
+	std::vector<ArrayGrid> p3nsm_approx_central = run({std::make_pair(ExprName::P3nsm, P3ApproxType::ImodAvg)});
 	std::vector<ArrayGrid> p3nsm_approx_imod1 = run({std::make_pair(ExprName::P3nsm, P3ApproxType::Imod1)});
 	std::vector<ArrayGrid> p3nsm_approx_imod2 = run({std::make_pair(ExprName::P3nsm, P3ApproxType::Imod2)});
 	std::vector<ArrayGrid> p3nsm_ratios_qns = calculate_ratios(p3nsm_exact, p3nsm_approx_central, p3nsm_approx_imod1, p3nsm_approx_imod2, 0);
@@ -63,7 +64,7 @@ int main()
 	outputData(p3nsm_ratios_lm, grid, "p3nsm-exact-vs-approx-lm.dat");
 
 	std::vector<ArrayGrid> p3nsp_exact = run({std::make_pair(ExprName::P3nsp, P3ApproxType::Exact)});
-	std::vector<ArrayGrid> p3nsp_approx_central = run({});
+	std::vector<ArrayGrid> p3nsp_approx_central = run({std::make_pair(ExprName::P3nsp, P3ApproxType::ImodAvg)});
 	std::vector<ArrayGrid> p3nsp_approx_imod1 = run({std::make_pair(ExprName::P3nsp, P3ApproxType::Imod1)});
 	std::vector<ArrayGrid> p3nsp_approx_imod2 = run({std::make_pair(ExprName::P3nsp, P3ApproxType::Imod2)});
     std::vector<ArrayGrid> p3nsp_ratios_qns = calculate_ratios(p3nsp_exact, p3nsp_approx_central, p3nsp_approx_imod1, p3nsp_approx_imod2, 1);
