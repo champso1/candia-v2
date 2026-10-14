@@ -13,9 +13,7 @@ set(tests_main_executables
   compare
   ratio
   precision
-  plot
-  scaleratio
-  test-all)
+  scaleratio)
 foreach(target IN LISTS tests_main_executables)
   add_executable(${target} ${target}.cpp)
   target_link_libraries(${target} PRIVATE tests_main_util)
@@ -23,13 +21,11 @@ endforeach()
 
 set(resources
   plot-scripts
-  hoppet-data
-  pegasus-data
   tex-table
-  tex-table2
-  benchmark-data
   backup.sh
 )
 file(COPY ${resources} DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+# the benchmark tables, so they can be passed as e.g. hoppet/out-nlo.dat
+file(COPY ${PROJECT_SOURCE_DIR}/data/hoppet ${PROJECT_SOURCE_DIR}/data/pegasus DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 
-add_custom_target(tests_main DEPENDS evolve read compare ratio precision scaleratio test-all)
+add_custom_target(tests_main DEPENDS evolve read compare ratio precision scaleratio)

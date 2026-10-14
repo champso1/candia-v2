@@ -130,8 +130,17 @@ endif()
 
 
 add_subdirectory(examples)
+
+option(CANDIA_BUILD_TESTS "Build the regression tests in tests/ (run them with ctest)" OFF)
 enable_testing()
-add_subdirectory(tests)
+if (CANDIA_BUILD_TESTS)
+  add_subdirectory(tests)
+endif()
+
+option(CANDIA_BUILD_STUDIES "Build the study programs in studies/ (benchmark tables, plots); these are not tests" OFF)
+if (CANDIA_BUILD_STUDIES)
+  add_subdirectory(studies)
+endif()
 
 
 

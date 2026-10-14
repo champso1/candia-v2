@@ -37,7 +37,8 @@ Among standard CMake options like `-DCMAKE_BUILD_TYPE` or `-DCMAKE_INSTALL_PREFI
 - `CANDIA_LHAPDF_DIR` (default: unset): if LHAPDF is installed in a nonstandard location (i.e. not /usr/local), then specify its installation prefix here. this variable is ignored if `CANDIA_WITH_LHAPDF` is FALSE.
 - `CANDIA_BUILD_DOCS` (default: FALSE): use Doxygen to build the code documentation
 - `CANDIA_BUILD_EXAMPLES` (default: TRUE): build the two examples in the `examples/` directory
-- `CANDIA_BUILD_TESTS` (default: FALSE): build the "tests" in the `tests/` directory. These aren't traditional tests, but rather a more extensive set of C++ files to perform e.g. benchmarking, plot generation, table creation, etc.
+- `CANDIA_BUILD_TESTS` (default: FALSE): build the regression tests in the `tests/` directory (see [Testing](#testing))
+- `CANDIA_BUILD_STUDIES` (default: FALSE): build the programs in the `studies/` directory, which produce the benchmark tables and plots (see `studies/README.md`). These aren't tests: their output is meant to be looked at.
 
 For the dependency installation prefixes, there is also the `<lib>_ROOT` variable, i.e. `libome_ROOT` and `LHAPDF_ROOT`. Notably, there is also the option to build shared or static libraries by passing the `BUILD_SHARED_LIBS=[ON/OFF]` flag.
 
@@ -45,13 +46,13 @@ Running `cmake --install <build-dir>` will perform standard installation to the 
 
 ### Testing
 
-Configuring with `-DCANDIA_BUILD_TESTS=ON` builds the regression tests in `tests/regression`, which are run with CTest from the build directory:
+Configuring with `-DCANDIA_BUILD_TESTS=ON` builds the regression tests in `tests/`, which are run with CTest from the build directory:
 
 ```bash
 ctest --output-on-failure # about 5 s
 ```
 
-They compare the evolution of the Les Houches toy PDFs with the hoppet/pegasus benchmark tables in `tests/main`, check the C++ against the Fortran N3LO splitting functions, check that several solvers can run concurrently, and (with LHAPDF support) write an LHAPDF grid and read it back. The other programs in `tests/` require LHAPDF.
+They compare the evolution of the Les Houches toy PDFs with the hoppet/pegasus benchmark tables in `data/`, check the C++ against the Fortran N3LO splitting functions, check that several solvers can run concurrently, and (with LHAPDF support) write an LHAPDF grid and read it back.
 
 
 ## Usage

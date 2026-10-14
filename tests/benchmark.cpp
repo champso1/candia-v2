@@ -70,7 +70,7 @@ int main(int argc, char* argv[])
 		}
 		const uint k = grid.ntab()[row++];
 
-		// as in tests/main/test-all.cpp, the smallest and largest x are skipped:
+		// as in the old test-all program, the smallest and largest x are skipped:
 		// at x=0.9 the heavy flavours are tiny and the relative difference is meaningless
 		if (x < 5e-5 || x > 0.8)
 			continue;
