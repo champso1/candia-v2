@@ -29,6 +29,20 @@ candia_benchmark_test(lo.mu05          0 0.5 0 ${CANDIA_PEGASUS_DATA}/out-lo-mu0
 candia_benchmark_test(nlo.mu20         1 2.0 0 ${CANDIA_PEGASUS_DATA}/out-nlo-mu20.dat 1e-4)
 candia_benchmark_test(nlo.mu05         1 0.5 0 ${CANDIA_PEGASUS_DATA}/out-nlo-mu05.dat 1e-4)
 
+# fixed flavour number scheme (n_f = 4) with mu_R != mu_F, against hoppet (tables made with data/hoppet/lh_hoppet.cpp);
+# the single evolution from Q0 to 100 GeV needs 20 iterations to converge at large x; they agree to ~5e-5
+function(candia_benchmark_ffns_test name order mur2_muf2 table)
+  add_test(NAME benchmark.${name}
+    COMMAND regression_benchmark ${order} 20 10 ${mur2_muf2} 0 ${table} 1e-4 4)
+endfunction()
+
+candia_benchmark_ffns_test(lo.ffn4.mu20   0 2.0 ${CANDIA_HOPPET_DATA}/out-lo-ffn4-mu20.dat)
+candia_benchmark_ffns_test(lo.ffn4.mu05   0 0.5 ${CANDIA_HOPPET_DATA}/out-lo-ffn4-mu05.dat)
+candia_benchmark_ffns_test(nlo.ffn4.mu20  1 2.0 ${CANDIA_HOPPET_DATA}/out-nlo-ffn4-mu20.dat)
+candia_benchmark_ffns_test(nlo.ffn4.mu05  1 0.5 ${CANDIA_HOPPET_DATA}/out-nlo-ffn4-mu05.dat)
+candia_benchmark_ffns_test(nnlo.ffn4.mu20 2 2.0 ${CANDIA_HOPPET_DATA}/out-nnlo-ffn4-mu20.dat)
+candia_benchmark_ffns_test(nnlo.ffn4.mu05 2 0.5 ${CANDIA_HOPPET_DATA}/out-nnlo-ffn4-mu05.dat)
+
 add_test(NAME p3_consistency COMMAND regression_p3_consistency)
 add_test(NAME concurrency COMMAND regression_concurrency)
 add_test(NAME api COMMAND regression_api)

@@ -61,12 +61,13 @@ namespace Candia2
 		_masses[_nfi+1] = _Qf;
 
 		// what we setup is the "post-threshold match" at the initial flavor
-		// which is just the initial value of alpha_s, i.e. alpha0
+		// which is the initial value of alpha_s at the renormalization scale, mu_R = sqrt(mur2_muf2)*Q0 (as in the VFNS),
 		// and the "pre-threshold match" at the next flavor
-		// which defines the final value of alpha_s,
-		// this we just calculate.
-		_post[_nfi] = _alpha0;
-		_pre[_nfi+1] = evaluate(_Q0, _Qf, _alpha0);
+		// which defines the final value of alpha_s, at mu_R = sqrt(mur2_muf2)*Qf
+		update(_nf);
+		const double mur_muf = std::sqrt(_mur2_muf2);
+		_post[_nfi] = evaluate(_Q0, mur_muf*_Q0, _alpha0);
+		_pre[_nfi+1] = evaluate(_Q0, _Qf, _post[_nfi]);
 	}
 
 	
