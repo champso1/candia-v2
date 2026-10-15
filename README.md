@@ -6,12 +6,12 @@
 
 ### Prerequisites
 
+- CMake and a build tool e.g. GNU `Make` or `Ninja`
 - libome: fast interface to OMEs. Can be installed from [here](https://gitlab.com/libome/libome). 
 - GSL: GNU Scientific Library (also required by libome)
 - tbb: Intel Threading Building Blocks -- allows usage of C++ execution policies to parallelize/vectorize C++ algorithm loops
 - Compiler with C++20 support, see [here](#compiler-and-system-support) for info about compiler/system choice
 - LHAPDF (optional): for interface to/from LHAPDF grids.
-- CMake and a build tool e.g. GNU `Make` or `Ninja`
 - Doxygen (optional): for building the code documentation
 
 #### Compiler and System Support
@@ -38,7 +38,7 @@ Among standard CMake options like `-DCMAKE_BUILD_TYPE` or `-DCMAKE_INSTALL_PREFI
 - `CANDIA_BUILD_DOCS` (default: FALSE): use Doxygen to build the code documentation
 - `CANDIA_BUILD_EXAMPLES` (default: TRUE): build the two examples in the `examples/` directory
 - `CANDIA_BUILD_TESTS` (default: FALSE): build the regression tests in the `tests/` directory (see [Testing](#testing))
-- `CANDIA_BUILD_STUDIES` (default: FALSE): build the programs in the `studies/` directory, which produce the benchmark tables and plots (see `studies/README.md`). These aren't tests: their output is meant to be looked at.
+- `CANDIA_BUILD_STUDIES` (default: FALSE): build the programs in the `studies/` directory, which produce benchmark tables, plots, etc. (see `studies/README.md`).
 
 For the dependency installation prefixes, there is also the `<lib>_ROOT` variable, i.e. `libome_ROOT` and `LHAPDF_ROOT`. Notably, there is also the option to build shared or static libraries by passing the `BUILD_SHARED_LIBS=[ON/OFF]` flag.
 
@@ -52,12 +52,12 @@ Configuring with `-DCANDIA_BUILD_TESTS=ON` builds the regression tests in `tests
 ctest --output-on-failure # about 5 s
 ```
 
-They compare the evolution of the Les Houches toy PDFs with the hoppet/pegasus benchmark tables in `data/`, check the C++ against the Fortran N3LO splitting functions, check that several solvers can run concurrently, and (with LHAPDF support) write an LHAPDF grid and read it back.
+They compare the evolution of the Les Houches toy PDFs with benchmark tables from e.g. hoppet or pegasus (these tables are in `data/`), check the C++ against the Fortran N3LO splitting functions, check that several solvers can run concurrently, and (with LHAPDF support) write an LHAPDF grid and read it back.
 
 
 ## Usage
 
-The `examples/` directory contains two files that illustrate the basic functionality of the library. The two main forms of output are basic PDFs from a single evolution, or an LHAPDF PDF from a set of evolutions to multiple different final energies. The former is exhibited in `evolve_dglap.cpp` and the latter in `lhapdf_grid.cpp`. Note that the latter will not be compiled if `CANDIA_WITH_LHAPDF` is disabled.
+The `examples/` directory contains two files that illustrate the basic functionality of the library. The two main forms of output are basic PDFs from a single evolution, or an LHAPDF PDF from a set of evolutions to multiple different final energies. The former is exhibited in `evolve_dglap.cpp` and the latter in `lhapdf_grid.cpp`. Note that the latter will not be compiled if `CANDIA_WITH_LHAPDF` is disabled, or LHAPDF wasn't found.
 
 ## Usage from Other CMake Projects
 
@@ -77,7 +77,7 @@ CMake will need to know where to find the `candiaConfig.cmake` file, which can b
 
 ## Changelog
 
-We will now keep a Changelog file for each release/update to the main branch, found in [Changelog.md](Changelog.md). Some minor info about what changed per release can be found on the Releases page.
+We will now keep a Changelog file for each release/update to the main branch, found in [Changelog.md](Changelog.md). Some major info about what changed per release can usually still be found on the Releases page.
 
 ## Attributions and License
 

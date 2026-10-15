@@ -19,7 +19,7 @@ foreach(target IN LISTS studies_main_executables)
 endforeach()
 add_custom_target(studies_main DEPENDS ${studies_main_executables})
 
-file(GLOB_RECURSE resources CONFIGURE_DEPENDS plot-scripts/* tex-table/*)
+file(GLOB_RECURSE resources CONFIGURE_DEPENDS plot-scripts/* tex-table/* tex-table2/*)
 candia_copy_to_build_dir(${CMAKE_CURRENT_SOURCE_DIR} ${resources} ${CMAKE_CURRENT_SOURCE_DIR}/backup.sh)
 # the benchmark tables, so they can be passed as e.g. hoppet/out-nlo.dat
 file(GLOB benchmark_tables CONFIGURE_DEPENDS ${PROJECT_SOURCE_DIR}/data/hoppet/*.dat ${PROJECT_SOURCE_DIR}/data/pegasus/*.dat)

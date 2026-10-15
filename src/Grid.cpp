@@ -288,13 +288,15 @@ namespace Candia2
 				for (uint i=0; i<_Xi.size(); i++) {
 					auto [y, J] = mapping(x, _Xi[i]);
 					double wJ = _Wi[i]*J;
-					double plus_part = wJ*(1.0/(1.0-y))*plus;
+					
+					double plus_part = -plus * wJ*(1.0/(1.0-y));
+					diag += plus_part; // this piece is propto Ak -> it's a diagonal piece
+					
 					double c = wJ*E.calcRegular(y) + plus_part;
 
 					int k0 = interpWeights(x/y, weights);
 					for (int m=0; m<static_cast<int>(NN); m++)
 						row[k0+m] += c*weights[m];
-					diag -= plus_part; // the subtraction of A[k] in the plus distribution
 					lo = std::min(lo, k0);
 				}
 			}
