@@ -289,8 +289,8 @@ namespace Candia2
 					auto [y, J] = mapping(x, _Xi[i]);
 					double wJ = _Wi[i]*J;
 					
-					double plus_part = -plus * wJ*(1.0/(1.0-y));
-					diag += plus_part; // this piece is propto Ak -> it's a diagonal piece
+					double plus_part = plus * wJ*(1.0/(1.0-y));
+					diag -= plus_part; // this piece is propto Ak -> it's a diagonal piece
 					
 					double c = wJ*E.calcRegular(y) + plus_part;
 

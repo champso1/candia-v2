@@ -18,8 +18,8 @@ using namespace Candia2;
 namespace
 {
 	constexpr uint order = 3;
-	constexpr uint iterations = 10;
-	constexpr uint trunc_idx = 10;
+	constexpr uint iterations = 15;
+	constexpr uint trunc_idx = 15;
 	constexpr double mur2_muf2 = 1.0;
 	const std::vector<double> xtab{1e-5, 1e-4, 1e-3, 1e-2, 0.1, 0.3, 0.5, 0.7, 0.9};
 
@@ -34,7 +34,7 @@ namespace
 		AlphaS alphas(order, dist.Q0(), Q, dist.alpha0(), mur2_muf2);
 		alphas.setVFNS(dist.masses(), dist.nfi(), dist.nff());
 		DGLAPSolver solver(order, grid, alphas, Q, iterations, trunc_idx, dist, mur2_muf2);
-		auto const& F = solver.evolveTrunc();
+		auto const& F = solver.evolve();
 		std::vector<ArrayGrid> subtraction_pdfs = solver.calculateSubtractionPDFs();
 		const uint first = (heavy == DIST_C) ? 0 : 10; // charm entries are 0-9, bottom 10-19
 
@@ -68,12 +68,10 @@ int main()
 			qvals.push_back(dist.Q0()*std::pow(Qmax/dist.Q0(), static_cast<double>(i)/(num_knots-1)));
 
 		LHAPDFGrid lhapdfgrid("testpdf", "infofile.in", dist, grid, order, iterations, trunc_idx, mur2_muf2);
-		lhapdfgrid.evolveTrunc(qvals, {});
+		lhapdfgrid.evolve(qvals, {});
 		lhapdfgrid.write();
 	}
-	std::cout << "wrote the LHAPDF set ./testpdf; add this directory to LHAPDF_DATA_PATH to use it\n";
 
 	writeSubtractionPDFs(4.0, DIST_C, "out-c.dat");
 	writeSubtractionPDFs(10.0, DIST_B, "out-b.dat");
-	std::cout << "wrote out-c.dat and out-b.dat; plot them with 'gnuplot plot.gplt'\n";
 }
