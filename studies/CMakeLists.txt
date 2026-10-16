@@ -12,6 +12,7 @@ endfunction()
 add_subdirectory(p3ns-exact)
 add_subdirectory(plot-generation)
 add_subdirectory(lhapdf-datafile)
+add_subdirectory(iteration-precision)
 
 if (CANDIA_WITH_LHAPDF AND LHAPDF_FOUND)
   add_subdirectory(main)
