@@ -97,6 +97,27 @@ int main()
 		check(finite, "NNLO evolution with trunc_idx=0 gives finite results");
 	}
 
+	// converged, the exact and truncated N3LO non-singlet solutions agree even for charm at x = 0.9, which is ~1e-6
+	// of the valence there, so it tests the non-singlet solutions to ~1e-9 (with the beta-function roots that used
+	// to be hard-coded to ~1e-6, the exact one was off by 1%); the singlet needs trunc_idx ~ 15 to converge there
+	{
+		constexpr double Qf = 100.0;
+		auto charm = [&](bool truncated) {
+			Grid grid({1e-5, 1e-3, 0.1, 0.5, 0.9});
+			LesHouchesDistribution dist(Qf);
+			AlphaS alphas(3, dist.Q0(), Qf, dist.alpha0(), 1.0);
+			alphas.setVFNS(dist.masses(), dist.nfi(), dist.nff());
+			DGLAPSolver solver(3, grid, alphas, Qf, 20, 15, dist, 1.0);
+			auto const& F = truncated ? solver.evolveTrunc() : solver.evolve();
+			const uint k = grid.ntab()[4];
+			return std::pair{F[DIST_C][k], F[DIST_C+6][k]};
+		};
+		auto [c_exact, cbar_exact] = charm(false);
+		auto [c_trunc, cbar_trunc] = charm(true);
+		check(std::abs(c_exact/c_trunc - 1.0) < 1e-3 && std::abs(cbar_exact/cbar_trunc - 1.0) < 1e-3,
+			"exact and truncated N3LO agree for c and cbar at x = 0.9");
+	}
+
 	// subtraction PDFs are computed for the heavy quarks that are active at the final energy
 	// (0-9 charm, 10-19 bottom), and are zero for the others
 	for (double Qf : {3.0, 10.0}) {

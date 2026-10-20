@@ -124,17 +124,17 @@ namespace Candia2
 		/** @brief returns a vector of (q,alpha_s) pairs evaluated at the provided list of energies */
 		std::vector<std::pair<double,double>> getValues(std::vector<double> const& qvals);
 
+		double calcBeta0(uint nf) const; //!< calculates \f$\beta_0\f$ for @a nf active flavors
+		double calcBeta1(uint nf) const; //!< calculates \f$\beta_1\f$ for @a nf active flavors
+		double calcBeta2(uint nf) const; //!< calculates \f$\beta_2\f$ for @a nf active flavors
+		double calcBeta3(uint nf) const; //!< calculates \f$\beta_3\f$ for @a nf active flavors
+
 	private:
 		void assertNf(uint nf) const; //!< asserts whether @a nf is a valid index into the per-flavor arrays
 		void assertScheme() const;  //!< asserts whether the user's choice(s) given the current scheme is(are) valid
 
 		double postMatch(double alpha, uint nf); //!< calculates \f$\alpha_s\f$ post threshold given the value pre-threshold
 		double preMatch(double alpha, uint nf); //!< calculates \f$\alpha_s\f$ pre threshold given the value post-threshold
-
-		double calcBeta0(uint nf) const; //!< calculates \f$\beta_0\f$ for @a nf active flavors
-		double calcBeta1(uint nf) const; //!< calculates \f$\beta_1\f$ for @a nf active flavors
-		double calcBeta2(uint nf) const; //!< calculates \f$\beta_2\f$ for @a nf active flavors
-		double calcBeta3(uint nf) const; //!< calculates \f$\beta_3\f$ for @a nf active flavors
 	};
 
 } // class AlphaS

@@ -79,29 +79,31 @@ namespace Candia2
 			_S.resize({_trunc_idx+1, 2, 2, grid.size()});
 		}
 
-		_r1[1] = -0.965105642503553;
-		_b[1] = -2.0 * 0.1629296392275606;
-		_c[1] = std::pow(0.1629296392275606, 2) + std::pow(0.9535744823175397, 2);
+		// the N3LO beta function, beta0 + beta1 a + beta2 a^2 + beta3 a^3 with a = alpha_s/(4 pi), factorizes in alpha_s as
+		// (beta3/(4 pi)^3)*(alpha_s - r1)*(alpha_s^2 + b*alpha_s + c); the exact N3LO non-singlet solution is built on this,
+		// so the roots must be those of the beta function used for alpha_s (hard-coded values were only accurate to ~1e-6)
+		for (uint nf=1; nf<=6; ++nf) {
+			const double p = 4.0*PI;
+			const double b3 = _alpha_s.calcBeta3(nf)/(p*p*p);
+			// as a monic cubic: alpha^3 + a2 alpha^2 + a1 alpha + a0
+			const double a2 = _alpha_s.calcBeta2(nf)/(p*p)/b3;
+			const double a1 = _alpha_s.calcBeta1(nf)/p/b3;
+			const double a0 = _alpha_s.calcBeta0(nf)/b3;
 
-		_r1[2] = -1.0315080774348302;
-		_b[2] = -2.0 * 0.18523659836580222;
-		_c[2] = std::pow(0.18523659836580222, 2) + std::pow(1.0299109343730084, 2);
-				
-		_r1[3] = -1.1120253073038324;
-		_b[3] = -2.0 * 0.2214224000789979;
-		_c[3] = std::pow(0.2214224000789979, 2) + std::pow(1.131077812338495, 2);
-
-		_r1[4] = -1.2090185772488318;
-		_b[4] = -2.0 * 0.2867586032664649;
-		_c[4] = std::pow(0.2867586032664649, 2) + std::pow(1.272794345339416, 2);
-				
-		_r1[5] = -1.3205899823870375;
-		_b[5] = -2.0 * 0.42477034063852415;
-		_c[5] = std::pow(0.42477034063852415, 2) + std::pow(1.4854822725151384, 2);
-				
-		_r1[6] = -1.4277979273114205;
-		_b[6] = -2.0 * 0.7964970177083996;
-		_c[6] = std::pow(0.7964970177083996, 2) + std::pow(1.816809978388145, 2);
+			// its only real root (near -1), by Newton's method
+			double r = -1.0;
+			for (uint i=0; i<100; ++i) {
+				const double step = (((r + a2)*r + a1)*r + a0)/((3.0*r + 2.0*a2)*r + a1);
+				r -= step;
+				if (std::abs(step) <= 1e-15*std::abs(r))
+					break;
+			}
+			// dividing out (alpha - r1) leaves alpha^2 + b alpha + c
+			_r1[nf] = r;
+			_b[nf] = a2 + r;
+			_c[nf] = a1 + r*_b[nf];
+			ensure(_b[nf]*_b[nf] < 4.0*_c[nf], "the N3LO beta function for nf={} has more than one real root", nf);
+		}
 
 		auto func = [](std::array<double, 8> const& a) -> std::string {
 			auto view =
