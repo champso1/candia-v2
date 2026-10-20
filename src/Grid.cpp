@@ -144,6 +144,18 @@ namespace Candia2
 				pp == std::numeric_limits<double>::max())
 				log(LOG_ERROR, "Grid::initGauLeg()", "Failed to determine gauss-legendre abscissae/weights");
 
+			// pp is the derivative at the previous iterate z1; the weight needs it at the final node z
+			// (with the derivative at z1 the weights were only accurate to ~1e-9, ~1e-6 for 200 points)
+			p1 = 1.0;
+			p2 = 0.0;
+			for (uint j=1; j<=n; j++) {
+				J = static_cast<double>(j);
+				p3 = p2;
+				p2 = p1;
+				p1 = ((2.0*J - 1.0)*z*p2 - (J-1.0)*p3)/J;
+			}
+			pp = N*(z*p1 - p2)/(z*z - 1.0);
+
 			Xi[i-1] = xm - xl*z;
 			Xi[n-i] = xm + xl*z;
 			Wi[i-1] = 2.0*xl/((1.0 - z*z)*pp*pp);

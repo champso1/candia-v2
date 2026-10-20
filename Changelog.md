@@ -10,6 +10,7 @@
    - The subtraction PDFs of a heavy quark are now computed when it is active at the final energy, and left at zero otherwise. The condition was inverted: they were only computed for Q <= m_h, so an evolution to 100 GeV returned none and one to 3 GeV returned the bottom ones but not the charm ones.
    - In the FFNS, whenever muR /= muF, alphas wasn't correctly evaluated at kr*muF=muR.
    
+   
 ## Non-Major Changes
    - The grid no longer contains x=1 at all, and every loop now covers every grid point. Previous behavior was artifact of candia-v1, where final grid points was determined by final xtab value. This is unecessary, and x=1 is singular anyway, so it's just removed entirely. Another nice effect is that the loops went to size-1 to not bring in the x=1 point, which doesn't happen anymore.
    - Errors via LOG_ERROR now throw a `Candia2::Error` (nothing more than `std::runtime_error`) instead of calling `exit()`, including errors raised in worker threads. They are raised regardless of verbosity.
@@ -20,11 +21,13 @@
    - `ArrayGrid` copy/move members are defaulted (moves no longer copy).
    - The Gauss-Legendre nodes for the convolutions now span the full mapping range z in [0, 1] instead of [xmin, 1], which skipped the start of every mapping on accident -> minor improvement in benchmark tables
    - `std::execution::par` is now used instead of `par_unseq` since loop bodies are not really vectorizeable in general. no vectorization happened anyway probably, which is corroborated by the unchanged time and outputs, but this is just a bit safer
+   - The Gauss-Legendre nodes for the convolutions now span the full mapping range z in [0, 1] instead of [xmin, 1].
+   - The Gauss-Legendre weights were computed with the Legendre derivative at the next-to-last Newton iterate, so they were only accurate to ~1e-9 (6e-7 for 200 points), which put a floor under the precision of every convolution. They are now accurate to ~1e-12.
    
 ## Major Changes
 	- Added CTest regression tests in `tests/`, and all things previously in `tests/` were moved to `studies/` (some of which were deleted, the others still need some major reworks I think). Calling them "tests" (while not having any *actual* tests) always bothered me. this makes more sense, and separates independent/one-off codes from actual tests that should be ran every time changes are made. See README for description on how to build/use.
 	- `LHAPDFGrid` now starts every evolution at the PDF's initial energy `Q0()` (previously the first requested Q, which gave an all-nan  grid in the example), splits the grid into subgrids at heavy-quark thresholds inside the Q range (keeping the discontinuity of the PDFs and of alphas), and generates the info file directly from the grid and other input parameters. The infofile template now only needs metadata such as `SetDesc`, `Authors` and `Reference`, and can be omitted.
-	- The Gauss-Legendre nodes for the convolutions now span the full mapping range z in [0, 1] instead of [xmin, 1].
+	- The roots of the N3LO beta function used by the exact N3LO non-singlet solution were hard-coded to only ~1e-6 accuracy; they are now computed from the beta-function coefficients. This mattered where heavy flavours are many orders of magnitude below the valence: at x = 0.9 and Q = 100 GeV, c and cbar were off by ~1% (exact ansatz).
 	- The convolutions with the splitting functions and OMEs are precomputed once per number of flavours as matrices acting on the grid (`ConvolutionKernel`, built by `Grid::buildKernel()`), instead of re-evaluating the expressions and interpolating at every Gauss point for every iteration. Results agree with the previous ones to rounding (about 1e-12 relative to each distribution), and evolutions beyond LO are 20-90x faster: an N3LO evolution to 100 GeV takes about 0.3 s instead of 27 s, and the `lhapdf_grid` example 2 s instead of 95 s.
 
 # 1.8.0 (from 1.7.0) September 24, 2026
