@@ -32,8 +32,8 @@ int main()
 	/* evolution setup */
 	/* see evolve_dglap.cpp for further description of these variables */
 	uint order = 1;
-	uint iterations = 10;
-	uint trunc_idx = 10;
+	uint iterations = 15;
+	uint trunc_idx = 15;
 	double mur2_muf2 = 1.0;
 
 	// create the LHAPDFGrid object called "testpdf"
