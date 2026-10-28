@@ -1,4 +1,4 @@
-# 1.9.0 (from 1.8.0) <date>
+# 1.9.0 (from 1.8.0) October 27, 2026
 ## Bugs
 	- The Fortran N3LO splitting functions were called with the wrong imod (the default `ImodAvg` selected B), `P3gg` was missing an `else` (so `Imod1` gave the average), and `P3nsv`/`P3gg::calcDelta` ignored imod entirely (was commented out)
 	- LHAPDF output and `LHAPDFDistribution` input had u and d (and ubar and dbar) swapped; `LHAPDFDistribution` also copied s into sbar and never filled charm. This was only the special case for the LesHouchesDistribution but was accidentally carried over the other distributions
@@ -29,6 +29,7 @@
 	- `LHAPDFGrid` now starts every evolution at the PDF's initial energy `Q0()` (previously the first requested Q, which gave an all-nan  grid in the example), splits the grid into subgrids at heavy-quark thresholds inside the Q range (keeping the discontinuity of the PDFs and of alphas), and generates the info file directly from the grid and other input parameters. The infofile template now only needs metadata such as `SetDesc`, `Authors` and `Reference`, and can be omitted.
 	- The roots of the N3LO beta function used by the exact N3LO non-singlet solution were hard-coded to only ~1e-6 accuracy; they are now computed from the beta-function coefficients. This mattered where heavy flavours are many orders of magnitude below the valence: at x = 0.9 and Q = 100 GeV, c and cbar were off by ~1% (exact ansatz).
 	- The convolutions with the splitting functions and OMEs are precomputed once per number of flavours as matrices acting on the grid (`ConvolutionKernel`, built by `Grid::buildKernel()`), instead of re-evaluating the expressions and interpolating at every Gauss point for every iteration. Results agree with the previous ones to rounding (about 1e-12 relative to each distribution), and evolutions beyond LO are 20-90x faster: an N3LO evolution to 100 GeV takes about 0.3 s instead of 27 s, and the `lhapdf_grid` example 2 s instead of 95 s.
+
 
 # 1.8.0 (from 1.7.0) September 24, 2026
 	- libome is no longer packaged as a submodule. Previously, this was done because we needed a slight modification to some of its behavior to be compatible with how we do convolutions, but this can get very messy very easily, for instance if the user has their own installation of libome, if there are updates we have to manually patch them in to our fork, etc. So, it is now a separate dependency (i.e. the user must install it themself), and the patch is applied by defining our own "custom" OMEs in LibomeInterface.{hpp,cpp} (whose results have been tested to match the original behavior). We have added `CANDIA_LIBOME_DIR` as a variable to point to the installation prefix.
