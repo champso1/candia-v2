@@ -1,0 +1,44 @@
+# plots the output of numerical-precision: one page per kernel for each sweep
+#   sweepA.pdf: error of a single convolution vs the number of Gauss-Legendre points (default grid);
+#               dashed: quadrature only (exact function at the nodes), solid: total (interpolated, as in the evolution)
+#   sweepB.pdf: error vs grid spacing h (relative to the default grid) with N_GL = 200; solid: interpolation
+#               error alone, dashed: total (quadrature + interpolation); with a reference line of slope 8 (the 8-point interpolation)
+
+set terminal pdfcairo enhanced notransparent size 5in,3.5in
+set border lw 1.5
+set grid
+set logscale xy
+set format y "10^{%T}"
+set key outside right top samplen 2
+
+kernels = "p0qq p0gg p1qq p1gg p2gg p3gg"
+xlabels = "10^{-4} 10^{-2} 0.3 0.9"
+colors = "#1f77b4 #d62728 #2ca02c #ff7f0e"
+
+set output "sweepA.pdf"
+set xlabel "N_{GL}"
+set xtics ("5" 5, "10" 10, "20" 20, "50" 50, "100" 100, "200" 200, "300" 300, "500" 500)
+set ylabel "{/Symbol e}_{total}"
+set xrange [4:550]
+set yrange [1e-12:1]
+do for [kern in kernels] {
+	set title sprintf("Sweep A: %s convolution, default grid", kern)
+	file = sprintf("sweepA-%s.dat", kern)
+	plot for [i=1:4] file using 1:(column(2*i+1)) with linespoints lw 2 pt 7 ps 0.4 lc rgb word(colors,i) title sprintf("x = %s", word(xlabels,i))
+}
+
+set output "sweepB.pdf"
+set xlabel "h / h_{default}"
+set ylabel "Error"
+set xtics auto
+set xrange [0.3:2.6]
+set yrange [1e-18:1e-1]
+do for [kern in kernels] {
+	set title sprintf("Sweep B: %s convolution, N_{GL} = 200", kern)
+	file = sprintf("sweepB-%s.dat", kern)
+	plot for [i=1:4] file using 1:(column(5+2*i)) with linespoints lw 2 pt 7 ps 0.4 lc rgb word(colors,i) title sprintf("x = %s", word(xlabels,i)), \
+	     for [i=1:4] file using 1:(column(4+2*i)) with lines lw 1.5 dt 2 lc rgb word(colors,i) notitle, \
+	     NaN with linespoints lw 2 pt 7 ps 0.4 lc rgb "black" title "{/Symbol e}_{interp}", \
+		 NaN with lines lw 2 dt 2 lc rgb "black" title "{/Symbol e}_{total}", \
+	     1e-12*x**8 with lines lw 2 dt 3 lc rgb "black" title "∝ h^8"
+}

@@ -1,6 +1,6 @@
 # Studies
 
-Programs that produce benchmark tables and plots. Unlike the regression tests in `tests/`, they are not automatically run or anything, and are meant to be either one-off codes for table generation, or in the case of `main` a full set of evolution and table/plot generation utilities. They are built whenever `-DCANDIA_BUILD_STUDIES=ON`; `main`, `lhapdf-datafile` and `pdflumiunc` need LHAPDF.
+Programs that produce benchmark tables and plots. Unlike the regression tests in `tests/`, they are not run automatically and have no pass/fail result: their output is meant to be looked at. They are built with `-DCANDIA_BUILD_STUDIES=ON`; `main` and `pdflumiunc` also need `-DCANDIA_WITH_LHAPDF=ON`. Each program is run from its directory in the build tree, where CMake copies the scripts and templates it needs.
 
 ## main
 
@@ -30,6 +30,16 @@ Compares N3LO evolutions with the exact non-singlet P3 against the approximation
 ## lhapdf-datafile
 
 `lhapdf-datafile` writes the LHAPDF set `testpdf`. It also writes the charm subtraction PDFs at Q = 4 GeV to `out-c.dat` and the bottom ones at Q = 10 GeV to `out-b.dat`, which `gnuplot plot.gplt` plots.
+
+## numerical-precision
+
+Measures the numerical error of a single convolution E⊗A, for splitting functions from P0qq to P3gg and smooth test functions shaped like the toy gluon or u valence, at x = 1e-4 and 1e-2 (logarithmic region of the grid), 0.3 (linear) and 0.9 (quadratic). It compares three results with a high-precision reference that does not use Candia's mappings, nodes or grid:
+
+- ε_GL: Candia's mappings and Gauss–Legendre nodes with the exact function at the nodes (quadrature error only);
+- ε_total: the precomputed kernel acting on the function at the grid points, as in the evolution;
+- ε_interp: the difference of the two, i.e. the interpolation error alone.
+
+Sweep A varies `num_gauss_points` at the default grid (`sweepA-<kernel>.dat`); Sweep B scales all grid sizes (log, linear and quadratic parts together) at 200 Gauss–Legendre points (`sweepB-<kernel>.dat`) and prints the fitted slope of ε_interp against the grid spacing h. Run `numerical-precision` (no arguments, about a second), then `gnuplot plot.gplt` for `sweepA.pdf` and `sweepB.pdf` (one page per kernel).
 
 ## pdflumiunc
 

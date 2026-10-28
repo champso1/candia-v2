@@ -18,9 +18,9 @@ namespace Candia2
 	/** @brief Struct for grouping the paramaters related to grid setup */
 	struct GridFillerArgs final
 	{
-		double min{1.0e-7};
-		uint log_size{150};
-		uint lin_size{25};
+		double min{1.0e-5};
+		uint log_size{100};
+		uint lin_size{50};
 		uint quad_size{25};
 		double pivot1{0.1}, pivot2{0.9};
 	};
