@@ -229,8 +229,9 @@ namespace Candia2
 			}
 		}
 
-		createExpression<OpMatElemN3LO>(ExprName::A3nsm, ome::Candia2::AqqQNSEven);
-		createExpression<OpMatElemN3LO>(ExprName::A3nsp, ome::Candia2::AqqQNSOdd);
+		// the C-even (q + qbar) non-singlet OME is libome's "Even", the C-odd (q - qbar) one its "Odd"
+		createExpression<OpMatElemN3LO>(ExprName::A3nsm, ome::Candia2::AqqQNSOdd);
+		createExpression<OpMatElemN3LO>(ExprName::A3nsp, ome::Candia2::AqqQNSEven);
 		createExpression<OpMatElemN3LO>(ExprName::A3gq, ome::Candia2::AgqQ);
 		createExpression<OpMatElemN3LO>(ExprName::A3gg, ome::Candia2::AggQ);
 		createExpression<OpMatElemN3LO>(ExprName::A3hq, ome::Candia2::AQqPS);
