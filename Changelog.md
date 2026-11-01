@@ -1,3 +1,8 @@
+# 1.9.1 (from 1.9.0) November 1, 2026
+	- fixed swap of OME for A3nsp and A3nsm (even vs. odd)
+	- P3qq is constructed from P3nsp and P_ps. The former has an exact expression, but wasn't taken into consideration even if P3nsp was specified to be exact (i.e. left as default). This is fixed.
+	- Generated even more tests to compare evolution using approx vs. exact non-singlet with hoppet under the same conditions
+
 # 1.9.0 (from 1.8.0) October 27, 2026
 ## Bugs
 	- The Fortran N3LO splitting functions were called with the wrong imod (the default `ImodAvg` selected B), `P3gg` was missing an `else` (so `Imod1` gave the average), and `P3nsv`/`P3gg::calcDelta` ignored imod entirely (was commented out)
