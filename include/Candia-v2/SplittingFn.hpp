@@ -9,6 +9,8 @@
 #include "Candia-v2/Expression.hpp"
 #include "Candia-v2/SpecialFuncs.hpp"
 
+#include <memory>
+
 namespace Candia2
 {
 	
@@ -389,6 +391,37 @@ namespace Candia2
 		double calcPlus() const override;
 		double calcDelta() const override;
 		void preCalc() override;
+	};
+
+	/**
+	 *  @ingroup n3lo_splitfuncs
+	 *  @brief \f$P_{qq}^{(3)} = P_{ns}^{(3)+} + P_{ps}^{(3)}\f$ from a given non-singlet and pure-singlet part,
+	 *  so that the singlet evolution uses the same \f$P_{ns}^{(3)+}\f$ (exact or approximate) as the non-singlet one
+	 */
+	class P3qqFromParts final : public SplittingFunction
+	{
+	private:
+		std::unique_ptr<SplittingFunction> _ns_plus;
+		std::unique_ptr<SplittingFunction> _pure_singlet;
+	public:
+		P3qqFromParts(std::unique_ptr<SplittingFunction> ns_plus, std::unique_ptr<SplittingFunction> pure_singlet)
+			: _ns_plus{std::move(ns_plus)}, _pure_singlet{std::move(pure_singlet)}
+		{
+		}
+
+		double calcRegular(double x) const override { return _ns_plus->calcRegular(x) + _pure_singlet->calcRegular(x); }
+		double calcPlus() const override { return _ns_plus->plus(); }
+		double calcDelta() const override { return _ns_plus->delta(); }
+
+		/** passes this expression's nf, beta0 and scale log on to both parts, then caches the plus and delta pieces */
+		void preCalc() override
+		{
+			for (SplittingFunction* part : {_ns_plus.get(), _pure_singlet.get()}) {
+				part->update(_nf, _beta0, _log_muf2_mur2);
+				part->preCalc();
+			}
+			SplittingFunction::preCalc();
+		}
 	};
 
 	/**

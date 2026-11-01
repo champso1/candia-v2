@@ -201,7 +201,18 @@ namespace Candia2
 			createExpression<mvv_p3::P3gq>(ExprName::P3gq, _p3_approx_types[static_cast<uint>(ExprName::P3gq)]);
 			createExpression<mvv_p3::P3gg>(ExprName::P3gg, _p3_approx_types[static_cast<uint>(ExprName::P3gg)]);
 		} else {
-			createExpression<P3qq>(ExprName::P3qq, _p3_approx_types[static_cast<uint>(ExprName::P3qq)]);
+			// the singlet P_qq = P_ns^+ + P_ps takes approximations from both nsp and ps
+			// since the nsp can be approx or exact, we construct them separately
+			const P3ApproxType nsp_type = _p3_approx_types[static_cast<uint>(ExprName::P3nsp)];
+			std::unique_ptr<SplittingFunction> ns_plus{};
+			if (nsp_type == P3ApproxType::Exact)
+				ns_plus = std::make_unique<p3_exact::P3nsp>();
+			else
+				ns_plus = std::make_unique<P3nsp>(nsp_type);
+			createExpression<P3qqFromParts>(
+				ExprName::P3qq,
+				std::move(ns_plus),
+				std::make_unique<P3ps>(_p3_approx_types[static_cast<uint>(ExprName::P3qq)]));
 			createExpression<P3qg>(ExprName::P3qg, _p3_approx_types[static_cast<uint>(ExprName::P3qg)]);
 			createExpression<P3gq>(ExprName::P3gq, _p3_approx_types[static_cast<uint>(ExprName::P3gq)]);
 			createExpression<P3gg>(ExprName::P3gg, _p3_approx_types[static_cast<uint>(ExprName::P3gg)]);
