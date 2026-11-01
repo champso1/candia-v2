@@ -3,8 +3,9 @@
 // Evolves the Les Houches toy PDFs to Q = 100 GeV and compares them with a benchmark table
 // (hoppet or pegasus output at the standard xtab points).
 //
-// usage: regression_benchmark <order> <iterations> <trunc_idx> <mur2_muf2> <truncated: 0/1> <table> <tolerance> [<ffns nf>]
-// without <ffns nf> (or with 0) the evolution uses the variable flavour number scheme
+// usage: regression_benchmark <order> <iterations> <trunc_idx> <mur2_muf2> <truncated: 0/1> <table> <tolerance> [<ffns nf> [<p3ns>]]
+// without <ffns nf> (or with 0) the evolution uses the variable flavour number scheme;
+// <p3ns> is the N3LO non-singlet splitting function: approx (default, the central approximation) or exact
 
 #include "Candia-v2/Candia.hpp"
 
@@ -19,8 +20,8 @@ using namespace Candia2;
 
 int main(int argc, char* argv[])
 {
-	if (argc != 8 && argc != 9) {
-		std::fprintf(stderr, "usage: %s <order> <iterations> <trunc_idx> <mur2_muf2> <truncated> <table> <tolerance> [<ffns nf>]\n", argv[0]);
+	if (argc < 8 || argc > 10 || (argc == 10 && std::string(argv[9]) != "approx" && std::string(argv[9]) != "exact")) {
+		std::fprintf(stderr, "usage: %s <order> <iterations> <trunc_idx> <mur2_muf2> <truncated> <table> <tolerance> [<ffns nf> [approx|exact]]\n", argv[0]);
 		return 2;
 	}
 	const uint order = std::stoi(argv[1]);
@@ -30,7 +31,8 @@ int main(int argc, char* argv[])
 	const bool truncated = std::stoi(argv[5]) == 1;
 	const std::string table_path = argv[6];
 	const double tolerance = std::stod(argv[7]);
-	const uint ffns_nf = (argc == 9) ? std::stoi(argv[8]) : 0;
+	const uint ffns_nf = (argc >= 9) ? std::stoi(argv[8]) : 0;
+	const bool exact_p3ns = (argc == 10) && std::string(argv[9]) == "exact";
 
 	getLogOptions().verbosity = LOG_WARNING;
 
@@ -44,11 +46,13 @@ int main(int argc, char* argv[])
 	else
 		alphas.setVFNS(dist.masses(), dist.nfi(), dist.nff());
 	DGLAPSolver solver(order, grid, alphas, Qf, iterations, trunc_idx, dist, mur2_muf2);
-	// the hoppet N3LO tables use the approximate non-singlet P3 (the central one of arXiv:1707.08315)
+	// the non-singlet P3: the central approximation (as in the hoppet *-approx tables) or the exact one of
+	// arXiv:2604.09534 (the *-exact tables); the singlet P3 is the central approximation in both
+	const P3ApproxType p3ns = exact_p3ns ? P3ApproxType::Exact : P3ApproxType::ImodAvg;
 	solver.setP3ApproximationTypes({
-		{ExprName::P3nsm, P3ApproxType::ImodAvg},
-		{ExprName::P3nsp, P3ApproxType::ImodAvg},
-		{ExprName::P3nsv, P3ApproxType::ImodAvg}});
+		{ExprName::P3nsm, p3ns},
+		{ExprName::P3nsp, p3ns},
+		{ExprName::P3nsv, p3ns}});
 	auto const& F = truncated ? solver.evolveTrunc() : solver.evolve();
 
 	// table columns: x, g, u, d, s, c, b, t, ub, db, sb, cb, bb, tb
@@ -99,8 +103,9 @@ int main(int argc, char* argv[])
 		}
 	}
 
-	std::printf("order=%u iterations=%u mur2_muf2=%g %s %s: compared %u values, max rel. diff %.3e (tolerance %.1e)\n",
-		order, iterations, mur2_muf2, truncated ? "truncated" : "exact", ffns_nf > 0 ? "FFNS" : "VFNS", compared, worst, tolerance);
+	std::printf("order=%u iterations=%u mur2_muf2=%g %s %s%s: compared %u values, max rel. diff %.3e (tolerance %.1e)\n",
+		order, iterations, mur2_muf2, truncated ? "truncated" : "exact", ffns_nf > 0 ? "FFNS" : "VFNS",
+		order == 3 ? (exact_p3ns ? " exact P3ns" : " approx. P3ns") : "", compared, worst, tolerance);
 	if (compared == 0) {
 		std::fprintf(stderr, "no values were compared\n");
 		return 1;
