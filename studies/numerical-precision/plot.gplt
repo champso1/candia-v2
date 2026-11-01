@@ -10,6 +10,7 @@ set grid
 set logscale xy
 set format y "10^{%T}"
 set key outside right top samplen 2
+set bmargin 4
 
 kernels = "p0qq p0gg p1qq p1gg p2gg p3gg"
 xlabels = "10^{-4} 10^{-2} 0.3 0.9"
@@ -27,12 +28,18 @@ do for [kern in kernels] {
 	plot for [i=1:4] file using 1:(column(2*i+1)) with linespoints lw 2 pt 7 ps 0.4 lc rgb word(colors,i) title sprintf("x = %s", word(xlabels,i))
 }
 
+set output "sweepA-p3gg.pdf"
+set title "Sweep A: p3gg convolution, default grid"
+plot for [i=1:4] 'sweepA-p3gg.dat' using 1:(column(2*i+1)) with linespoints lw 2 pt 7 ps 0.4 lc rgb word(colors,i) title sprintf("x = %s", word(xlabels,i))
+
+
 set output "sweepB.pdf"
 set xlabel "h / h_{default}"
 set ylabel "Error"
 set xtics auto
 set xrange [0.3:2.6]
 set yrange [1e-18:1e-1]
+set bmargin 4
 do for [kern in kernels] {
 	set title sprintf("Sweep B: %s convolution, N_{GL} = 200", kern)
 	file = sprintf("sweepB-%s.dat", kern)
@@ -42,3 +49,12 @@ do for [kern in kernels] {
 		 NaN with lines lw 2 dt 2 lc rgb "black" title "{/Symbol e}_{total}", \
 	     1e-12*x**8 with lines lw 2 dt 3 lc rgb "black" title "∝ h^8"
 }
+
+set output "sweepB-p3gg.pdf"
+set title "Sweep B: p3gg convolution, N_{GL} = 200"
+file = "sweepB-p3gg.dat"
+plot for [i=1:4] file using 1:(column(5+2*i)) with linespoints lw 2 pt 7 ps 0.4 lc rgb word(colors,i) title sprintf("x = %s", word(xlabels,i)), \
+     for [i=1:4] file using 1:(column(4+2*i)) with lines lw 1.5 dt 2 lc rgb word(colors,i) notitle, \
+     NaN with linespoints lw 2 pt 7 ps 0.4 lc rgb "black" title "{/Symbol e}_{interp}", \
+	 NaN with lines lw 2 dt 2 lc rgb "black" title "{/Symbol e}_{total}", \
+     1e-12*x**8 with lines lw 2 dt 3 lc rgb "black" title "∝ h^8"
