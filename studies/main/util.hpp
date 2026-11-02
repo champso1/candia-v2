@@ -55,37 +55,18 @@ ReadCandiaFileResult read_candia_file(fs::path const &path, uint size);
 dist_type fix_dists(dist_type const& dists, int type);
 std::pair<xtab_type, dist_type> read_other_file(fs::path const &path, uint size);
 
-constexpr inline char const* TEX_TABLE_DIR{"tex-table"};
-constexpr inline char const* TEX_TABLE_TEMPLATE{"table-base.txt"};
-constexpr inline char const* TEX_TABLE_SUBTABLE_TEMPLATE{"table-sub-base.txt"};
-constexpr inline char const* TEX_TABLE_FOOTER_TEMPLATE{"table-footer.txt"};
-constexpr inline char const* TEX_TABLE_COL_LINE{"    \\multicolumn{1}{c|} {$^COL^$} &\n"};
-constexpr inline char const* TEX_TABLE_COL_LINE_FINAL{"    \\multicolumn{1}{c||}{$^COL^$} \\\\[0.5mm]"};
-constexpr inline char const* TEX_TABLE_COL_DEF{"r|"};
-
-constexpr inline std::string_view TEX_TABLE2_DIR{"tex-table2"};
-constexpr inline std::string_view TEX_TABLE2_TEMPLATE{"table-base.txt"};
-constexpr inline std::string_view TEX_TABLE2_SUBTABLE_TEMPLATE{"table-sub-base.txt"};
-constexpr inline std::string_view TEX_TABLE2_FOOTER_TEMPLATE{"table-footer.txt"};
-constexpr inline std::string_view TEX_TABLE2_COL_DEF{"c"};
+constexpr inline std::string_view TEX_TABLE_DIR{"tex-table"};
+constexpr inline std::string_view TEX_TABLE_TEMPLATE{"table-base.txt"};
+constexpr inline std::string_view TEX_TABLE_SUBTABLE_TEMPLATE{"table-sub-base.txt"};
+constexpr inline std::string_view TEX_TABLE_FOOTER_TEMPLATE{"table-footer.txt"};
+constexpr inline std::string_view TEX_TABLE_COL_DEF{"c"};
 
 void outputLatexTable(
     xtab_type const& xtab,
 	dist_type const& diffs, std::string const& filename,
 	std::vector<std::string> const& cols, int format, bool benchmark_format);
 
-void outputLatexTable2(
-    xtab_type const& xtab,
-	dist_type const& diffs, std::string const& filename,
-	std::vector<std::string> const& cols, int format, bool benchmark_format);
-
 void outputLatexTableScaleRatio(
-    xtab_type const& xtab,
-	std::array<std::reference_wrapper<dist_type>, 3> const& arrs,
-	std::string const& filename,
-	std::vector<std::string> const& cols, int format, bool benchmark_format);
-
-void outputLatexTableScaleRatio2(
     xtab_type const& xtab,
 	std::array<std::reference_wrapper<dist_type>, 3> const& arrs,
 	std::string const& filename,

@@ -120,7 +120,7 @@ int main(int argc, char *argv[]) {
 	log_options.log_output_stream = log_output_file;
 
 	std::vector<double> xtab{1e-5, 1e-4, 1e-3, 1e-2, 0.1, 0.3, 0.5, 0.7, 0.9};
-	Grid grid(xtab);
+	Grid grid(xtab, {.min=1.0e-7,.log_size=150}, {.num_gauss_points=100});
 
 	LesHouchesDistribution dist(Qf);
 	// LHAPDFDistribution dist(make_lhapdf_pdf("CT18NNLO"), 1.295, 100.0);
@@ -129,11 +129,6 @@ int main(int argc, char *argv[]) {
 	// alphas.setFFNS(4);
 
 	DGLAPSolver solver(order, grid, alphas, Qf, iterations, trunc_idx, dist, mur2_muf2);
-	solver.setP3ApproximationTypes({
-			std::make_pair(ExprName::P3nsm, P3ApproxType::ImodAvg),
-			std::make_pair(ExprName::P3nsp, P3ApproxType::ImodAvg),
-			std::make_pair(ExprName::P3nsv, P3ApproxType::ImodAvg)
-		});
 	
 	auto t0 = chrono::high_resolution_clock::now();
 	auto F = use_trunc ? solver.evolveTrunc() : solver.evolve();

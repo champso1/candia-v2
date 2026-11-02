@@ -1,5 +1,5 @@
-\hline \hline
+\bottomrule
 \end{tabular}
-\end{center}
+}
 \end{table}
 \end{document}

@@ -52,6 +52,6 @@ int main(int argc, char *argv[])
 		std::ref(mu2_dists)
 	};
 	
-	outputLatexTableScaleRatio2(mu1_result.xtab, arrs, title, cols[type].get(), 1, format == 0);
+	outputLatexTableScaleRatio(mu1_result.xtab, arrs, title, cols[type].get(), 1, format == 0);
 }
 
