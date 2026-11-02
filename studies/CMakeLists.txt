@@ -14,6 +14,7 @@ add_subdirectory(plot-generation)
 add_subdirectory(lhapdf-datafile)
 add_subdirectory(iteration-precision)
 add_subdirectory(numerical-precision)
+add_subdirectory(low-energy-evolutions)
 
 if (CANDIA_WITH_LHAPDF AND LHAPDF_FOUND)
   add_subdirectory(main)
