@@ -20,7 +20,7 @@ set style line 5 lc rgb 'purple' dt 5 lw 2 # Dot-Dash Purple
 
 set output 'b-subpdf.pdf'
 set ylabel "xb(x,Q^2)"
-set title "b subtraction PDFs at x=10 GeV, Candia-v2 evolution"
+set title "b subtraction PDFs at Q=10 GeV, Candia-v2 evolution"
 plot 'data/out-b-10gev.dat' u 1:2 w lines ls 1 title "f_b", \
      ''        u 1:6  w lines ls 2 title "f̃_b^{NLO}", \
 	 ''        u 1:7  w lines ls 3 title "f̃_b^{NNLO}", \
@@ -29,7 +29,7 @@ plot 'data/out-b-10gev.dat' u 1:2 w lines ls 1 title "f_b", \
 
 set output 'c-subpdf.pdf'
 set ylabel "xc(x,Q^2)"
-set title "c subtraction PDFs at x=4 GeV, Candia-v2 evolution"
+set title "c subtraction PDFs at Q=4 GeV, Candia-v2 evolution"
 plot 'data/out-c-4gev.dat' u 1:2 w lines ls 1 title "f_c", \
      ''        u 1:6  w lines ls 2 title "f̃_c^{NLO}", \
 	 ''        u 1:7  w lines ls 3 title "f̃_c^{NNLO}", \
