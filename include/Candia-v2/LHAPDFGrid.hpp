@@ -52,23 +52,23 @@ namespace Candia2
 		    C_FTILDE1=0,
 			C_FTILDE2   ,
 			C_FTILDE3   ,
-			C_FTILDENNLO, // ft1 + ft2
-			C_FTILDEN3LO, // ft1 + ft2 + ft3
+			C_FTILDENLO, // ft1 + ft2
+			C_FTILDENNLO, // ft1 + ft2 + ft3
 			C_DELTAF1   , // fc - ft1
 			C_DELTAF2   , // fc - ft2
 			C_DELTAF3   , // fc - ft3
+			C_DELTAFNLO, // fc - ftNLO
 			C_DELTAFNNLO, // fc - ftNNLO
-			C_DELTAFN3LO, // fc - ftN3LO
 			B_FTILDE1   ,
 			B_FTILDE2   ,
 			B_FTILDE3   ,
-			B_FTILDENNLO, // ft1 + ft2
-			B_FTILDEN3LO, // ft1 + ft2 + ft3
+			B_FTILDENLO, // ft1 + ft2
+			B_FTILDENNLO, // ft1 + ft2 + ft3
 			B_DELTAF1   , // fb - ft1
 			B_DELTAF2   , // fb - ft2
 			B_DELTAF3   , // fb - ft3
-			B_DELTAFNNLO, // fb - ftNNLO
-			B_DELTAFN3LO  // fb - ftN3LO
+			B_DELTAFNLO, // fb - ftNLO
+			B_DELTAFNNLO  // fb - ftNNLO
 		};
 	private:
 		uint _lhapdf_subpdf_pid_offset{9000};

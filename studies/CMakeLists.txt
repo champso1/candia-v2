@@ -8,7 +8,7 @@ function(candia_copy_to_build_dir base)
   endforeach()
 endfunction()
 
-# main and pdflumiunc need LHAPDF; the others only need the library
+# main, pdflumiunc and subtraction-pdfs need LHAPDF; the others only need the library
 add_subdirectory(p3ns-exact)
 add_subdirectory(plot-generation)
 add_subdirectory(lhapdf-datafile)
@@ -19,6 +19,7 @@ add_subdirectory(low-energy-evolutions)
 if (CANDIA_WITH_LHAPDF AND LHAPDF_FOUND)
   add_subdirectory(main)
   add_subdirectory(pdflumiunc)
+  add_subdirectory(subtraction-pdfs)
 else()
-  message(STATUS "candia-v2: studies/main and studies/pdflumiunc need LHAPDF (CANDIA_WITH_LHAPDF=ON); skipping them")
+  message(STATUS "candia-v2: studies/main, studies/pdflumiunc and studies/subtraction-pdfs need LHAPDF (CANDIA_WITH_LHAPDF=ON); skipping them")
 endif()

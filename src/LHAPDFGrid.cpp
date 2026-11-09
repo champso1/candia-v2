@@ -43,6 +43,8 @@ namespace Candia2
 		auto duplicates = std::ranges::unique(knots);
 		knots.erase(duplicates.begin(), duplicates.end());
 
+		log(LOG_DEBUG, "LHAPDFGrid", "After removing duplicates, have the following Q knots: {}", vec_to_str2(knots));
+
 		// every evolution starts at the initial energy of the distribution
 		const double q0 = _dist.Q0();
 		const double dist_qf = _dist.Qf();

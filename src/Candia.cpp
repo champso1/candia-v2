@@ -634,11 +634,6 @@ namespace Candia2
 
 	std::vector<ArrayGrid> DGLAPSolver::calculateSubtractionPDFs()
 	{
-		if (_order < 2) {
-			log(LOG_WARNING, "DGLAPSolver", "cannot create subtraction PDFs below NNLO");
-			return {};
-		}
-
 		double as = _alpha1/(4.0*PI);
 		double as2 = as*as;
 		double as3 = as2*as;
@@ -650,104 +645,128 @@ namespace Candia2
 		
 
 		auto zero_func = [](double,double){ return 0.0; };
-	    auto a1qg_reg_func = [as](double lm, double nf, double x) {
+	    auto a1qg_reg_func = [](double lm, double nf, double x) {
 			auto ome_reg = ome::AQg_reg[1];
 			return ome_reg(lm, nf, x); };
-		OpMatElemCustom a1hg(a1qg_reg_func, zero_func, zero_func);
+		OpMatElemCustom _a1hg(a1qg_reg_func, zero_func, zero_func);
 
-		auto a2hq_reg_func = [as](double lm, double nf, double x) {
+		auto a2hq_reg_func = [](double lm, double nf, double x) {
 			auto ome_reg = ome::AQqPS_reg[2];
 			return ome_reg(lm, nf, x); };
-		OpMatElemCustom a2hq(a2hq_reg_func, zero_func, zero_func);
+		OpMatElemCustom _a2hq(a2hq_reg_func, zero_func, zero_func);
 		
-		auto a2hg_reg_func = [as](double lm, double nf, double x) {
+		auto a2hg_reg_func = [](double lm, double nf, double x) {
 			auto ome_reg = ome::AQg_reg[2];
 			return ome_reg(lm, nf, x); };
-		OpMatElemCustom a2hg(a2hg_reg_func, zero_func, zero_func);
+		OpMatElemCustom _a2hg(a2hg_reg_func, zero_func, zero_func);
 
-		auto a3hq_reg_func = [as](double lm, double nf, double x) {
+		auto a3hq_reg_func = [](double lm, double nf, double x) {
 			auto ome_reg = ome::AQqPS_reg[3];
 			return ome_reg(lm, nf, x); };
-		OpMatElemCustom a3hq(a3hq_reg_func, zero_func, zero_func);
+		OpMatElemCustom _a3hq(a3hq_reg_func, zero_func, zero_func);
 		
-		auto a3hg_reg_func = [as](double lm, double nf, double x) {
+		auto a3hg_reg_func = [](double lm, double nf, double x) {
 			auto ome_reg = ome::AQg_reg[3];
 			return ome_reg(lm, nf, x); };
-		OpMatElemCustom a3hg(a3hg_reg_func, zero_func, zero_func);
+		OpMatElemCustom _a3hg(a3hg_reg_func, zero_func, zero_func);
 
 
 		// libome takes the number of light flavours, i.e. those below the heavy quark
 		constexpr uint nl_charm = DIST_C - 1;
 		constexpr uint nl_bottom = DIST_B - 1;
-
-		// the subtraction PDFs of a heavy quark are only computed if it is active at the end of the evolution;
-		// otherwise its PDF is zero and they are left at zero
+		
 		std::vector<ArrayGrid> subpdfs(20, ArrayGrid(_grid.size()));
 		// charm
 		if (_alpha_s.nff() >= DIST_C) {
 			double L = std::log(mc2/qf2);
-			for (OpMatElemCustom* ome : {&a1hg, &a2hq, &a2hg, &a3hq, &a3hg})
-				ome->update(L, nl_charm);
 			
+			for (OpMatElemCustom* ome : {&_a1hg, &_a2hq, &_a2hg, &_a3hq, &_a3hg})
+				ome->update(L, nl_charm);
+
+			ConvolutionKernel a1hg = _grid.buildKernel(_a1hg);
+			ConvolutionKernel a2hq = _grid.buildKernel(_a2hq);
+			ConvolutionKernel a2hg = _grid.buildKernel(_a2hg);
+			ConvolutionKernel a3hq = _grid.buildKernel(_a3hq);
+			ConvolutionKernel a3hg = _grid.buildKernel(_a3hg);
+
 			for (uint k=0; k<_grid.size(); ++k) {
-				double ftilde1 = as*_grid.convolution(_F[0], a1hg, k);
-				double ftilde2 = as2*(
-					_grid.convolution(_F[31], a2hq, k) +
-					_grid.convolution(_F[0], a2hg, k)
+				double ftilde1 = 0.5*as*a1hg.apply(_F[0], k);
+				double ftilde2 = 0.5*as2*(
+					 a2hq.apply(_F[31], k) +
+					 a2hg.apply(_F[0], k)
 				);
-				double ftilde3 = as3*(
-					_grid.convolution(_F[31], a3hq, k) +
-					_grid.convolution(_F[0], a3hg, k)
+				double ftilde3 = 0.5*as3*(
+					 a3hq.apply(_F[31], k) +
+					 a3hg.apply(_F[0], k)
 				);
 
-				subpdfs[0][k] = ftilde1;
-				subpdfs[1][k] = ftilde2;
-				subpdfs[2][k] = ftilde3;
+				// here, we store all possible pieces of the subtraction PDFs
+				// each term in the series, ftilde1-3, 1 containing the NLO OME,
+				// 2 the NNLO, and 3 the N3LO
+				// then we store the actual full subtraction PDFs,
+				// the LO coming from ftilde1 (meaning ftildeLO is just ftilde1)
+				// NLO from ftilde1 and 2, and NNLO from all three
+				// lastly we store the residuals, which are the actual PDF
+				// minus the subtraction piece
+				// we again do this for each piece order by order
+				// as well as the full terms
+
+				subpdfs[0][k] = ftilde1;                       // ftilde 1
+				subpdfs[1][k] = ftilde2;                       // ftilde 2
+				subpdfs[2][k] = ftilde3;                       // ftilde 3
+
+				subpdfs[3][k] = ftilde1 + ftilde2;             // ftilde NLO
+				subpdfs[4][k] = ftilde1 + ftilde2 + ftilde3;   // ftilde NNLO
 			
-				subpdfs[3][k] = ftilde1 + ftilde2;
-				subpdfs[4][k] = ftilde1 + ftilde2 + ftilde3;
-			
-				subpdfs[5][k] = _F[DIST_C][k] - ftilde1;
-				subpdfs[6][k] = _F[DIST_C][k] - ftilde2;
-				subpdfs[7][k] = _F[DIST_C][k] - ftilde3;
-				
-				subpdfs[8][k] = _F[DIST_C][k] - subpdfs[3][k];
-				subpdfs[9][k] = _F[DIST_C][k] - subpdfs[4][k];
+				subpdfs[5][k] = _F[DIST_C][k] - ftilde1;       // deltaf 1
+				subpdfs[6][k] = _F[DIST_C][k] - ftilde2;       // deltaf 2
+				subpdfs[7][k] = _F[DIST_C][k] - ftilde3;       // deltaf 3
+
+				subpdfs[8][k] = _F[DIST_C][k] - subpdfs[3][k]; // deltaf NLO
+				subpdfs[9][k] = _F[DIST_C][k] - subpdfs[4][k]; // deltaf NNLO
 			}
 		}
 		// bottom
 		if (_alpha_s.nff() >= DIST_B) {
 		    double L = std::log(mb2/qf2);
-			for (OpMatElemCustom* ome : {&a1hg, &a2hq, &a2hg, &a3hq, &a3hg})
+			
+			for (OpMatElemCustom* ome : {&_a1hg, &_a2hq, &_a2hg, &_a3hq, &_a3hg})
 				ome->update(L, nl_bottom);
+
+		    ConvolutionKernel a1hg = _grid.buildKernel(_a1hg);
+			ConvolutionKernel a2hq = _grid.buildKernel(_a2hq);
+			ConvolutionKernel a2hg = _grid.buildKernel(_a2hg);
+			ConvolutionKernel a3hq = _grid.buildKernel(_a3hq);
+			ConvolutionKernel a3hg = _grid.buildKernel(_a3hg);
 			
 			for (uint k=0; k<_grid.size(); ++k) {
-				double ftilde1 = as*_grid.convolution(_F[0], a1hg, k);
-				double ftilde2 = as2*(
-					_grid.convolution(_F[31], a2hq, k) +
-					_grid.convolution(_F[0], a2hg, k)
+				double ftilde1 = 0.5*as*a1hg.apply(_F[0], k);
+				double ftilde2 = 0.5*as2*(
+					 a2hq.apply(_F[31], k) +
+					 a2hg.apply(_F[0], k)
 				);
-				double ftilde3 = as3*(
-					_grid.convolution(_F[31], a3hq, k) +
-					_grid.convolution(_F[0], a3hg, k)
+				double ftilde3 = 0.5*as3*(
+					 a3hq.apply(_F[31], k) +
+					 a3hg.apply(_F[0], k)
 				);
 
-				subpdfs[10][k] = ftilde1;
-				subpdfs[11][k] = ftilde2;
-				subpdfs[12][k] = ftilde3;
+				subpdfs[10][k] = ftilde1;                        // ftilde 1
+				subpdfs[11][k] = ftilde2;                        // ftilde 2
+				subpdfs[12][k] = ftilde3;                        // ftilde 3
+
+				subpdfs[13][k] = ftilde1 + ftilde2;              // ftilde NLO
+				subpdfs[14][k] = ftilde1 + ftilde2 + ftilde3;    // ftilde NNLO
 			
-				subpdfs[13][k] = ftilde1 + ftilde2;
-				subpdfs[14][k] = ftilde1 + ftilde2 + ftilde3;
-			
-				subpdfs[15][k] = _F[DIST_B][k] - ftilde1;
-				subpdfs[16][k] = _F[DIST_B][k] - ftilde2;
-				subpdfs[17][k] = _F[DIST_B][k] - ftilde3;
-				subpdfs[18][k]  = _F[DIST_B][k] - subpdfs[13][k];
-				subpdfs[19][k]  = _F[DIST_B][k] - subpdfs[14][k];
+				subpdfs[15][k] = _F[DIST_B][k] - ftilde1;        // deltaf 1
+				subpdfs[16][k] = _F[DIST_B][k] - ftilde2;        // deltaf 2
+				subpdfs[17][k] = _F[DIST_B][k] - ftilde3;        // deltaf 3
+
+				subpdfs[18][k] = _F[DIST_B][k] - subpdfs[13][k];  // deltaf NLO
+				subpdfs[19][k] = _F[DIST_B][k] - subpdfs[14][k];  // deltaf NNLO
 			}
 		}
 
 		return subpdfs;
-	}
+	} // calculateSubtractionPDFs()
 	
 } // namespace Candia2

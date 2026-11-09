@@ -44,3 +44,7 @@ Sweep A varies `num_gauss_points` at the default grid (`sweepA-<kernel>.dat`); S
 ## pdflumiunc
 
 `evolvepdfset` evolves CT25NNLO at N3LO into the LHAPDF set `CT25aN3LO`, written to the working directory; `pdflumiunc`, run from the same directory, then compares its gg luminosity at √s = 13.6 TeV with MSHT20 aN3LO and NNPDF4.0 aN3LO (all these sets must be installed, of course), and `plot.gplt` plots the ratios.
+
+## subtraction-pdfs
+
+Spits out a bunch of plots related to subtraction PDFs. Requires a good bit of runtime since we do this for a few different PDFs, e.g. CT18NLO, CT18NNLO.

@@ -1,0 +1,37 @@
+set terminal pdfcairo enhanced notransparent
+
+set border lw 2
+set size ratio 0.65
+
+set logscale xy
+set xlabel "x" offset 0,0.7
+set xrange [1e-5:1]
+set yrange [1e-5:20]
+set format x "10^{%T}"
+set format y "10^{%T}"
+
+set key bottom left Left reverse samplen 3 spacing 1.2
+
+set style line 1 lc rgb 'blue' dt 1 lw 2 # Solid Blue
+set style line 2 lc rgb 'red' dt 2 lw 2 # Dashed Red
+set style line 3 lc rgb 'dark-green' dt 3 lw 2 # Dotted Dark Green
+set style line 4 lc rgb 'orange' dt 4 lw 2 # Dash-Dot Orange
+set style line 5 lc rgb 'purple' dt 5 lw 2 # Dot-Dash Purple
+
+set output 'b-subpdf.pdf'
+set ylabel "xb(x,Q^2)"
+set title "b subtraction PDFs at x=10 GeV, Candia-v2 evolution"
+plot 'data/out-b-10gev.dat' u 1:2 w lines ls 1 title "f_b", \
+     ''        u 1:6  w lines ls 2 title "f̃_b^{NLO}", \
+	 ''        u 1:7  w lines ls 3 title "f̃_b^{NNLO}", \
+	 ''        u 1:11 w lines ls 4 title "{/Symbol d}f_b^{NLO}", \
+	 ''        u 1:12 w lines ls 5 title "{/Symbol d}f_b^{NNLO}"
+
+set output 'c-subpdf.pdf'
+set ylabel "xc(x,Q^2)"
+set title "c subtraction PDFs at x=4 GeV, Candia-v2 evolution"
+plot 'data/out-c-4gev.dat' u 1:2 w lines ls 1 title "f_c", \
+     ''        u 1:6  w lines ls 2 title "f̃_c^{NLO}", \
+	 ''        u 1:7  w lines ls 3 title "f̃_c^{NNLO}", \
+	 ''        u 1:11 w lines ls 4 title "{/Symbol d}f_c^{NLO}", \
+	 ''        u 1:12 w lines ls 5 title "{/Symbol d}f_c^{NNLO}"
