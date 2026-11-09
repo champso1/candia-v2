@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.20)
-project(candia_v2 VERSION 1.9.1)
+project(candia_v2 VERSION 1.9.2)
 set(CMAKE_EXPORT_COMPILE_COMMANDS on)
 # default to installing into the source tree, but respect -DCMAKE_INSTALL_PREFIX
 if (CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)

@@ -1,3 +1,7 @@
+# 1.9.2 (from 1.9.1) November 9, 2026
+	- subtraction PDFs were missing a 1/2 since the OMEs are normalized for h+hbar and we are constructing subpdfs for single quarks. this also fixes the residuals being negative, and as expected, makes the residuals smaller (in other words the subpdfs become closer to the true quark PDF) at higher orders
+	- studies/subtraction-pdfs was made to further test this and make sure it matches
+
 # 1.9.1 (from 1.9.0) November 1, 2026
 	- fixed swap of OME for A3nsp and A3nsm (even vs. odd)
 	- P3qq is constructed from P3nsp and P_ps. The former has an exact expression, but wasn't taken into consideration even if P3nsp was specified to be exact (i.e. left as default). This is fixed.
