@@ -9,17 +9,25 @@ namespace Candia2
 		accessor_type const& ns_accessor,
 		std::vector<value_type> const& grid_points) const
 	{
-		for (uint k=0; k<grid_points.size()-1; k++) {
+		for (uint k=0; k<grid_points.size(); k++) {
 			double x = grid_points[k];
-			s_accessor(0, k) = xg(x);
-			s_accessor(1, k) = xqplus(x);
-
-			ns_accessor(1, k) = xu(x);  // u
-			ns_accessor(2, k) = xd(x);  // d
-			ns_accessor(3, k) = xs(x);  // s
-			ns_accessor(7, k) = xub(x); // ub
-			ns_accessor(8, k) = xdb(x); // db
-			ns_accessor(9, k) = xs(x);  // sb ( = s)
+			accessor(0, k) = xg(x);
+			accessor(1, k) = xqplus(x);
+		}
+	}
+	
+	void LesHouchesDistribution::fillNonSingletCoeffs(
+		accessor_type const& accessor,
+		std::vector<value_type> const& grid_points) const
+	{
+		for (uint k=0; k<grid_points.size(); k++) {
+			double x = grid_points[k];
+			accessor(1, k) = xu(x);  // u
+			accessor(2, k) = xd(x);  // d
+			accessor(3, k) = xs(x);  // s
+			accessor(7, k) = xub(x); // ub
+			accessor(8, k) = xdb(x); // db
+			accessor(9, k) = xs(x);  // sb ( = s)
 		}
 	}
 
@@ -35,6 +43,12 @@ namespace Candia2
 			if (qf > _masses[_nff])
 				break;
 		}
+		// the loop above ends one below _nfi when qf is not above the mass at _nfi,
+		// i.e. when evolving to the initial energy itself: no flavours change
+		if (qf < q0)
+			log(LOG_ERROR, "LesHouchesDistribution", "final energy ({}) is below the initial energy ({})", qf, q0);
+		if (_nff < _nfi)
+			_nff = _nfi;
 		if (_nff < 1 || _nff > 6)
 			log(LOG_ERROR, "LesHouchesDistribution", "error finding nf (_nff={})", _nff);
 	}

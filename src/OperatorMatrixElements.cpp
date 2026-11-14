@@ -7,9 +7,6 @@
 
 namespace Candia2
 {
-	// sensible defaults and to provide a definition
-	double OpMatElem::_lm = 0.0;
-	uint OpMatElem::_nf = 4;
 
   	double A2ns::calcRegular(double x) const
 	{

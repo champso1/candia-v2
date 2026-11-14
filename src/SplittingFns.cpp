@@ -9,9 +9,6 @@
 
 namespace Candia2
 {
-	uint SplittingFunction::_nf = 4;      //!< number of active/currently massless flavors
-	double SplittingFunction::_beta0; //!< \f$\beta_0\f$ value for P0gg calculation
-	double SplittingFunction::_log_muf2_mur2 = 0;    //!< log of mu_f/mu_r
 	
 	double P0ns::calcRegular(double x) const
 	{
@@ -821,12 +818,12 @@ namespace Candia2
 				- 6.473971e+2 * dl - 6.641219e+1 * dl2 - 5.353347 * dl3 - 5.925926 * dl4
 				- 3.950617e-1 * dl5 + 1.970002e+1 * omx * dlm - 3.435474 * omx * dlm2;
 
-			// if (_imod == P3ApproxType::Imod1)
-				// res1 = nf * p3nsa11 + nf2 * p3nssa2;
-			// else if (_imod == P3ApproxType::Imod2)
-				// res1 = nf * p3nsa12 + nf2 * p3nssa2;
-			// else
-				res1 = 0.5 * nf * ( p3nsa11 + p3nsa12 ) + nf2 * p3nssa2; // 
+			if (_imod == P3ApproxType::Imod1)
+				res1 = nf * p3nsa11 + nf2 * p3nssa2;
+			else if (_imod == P3ApproxType::Imod2)
+				res1 = nf * p3nsa12 + nf2 * p3nssa2;
+			else
+				res1 = 0.5 * nf * ( p3nsa11 + p3nsa12 ) + nf2 * p3nssa2;
 		}
 
 		{
@@ -1841,7 +1838,7 @@ namespace Candia2
 		double res{};
 		if (_imod == P3ApproxType::Imod1)
 		    res = p3ggapp1;
-		if (_imod == P3ApproxType::Imod2)
+		else if (_imod == P3ApproxType::Imod2)
 			res = p3ggapp2;
 		else
 			res = 0.5*(p3ggapp1 + p3ggapp2);
@@ -1862,7 +1859,12 @@ namespace Candia2
 		auto nf2 = nf*nf;
 		auto nf3 = nf2*nf;
 
-		return (68587.64 - 18143.983*nf + 423.81135*nf2 + 9.0672154e-1*nf3)/16.0;
+		double b4gluon = 68587.64 - 18143.983*nf + 423.81135*nf2 + 9.0672154e-1*nf3;
+		if (_imod == P3ApproxType::Imod1)
+			b4gluon -= 0.2;
+		else if (_imod == P3ApproxType::Imod2)
+			b4gluon += 0.2;
+		return b4gluon/16.0;
 	}
 
 	void P3gg::preCalc()

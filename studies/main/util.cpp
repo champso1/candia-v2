@@ -1,0 +1,513 @@
+#include "util.hpp"
+#include "Candia-v2/Common.hpp"
+
+#include <algorithm>
+#include <cmath>
+
+std::string percentToLatex(double percent)
+{
+	return std::format("${:.2f}$\\%", percent);
+}
+
+std::string scientificToLatex(double num, int precision, bool benchmark_format)
+{
+	if (!std::isfinite(num))
+		return std::format("???");
+	// exact zeros (e.g. a heavy quark below its threshold) have no exponent: write them as 0 x 10^0
+	int exponent = (num == 0.0) ? 0 : static_cast<int>(std::floor(std::log10(std::abs(num))));
+	if (std::abs(exponent) > 20)
+		return std::format("???");
+	double mantissa = num / std::pow(10.0, static_cast<double>(exponent));
+	if (benchmark_format) {
+		return std::vformat("${0: .{1}f}^{{{2:+}}}$",
+			std::make_format_args(mantissa, precision, exponent));
+	} else {
+		int precision_new = precision-1;
+		return std::vformat("{0: .{1}f}e${2:+}$",
+			std::make_format_args(mantissa, precision_new, exponent));
+	}
+}
+
+std::string percentToLatex2(double percent)
+{
+	if (std::abs(percent) >= 1e-8) {
+		int exponent = std::floor(std::log10(std::abs(percent)));
+		double mantissa = percent / std::pow(10.0, static_cast<double>(exponent));
+		return std::format("{:.2f}e{:+}\\%", mantissa, exponent);
+	} else {
+		return std::format("0.00\\%");
+	}
+}
+
+void file_exists(fs::path const& path)
+{
+	if (!fs::exists(path))
+		log(LOG_ERROR, "compare.cpp", "Failed to find file '{}'", path.string());
+}
+
+void print_dist(dist_type const& dist) {
+	for (uint j=0; j<dist.at(0).size(); ++j) {
+		for (uint i=0; i<dist.size(); ++i)
+			std::cout << dist[i][j] << ' ';
+		std::cout << '\n';
+	}
+	std::cout << std::endl;
+}
+
+
+void print_compare_types(std::string_view filename)
+{
+	log(LOG_INFO, filename, "    <type>:      0: all flavors independently");
+	log(LOG_INFO, filename, "                 1: special combos from benchmark paper");
+	log(LOG_INFO, filename, "                 2: special combos from benchmark paper to avoid cancellations");
+	log(LOG_INFO, filename, "                 3: specific non-singlet and singlet distributions");
+	log(LOG_INFO, filename, "                 4: ffns distributions");
+	log(LOG_INFO, filename, "                 5: qed");
+}
+
+ReadCandiaFileResult read_candia_file(fs::path const &path, uint size)
+{
+	dist_type dists(size, std::vector<double>{});
+	std::ifstream file(path);
+	
+	std::vector<double> xtab{};
+	std::vector<int> ntab{};
+	std::vector<double> grid_points{};
+	double temp;
+	int temp2;
+	std::string line{};
+
+	file.ignore(1000, '\n');
+	
+	std::getline(file, line);
+	std::istringstream iss(line);
+	while (iss >> temp)
+		xtab.push_back(temp);
+	
+	std::getline(file, line);
+	iss = std::istringstream(line);
+	while (iss >> temp2)
+		ntab.push_back(temp2);
+
+	std::getline(file, line);
+	iss = std::istringstream(line);
+	while (iss >> temp)
+		grid_points.push_back(temp);
+
+	while (std::getline(file, line)) {
+		iss = std::istringstream(line);
+		iss >> temp;
+		for (uint i=0; i<size; ++i) {
+			iss >> temp;
+			dists.at(i).push_back(temp);
+		}
+
+	}
+	// older output files included x=1 in xtab, which is not a real grid point; skip it
+	uint num_xtab = static_cast<uint>(std::ranges::count_if(xtab, [](double x){ return x < 1.0; }));
+	dist_type dists_ntabbed(size, std::vector<double>(num_xtab, 0.0));
+	for (uint i=0; i<size; ++i) {
+		for (uint j=0; j<num_xtab; ++j) {
+			uint idx = ntab[j];
+			dists_ntabbed[i][j] = dists[i][idx];
+		}
+	}
+	return {xtab_type(xtab.begin(), xtab.begin()+num_xtab), dists, dists_ntabbed, grid_points};
+}
+
+dist_type fix_dists(dist_type const& dists, int type)
+{
+	uint ncols = cols[type].get().size();
+	switch (type) {
+		case 0: {
+			dist_type dists_fixed(ncols, std::vector<double>(dists.at(0).size(), 0.0));
+
+			std::vector<int> js{0, 1, 2, 3, 4, 5, 7, 8, 9, 10, 11};
+			auto tie =
+				std::views::iota(0)
+				| std::views::take(js.size())
+				| std::views::transform([&](int i){ return std::make_pair(i, js[i]); });
+		    
+			for (uint k=0; k<dists_fixed.at(0).size(); ++k) {
+				for (auto [i, j] : tie) {
+					dists_fixed.at(i).at(k) = dists[j][k];
+				}
+			}
+			return dists_fixed;
+		} break;
+		case 1: {
+			dist_type dists_fixed(ncols, std::vector<double>(dists.at(0).size(), 0.0));
+			for (uint k=0; k<dists_fixed.at(0).size(); ++k) {
+				dists_fixed.at(0).at(k) = dists[1][k] - dists[6+1][k];
+				dists_fixed.at(1).at(k) = dists[2][k] - dists[6+2][k];
+				dists_fixed.at(2).at(k) = dists[6+2][k] - dists[6+1][k];
+				dists_fixed.at(3).at(k) = 2.0*(dists[2+6][k] + dists[6+1][k]);
+				dists_fixed.at(4).at(k) = dists[3][k] + dists[6+3][k];
+				dists_fixed.at(5).at(k) = dists[4][k] + dists[6+4][k];
+				dists_fixed.at(6).at(k) = dists[5][k] + dists[6+5][k];
+				dists_fixed.at(7).at(k) = dists[0][k];
+			}
+			return dists_fixed;
+		} break;
+		case 2: {
+			dist_type dists_fixed(ncols, std::vector<double>(dists.at(0).size(), 0.0));
+			for (uint k=0; k<dists_fixed.at(0).size(); ++k) {
+				dists_fixed.at(0).at(k) = dists[1][k] - dists[6+1][k];
+				dists_fixed.at(1).at(k) = dists[2][k] - dists[6+2][k];
+				dists_fixed.at(2).at(k) = dists[1+6][k];
+				dists_fixed.at(3).at(k) = dists[2+6][k];
+				dists_fixed.at(4).at(k) = 2.0*(dists[2+6][k] + dists[6+1][k]);
+				dists_fixed.at(5).at(k) = dists[3][k] + dists[3+6][k];
+				dists_fixed.at(6).at(k) = dists[4][k] + dists[4+6][k];
+				dists_fixed.at(7).at(k) = dists[5][k] + dists[5+6][k];
+				dists_fixed.at(8).at(k) = dists[0][k];
+			}
+			return dists_fixed;
+		}; break;
+		case 3: {
+			dist_type dists_fixed(ncols, std::vector<double>(dists.at(0).size(), 0.0));
+			for (uint k=0; k<dists_fixed.at(0).size(); ++k) {
+				double qpu = dists[1][k] + dists[6+1][k];
+				double qmu = dists[1][k] - dists[6+1][k];
+				
+				dists_fixed.at(0).at(k) = qmu - (dists[2][k] - dists[6+2][k]);
+				dists_fixed.at(1).at(k) = qmu - (dists[4][k] - dists[6+4][k]);
+				dists_fixed.at(2).at(k) = qmu - (dists[5][k] - dists[6+5][k]);
+				dists_fixed.at(3).at(k) = qpu - (dists[2][k] + dists[6+2][k]);
+				dists_fixed.at(4).at(k) = qpu - (dists[4][k] + dists[6+4][k]);
+				dists_fixed.at(5).at(k) = qpu - (dists[5][k] + dists[6+5][k]);
+
+				dists_fixed.at(6).at(k) = 0.0;
+				dists_fixed.at(7).at(k) = 0.0;
+				dists_fixed.at(8).at(k) = dists[0][k];
+
+				for (uint j=1; j<=6; ++j) {
+					dists_fixed.at(6).at(k) += dists[j][k] - dists[j+6][k];
+					dists_fixed.at(7).at(k) += dists[j][k] + dists[j+6][k];
+				}
+			}
+			return dists_fixed;
+		}; break;
+		case 4: {
+			dist_type dists_fixed(ncols, std::vector<double>(dists.at(0).size(), 0.0));
+			for (uint k=0; k<dists_fixed.at(0).size(); ++k) {
+				dists_fixed.at(0).at(k) = dists[1][k] - dists[6+1][k];
+				dists_fixed.at(1).at(k) = dists[2][k] - dists[6+2][k];
+				dists_fixed.at(2).at(k) = dists[6+2][k] - dists[6+1][k];
+				dists_fixed.at(3).at(k) = 2.0*(dists[2+6][k] + dists[6+1][k]);
+				dists_fixed.at(4).at(k) = dists[3][k] - dists[6+3][k];
+				dists_fixed.at(5).at(k) = dists[3][k] + dists[6+3][k];
+				dists_fixed.at(6).at(k) = dists[4][k] + dists[6+4][k];
+				dists_fixed.at(7).at(k) = dists[0][k];
+			}
+			return dists_fixed;
+		} break;
+		case 5: {
+			dist_type dists_fixed(ncols, std::vector<double>(dists.at(0).size(), 0.0));
+			for (uint k=0; k<dists_fixed.at(0).size(); ++k) {
+				dists_fixed.at(0).at(k) = dists[static_cast<uint>(QEDPartonIndices::UV)][k];
+				dists_fixed.at(1).at(k) = dists[static_cast<uint>(QEDPartonIndices::DV)][k];
+				dists_fixed.at(2).at(k) = dists[static_cast<uint>(QEDPartonIndices::G)][k];
+				dists_fixed.at(3).at(k) = dists[static_cast<uint>(QEDPartonIndices::PHOTON)][k];
+				dists_fixed.at(4).at(k) = dists[static_cast<uint>(QEDPartonIndices::EP)][k];
+				dists_fixed.at(5).at(k) = dists[static_cast<uint>(QEDPartonIndices::MUP)][k];
+				dists_fixed.at(6).at(k) = dists[static_cast<uint>(QEDPartonIndices::TAUP)][k];
+			}
+			return dists_fixed;
+		}; break;
+	}
+	return dists;
+}
+
+std::pair<xtab_type, dist_type> read_other_file(fs::path const &path, uint size)
+{
+	dist_type dists(size, std::vector<double>{});
+	std::ifstream file(path);
+	file.ignore(1000, '\n');
+
+	xtab_type xtab{};
+	std::string line;
+	double temp;
+	while (std::getline(file, line)) {
+		std::istringstream iss(line);
+		iss >> temp;
+		xtab.emplace_back(temp);
+		for (uint i=0; i<size; ++i) {
+			iss >> temp;
+			dists.at(i).emplace_back(temp);
+		}
+	}
+	return {xtab, dists};
+}
+
+
+void outputLatexTable(
+    xtab_type const& xtab,
+	dist_type const& diffs, std::string const& filename,
+	std::vector<std::string> const& cols, int format, bool benchmark_format)
+{
+	auto read_table_file = [](fs::path const& p) -> std::string {
+		if (!fs::exists(p))
+			log(LOG_ERROR, "util.hpp", "Failed to open the tex template file '{}'.", p.string());
+
+		std::ifstream file(p);
+		return std::string(
+			std::istreambuf_iterator<char>(file),
+			std::istreambuf_iterator<char>{}
+		);
+	};
+
+	auto text_replace = [](std::string& base, std::string_view to_replace, std::string const& replace_with){
+		auto pos = base.find(to_replace);
+		while (pos != std::string::npos) {
+			base.replace(pos, to_replace.size(), replace_with);
+			pos = base.find(to_replace);
+		}
+	};
+	
+	fs::path tex_table_dir = fs::current_path()/TEX_TABLE_DIR;
+	fs::path tex_table_base = tex_table_dir/TEX_TABLE_TEMPLATE;
+	fs::path tex_subtable = tex_table_dir/TEX_TABLE_SUBTABLE_TEMPLATE;
+    fs::path tex_table_footer = tex_table_dir/TEX_TABLE_FOOTER_TEMPLATE;
+	
+	std::string ncols = std::format("{}", cols.size()+1); // +1 for x
+	
+	std::string::size_type pos;
+	std::string table_text{};
+	
+	std::string_view C_repl_str{"^C^"};
+	std::string_view COLS_repl_str{"^COLS^"};
+	std::string_view KR_repl_str{"^KR^"};
+
+	std::string col_def;
+	col_def.reserve(TEX_TABLE_COL_DEF.size() * cols.size());
+	for (uint i=0; i<cols.size(); ++i)
+		col_def.append(TEX_TABLE_COL_DEF);
+
+	std::string table_base = read_table_file(tex_table_base);
+	text_replace(table_base, C_repl_str, col_def);
+	text_replace(table_base, COLS_repl_str, ncols);
+	for (std::string const& col : cols)
+		table_base.append(std::format(" & ${}$", col));
+	table_base.append(" \\\\\n");
+	
+	std::string sub_table = read_table_file(tex_subtable);
+	text_replace(sub_table, KR_repl_str, "1.0");
+	text_replace(sub_table, COLS_repl_str, ncols);
+	
+	fs::path latex_build_dir = fs::current_path()/"latex";
+	if (!fs::exists(latex_build_dir)) {
+		if (!fs::create_directory(latex_build_dir))
+			log(LOG_ERROR, "util.hpp", "Failed to create latex build directory.");
+		log(LOG_INFO, "util.hpp", "'latex' directory created.");
+	} else {
+	    log(LOG_INFO, "util.hpp", "'latex' directory exists. Continuing.");
+	}
+
+	auto format_val = [t=format,f=benchmark_format](double val) -> std::string {
+		switch (t) {
+			case 0: return percentToLatex(val); break;
+			case 1: return scientificToLatex(val, 4, f); break;
+			case 2: return percentToLatex2(val); break;
+		}
+		throw std::runtime_error("unreachable");
+	};
+
+	log(LOG_INFO, "util.hpp", "Printing table information.");
+	std::string table_data;
+	table_data.reserve(diffs.at(0).size()*diffs.size()*10);
+	for (uint i=0; i<diffs.at(0).size(); ++i) {
+		double x = xtab.at(i);
+		table_data.append(scientificToLatex(x, 1, benchmark_format) + " & ");
+				
+		for (uint j=0; j<diffs.size()-1; ++j)
+			table_data.append(format_val(diffs.at(j).at(i)) + " & ");
+		table_data.append(format_val(diffs.back().at(i)));
+			
+		table_data.append(" \\\\\n");
+	}
+
+	std::string table_footer = read_table_file(tex_table_footer);
+
+    table_text.reserve(table_base.size() + sub_table.size() + table_data.size() + table_footer.size());
+	table_text.append(table_base);
+	table_text.append(sub_table);
+	table_text.append(table_data);
+	table_text.append(table_footer);
+
+	std::string title = filename + ".tex";
+	fs::path latex_file_path = latex_build_dir/title;
+	{
+		std::ofstream latex_file(latex_file_path);
+		latex_file << table_text;
+	}
+
+	std::string command = "pdflatex -interaction=batchmode -output-directory latex " + title;
+	system(command.c_str());
+	log(LOG_INFO, "util.hpp", "Cleaning up auxilliary files...");
+
+	auto output_dir = (format == 0 || format == 2) ? "diffs" : "tables";
+	fs::path output_dir_path = fs::current_path()/fs::path(output_dir);
+	if (!fs::exists(output_dir_path)) {
+		if (!fs::create_directory(output_dir_path))
+			log(LOG_ERROR, "util.hpp", "Failed to create output directory '{}'.", output_dir_path.string());
+	}
+	fs::path pdf_path(fs::current_path()/fs::path("latex")/fs::path(filename + ".pdf"));
+	log(LOG_INFO, "util.hpp", "{}  ->  {}", pdf_path.string(), output_dir_path.string());
+	fs::copy(pdf_path, output_dir_path, fs::copy_options::overwrite_existing);
+	auto dir_view =
+		fs::directory_iterator{fs::current_path()/"latex"}
+		| std::ranges::views::filter([&filename](fs::directory_entry const& e) -> bool {
+			if (e.path().has_extension() && e.path().extension().string() != ".tex" && e.path().filename().string().starts_with(filename))
+				return true;
+			return false;
+		});
+	for (fs::directory_entry const& e : dir_view)
+		fs::remove(e.path());
+}
+
+
+void outputLatexTableScaleRatio(
+    xtab_type const& xtab,
+	std::array<std::reference_wrapper<dist_type>, 3> const& arrs,
+	std::string const& filename,
+	std::vector<std::string> const& cols, int format, bool benchmark_format)
+{
+	auto read_table_file = [](fs::path const& p) -> std::string {
+		if (!fs::exists(p))
+			log(LOG_ERROR, "util.hpp", "Failed to open the tex template file '{}'.", p.string());
+
+		std::ifstream file(p);
+		return std::string(
+			std::istreambuf_iterator<char>(file),
+			std::istreambuf_iterator<char>{}
+		);
+	};
+
+	auto text_replace = [](std::string& base, std::string_view to_replace, std::string const& replace_with){
+		auto pos = base.find(to_replace);
+		while (pos != std::string::npos) {
+			base.replace(pos, to_replace.size(), replace_with);
+			pos = base.find(to_replace);
+		}
+	};
+
+	std::array<double,3> kr_vals{1.0, 0.5, 2.0};
+	
+	fs::path tex_table_dir = fs::current_path()/TEX_TABLE_DIR;
+	fs::path tex_table_base = tex_table_dir/TEX_TABLE_TEMPLATE;
+	fs::path tex_subtable = tex_table_dir/TEX_TABLE_SUBTABLE_TEMPLATE;
+    fs::path tex_table_footer = tex_table_dir/TEX_TABLE_FOOTER_TEMPLATE;
+    
+	std::string ncols = std::format("{}", cols.size()+1); // +1 for x
+
+	std::string::size_type pos;
+	std::string table_text{};
+	
+	std::string_view C_repl_str{"^C^"};
+	std::string_view COLS_repl_str{"^COLS^"};
+	std::string_view KR_repl_str{"^KR^"};
+
+	std::string col_def;
+	col_def.reserve(TEX_TABLE_COL_DEF.size() * cols.size());
+	for (uint i=0; i<cols.size(); ++i)
+		col_def.append(TEX_TABLE_COL_DEF);
+
+	std::string table_base = read_table_file(tex_table_base);
+	text_replace(table_base, C_repl_str, col_def);
+	text_replace(table_base, COLS_repl_str, ncols);
+	for (std::string const& col : cols)
+		table_base.append(std::format(" & ${}$", col));
+	table_base.append(" \\\\\n");
+
+	std::vector<std::string> sub_tables{};
+	uint sub_tables_total_size = 0;
+	for (double kr : kr_vals) {
+		std::string sub_table = read_table_file(tex_subtable);
+		text_replace(sub_table, KR_repl_str, std::format("{}", kr));
+		text_replace(sub_table, COLS_repl_str, ncols);
+		sub_tables.emplace_back(sub_table);
+		sub_tables_total_size += sub_table.size();
+	}
+	
+	
+	fs::path latex_build_dir = fs::current_path()/"latex";
+	if (!fs::exists(latex_build_dir)) {
+		if (!fs::create_directory(latex_build_dir))
+			log(LOG_ERROR, "util.hpp", "Failed to create latex build directory.");
+		log(LOG_INFO, "util.hpp", "'latex' directory created.");
+	} else {
+	    log(LOG_INFO, "util.hpp", "'latex' directory exists. Continuing.");
+	}
+
+	auto format_val = [t=format,f=benchmark_format](double val) -> std::string {
+		switch (t) {
+			case 0: return percentToLatex(val); break;
+			case 1: return scientificToLatex(val, 4, f); break;
+			case 2: return percentToLatex2(val); break;
+		}
+		throw std::runtime_error("unreachable");
+	};
+
+	log(LOG_INFO, "util.hpp", "Printing table information.");
+	std::vector<std::string> all_table_data{};
+	uint all_table_data_size = 0;
+	for (uint i=0; i<kr_vals.size(); ++i) {
+		std::string table_data;
+		double kr = kr_vals[i];
+		auto const& arr = arrs[i];
+		table_data.reserve(arr.get().at(0).size()*arr.get().size()*10);
+		for (uint i=0; i<arr.get().at(0).size(); ++i) {
+			double x = xtab.at(i);
+			table_data.append(scientificToLatex(x, 1, benchmark_format) + " & ");
+				
+			for (uint j=0; j<arr.get().size()-1; ++j)
+				table_data.append(format_val(arr.get().at(j).at(i)) + " & ");
+			table_data.append(format_val(arr.get().back().at(i)));
+			
+			table_data.append(" \\\\\n");
+		}
+		all_table_data.emplace_back(table_data);
+		all_table_data_size += table_data.size();
+	}
+
+	std::string table_footer = read_table_file(tex_table_footer);
+
+    table_text.reserve(table_base.size() + sub_tables_total_size + all_table_data_size + table_footer.size());
+	table_text.append(table_base);
+	for (uint i=0; i<kr_vals.size(); ++i) {
+		table_text.append(sub_tables[i]);
+		table_text.append(all_table_data[i]);
+	}
+	table_text.append(table_footer);
+
+	std::string title = filename + ".tex";
+	fs::path latex_file_path = latex_build_dir/title;
+	{
+		std::ofstream latex_file(latex_file_path);
+		latex_file << table_text;
+	}
+
+	std::string command = "pdflatex -interaction=batchmode -output-directory latex " + title;
+	system(command.c_str());
+	log(LOG_INFO, "util.hpp", "Cleaning up auxilliary files...");
+
+	auto output_dir = (format == 0 || format == 2) ? "diffs" : "tables";
+	fs::path output_dir_path = fs::current_path()/fs::path(output_dir);
+	if (!fs::exists(output_dir_path)) {
+		if (!fs::create_directory(output_dir_path))
+			log(LOG_ERROR, "util.hpp", "Failed to create output directory '{}'.", output_dir_path.string());
+	}
+	fs::path pdf_path(fs::current_path()/fs::path("latex")/fs::path(filename + ".pdf"));
+	log(LOG_INFO, "util.hpp", "{}  ->  {}", pdf_path.string(), output_dir_path.string());
+	fs::copy(pdf_path, output_dir_path, fs::copy_options::overwrite_existing);
+	auto dir_view =
+		fs::directory_iterator{fs::current_path()/"latex"}
+		| std::ranges::views::filter([&filename](fs::directory_entry const& e) -> bool {
+			if (e.path().has_extension() && e.path().extension().string() != ".tex" && e.path().filename().string().starts_with(filename))
+				return true;
+			return false;
+		});
+	for (fs::directory_entry const& e : dir_view)
+		fs::remove(e.path());
+}

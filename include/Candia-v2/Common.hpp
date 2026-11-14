@@ -21,6 +21,7 @@
 #include <array>
 #include <filesystem>
 #include <fstream>
+#include <stdexcept>
 
 using uint = unsigned;
 
@@ -219,35 +220,43 @@ namespace Candia2
 	/** @brief returns the global options for setting values */
 	inline LogOptions& getLogOptions() { return _log_options; }
 
+	/** @brief Exception thrown for unrecoverable errors, i.e. every message logged with @a LOG_ERROR */
+	class Error : public std::runtime_error
+	{
+	public:
+		using std::runtime_error::runtime_error;
+	};
+
 	/**
 	 *  @brief Prints a message to standard out and possibly an additional stream with a nice prefix.
 	 *  @param log_type a type as in the enum @a LogType
 	 *  @param prefix an identifier of some kind to include within the message, often a function name
 	 *  @param fmt_string the format string of the log message, as used in std::format
 	 *  @param args args used to format the string, as used in std::format
+	 *  @throws Error if @a log_type is @a LOG_ERROR (regardless of the verbosity)
 	 */
 	template <typename... TArgs>
 	void log(int log_type, std::string_view prefix, std::format_string<TArgs...> fmt_string, TArgs&& ...args)
 	{
-		if (getLogOptions().verbosity == LOG_NONE)
+		int verbosity = getLogOptions().verbosity;
+		bool shown = verbosity != LOG_NONE
+			// we treat LOG_THREAD identical to LOG_INFO so we must handle that
+			&& !(log_type == LOG_THREAD && verbosity > LOG_INFO)
+			&& log_type >= verbosity;
+		if (!shown && log_type != LOG_ERROR)
 			return;
 
-		// we treat LOG_THREAD identical to LOG_INFO so we must handle that
-		if (log_type == LOG_THREAD && getLogOptions().verbosity > LOG_INFO)
-			return;
-
-		if (log_type < getLogOptions().verbosity)
-			return;
-			
 		std::string log_text = std::vformat(fmt_string.get(), std::make_format_args(args...));
-		std::string all_text = std::format("{}[{}] {}: {}{}\n",
-			log_string_colors[log_type], log_string_reps[log_type], prefix, log_text, ANSI_COLOR_RESET);
-		if (getLogOptions().use_log_output_stream)
-			getLogOptions().log_output_stream.get() << all_text;
-		std::cout << all_text;
+		if (shown) {
+			std::string all_text = std::format("{}[{}] {}: {}{}\n",
+				log_string_colors[log_type], log_string_reps[log_type], prefix, log_text, ANSI_COLOR_RESET);
+			if (getLogOptions().use_log_output_stream)
+				getLogOptions().log_output_stream.get() << all_text;
+			std::cout << all_text;
+		}
 
 		if (log_type == LOG_ERROR)
-			exit(EXIT_FAILURE);
+			throw Error(std::format("{}: {}", prefix, log_text));
 	}
 
 	/**
@@ -268,24 +277,18 @@ namespace Candia2
 	}
 
 	inline std::unordered_map<uint, uint> log_threads_line_offset{};
+	inline std::mutex log_threads_mutex; //!< guards @a log_threads_line_offset and the threaded progress output
 	inline void registerThreadLogs(std::vector<uint> const& ids)
 	{
 		if (getLogOptions().verbosity == LOG_NONE || getLogOptions().verbosity > LOG_INFO)
 			return;
-			
+
+		std::lock_guard<std::mutex> guard{log_threads_mutex};
 		for (uint i=0; i<ids.size(); ++i) {
 			log_threads_line_offset[ids[i]] = ids.size()-i;
 			std::cout << '\n';
 		}
 	}
-	inline void unregisterThreadLogs([[maybe_unused]] std::vector<uint> const& ids)
-	{
-		if (getLogOptions().verbosity == LOG_NONE || getLogOptions().verbosity > LOG_INFO)
-			return;
-
-		log_threads_line_offset.clear();
-	}
-	inline std::mutex log_threads_mutex;
 	/**
 	 *  @brief Prints messages to standard out for threaded iterations in a nice way that doesn't flood stdout
 	 *  @param thread_idx used in threaded printing, 
@@ -301,7 +304,12 @@ namespace Candia2
 		
 		auto log_type = LOG_THREAD;
 
-		auto count = log_threads_line_offset[thread_idx];
+		uint count{};
+		{
+			std::lock_guard<std::mutex> guard{log_threads_mutex};
+			if (auto it = log_threads_line_offset.find(thread_idx); it != log_threads_line_offset.end())
+				count = it->second;
+		}
 		auto ansi_jump_up   = ANSI_LINEFEED_UP(count);
 		auto ansi_jump_down = ANSI_LINEFEED_DOWN(count);
 		double ratio = static_cast<double>(val)/static_cast<double>(end);
@@ -368,7 +376,7 @@ namespace Candia2
 	}
 
 	template <typename... TArgs>
-	void assert(bool stmnt, std::format_string<TArgs...> fmt_string, TArgs&&... args)
+	void ensure(bool stmnt, std::format_string<TArgs...> fmt_string, TArgs&&... args)
 	{
 		if (!stmnt)
 			log(LOG_ERROR, "ASSERT", fmt_string, std::forward<TArgs>(args)...);

@@ -1,0 +1,18 @@
+set terminal cairolatex pdf color standalone
+set border lw 1.5
+set grid
+set logscale x
+set format x "$10^{%T}$"
+set xlabel "$x$"
+set ylabel "$\\frac{f_{\\mathrm{n3lo}}-f_{\\mathrm{nnlo}}}{f_{\\mathrm{nnlo}}}{\\times}100$ [\\%]"
+set yrange [-30:70]
+
+energies = "2 3"
+
+do for [energy in energies] {
+   file = sprintf("qf%s.dat", energy)
+   set output sprintf("qf%s.tex", energy)
+   set title sprintf("Evolution from 1 GeV to %s GeV", energy)
+   plot file using 1:2 with linespoints lw 2 pt 7 ps 0.4 lc rgb "red" title "charm", \
+        ''   using 1:3 with linespoints lw 2 pt 7 ps 0.4 lc rgb "green" title "gluon"
+}

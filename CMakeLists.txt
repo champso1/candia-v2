@@ -1,7 +1,10 @@
 cmake_minimum_required(VERSION 3.20)
-project(candia_v2 VERSION 1.8.0)
+project(candia_v2 VERSION 1.9.2)
 set(CMAKE_EXPORT_COMPILE_COMMANDS on)
-set(CMAKE_INSTALL_PREFIX ${CMAKE_SOURCE_DIR}/install)
+# default to installing into the source tree, but respect -DCMAKE_INSTALL_PREFIX
+if (CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
+  set(CMAKE_INSTALL_PREFIX ${PROJECT_SOURCE_DIR}/install CACHE PATH "Installation prefix." FORCE)
+endif()
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 
@@ -10,10 +13,6 @@ if (NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
   set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Build type." FORCE)
   set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS
 	"Debug" "Release" "MinSizeRel" "RelWithDebInfo")
-endif()
-
-if (NOT CMAKE_INSTALL_PREFIX)
-  set(CMAKE_INSTALL_PREFIX ${CMAKE_SOURCE_DIR}/install)
 endif()
 
 # build all vendor projects first before touching candia
@@ -78,11 +77,11 @@ set(n3lo_splitfuncs_fortran_src
   src/fortran/mvv_p3/xpps3a.f90
   src/fortran/mvv_p3/xpqg3a.f90)
 
-add_library(candia SHARED)
+add_library(candia)
 
 option(CANDIA_ENABLE_WARNINGS "Enable compilation with max warnings e.g. -Wall -Wextra and -Wpedantic")
 if (CANDIA_ENABLE_WARNINGS)
-  target_compile_options(candia PUBLIC -Wall -Wextra -Wpedantic)
+  target_compile_options(candia PRIVATE -Wall -Wextra -Wpedantic)
 endif()
 target_sources(candia PRIVATE ${sources})
 target_sources(candia PRIVATE
@@ -93,12 +92,13 @@ target_sources(candia PRIVATE
 target_sources(candia PUBLIC
   FILE_SET cxx_headers
   TYPE HEADERS
-  BASE_DIRS ${CMAKE_SOURCE_DIR}/include
+  BASE_DIRS ${PROJECT_SOURCE_DIR}/include
   FILES ${headers})
 
-list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/share/cmake")
+list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/share/cmake")
 find_package(TBB REQUIRED)
 find_package(Threads REQUIRED)
+set(CANDIA_LIBOME_DIR "" CACHE PATH "Path to the installation root/prefix of libome.")
 find_package(libome REQUIRED)
 
 target_link_libraries(candia PRIVATE
@@ -106,12 +106,13 @@ target_link_libraries(candia PRIVATE
   Threads::Threads
   TBB::tbb
   libome::libome)
+target_link_libraries(candia PUBLIC libome::libome)
 target_include_directories(candia PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:include>)
 
 option(CANDIA_WITH_LHAPDF "Compile in LHAPDF interface" OFF)
-option(CANDIA_LHAPDF_DIR "Path to the installation root/prefix of LHAPDF." "/usr/local")
+set(CANDIA_LHAPDF_DIR "" CACHE PATH "Path to the installation root/prefix of LHAPDF.")
 if (CANDIA_WITH_LHAPDF)
   find_package(LHAPDF REQUIRED)
   message("candia-v2: Compiling with LHAPDF support.")
@@ -127,14 +128,24 @@ if (CANDIA_WITH_LHAPDF)
   target_sources(candia PUBLIC
     FILE_SET cxx_headers
     TYPE HEADERS
-    BASE_DIRS ${CMAKE_SOURCE_DIR}/include
+    BASE_DIRS ${PROJECT_SOURCE_DIR}/include
     FILES include/Candia-v2/LHAPDFDistribution.hpp)
   target_sources(candia PRIVATE src/LHAPDFDistribution.cpp)
 endif()
 
 
 add_subdirectory(examples)
-add_subdirectory(tests)
+
+option(CANDIA_BUILD_TESTS "Build the regression tests in tests/ (run them with ctest)" OFF)
+enable_testing()
+if (CANDIA_BUILD_TESTS)
+  add_subdirectory(tests)
+endif()
+
+option(CANDIA_BUILD_STUDIES "Build the study programs in studies/ (benchmark tables, plots); these are not tests" OFF)
+if (CANDIA_BUILD_STUDIES)
+  add_subdirectory(studies)
+endif()
 
 
 
@@ -158,6 +169,13 @@ endif()
 # ====================
 # INSTALLATION
 # ====================
+get_target_property(_LIB_TYPE candia TYPE)
+if(_LIB_TYPE STREQUAL "STATIC_LIBRARY")
+  set(CANDIA_BUILT_AS_STATIC TRUE)
+else()
+  set(CANDIA_BUILT_AS_STATIC FALSE)
+endif()
+
 include(GNUInstallDirs)
 install(TARGETS candia
   EXPORT candiaTargets
@@ -180,7 +198,8 @@ install(
   FILES
     ${CMAKE_CURRENT_BINARY_DIR}/candiaConfig.cmake
     ${CMAKE_CURRENT_BINARY_DIR}/candiaConfigVersion.cmake
-    ${CMAKE_SOURCE_DIR}/share/cmake/FindLHAPDF.cmake
+    ${PROJECT_SOURCE_DIR}/share/cmake/FindLHAPDF.cmake
+	${PROJECT_SOURCE_DIR}/share/cmake/Findlibome.cmake
   DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/candia)
 
 

@@ -2,10 +2,12 @@
 
 #include "Candia-v2/Grid.hpp"
 #include "Candia-v2/Common.hpp"
+#include "Parallel.hpp"
 
 #include <algorithm>
 #include <cmath>
 #include <limits>
+#include <ranges>
 #include <set>
 
 namespace Candia2
@@ -22,8 +24,13 @@ namespace Candia2
 			std::ranges::sort(_xtab);
 		}
 
+		// the grid never contains x=1, since the expressions are singular there
+		if (auto n = std::erase_if(_xtab, [](double x){ return x >= 1.0; }); n > 0)
+			log(LOG_WARNING, "Grid", "Removed {} xtab value(s) >= 1; the grid does not contain x=1", n);
+
 		fillPoints();
-		initGauLeg(gridfiller_args.min, 1.0, _Xi, _Wi);
+		// the nodes are in the mapping variable z, which always runs over [0, 1] (not in x)
+		initGauLeg(0.0, 1.0, _Xi, _Wi);
 		setupMappings();
 	}
 
@@ -37,10 +44,10 @@ namespace Candia2
 		// probably a better way to do it but who cares
 		for (double x : _xtab) {
 			auto val1 = std::ranges::lower_bound(_points, x);
-			if (std::abs(*val1 - x) < 1e-7)
+			if (val1 != _points.end() && std::abs(*val1 - x) < 1e-7)
 				_points.erase(val1);
 			auto val2 = std::ranges::upper_bound(_points, x);
-			if (std::abs(*val2 - x) < 1e-7)
+			if (val2 != _points.end() && std::abs(*val2 - x) < 1e-7)
 				_points.erase(val2);
 		}
 		
@@ -137,6 +144,18 @@ namespace Candia2
 				pp == std::numeric_limits<double>::max())
 				log(LOG_ERROR, "Grid::initGauLeg()", "Failed to determine gauss-legendre abscissae/weights");
 
+			// pp is the derivative at the previous iterate z1; the weight needs it at the final node z
+			// (with the derivative at z1 the weights were only accurate to ~1e-9, ~1e-6 for 200 points)
+			p1 = 1.0;
+			p2 = 0.0;
+			for (uint j=1; j<=n; j++) {
+				J = static_cast<double>(j);
+				p3 = p2;
+				p2 = p1;
+				p1 = ((2.0*J - 1.0)*z*p2 - (J-1.0)*p3)/J;
+			}
+			pp = N*(z*p1 - p2)/(z*z - 1.0);
+
 			Xi[i-1] = xm - xl*z;
 			Xi[n-i] = xm + xl*z;
 			Wi[i-1] = 2.0*xl/((1.0 - z*z)*pp*pp);
@@ -175,8 +194,8 @@ namespace Candia2
 	constexpr auto NN = 2*INTERP_POINTS;
     int Grid::interpFindIdx(double x)
 	{
-		static const int n = static_cast<int>(size());
-		static const int max_k = static_cast<int>(n-NN);
+		const int n = static_cast<int>(size());
+		const int max_k = static_cast<int>(n-NN);
 
 		auto it = std::upper_bound(
 			_points.begin(),
@@ -236,6 +255,79 @@ namespace Candia2
 		}
 
 		return y;
+	}
+
+	int Grid::interpWeights(double x, std::array<double, NN>& weights)
+	{
+		// Lagrange form of the same polynomial that interpolate() evaluates with Neville's algorithm
+		constexpr int n = NN;
+		int k = interpFindIdx(x);
+		double const* xa = &(_points[k]);
+
+		for (int i=0; i<n; i++) {
+			double w = 1.0;
+			for (int m=0; m<n; m++) {
+				if (m == i)
+					continue;
+				double grid_diff = xa[i] - xa[m];
+				if (std::abs(grid_diff) < 1e-15)
+					log(LOG_ERROR, "Grid::interpWeights()", "found a denominator equal to 0.0 ({}, {}, {})", x, xa[i], xa[m]);
+				w *= (x - xa[m])/grid_diff;
+			}
+			weights[i] = w;
+		}
+		return k;
+	}
+
+	ConvolutionKernel Grid::buildKernel(Expression& E)
+	{
+		const uint n = size();
+		const double plus = E.plus();
+		const double delta = E.delta();
+
+		// the same sum as convolution(), with interpolate(A, x/y) replaced by its weights on the grid values,
+		// so row k holds the coefficient of every A[j] in the convolution at x_k
+		std::vector<std::vector<double>> rows(n);
+		std::vector<uint> first(n);
+		parallelFor(std::views::iota(uint{0}, n), [&](uint k) {
+			std::vector<double> row(n, 0.0);
+			std::array<double, NN> weights{};
+			double x = _points[k];
+			double diag = plus*std::log1p(-x) + delta;
+			int lo = static_cast<int>(k);
+
+			for (auto& mapping : getMappings(x)) {
+				for (uint i=0; i<_Xi.size(); i++) {
+					auto [y, J] = mapping(x, _Xi[i]);
+					double wJ = _Wi[i]*J;
+					
+					double plus_part = plus * wJ*(1.0/(1.0-y));
+					diag -= plus_part; // this piece is propto Ak -> it's a diagonal piece
+					
+					double c = wJ*E.calcRegular(y) + plus_part;
+
+					int k0 = interpWeights(x/y, weights);
+					for (int m=0; m<static_cast<int>(NN); m++)
+						row[k0+m] += c*weights[m];
+					lo = std::min(lo, k0);
+				}
+			}
+			row[k] += diag;
+
+			first[k] = static_cast<uint>(lo);
+			rows[k].assign(row.begin()+lo, row.end());
+		});
+
+		ConvolutionKernel kernel{};
+		kernel._first = std::move(first);
+		kernel._offset.reserve(n+1);
+		kernel._offset.push_back(0);
+		for (auto const& row : rows)
+			kernel._offset.push_back(kernel._offset.back() + row.size());
+		kernel._values.reserve(kernel._offset.back());
+		for (auto const& row : rows)
+			kernel._values.insert(kernel._values.end(), row.begin(), row.end());
+		return kernel;
 	}
 
 	double Grid::mappingFunctionBase(

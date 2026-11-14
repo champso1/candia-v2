@@ -47,8 +47,8 @@ namespace Candia2
 		inline LHAPDF::PDF const& pdf() const { return *_pdf; }
 
 		value_type xg (value_type x) const override { return _pdf->xfxQ(21, x, _Q0); }
-		value_type xu (value_type x) const override { return _pdf->xfxQ(1,  x, _Q0); }
-		value_type xd (value_type x) const override { return _pdf->xfxQ(2,  x, _Q0); }
+		value_type xu (value_type x) const override { return _pdf->xfxQ(2,  x, _Q0); }
+		value_type xd (value_type x) const override { return _pdf->xfxQ(1,  x, _Q0); }
 		value_type xs (value_type x) const override { return _pdf->xfxQ(3,  x, _Q0); }
 		value_type xc (value_type x) const override { return _pdf->xfxQ(4,  x, _Q0); }
 		value_type xdb(value_type x) const override { return _pdf->xfxQ(-1, x, _Q0); }

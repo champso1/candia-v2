@@ -9,18 +9,27 @@ namespace Candia2
 		accessor_type const& ns_accessor,
 		std::vector<value_type> const& grid_points) const
 	{
-		for (uint k=0; k<grid_points.size()-1; k++) {
+		for (uint k=0; k<grid_points.size(); k++) {
 			double x = grid_points[k];
-
-			s_accessor(0, k) = xg(x);
-			s_accessor(1, k) = xqplus(x);
-			
-			ns_accessor(1, k) = xu(x);  // u
-			ns_accessor(2, k) = xd(x);  // d
-			ns_accessor(3, k) = xs(x);  // s
-			ns_accessor(7, k) = xub(x); // ub
-			ns_accessor(8, k) = xdb(x); // db
-			ns_accessor(9, k) = xs(x);  // sb ( = s)
+			accessor(0, k) = xg(x);
+			accessor(1, k) = xqplus(x);
+		}
+	}
+	
+	void LHAPDFDistribution::fillNonSingletCoeffs(
+		accessor_type const& accessor,
+		std::vector<value_type> const& grid_points) const
+	{
+		for (uint k=0; k<grid_points.size(); k++) {
+			double x = grid_points[k];
+			accessor(2, k) = xu(x);  // u
+			accessor(1, k) = xd(x);  // d
+			accessor(3, k) = xs(x);  // s
+			accessor(4, k) = xc(x);  // c
+			accessor(7, k) = xub(x); // ub
+			accessor(8, k) = xdb(x); // db
+			accessor(9, k) = xsb(x);  // sb
+			accessor(10, k) = xcb(x);  // cb
 		}
 	}
 
@@ -36,7 +45,7 @@ namespace Candia2
 		for (uint i : {3, 4, 5, 6})
 			_masses[i] = _pdf->quarkMass(i);
 
-		for (_nfi=1; _nfi<=_masses.size(); ++_nfi) {
+		for (_nfi=1; _nfi<=6; ++_nfi) {
 			if (Q0 <= _masses[_nfi])
 				break;
 		}
@@ -56,6 +65,11 @@ namespace Candia2
 		// because again, say, if charm mass (nf=4) = 1.3 and bottom mass (nf=5) = 4.5,
 		// if we have Qf=2, or anything up to and including 4.5,
 		// then we are good staying with _nff = 4
+		// as above, when evolving to the initial energy itself the loop ends one below _nfi
+		if (Qf < Q0)
+			log(LOG_ERROR, "LHAPDFDistribution", "final energy ({}) is below the initial energy ({})", Qf, Q0);
+		if (_nff < _nfi)
+			_nff = _nfi;
 		if (_nff < 1 || _nff > 6)
 			log(LOG_ERROR, "LHAPDFDistribution", "error finding nf (_nff={})", _nff);
 

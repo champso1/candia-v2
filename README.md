@@ -1,20 +1,18 @@
 # Candia-v2
 
-
 `Candia-v2` is a new and improved version of `Candia` (cfr. C. Hampson, M. Guzzi, arXiv:2512.22667; A. Cafarella, M. Guzzi, C. Coriano', Comp.Phys.Comm. 179 2008; A. Cafarella, M. Guzzi, C. Coriano', Nucl.Phys.B748 2006), a computer code to numerically solve DGLAP evolution for collinear PDFs in the x-space up to next-to-next-to-next-to leading order (N3LO) accuracy in perturbative QCD. `Candia-v2` currently uses an approximate version of the 4-loop singlet splitting functions and the exact expressions for the 4-loop non-singlet splitting functions. `Candia` was originally written in C and was only capable of evolution up to next-to-next-to (NNLO) accuracy in QCD. New information on the splitting functions and operator matrix elements as well as advancements to C++ led to the development of `Candia-v2`, which also brings significant optimizations.
 
 ## Building
 
 ### Prerequisites
 
+- CMake and a build tool e.g. GNU `Make` or `Ninja`
 - libome: fast interface to OMEs. Can be installed from [here](https://gitlab.com/libome/libome). 
 - GSL: GNU Scientific Library (also required by libome)
 - tbb: Intel Threading Building Blocks -- allows usage of C++ execution policies to parallelize/vectorize C++ algorithm loops
 - Compiler with C++20 support, see [here](#compiler-and-system-support) for info about compiler/system choice
 - LHAPDF (optional): for interface to/from LHAPDF grids.
-- CMake and a build tool e.g. GNU `Make` or `Ninja`
 - Doxygen (optional): for building the code documentation
-- LaTeX tools (optional): for building the manuscripts
 
 #### Compiler and System Support
 
@@ -34,19 +32,32 @@ cmake --build .
 ```
 
 Among standard CMake options like `-DCMAKE_BUILD_TYPE` or `-DCMAKE_INSTALL_PREFIX` are the following `Candia-v2` specific options (all of which are prefixed with `CANDIA_`):
-- `CANDIA_LIBOME_DIR` (default: '/usr/local'): installation prefix for libome
+- `CANDIA_LIBOME_DIR` (default: unset): installation prefix for libome, if it is not in a standard location
 - `CANDIA_WITH_LHAPDF` (default: FALSE): compile LHAPDF support. 
-- `CANDIA_LHAPDF_DIR` (default: '/usr/local'): if LHAPDF is installed in a nonstandard location (i.e. not /usr/local), then specify its installation prefix here. this variable is ignored if `CANDIA_WITH_LHAPDF` is FALSE.
+- `CANDIA_LHAPDF_DIR` (default: unset): if LHAPDF is installed in a nonstandard location (i.e. not /usr/local), then specify its installation prefix here. this variable is ignored if `CANDIA_WITH_LHAPDF` is FALSE.
 - `CANDIA_BUILD_DOCS` (default: FALSE): use Doxygen to build the code documentation
 - `CANDIA_BUILD_EXAMPLES` (default: TRUE): build the two examples in the `examples/` directory
-- `CANDIA_BUILD_TESTS` (default: FALSE): build the "tests" in the `tests/` directory. These aren't traditional tests, but rather a more extensive set of C++ files to perform e.g. benchmarking, plot generation, table creation, etc.
+- `CANDIA_BUILD_TESTS` (default: FALSE): build the regression tests in the `tests/` directory (see [Testing](#testing))
+- `CANDIA_BUILD_STUDIES` (default: FALSE): build the programs in the `studies/` directory, which produce benchmark tables, plots, etc. (see `studies/README.md`).
+
+For the dependency installation prefixes, there is also the `<lib>_ROOT` variable, i.e. `libome_ROOT` and `LHAPDF_ROOT`. Notably, there is also the option to build shared or static libraries by passing the `BUILD_SHARED_LIBS=[ON/OFF]` flag.
 
 Running `cmake --install <build-dir>` will perform standard installation to the chosen directory, and will also spit out a `candiaConfig.cmake` file -- see [here](#usage-from-other-cmake-projects) for what to do with it in other CMake projects.
+
+### Testing
+
+Configuring with `-DCANDIA_BUILD_TESTS=ON` builds the regression tests in `tests/`, which are run with CTest from the build directory:
+
+```bash
+ctest --output-on-failure # about 5 s
+```
+
+They compare the evolution of the Les Houches toy PDFs with benchmark tables from e.g. hoppet or pegasus (these tables are in `data/`), check the C++ against the Fortran N3LO splitting functions, check that several solvers can run concurrently, and (with LHAPDF support) write an LHAPDF grid and read it back.
 
 
 ## Usage
 
-The `examples/` directory contains two files that illustrate the basic functionality of the library. The two main forms of output are basic PDFs from a single evolution, or an LHAPDF PDF from a set of evolutions to multiple different final energies. The former is exhibited in `evolve_dglap.cpp` and the latter in `lhapdf_grid.cpp`. Note that the latter will not be compiled if `CANDIA_WITH_LHAPDF` is disabled.
+The `examples/` directory contains two files that illustrate the basic functionality of the library. The two main forms of output are basic PDFs from a single evolution, or an LHAPDF PDF from a set of evolutions to multiple different final energies. The former is exhibited in `evolve_dglap.cpp` and the latter in `lhapdf_grid.cpp`. Note that the latter will not be compiled if `CANDIA_WITH_LHAPDF` is disabled, or LHAPDF wasn't found.
 
 ## Usage from Other CMake Projects
 
@@ -57,8 +68,7 @@ enable_language(Fortran)
 add_executable(main ...)
 # ...
 find_package(candia REQUIRED)
-target_include_directories(main PUBLIC ${CANDIA_INCLUDE_DIR})
-target_link_libraries(main PRIVATE ${CANDIA_LIBRARIES})
+target_link_libraries(main PRIVATE candia::candia)
 ```
 
 The call to `enable_language` is required because `Candia-v2` uses some Fortran files to do e.g. harmonic polylogarithms, and this function call sets up the required compiler/linker flags.
@@ -67,7 +77,7 @@ CMake will need to know where to find the `candiaConfig.cmake` file, which can b
 
 ## Changelog
 
-We will now keep a Changelog file for each release/update to the main branch, found in [Changelog.md](Changelog.md). Some minor info about what changed per release can be found on the Releases page.
+We will now keep a Changelog file for each release/update to the main branch, found in [Changelog.md](Changelog.md). Some major info about what changed per release can usually still be found on the Releases page.
 
 ## Attributions and License
 

@@ -7,10 +7,10 @@
 
 namespace Candia2
 {
-    void AlphaS::assertNf() const
+    void AlphaS::assertNf(uint nf) const
 	{
-		if (_nf > 8)
-			log(LOG_ERROR, "AlphaS::assertNf()", "Found nf value of {}, expected < 8", _nf);
+		if (nf >= _masses.size())
+			log(LOG_ERROR, "AlphaS::assertNf()", "Found nf value of {}, expected < {}", nf, _masses.size());
 	}
 
 	void AlphaS::assertScheme() const
@@ -61,32 +61,33 @@ namespace Candia2
 		_masses[_nfi+1] = _Qf;
 
 		// what we setup is the "post-threshold match" at the initial flavor
-		// which is just the initial value of alpha_s, i.e. alpha0
+		// which is the initial value of alpha_s at the renormalization scale, mu_R = sqrt(mur2_muf2)*Q0 (as in the VFNS),
 		// and the "pre-threshold match" at the next flavor
-		// which defines the final value of alpha_s,
-		// this we just calculate.
-		_post[_nfi] = _alpha0;
-		_pre[_nfi+1] = evaluate(_Q0, _Qf, _alpha0);
+		// which defines the final value of alpha_s, at mu_R = sqrt(mur2_muf2)*Qf
+		update(_nf);
+		const double mur_muf = std::sqrt(_mur2_muf2);
+		_post[_nfi] = evaluate(_Q0, mur_muf*_Q0, _alpha0);
+		_pre[_nfi+1] = evaluate(_Q0, _Qf, _post[_nfi]);
 	}
 
 	
 	double AlphaS::masses(uint nf) const
 	{
-		assertNf();
+		assertNf(nf);
 		assertScheme();
 		return _masses[nf];
 	}
 
 	double AlphaS::pre(uint nf) const
 	{
-		assertNf();
+		assertNf(nf);
 		assertScheme();
 		return _pre[nf];
 	}
 
 	double AlphaS::post(uint nf) const
 	{
-		assertNf();
+		assertNf(nf);
 		assertScheme();
 		return _post[nf];
 	}
@@ -278,8 +279,10 @@ namespace Candia2
 			double q0 = _masses[i];
 			double qf = _masses[i+1];
 		    double a0 = _post[i];
+			// the last interval is closed so that q == Qf is included
+			bool last_interval = (i == _nff);
 			for (double q : qvals_sorted) {
-				if (q >= q0 && q < qf)
+				if (q >= q0 && (q < qf || (last_interval && q == qf)))
 					vals.emplace_back(q, evaluate(q0, q, a0));
 			}
 		}

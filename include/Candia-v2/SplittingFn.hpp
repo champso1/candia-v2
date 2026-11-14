@@ -9,6 +9,8 @@
 #include "Candia-v2/Expression.hpp"
 #include "Candia-v2/SpecialFuncs.hpp"
 
+#include <memory>
+
 namespace Candia2
 {
 	
@@ -18,11 +20,21 @@ namespace Candia2
 	class SplittingFunction : public Expression
 	{
 	protected:
-		static uint _nf;      //!< number of active/currently massless flavors
-		static double _beta0; //!< \f$\beta_0\f$ value for P0gg calculation
-		static double _log_muf2_mur2;    //!< log of mu_f/mu_r
+		uint _nf{4};      //!< number of active/currently massless flavors
+		double _beta0{}; //!< \f$\beta_0\f$ value for P0gg calculation
+		double _log_muf2_mur2{};    //!< log of mu_f/mu_r
 		P3ApproxType _imod{P3ApproxType::ImodAvg}; //!< approximation type for n3lo splitting functions
-		static double flagNLP; //!< random flag enclosed in exact p3 splitting functions
+		static constexpr double flagNLP = 1.0; //!< flag enclosing the next-to-leading-power terms in the exact p3 splitting functions
+
+		/** maps @a _imod onto the IMOD convention of the Fortran routines (1 = set A, 2 = set B, anything else = average) */
+		inline int fortranImod() const
+		{
+			switch (_imod) {
+				case P3ApproxType::Imod1: return 1;
+				case P3ApproxType::Imod2: return 2;
+				default: return 0;
+			}
+		}
 	public:
 		SplittingFunction() = default; //!< default constructor
 		virtual ~SplittingFunction() = default; //!< default deconstructor
@@ -31,8 +43,8 @@ namespace Candia2
 		{
 		}
 
-		/** updates the global value of nf and \f$\beta_0\f$ */
-		inline static void update(uint nf, double beta0, double log_muf2_mur2)
+		/** updates this expression's value of nf and \f$\beta_0\f$; call @a preCalc() afterwards */
+		inline void update(uint nf, double beta0, double log_muf2_mur2)
 		{
 			_nf = nf;
 			_beta0 = beta0;
@@ -383,6 +395,37 @@ namespace Candia2
 
 	/**
 	 *  @ingroup n3lo_splitfuncs
+	 *  @brief \f$P_{qq}^{(3)} = P_{ns}^{(3)+} + P_{ps}^{(3)}\f$ from a given non-singlet and pure-singlet part,
+	 *  so that the singlet evolution uses the same \f$P_{ns}^{(3)+}\f$ (exact or approximate) as the non-singlet one
+	 */
+	class P3qqFromParts final : public SplittingFunction
+	{
+	private:
+		std::unique_ptr<SplittingFunction> _ns_plus;
+		std::unique_ptr<SplittingFunction> _pure_singlet;
+	public:
+		P3qqFromParts(std::unique_ptr<SplittingFunction> ns_plus, std::unique_ptr<SplittingFunction> pure_singlet)
+			: _ns_plus{std::move(ns_plus)}, _pure_singlet{std::move(pure_singlet)}
+		{
+		}
+
+		double calcRegular(double x) const override { return _ns_plus->calcRegular(x) + _pure_singlet->calcRegular(x); }
+		double calcPlus() const override { return _ns_plus->plus(); }
+		double calcDelta() const override { return _ns_plus->delta(); }
+
+		/** passes this expression's nf, beta0 and scale log on to both parts, then caches the plus and delta pieces */
+		void preCalc() override
+		{
+			for (SplittingFunction* part : {_ns_plus.get(), _pure_singlet.get()}) {
+				part->update(_nf, _beta0, _log_muf2_mur2);
+				part->preCalc();
+			}
+			SplittingFunction::preCalc();
+		}
+	};
+
+	/**
+	 *  @ingroup n3lo_splitfuncs
 	 *  @brief Implements \f$P_{qg}^{(3)}\f$
 	 */
 	class P3qg final: public SplittingFunction
@@ -623,21 +666,21 @@ namespace Candia2
 			inline double calcRegular(double x) const override
 			{
 				int nf = static_cast<int>(_nf);
-				int imod = static_cast<int>(_imod);
+				int imod = fortranImod();
 				return p3nspa(&x, &nf, &imod)/16.0;
 			}
 			inline double calcPlus() const override
 			{
 				double x = 0.0;
 				int nf = static_cast<int>(_nf);
-				int imod = static_cast<int>(_imod);
+				int imod = fortranImod();
 				return p3nspb(&x, &nf, &imod)/16.0;
 			}
 			inline double calcDelta() const override
 			{
 				double x = 1.0;
 				int nf = static_cast<int>(_nf);
-				int imod = static_cast<int>(_imod);
+				int imod = fortranImod();
 				return p3nspc(&x, &nf, &imod)/16.0;
 			}
 		};
@@ -654,21 +697,21 @@ namespace Candia2
 			inline double calcRegular(double x) const override
 			{
 				int nf = static_cast<int>(_nf);
-				int imod = static_cast<int>(_imod);
+				int imod = fortranImod();
 				return p3nsma(&x, &nf, &imod)/16.0;
 			}
 			inline double calcPlus() const override
 			{
 				double x = 0.0;
 				int nf = static_cast<int>(_nf);
-				int imod = static_cast<int>(_imod);
+				int imod = fortranImod();
 				return p3nsmb(&x, &nf, &imod)/16.0;
 			}
 			inline double calcDelta() const override
 			{
 				double x = 1.0;
 				int nf = static_cast<int>(_nf);
-				int imod = static_cast<int>(_imod);
+				int imod = fortranImod();
 				return p3nsmc(&x, &nf, &imod)/16.0;
 			}
 		};
@@ -685,21 +728,21 @@ namespace Candia2
 			inline double calcRegular(double x) const override
 			{
 				int nf = static_cast<int>(_nf);
-				int imod = static_cast<int>(_imod);
+				int imod = fortranImod();
 				return (p3nsma(&x, &nf, &imod) + p3nssa(&x, &nf, &imod))/16.0;
 			}
 			inline double calcPlus() const override
 			{
 				double x = 0.0;
 				int nf = static_cast<int>(_nf);
-				int imod = static_cast<int>(_imod);
+				int imod = fortranImod();
 				return p3nsmb(&x, &nf, &imod)/16.0;
 			}
 			inline double calcDelta() const override
 			{
 				double x = 1.0;
 				int nf = static_cast<int>(_nf);
-				int imod = static_cast<int>(_imod);
+				int imod = fortranImod();
 				return p3nsmc(&x, &nf, &imod)/16.0;
 			}
 		};
@@ -716,7 +759,7 @@ namespace Candia2
 			inline double calcRegular(double x) const override
 			{
 				int nf = static_cast<int>(_nf);
-				int imod = static_cast<int>(_imod);
+				int imod = fortranImod();
 				return p3psa(&x, &nf, &imod)/16.0;
 			}
 		};
@@ -733,21 +776,21 @@ namespace Candia2
 			inline double calcRegular(double x) const override
 			{
 				int nf = static_cast<int>(_nf);
-				int imod = static_cast<int>(_imod);
+				int imod = fortranImod();
 				return (p3nspa(&x, &nf, &imod) + p3psa(&x, &nf, &imod))/16.0;
 			}
 			inline double calcPlus() const override
 			{
 				double x = 0.0;
 				int nf = static_cast<int>(_nf);
-				int imod = static_cast<int>(_imod);
+				int imod = fortranImod();
 				return p3nspb(&x, &nf, &imod)/16.0;
 			}
 			inline double calcDelta() const override
 			{
 				double x = 1.0;
 				int nf = static_cast<int>(_nf);
-				int imod = static_cast<int>(_imod);
+				int imod = fortranImod();
 				return p3nspc(&x, &nf, &imod)/16.0;
 			}
 		};
@@ -764,7 +807,7 @@ namespace Candia2
 			inline double calcRegular(double x) const override
 			{
 				int nf = static_cast<int>(_nf);
-				int imod = static_cast<int>(_imod);
+				int imod = fortranImod();
 				return p3qga(&x, &nf, &imod)/16.0;
 			}
 		};
@@ -781,7 +824,7 @@ namespace Candia2
 			inline double calcRegular(double x) const override
 			{
 				int nf = static_cast<int>(_nf);
-				int imod = static_cast<int>(_imod);
+				int imod = fortranImod();
 				return p3gqa_2512(&x, &nf, &imod)/16.0;
 			}
 		};
@@ -798,21 +841,21 @@ namespace Candia2
 			inline double calcRegular(double x) const override
 			{
 				int nf = static_cast<int>(_nf);
-				int imod = static_cast<int>(_imod);
+				int imod = fortranImod();
 				return p3gga_2410(&x, &nf, &imod)/16.0;
 			}
 			inline double calcPlus() const override
 			{
 				double x = 0.0;
 				int nf = static_cast<int>(_nf);
-				int imod = static_cast<int>(_imod);
+				int imod = fortranImod();
 				return p3ggb_2410(&x, &nf, &imod)/16.0;
 			}
 			inline double calcDelta() const override
 			{
 				double x = 1.0;
 				int nf = static_cast<int>(_nf);
-				int imod = static_cast<int>(_imod);
+				int imod = fortranImod();
 				return p3ggc_2410(&x, &nf, &imod)/16.0;
 			}
 		};

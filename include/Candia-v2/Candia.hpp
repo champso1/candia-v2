@@ -153,6 +153,32 @@ namespace Candia2
 		}
 
 	private:
+		/** @brief number of splitting functions; they come first in @a ExprName, ordered by perturbative order */
+		static constexpr uint _num_splitting_functions = static_cast<uint>(ExprName::A2ns);
+
+		/** @brief precomputed convolutions with the expressions, for the current number of flavours */
+		std::array<ConvolutionKernel, static_cast<uint>(ExprName::Count)> _kernels{};
+
+		/** @brief rebuilds the kernels of the splitting functions up to the evolution order */
+		void buildKernels();
+
+		/** @brief builds the kernel of a single expression in its current state */
+		inline void buildKernel(ExprName name)
+		{
+			_kernels[static_cast<uint>(name)] = _grid.buildKernel(getExpression(name));
+		}
+
+		/**
+		 *  @brief returns the precomputed convolution with the expression @a name
+		 *  @note only valid after it was built for the current number of flavours
+		 */
+		inline ConvolutionKernel const& getKernel(ExprName name) const
+		{
+			ConvolutionKernel const& kernel = _kernels[static_cast<uint>(name)];
+			ensure(!kernel.empty(), "no convolution kernel for this expression");
+			return kernel;
+		}
+
 		enum class EvolType
 		{
 			None,
@@ -167,14 +193,14 @@ namespace Candia2
 		 *  @{
 		 */
 		inline double& getSingletCoeffValue(uint j, uint k) {
-			assert(_evol_type != EvolType::None, "invalid evolution type (found None)");
+			ensure(_evol_type != EvolType::None, "invalid evolution type (found None)");
 			if (_evol_type == EvolType::Exact)
 				return _S(0,j,0,k);
 			else
 				return _S_NS(0,j,0,k);
 		}
 		inline ArrayGridView getSingletCoeffArray(uint j) {
-			assert(_evol_type != EvolType::None, "invalid evolution type (found None)");
+			ensure(_evol_type != EvolType::None, "invalid evolution type (found None)");
 			if (_evol_type == EvolType::Exact)
 				return _S(0,j,0);
 			else
@@ -182,7 +208,7 @@ namespace Candia2
 		}
 		
 	    inline double& getNonSingletCoeffValue(uint j, uint k) {
-			assert(_evol_type != EvolType::None, "invalid evolution type (found None)");
+			ensure(_evol_type != EvolType::None, "invalid evolution type (found None)");
 			if (_evol_type == EvolType::Truncated)
 				return _S_NS(0,j,0,k);
 			switch (_order) {
@@ -195,7 +221,7 @@ namespace Candia2
 		}
 
 		inline ArrayGridView getNonSingletCoeffArray(uint j) {
-			assert(_evol_type != EvolType::None, "invalid evolution type (found None)");
+			ensure(_evol_type != EvolType::None, "invalid evolution type (found None)");
 			if (_evol_type == EvolType::Truncated)
 				return _S_NS(0,j,0);
 			switch (_order) {
@@ -293,7 +319,7 @@ namespace Candia2
 		 */
 		inline std::vector<ArrayGrid> const& evolveTrunc()
 		{
-			log(LOG_DEBUG, "DGLAPSolver", "Using exact ansatz for NS sector");
+			log(LOG_INFO, "DGLAPSolver", "Using truncated ansatz for NS sector");
 			return _evolve_function(EvolType::Truncated);
 		}
 
@@ -442,9 +468,9 @@ namespace Candia2
 		 *  @ingroup recrelhelpers
 		 *  @{
 		 */
-		double shift_p1(Expression& P1, Expression& P0, ArrayGridView A, uint k);
-		double shift_p2(Expression& P2, Expression& P1, Expression& P0, ArrayGridView A, uint k);
-		double shift_p3(Expression& P3, Expression& P2, Expression& P1, Expression& P0, ArrayGridView A, uint k);
+		double shift_p1(ConvolutionKernel const& P1, ConvolutionKernel const& P0, ArrayGridView A, uint k);
+		double shift_p2(ConvolutionKernel const& P2, ConvolutionKernel const& P1, ConvolutionKernel const& P0, ArrayGridView A, uint k);
+		double shift_p3(ConvolutionKernel const& P3, ConvolutionKernel const& P2, ConvolutionKernel const& P1, ConvolutionKernel const& P0, ArrayGridView A, uint k);
 		/** @} */
 		
 		/**
@@ -452,19 +478,19 @@ namespace Candia2
 		 *  @ingroup recrels
 		 *  @{
 		 */
-		double recrelS_1(ArrayGridView S, uint k, Expression& P);
+		double recrelS_1(ArrayGridView S, uint k, ConvolutionKernel const& P);
 		double recrelS_2(
 			ArrayGridView S_i, ArrayGridView S_im1,
 			uint k,
-			Expression& P0, Expression& P1);
+			ConvolutionKernel const& P0, ConvolutionKernel const& P1);
 		double recrelS_3(
 			ArrayGridView S_i, ArrayGridView S_im1, ArrayGridView S_im2,
 			uint k,
-			Expression& P0, Expression& P1, Expression& P2);
+			ConvolutionKernel const& P0, ConvolutionKernel const& P1, ConvolutionKernel const& P2);
 		double recrelS_4(
 			ArrayGridView S_i, ArrayGridView S_im1, ArrayGridView S_im2, ArrayGridView S_im3,
 			uint k,
-			Expression& P0, Expression& P1, Expression& P2, Expression& P3);
+			ConvolutionKernel const& P0, ConvolutionKernel const& P1, ConvolutionKernel const& P2, ConvolutionKernel const& P3);
 		/** @} */
 
 		/**
@@ -472,7 +498,7 @@ namespace Candia2
 		 *  @ingroup recrels
 		 *  @{
 		 */
-		double recrelLO(ArrayGridView A, uint k, Expression& P0);
+		double recrelLO(ArrayGridView A, uint k, ConvolutionKernel const& P0);
 		/** @} */
 
 		/**
@@ -483,11 +509,11 @@ namespace Candia2
 		double recrelNLO_1(
 			ArrayGridView B,
 			uint k,
-			Expression& P0);
+			ConvolutionKernel const& P0);
 		double recrelNLO_2(
 			ArrayGridView B,
 			uint k,
-			Expression& P0, Expression& P1);
+			ConvolutionKernel const& P0, ConvolutionKernel const& P1);
 		/** @} */
 
 		/**
@@ -498,15 +524,15 @@ namespace Candia2
 		double recrelNNLO_1(
 			ArrayGridView C,
 			uint k,
-			Expression& P0);
+			ConvolutionKernel const& P0);
 		double recrelNNLO_2(
 			ArrayGridView C,
 			uint k,
-			Expression& P0, Expression& P1, Expression& P2);
+			ConvolutionKernel const& P0, ConvolutionKernel const& P1, ConvolutionKernel const& P2);
 		double recrelNNLO_3(
 			ArrayGridView C,
 			uint k,
-			Expression& P0, Expression& P1);
+			ConvolutionKernel const& P0, ConvolutionKernel const& P1);
 		/** @} */
 
 		/**
@@ -517,19 +543,19 @@ namespace Candia2
 		double recrelN3LO_1(
 			ArrayGridView D,
 			uint k,
-			Expression& P0);
+			ConvolutionKernel const& P0);
 		double recrelN3LO_2(
 			ArrayGridView D,
 			uint k,
-			Expression& P0, Expression& P1, Expression& P2, Expression& P3);
+			ConvolutionKernel const& P0, ConvolutionKernel const& P1, ConvolutionKernel const& P2, ConvolutionKernel const& P3);
 		double recrelN3LO_3(
 			ArrayGridView D,
 			uint k,
-			Expression& P0, Expression& P1, Expression& P2, Expression& P3);
+			ConvolutionKernel const& P0, ConvolutionKernel const& P1, ConvolutionKernel const& P2, ConvolutionKernel const& P3);
 		double recrelN3LO_4(
 			ArrayGridView D,
 			uint k,
-			Expression& P0, Expression& P1, Expression& P2, Expression& P3);
+			ConvolutionKernel const& P0, ConvolutionKernel const& P1, ConvolutionKernel const& P2, ConvolutionKernel const& P3);
 		/** @} */
 	};
 }

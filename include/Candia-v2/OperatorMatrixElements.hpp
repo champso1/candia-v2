@@ -17,15 +17,15 @@ namespace Candia2
 	class OpMatElem : public Expression
 	{
 	protected:
-		static double _lm; //!< log(m_h^2/mu_r^2) = -log_mur2_muf2  ** NOTE THE MINUS **
-		static uint _nf;   //!< number of active/massless flavors
+		double _lm{0.0}; //!< log(m_h^2/mu_r^2) = -log_mur2_muf2  ** NOTE THE MINUS **
+		uint _nf{4};     //!< number of active/massless flavors
 
 		OpMatElem() = default; //!< default constructor
 	public:
 		virtual ~OpMatElem() = default; //!< default destructor
 
-		/** Updates the internally stored value of @a lm and @a nf */
-		inline static void update(double lm, uint nf)
+		/** Updates this OME's value of @a lm and @a nf; call @a preCalc() afterwards */
+		inline void update(double lm, uint nf)
 		{
 			log(LOG_DEBUG, "OME", "Setting L_M = {}, nf = {}", lm, nf);
 			_lm = lm;

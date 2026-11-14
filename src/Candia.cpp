@@ -67,8 +67,39 @@ namespace Candia2
 		log(LOG_DEBUG, "DGLAPSolver::DGLAPSolver()", "Evolving with log(mu_R / mu_F) = log({:.1}) = {:.4}.", _mur2_muf2, _log_mur2_muf2);
 
 		if (_order == 0 && _trunc_idx != 0) {
-			_trunc_idx = 0; // LO has exact singlet solution, do not add additional terms
 			log(LOG_WARNING, "DGLAP", "Specified value of the truncation index ({}) will be set to zero.", _trunc_idx);
+			_trunc_idx = 0; // LO has exact singlet solution, do not add additional terms
+		} else if (_trunc_idx < _order) {
+			// the singlet recursion at order n writes to _S(n,...), so we need at least _order+1 slots
+			log(LOG_WARNING, "DGLAP", "Specified value of the truncation index ({}) is below the perturbative order and will be set to {}.", _trunc_idx, _order);
+			_trunc_idx = _order;
+			_S.resize({_trunc_idx+1, 2, 2, grid.size()});
+		}
+
+		// the N3LO beta function, beta0 + beta1 a + beta2 a^2 + beta3 a^3 with a = alpha_s/(4 pi), factorizes in alpha_s as
+		// (beta3/(4 pi)^3)*(alpha_s - r1)*(alpha_s^2 + b*alpha_s + c); the exact N3LO non-singlet solution is built on this,
+		// so the roots must be those of the beta function used for alpha_s (hard-coded values were only accurate to ~1e-6)
+		for (uint nf=1; nf<=6; ++nf) {
+			const double p = 4.0*PI;
+			const double b3 = _alpha_s.calcBeta3(nf)/(p*p*p);
+			// as a monic cubic: alpha^3 + a2 alpha^2 + a1 alpha + a0
+			const double a2 = _alpha_s.calcBeta2(nf)/(p*p)/b3;
+			const double a1 = _alpha_s.calcBeta1(nf)/p/b3;
+			const double a0 = _alpha_s.calcBeta0(nf)/b3;
+
+			// its only real root (near -1), by Newton's method
+			double r = -1.0;
+			for (uint i=0; i<100; ++i) {
+				const double step = (((r + a2)*r + a1)*r + a0)/((3.0*r + 2.0*a2)*r + a1);
+				r -= step;
+				if (std::abs(step) <= 1e-15*std::abs(r))
+					break;
+			}
+			// dividing out (alpha - r1) leaves alpha^2 + b alpha + c
+			_r1[nf] = r;
+			_b[nf] = a2 + r;
+			_c[nf] = a1 + r*_b[nf];
+			ensure(_b[nf]*_b[nf] < 4.0*_c[nf], "the N3LO beta function for nf={} has more than one real root", nf);
 		}
 
 		auto to_string = [](std::array<double, 8> const& a) -> std::string {
@@ -80,6 +111,9 @@ namespace Candia2
 		log(LOG_DEBUG, "DGLAPSolver::DGLAPSolver()", "r1 array: {}", to_string(_r1));
 		log(LOG_DEBUG, "DGLAPSolver::DGLAPSolver()", "b  array: {}", to_string(_b));
 		log(LOG_DEBUG, "DGLAPSolver::DGLAPSolver()", "c  array: {}", to_string(_c));
+	    
+		setInitialConditions(initial_dist);
+		log(LOG_DEBUG, "DGLAPSolver::DGLAPSolver()", "Successfully filled coefficients with initial conditions.");
 	}
 
 	DGLAPSolver::DGLAPSolver(
@@ -101,8 +135,39 @@ namespace Candia2
 		log(LOG_DEBUG, "DGLAPSolver::DGLAPSolver()", "Evolving with log(mu_R / mu_F) = log({:.1}) = {:.4}.", _mur2_muf2, _log_mur2_muf2);
 
 		if (_order == 0 && _trunc_idx != 0) {
-			_trunc_idx = 0; // LO has exact singlet solution, do not add additional terms
 			log(LOG_WARNING, "DGLAP", "Specified value of the truncation index ({}) will be set to zero.", _trunc_idx);
+			_trunc_idx = 0; // LO has exact singlet solution, do not add additional terms
+		} else if (_trunc_idx < _order) {
+			// the singlet recursion at order n writes to _S(n,...), so we need at least _order+1 slots
+			log(LOG_WARNING, "DGLAP", "Specified value of the truncation index ({}) is below the perturbative order and will be set to {}.", _trunc_idx, _order);
+			_trunc_idx = _order;
+			_S.resize({_trunc_idx+1, 2, 2, grid.size()});
+		}
+
+		// the N3LO beta function, beta0 + beta1 a + beta2 a^2 + beta3 a^3 with a = alpha_s/(4 pi), factorizes in alpha_s as
+		// (beta3/(4 pi)^3)*(alpha_s - r1)*(alpha_s^2 + b*alpha_s + c); the exact N3LO non-singlet solution is built on this,
+		// so the roots must be those of the beta function used for alpha_s (hard-coded values were only accurate to ~1e-6)
+		for (uint nf=1; nf<=6; ++nf) {
+			const double p = 4.0*PI;
+			const double b3 = _alpha_s.calcBeta3(nf)/(p*p*p);
+			// as a monic cubic: alpha^3 + a2 alpha^2 + a1 alpha + a0
+			const double a2 = _alpha_s.calcBeta2(nf)/(p*p)/b3;
+			const double a1 = _alpha_s.calcBeta1(nf)/p/b3;
+			const double a0 = _alpha_s.calcBeta0(nf)/b3;
+
+			// its only real root (near -1), by Newton's method
+			double r = -1.0;
+			for (uint i=0; i<100; ++i) {
+				const double step = (((r + a2)*r + a1)*r + a0)/((3.0*r + 2.0*a2)*r + a1);
+				r -= step;
+				if (std::abs(step) <= 1e-15*std::abs(r))
+					break;
+			}
+			// dividing out (alpha - r1) leaves alpha^2 + b alpha + c
+			_r1[nf] = r;
+			_b[nf] = a2 + r;
+			_c[nf] = a1 + r*_b[nf];
+			ensure(_b[nf]*_b[nf] < 4.0*_c[nf], "the N3LO beta function for nf={} has more than one real root", nf);
 		}
 
 		auto to_string = [](std::array<double, 8> const& a) -> std::string {
@@ -114,6 +179,9 @@ namespace Candia2
 		log(LOG_DEBUG, "DGLAPSolver::DGLAPSolver()", "r1 array: {}", to_string(_r1));
 		log(LOG_DEBUG, "DGLAPSolver::DGLAPSolver()", "b  array: {}", to_string(_b));
 		log(LOG_DEBUG, "DGLAPSolver::DGLAPSolver()", "c  array: {}", to_string(_c));
+	    
+		setInitialConditions(initial_dist);
+		log(LOG_DEBUG, "DGLAPSolver::DGLAPSolver()", "Successfully filled coefficients with initial conditions.");
 	}
 
 	DGLAPSolver::~DGLAPSolver()
@@ -178,7 +246,18 @@ namespace Candia2
 			createExpression<mvv_p3::P3gq>(ExprName::P3gq, _p3_approx_types[static_cast<uint>(ExprName::P3gq)]);
 			createExpression<mvv_p3::P3gg>(ExprName::P3gg, _p3_approx_types[static_cast<uint>(ExprName::P3gg)]);
 		} else {
-			createExpression<P3qq>(ExprName::P3qq, _p3_approx_types[static_cast<uint>(ExprName::P3qq)]);
+			// the singlet P_qq = P_ns^+ + P_ps takes approximations from both nsp and ps
+			// since the nsp can be approx or exact, we construct them separately
+			const P3ApproxType nsp_type = _p3_approx_types[static_cast<uint>(ExprName::P3nsp)];
+			std::unique_ptr<SplittingFunction> ns_plus{};
+			if (nsp_type == P3ApproxType::Exact)
+				ns_plus = std::make_unique<p3_exact::P3nsp>();
+			else
+				ns_plus = std::make_unique<P3nsp>(nsp_type);
+			createExpression<P3qqFromParts>(
+				ExprName::P3qq,
+				std::move(ns_plus),
+				std::make_unique<P3ps>(_p3_approx_types[static_cast<uint>(ExprName::P3qq)]));
 			createExpression<P3qg>(ExprName::P3qg, _p3_approx_types[static_cast<uint>(ExprName::P3qg)]);
 			createExpression<P3gq>(ExprName::P3gq, _p3_approx_types[static_cast<uint>(ExprName::P3gq)]);
 			createExpression<P3gg>(ExprName::P3gg, _p3_approx_types[static_cast<uint>(ExprName::P3gg)]);
@@ -206,8 +285,9 @@ namespace Candia2
 			}
 		}
 
-		createExpression<OpMatElemN3LO>(ExprName::A3nsm, ome::Candia2::AqqQNSEven);
-		createExpression<OpMatElemN3LO>(ExprName::A3nsp, ome::Candia2::AqqQNSOdd);
+		// the C-even (q + qbar) non-singlet OME is libome's "Even", the C-odd (q - qbar) one its "Odd"
+		createExpression<OpMatElemN3LO>(ExprName::A3nsm, ome::Candia2::AqqQNSOdd);
+		createExpression<OpMatElemN3LO>(ExprName::A3nsp, ome::Candia2::AqqQNSEven);
 		createExpression<OpMatElemN3LO>(ExprName::A3gq, ome::Candia2::AgqQ);
 		createExpression<OpMatElemN3LO>(ExprName::A3gg, ome::Candia2::AggQ);
 		createExpression<OpMatElemN3LO>(ExprName::A3hq, ome::Candia2::AQqPS);
@@ -262,6 +342,22 @@ namespace Candia2
 			createExpression<P0yy>(ExprName::P0yy);
 		}
     }
+
+	void DGLAPSolver::buildKernels()
+	{
+		// the splitting functions of each order start at these names
+		constexpr std::array<ExprName, 4> order_starts{ExprName::P0ns, ExprName::P1nsm, ExprName::P2nsm, ExprName::P3nsm};
+		const uint end = (_order+1 < order_starts.size()) ?
+			static_cast<uint>(order_starts[_order+1]) :
+			_num_splitting_functions;
+
+		for (uint i=0; i<_num_splitting_functions; i++) {
+			if (i < end)
+				buildKernel(static_cast<ExprName>(i));
+			else
+				_kernels[i] = ConvolutionKernel{};
+		}
+	}
 
     void DGLAPSolver::setupCoefficients()
     {
@@ -335,7 +431,7 @@ namespace Candia2
 		}
 
         double Nf = static_cast<double>(_nf);
-		for (uint k=0; k<_grid.size()-1;k++) {
+		for (uint k=0; k<_grid.size();k++) {
 			if (_order>=2) {
 				resum[13](k) = resum[25](k);
 				for (uint j=26; j<=24+_nf; j++)
@@ -428,7 +524,7 @@ namespace Candia2
 		}
 
         double Nf = static_cast<double>(_nf);
-		for (uint k=0; k<_grid.size()-1;k++) {
+		for (uint k=0; k<_grid.size();k++) {
 			if (_order>=2) {
 				resum[13](k)=resum[25](k);
 				for (uint j=26; j<=24+_nf; j++)
@@ -660,7 +756,6 @@ namespace Candia2
 		std::vector<ArrayGrid> resum_singlet(num_dists, ArrayGrid(_grid.size()));
 		std::vector<ArrayGrid> resum(num_dists, ArrayGrid(_grid.size()));
 		
-		bool performed_evolution = false;
 		for (_nf=_alpha_s.nfi(); _nf<=_alpha_s.nff(); _nf++) {
 			log(LOG_DEBUG, "DGLAP", "Setting nf={}", _nf);
 			bool last_loop = _nf == _alpha_s.nff();
@@ -680,11 +775,12 @@ namespace Candia2
 			// update all values
 			_alpha_s.update(_nf);
 			log(LOG_DEBUG, "DGLAP", "Loading relevant splitting function / OME values into cache");
-			SplittingFunction::update(_nf, _alpha_s.beta0(), _log_muf2_mur2);
-			OpMatElem::update(_log_muf2_mur2, _nf);
 			for (auto& expr : _expressions) {
-				if (expr)
-					expr->preCalc();
+				if (auto* sf = dynamic_cast<SplittingFunction*>(expr.get()))
+					sf->update(_nf, _alpha_s.beta0(), _log_muf2_mur2);
+				else if (auto* ome = dynamic_cast<OpMatElem*>(expr.get()))
+					ome->update(_log_muf2_mur2, _nf);
+				expr->preCalc();
 			}
 			
 			log(LOG_DEBUG, "DGLAP", "Retrieving values of alpha_s, and calculating all logarithm factors");
@@ -742,7 +838,8 @@ namespace Candia2
 			// only do evolution if alphas are different
 			// (i.e. energy scales are different)
 			if (_alpha0 != _alpha1) {
-				performed_evolution = true;
+				log(LOG_DEBUG, "DGLAP", "Precomputing the convolutions with the splitting functions...");
+				buildKernels();
 				log(LOG_DEBUG, "DGLAP", "Starting singlet evolution and resummation...");
 				evolveSinglet(resum_singlet, L1);
 				log(LOG_DEBUG, "DGLAP", "Finished singlet evolution and resummation.");
@@ -775,10 +872,11 @@ namespace Candia2
 						std::ranges::copy(resum[j*31], _S(0,j,0).begin());
 				}
 			} else { // if (alpha0 != alpha1)
-				// if we've done no evolutions or anything,
-				// we want to make sure we return correctly
-				// the initial distributions
-				if (last_loop && !performed_evolution) {
+				// nothing to evolve in the last interval (e.g. Qf is the initial energy,
+				// or sits exactly on a threshold that we have just matched across),
+				// so the result is whatever is in the coefficients now:
+				// the initial distributions, or the matched ones
+				if (last_loop) {
 					fixDistributionsForce(resum);
 					_F = std::move(resum);
 					break;
@@ -800,11 +898,6 @@ namespace Candia2
 
 	std::vector<ArrayGrid> DGLAPSolver::calculateSubtractionPDFs()
 	{
-		if (_order < 2) {
-			log(LOG_WARNING, "DGLAPSolver", "cannot create subtraction PDFs below NNLO");
-			return {};
-		}
-
 		double as = _alpha1/(4.0*PI);
 		double as2 = as*as;
 		double as3 = as2*as;
@@ -819,93 +912,125 @@ namespace Candia2
 	    auto a1qg_reg_func = [](double lm, double nf, double x) {
 			auto ome_reg = ome::AQg_reg[1];
 			return ome_reg(lm, nf, x); };
-		OpMatElemCustom a1hg(a1qg_reg_func, zero_func, zero_func);
+		OpMatElemCustom _a1hg(a1qg_reg_func, zero_func, zero_func);
 
 		auto a2hq_reg_func = [](double lm, double nf, double x) {
 			auto ome_reg = ome::AQqPS_reg[2];
 			return ome_reg(lm, nf, x); };
-		OpMatElemCustom a2hq(a2hq_reg_func, zero_func, zero_func);
+		OpMatElemCustom _a2hq(a2hq_reg_func, zero_func, zero_func);
 		
 		auto a2hg_reg_func = [](double lm, double nf, double x) {
 			auto ome_reg = ome::AQg_reg[2];
 			return ome_reg(lm, nf, x); };
-		OpMatElemCustom a2hg(a2hg_reg_func, zero_func, zero_func);
+		OpMatElemCustom _a2hg(a2hg_reg_func, zero_func, zero_func);
 
 		auto a3hq_reg_func = [](double lm, double nf, double x) {
 			auto ome_reg = ome::AQqPS_reg[3];
 			return ome_reg(lm, nf, x); };
-		OpMatElemCustom a3hq(a3hq_reg_func, zero_func, zero_func);
+		OpMatElemCustom _a3hq(a3hq_reg_func, zero_func, zero_func);
 		
 		auto a3hg_reg_func = [](double lm, double nf, double x) {
 			auto ome_reg = ome::AQg_reg[3];
 			return ome_reg(lm, nf, x); };
-		OpMatElemCustom a3hg(a3hg_reg_func, zero_func, zero_func);
+		OpMatElemCustom _a3hg(a3hg_reg_func, zero_func, zero_func);
 
 
+		// libome takes the number of light flavours, i.e. those below the heavy quark
+		constexpr uint nl_charm = DIST_C - 1;
+		constexpr uint nl_bottom = DIST_B - 1;
+		
 		std::vector<ArrayGrid> subpdfs(20, ArrayGrid(_grid.size()));
 		// charm
-		if (mc2 >= qf2) {
+		if (_alpha_s.nff() >= DIST_C) {
 			double L = std::log(mc2/qf2);
-			OpMatElemN3LO::update(L, _nf);
 			
+			for (OpMatElemCustom* ome : {&_a1hg, &_a2hq, &_a2hg, &_a3hq, &_a3hg})
+				ome->update(L, nl_charm);
+
+			ConvolutionKernel a1hg = _grid.buildKernel(_a1hg);
+			ConvolutionKernel a2hq = _grid.buildKernel(_a2hq);
+			ConvolutionKernel a2hg = _grid.buildKernel(_a2hg);
+			ConvolutionKernel a3hq = _grid.buildKernel(_a3hq);
+			ConvolutionKernel a3hg = _grid.buildKernel(_a3hg);
+
 			for (uint k=0; k<_grid.size(); ++k) {
-				double ftilde1 = as*_grid.convolution(_F[0], a1hg, k);
-				double ftilde2 = as2*(
-					_grid.convolution(_F[31], a2hq, k) +
-					_grid.convolution(_F[0], a2hg, k)
+				double ftilde1 = 0.5*as*a1hg.apply(_F[0], k);
+				double ftilde2 = 0.5*as2*(
+					 a2hq.apply(_F[31], k) +
+					 a2hg.apply(_F[0], k)
 				);
-				double ftilde3 = as3*(
-					_grid.convolution(_F[31], a3hq, k) +
-					_grid.convolution(_F[0], a3hg, k)
+				double ftilde3 = 0.5*as3*(
+					 a3hq.apply(_F[31], k) +
+					 a3hg.apply(_F[0], k)
 				);
 
-				subpdfs[0][k] = ftilde1;
-				subpdfs[1][k] = ftilde2;
-				subpdfs[2][k] = ftilde3;
+				// here, we store all possible pieces of the subtraction PDFs
+				// each term in the series, ftilde1-3, 1 containing the NLO OME,
+				// 2 the NNLO, and 3 the N3LO
+				// then we store the actual full subtraction PDFs,
+				// the LO coming from ftilde1 (meaning ftildeLO is just ftilde1)
+				// NLO from ftilde1 and 2, and NNLO from all three
+				// lastly we store the residuals, which are the actual PDF
+				// minus the subtraction piece
+				// we again do this for each piece order by order
+				// as well as the full terms
+
+				subpdfs[0][k] = ftilde1;                       // ftilde 1
+				subpdfs[1][k] = ftilde2;                       // ftilde 2
+				subpdfs[2][k] = ftilde3;                       // ftilde 3
+
+				subpdfs[3][k] = ftilde1 + ftilde2;             // ftilde NLO
+				subpdfs[4][k] = ftilde1 + ftilde2 + ftilde3;   // ftilde NNLO
 			
-				subpdfs[3][k] = ftilde1 + ftilde2;
-				subpdfs[4][k] = ftilde1 + ftilde2 + ftilde3;
-			
-				subpdfs[5][k] = _F[5][k] - ftilde1;
-				subpdfs[6][k] = _F[5][k] - ftilde2;
-				subpdfs[7][k] = _F[5][k] - ftilde3;
-				
-				subpdfs[8][k] = _F[5][k] - subpdfs[3][k];
-				subpdfs[9][k] = _F[5][k] - subpdfs[4][k];
+				subpdfs[5][k] = _F[DIST_C][k] - ftilde1;       // deltaf 1
+				subpdfs[6][k] = _F[DIST_C][k] - ftilde2;       // deltaf 2
+				subpdfs[7][k] = _F[DIST_C][k] - ftilde3;       // deltaf 3
+
+				subpdfs[8][k] = _F[DIST_C][k] - subpdfs[3][k]; // deltaf NLO
+				subpdfs[9][k] = _F[DIST_C][k] - subpdfs[4][k]; // deltaf NNLO
 			}
 		}
 		// bottom
-		if (mb2 >= qf2) {
+		if (_alpha_s.nff() >= DIST_B) {
 		    double L = std::log(mb2/qf2);
-			OpMatElemN3LO::update(L, _nf);
+			
+			for (OpMatElemCustom* ome : {&_a1hg, &_a2hq, &_a2hg, &_a3hq, &_a3hg})
+				ome->update(L, nl_bottom);
+
+		    ConvolutionKernel a1hg = _grid.buildKernel(_a1hg);
+			ConvolutionKernel a2hq = _grid.buildKernel(_a2hq);
+			ConvolutionKernel a2hg = _grid.buildKernel(_a2hg);
+			ConvolutionKernel a3hq = _grid.buildKernel(_a3hq);
+			ConvolutionKernel a3hg = _grid.buildKernel(_a3hg);
 			
 			for (uint k=0; k<_grid.size(); ++k) {
-				double ftilde1 = as*_grid.convolution(_F[0], a1hg, k);
-				double ftilde2 = as2*(
-					_grid.convolution(_F[31], a2hq, k) +
-					_grid.convolution(_F[0], a2hg, k)
+				double ftilde1 = 0.5*as*a1hg.apply(_F[0], k);
+				double ftilde2 = 0.5*as2*(
+					 a2hq.apply(_F[31], k) +
+					 a2hg.apply(_F[0], k)
 				);
-				double ftilde3 = as3*(
-					_grid.convolution(_F[31], a3hq, k) +
-					_grid.convolution(_F[0], a3hg, k)
+				double ftilde3 = 0.5*as3*(
+					 a3hq.apply(_F[31], k) +
+					 a3hg.apply(_F[0], k)
 				);
 
-				subpdfs[10][k] = ftilde1;
-				subpdfs[11][k] = ftilde2;
-				subpdfs[12][k] = ftilde3;
+				subpdfs[10][k] = ftilde1;                        // ftilde 1
+				subpdfs[11][k] = ftilde2;                        // ftilde 2
+				subpdfs[12][k] = ftilde3;                        // ftilde 3
+
+				subpdfs[13][k] = ftilde1 + ftilde2;              // ftilde NLO
+				subpdfs[14][k] = ftilde1 + ftilde2 + ftilde3;    // ftilde NNLO
 			
-				subpdfs[13][k] = ftilde1 + ftilde2;
-				subpdfs[14][k] = ftilde1 + ftilde2 + ftilde3;
-			
-				subpdfs[15][k] = _F[5][k] - ftilde1;
-				subpdfs[16][k] = _F[5][k] - ftilde2;
-				subpdfs[17][k] = _F[5][k] - ftilde3;
-				subpdfs[18][k]  = _F[5][k] - subpdfs[3][k];
-				subpdfs[19][k]  = _F[5][k] - subpdfs[4][k];
+				subpdfs[15][k] = _F[DIST_B][k] - ftilde1;        // deltaf 1
+				subpdfs[16][k] = _F[DIST_B][k] - ftilde2;        // deltaf 2
+				subpdfs[17][k] = _F[DIST_B][k] - ftilde3;        // deltaf 3
+
+				subpdfs[18][k] = _F[DIST_B][k] - subpdfs[13][k];  // deltaf NLO
+				subpdfs[19][k] = _F[DIST_B][k] - subpdfs[14][k];  // deltaf NNLO
 			}
 		}
 
 		return subpdfs;
-	}
+	} // calculateSubtractionPDFs()
 	
 } // namespace Candia2

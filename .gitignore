@@ -17,3 +17,4 @@ build*
 scripts
 **/*.txt
 !**/CMakeLists.txt
+!studies/main/tex-table/*.txt

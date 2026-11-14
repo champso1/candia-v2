@@ -1,0 +1,10 @@
+SetDesc: 'Candia-v2 evolution'
+Authors: C. Hampson, M. Guzzi
+Reference: arXiv:2512.22667
+DataVersion: 1
+NumMembers: 1
+SetIndex: 99876
+ErrorType: hessian
+ErrorConfLevel: 90
+MZ: 91.1870
+AlphaS_MZ:  0.118000
