@@ -65,9 +65,10 @@ void print_compare_types(std::string_view filename)
 	log(LOG_INFO, filename, "                 5: qed");
 }
 
-ReadCandiaFileResult read_candia_file(fs::path const &path, uint size)
+ReadCandiaFileResult read_candia_file(fs::path const &path)
 {
-	dist_type dists(size, std::vector<double>{});
+	dist_type dists{};
+	int size = -1;
 	std::ifstream file(path);
 	
 	std::vector<double> xtab{};
@@ -95,6 +96,18 @@ ReadCandiaFileResult read_candia_file(fs::path const &path, uint size)
 		grid_points.push_back(temp);
 
 	while (std::getline(file, line)) {
+		if (size < 0) {
+			// cringest shit i ever seen
+			std::string line_copy{line};
+			namespace rv = std::views;
+			std::string_view delim{" "};
+			auto tokens_view = line_copy | rv::split(delim);
+			auto tokens = std::vector(tokens_view.begin(), tokens_view.end());
+			size = static_cast<int>(tokens.size()-1);
+			if (size <= 0)
+				log(LOG_ERROR, "utils.cpp", "failed to get size of Candia file (found {})", size);
+			dists = dist_type(size, std::vector<double>{});
+		}
 		iss = std::istringstream(line);
 		iss >> temp;
 		for (uint i=0; i<size; ++i) {
@@ -219,9 +232,11 @@ dist_type fix_dists(dist_type const& dists, int type)
 	return dists;
 }
 
-std::pair<xtab_type, dist_type> read_other_file(fs::path const &path, uint size)
+std::pair<xtab_type, dist_type> read_other_file(fs::path const &path)
 {
-	dist_type dists(size, std::vector<double>{});
+	dist_type dists{};
+	int size = -1;
+	
 	std::ifstream file(path);
 	file.ignore(1000, '\n');
 
@@ -229,6 +244,17 @@ std::pair<xtab_type, dist_type> read_other_file(fs::path const &path, uint size)
 	std::string line;
 	double temp;
 	while (std::getline(file, line)) {
+		if (size < 0) {
+			// cringest shit i ever seen
+			namespace rv = std::views;
+			std::string_view delim{" "};
+			auto tokens_view = line | rv::split(delim);
+			auto tokens = std::vector(tokens_view.begin(), tokens_view.end());
+			size = static_cast<int>(tokens.size()-1);
+			if (size <= 0)
+				log(LOG_ERROR, "utils.cpp", "failed to get size of Candia file (found {})", size);
+			dists = dist_type(size, std::vector<double>{});
+		}
 		std::istringstream iss(line);
 		iss >> temp;
 		xtab.emplace_back(temp);

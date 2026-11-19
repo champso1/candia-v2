@@ -10,14 +10,19 @@ namespace Candia2
     class SplitFuncQED : public SplittingFunction
 	{
 	protected:
-		static uint _nl;
-		static double _totalchargefac;
+	    uint _nl;
+	    double _totalchargefac;
 	public:
 		using SplittingFunction::SplittingFunction;
 
-		inline static void update(uint nf, double beta0, double log_muf2_mur2, uint nl)
+		inline void update(uint nf, double beta0, double log_muf2_mur2, uint nl)
 		{
-			SplittingFunction::update(nf, beta0, log_muf2_mur2);
+			_nf = nf;
+			_beta0 = beta0;
+		    _log_muf2_mur2 = log_muf2_mur2;
+			log(LOG_DEBUG, "SplitFuncQED::update()",
+				"Setting nf={}, beta0={}, log_muf2_mur2={}",
+				_nf, _beta0, _log_muf2_mur2);
 			
 			_nl = nl;
 			_totalchargefac = _nl;

@@ -53,9 +53,9 @@ struct ReadCandiaFileResult final
 	grid_points_type grid_points;
 };
 
-ReadCandiaFileResult read_candia_file(fs::path const &path, uint size);
+ReadCandiaFileResult read_candia_file(fs::path const &path);
 dist_type fix_dists(dist_type const& dists, int type);
-std::pair<xtab_type, dist_type> read_other_file(fs::path const &path, uint size);
+std::pair<xtab_type, dist_type> read_other_file(fs::path const &path);
 
 constexpr inline std::string_view TEX_TABLE_DIR{"tex-table"};
 constexpr inline std::string_view TEX_TABLE_TEMPLATE{"table-base.txt"};
@@ -70,11 +70,6 @@ constexpr inline std::string_view TEX_TABLE2_FOOTER_TEMPLATE{"table-footer.txt"}
 constexpr inline std::string_view TEX_TABLE2_COL_DEF{"c"};
 
 void outputLatexTable(
-    xtab_type const& xtab,
-	dist_type const& diffs, std::string const& filename,
-	std::vector<std::string> const& cols, int format, bool benchmark_format);
-
-void outputLatexTable2(
     xtab_type const& xtab,
 	dist_type const& diffs, std::string const& filename,
 	std::vector<std::string> const& cols, int format, bool benchmark_format);

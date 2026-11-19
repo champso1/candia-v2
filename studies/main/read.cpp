@@ -36,16 +36,16 @@ int main(int argc, char *argv[])
 
 	xtab_type xtab{};
 	dist_type dists_raw{};
-	if (origin == 0 && type != 5) {
-		auto read_candia_file_result = read_candia_file(datafile_path, 37);
+	if (origin == 0) {
+		auto read_candia_file_result = read_candia_file(datafile_path);
 		xtab = read_candia_file_result.xtab;
 		dists_raw = read_candia_file_result.dists_ntabbed;
 	} else {
-		std::tie(xtab, dists_raw) = read_other_file(datafile_path, 37);
+		std::tie(xtab, dists_raw) = read_other_file(datafile_path);
 	}
 
 	auto dists = fix_dists(dists_raw, type);
 	
 	std::string basename = datafile_path.filename().string().substr(0, datafile_path.filename().string().rfind('.'));	
-	outputLatexTable2(xtab, dists, basename, cols[type].get(), 1, format == 0);
+	outputLatexTable(xtab, dists, basename, cols[type].get(), 1, format == 0);
 }

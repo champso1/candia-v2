@@ -38,9 +38,9 @@ int main(int argc, char *argv[])
 		title = argv[6];
 	}
 
-	auto mu1_result = read_candia_file(datafile_mu1, 37);
-	auto mu05_result = read_candia_file(datafile_mu05, 37);
-	auto mu2_result = read_candia_file(datafile_mu2, 37);
+	auto mu1_result = read_candia_file(datafile_mu1);
+	auto mu05_result = read_candia_file(datafile_mu05);
+	auto mu2_result = read_candia_file(datafile_mu2);
 	
 	auto mu1_dists = fix_dists(mu1_result.dists_ntabbed, type);
 	auto mu05_dists = fix_dists(mu05_result.dists_ntabbed, type);

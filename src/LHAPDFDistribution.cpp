@@ -11,28 +11,20 @@ namespace Candia2
 	{
 		for (uint k=0; k<grid_points.size(); k++) {
 			double x = grid_points[k];
-			accessor(0, k) = xg(x);
-			accessor(1, k) = xqplus(x);
-		}
-	}
-	
-	void LHAPDFDistribution::fillNonSingletCoeffs(
-		accessor_type const& accessor,
-		std::vector<value_type> const& grid_points) const
-	{
-		for (uint k=0; k<grid_points.size(); k++) {
-			double x = grid_points[k];
-			accessor(2, k) = xu(x);  // u
-			accessor(1, k) = xd(x);  // d
-			accessor(3, k) = xs(x);  // s
-			accessor(4, k) = xc(x);  // c
-			accessor(7, k) = xub(x); // ub
-			accessor(8, k) = xdb(x); // db
-			accessor(9, k) = xsb(x);  // sb
-			accessor(10, k) = xcb(x);  // cb
-		}
-	}
+			s_accessor(0, k) = xg(x);
+			s_accessor(1, k) = xqplus(x);
 
+			ns_accessor(2, k) = xu(x);  // u
+			ns_accessor(1, k) = xd(x);  // d
+			ns_accessor(3, k) = xs(x);  // s
+			ns_accessor(4, k) = xc(x);  // c
+			ns_accessor(7, k) = xub(x); // ub
+			ns_accessor(8, k) = xdb(x); // db
+			ns_accessor(9, k) = xsb(x);  // sb
+			ns_accessor(10, k) = xcb(x);  // cb
+		}
+	}
+    
 	void LHAPDFDistribution::setup(double Q0, double Qf)
 	{
 		if (Q0 < 1.0)

@@ -103,6 +103,7 @@ namespace Candia2
 
 		inline double evaluate(double Q0, double Qf, double alpha0) const override
 		{
+			log(LOG_DEBUG, "AlphaQED::evaluate()", "Q0={}, Qf={}, alpha0={}", Q0, Qf, alpha0);
 			double log_arg = (Qf/Q0)*(Qf/Q0);
 			double res = alpha0/(1.0 + (alpha0/4.0/PI)*beta0()*std::log(log_arg));
 		    return res;

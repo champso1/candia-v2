@@ -19,20 +19,20 @@ namespace Candia2
 		auto const& alphaqed = _alpha_qed.value();
 
 		// qcd kernels
-		auto& p0ns = getExpression(ExprName::P0ns);
-		auto& p0qq = getExpression(ExprName::P0qq);
-		auto& p0qg = getExpression(ExprName::P0qg);
-		auto& p0gq = getExpression(ExprName::P0gq);
-		auto& p0gg = getExpression(ExprName::P0gg);
+		auto& p0ns = getKernel(ExprName::P0ns);
+		auto& p0qq = getKernel(ExprName::P0qq);
+		auto& p0qg = getKernel(ExprName::P0qg);
+		auto& p0gq = getKernel(ExprName::P0gq);
+		auto& p0gg = getKernel(ExprName::P0gg);
 
 		// qed kernels
-		auto& p0ff = getExpression(ExprName::P0ff);
-		auto& p0uu = getExpression(ExprName::P0uu);
-		auto& p0dd = getExpression(ExprName::P0dd);
-		auto& p0ll = getExpression(ExprName::P0ll);
-		auto& p0fy = getExpression(ExprName::P0fy);
-		auto& p0yf = getExpression(ExprName::P0yf);
-		auto& p0yy = getExpression(ExprName::P0yy);
+		auto& p0ff = getKernel(ExprName::P0ff);
+		auto& p0uu = getKernel(ExprName::P0uu);
+		auto& p0dd = getKernel(ExprName::P0dd);
+		auto& p0ll = getKernel(ExprName::P0ll);
+		auto& p0fy = getKernel(ExprName::P0fy);
+		auto& p0yf = getKernel(ExprName::P0yf);
+		auto& p0yy = getKernel(ExprName::P0yy);
 
 		auto deltaud = static_cast<uint>(QEDPartonIndices::DELTAUD);
 		auto sigma = static_cast<uint>(QEDPartonIndices::SIGMA);
@@ -70,7 +70,8 @@ namespace Candia2
 			p0uu,p0dd,p0ll
 		};
 		auto num_ns_splitfunc_options = ns_splitfuncs.size();
-		
+
+		log(LOG_DEBUG, "DGLAPSolver::evolveQED()", "Copying to evolution distributions.");
 		for (uint j : s_dists)
 			std::ranges::copy(_S_QED(j,0,0), arr_singlet.get()[j].begin());
 		for (uint j : ns_dists | std::views::join)
@@ -103,23 +104,23 @@ namespace Candia2
 					auto pows = std::pow(L0QCD,n)*std::pow(L0QED,s-n)/factorial(n)/factorial(s-n);
 					for (uint k=0; k<_grid.size()-1; k++) {
 					    double res1 = fac_qcd*(
-							_grid.convolution(_S_QED(deltaud,0,n-1), p0qq, k) +
+							p0qq.apply(_S_QED(deltaud,0,n-1), k) +
 							0 +
-							deltaNf*_grid.convolution(_S_QED(gluon,0,n-1), p0qg, k) +
+							deltaNf*p0qg.apply(_S_QED(gluon,0,n-1), k) +
 							0 +
 							0
 						)*0.0;
 						double res2 = fac_qcd*(
 							0 +
-							_grid.convolution(_S_QED(sigma,0,n-1), p0qq, k) +
-							_grid.convolution(_S_QED(gluon,0,n-1), p0qg, k) +
+						    p0qq.apply(_S_QED(sigma,0,n-1), k) +
+						    p0qg.apply(_S_QED(gluon,0,n-1), k) +
 							0 +
 							0
 						);
 						double res3 = fac_qcd*(
 							0 +
-							_grid.convolution(_S_QED(sigma,0,n-1), p0gq, k) +
-							_grid.convolution(_S_QED(gluon,0,n-1), p0gg, k) +
+						    p0gq.apply(_S_QED(sigma,0,n-1), k) +
+						    p0gg.apply(_S_QED(gluon,0,n-1), k) +
 							0 +
 							0
 						);
@@ -140,32 +141,32 @@ namespace Candia2
 					auto pows = std::pow(L0QCD,n)*std::pow(L0QED,s-n)/factorial(n)/factorial(s-n);
 					for (uint k=0; k<_grid.size()-1; k++) {
 						double res1 = fac_qed*(
-							cp*_grid.convolution(_S_QED(deltaud,0,n), p0ff, k) +
-							cm*_grid.convolution(_S_QED(sigma,0,n), p0ff, k) +
+							cp*p0ff.apply(_S_QED(deltaud,0,n), k) +
+							cm*p0ff.apply(_S_QED(sigma,0,n),   k) +
 							0 +
-							2*NC*_nf*(cp*deltaNf + cm)*_grid.convolution(_S_QED(photon,0,n), p0fy, k) +
+							2*NC*_nf*(cp*deltaNf + cm)*p0fy.apply(_S_QED(photon,0,n), k) +
 							0
 						);
 						double res2 = fac_qed*(
-							cm*_grid.convolution(_S_QED(deltaud,0,n), p0ff, k) +
-							cp*_grid.convolution(_S_QED(sigma,0,n), p0ff, k) +
+							cm*p0ff.apply(_S_QED(deltaud,0,n), k) +
+							cp*p0ff.apply(_S_QED(sigma,0,n),   k) +
 							0 +
-							2*NC*_nf*(cp + cm*deltaNf)*_grid.convolution(_S_QED(photon,0,n), p0fy, k) +
+							2*NC*_nf*(cp + cm*deltaNf)*p0fy.apply(_S_QED(photon,0,n), k) +
 							0
 						);
 						double res4 = fac_qed*(
-							cm*_grid.convolution(_S_QED(deltaud,0,n), p0yf, k) +
-							cp*_grid.convolution(_S_QED(sigma,0,n), p0yf, k) +
+							cm*p0yf.apply(_S_QED(deltaud,0,n), k) +
+							cp*p0yf.apply(_S_QED(sigma,0,n), k) +
 							0 +
-							-3.0/4.0*beta0qed*_grid.convolution(_S_QED(photon,0,n), p0yy, k) +
-							_grid.convolution(_S_QED(sigmal,0,n), p0yf, k)
+							-3.0/4.0*beta0qed*p0yy.apply(_S_QED(photon,0,n), k) +
+						    p0yf.apply(_S_QED(sigmal,0,n), k)
 						);
 						double res5 = fac_qed*(
 							0 +
 							0 +
 							0 +
-							2.0*_nl*_grid.convolution(_S_QED(photon,0,n), p0fy, k) +
-							_grid.convolution(_S_QED(sigmal,0,n), p0ff, k)
+							2.0*_nl*p0fy.apply(_S_QED(photon,0,n), k) +
+						    p0ff.apply(_S_QED(sigmal,0,n), k)
 						);
 									
 						_S_QED(deltaud,1,n,k) = res1;
@@ -197,7 +198,7 @@ namespace Candia2
 						for (uint n=1; n<=s; n++) {
 							double pows = std::pow(L0QCD,n)*std::pow(L0QED,s-n)/factorial(n)/factorial(s-n);
 							for (uint k=0; k<_grid.size()-1;k++) {
-								_A_QED(j,1,n,k) = fac_qcd*_grid.convolution(_A_QED(j,0,n-1), p0ns, k);
+								_A_QED(j,1,n,k) = fac_qcd*p0ns.apply(_A_QED(j,0,n-1), k);
 								arr_ns.get()[j][k] += _A_QED(j,1,n,k)*pows;
 							}
 						}
@@ -206,7 +207,7 @@ namespace Candia2
 							uint n = 0;
 							double pows = std::pow(L0QCD,n)*std::pow(L0QED,s-n)/factorial(n)/factorial(s-n);
 							for (uint k=0; k<_grid.size()-1; k++) {
-								_A_QED(j,1,n,k) = fac_qed*_grid.convolution(_A_QED(j,0,n), p0ff, k);
+								_A_QED(j,1,n,k) = fac_qed*p0ff.apply(_A_QED(j,0,n), k);
 								arr_ns.get()[j][k] += _A_QED(j,1,n,k)*pows;
 							}
 						}

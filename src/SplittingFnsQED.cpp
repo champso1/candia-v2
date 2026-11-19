@@ -4,9 +4,6 @@
 
 namespace Candia2
 {
-	uint SplitFuncQED::_nl;
-	double SplitFuncQED::_totalchargefac;
-
 	double SplitFuncQED::pqq(double x) const
 	{
 		return 1+x*x; // coefficient of the plus distribution

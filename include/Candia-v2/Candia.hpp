@@ -105,35 +105,11 @@ namespace Candia2
 		ArrayGridN<4> _S_QED{}; //!< LO QCD/LO QED singlet coeffs
 
 		// real solution to N3LO quadratic
-		static constexpr std::array<double,8> _r1{
-			0.0, // nf=0
-			-0.965105642503553,
-			-1.0315080774348302,
-			-1.1120253073038324,
-			-1.2090185772488318,
-			-1.3205899823870375,
-			-1.4277979273114205,
-		};
+		std::array<double,8> _r1{};
 		// \f$-2*\mathrm{Re}[r_2]\f$
-		static constexpr std::array<double,8> _b{
-			0.0, // nf=0
-			-2.0 * 0.1629296392275606,
-			-2.0 * 0.18523659836580222,
-			-2.0 * 0.2214224000789979,
-			-2.0 * 0.2867586032664649,
-			-2.0 * 0.42477034063852415,
-			-2.0 * 0.7964970177083996,
-		};
+		std::array<double,8> _b{};
 		// \f$|r_2|^2\f$
-		static constexpr std::array<double,8> _c{
-			0.0, // nf=0
-			power<2>(0.1629296392275606) + power<2>(0.9535744823175397),
-			power<2>(0.18523659836580222) + power<2>(1.0299109343730084),
-			power<2>(0.2214224000789979) + power<2>(1.131077812338495),
-			power<2>(0.2867586032664649) + power<2>(1.272794345339416),
-			power<2>(0.42477034063852415) + power<2>(1.4854822725151384),
-			power<2>(0.7964970177083996) + power<2>(1.816809978388145),
-		};
+		std::array<double,8> _c{};
 
 		std::array<std::unique_ptr<Expression>, static_cast<uint>(ExprName::Count)> _expressions{};
 		template <typename TExpr, typename... TExprArgs>

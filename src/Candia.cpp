@@ -111,9 +111,6 @@ namespace Candia2
 		log(LOG_DEBUG, "DGLAPSolver::DGLAPSolver()", "r1 array: {}", to_string(_r1));
 		log(LOG_DEBUG, "DGLAPSolver::DGLAPSolver()", "b  array: {}", to_string(_b));
 		log(LOG_DEBUG, "DGLAPSolver::DGLAPSolver()", "c  array: {}", to_string(_c));
-	    
-		setInitialConditions(initial_dist);
-		log(LOG_DEBUG, "DGLAPSolver::DGLAPSolver()", "Successfully filled coefficients with initial conditions.");
 	}
 
 	DGLAPSolver::DGLAPSolver(
@@ -179,9 +176,6 @@ namespace Candia2
 		log(LOG_DEBUG, "DGLAPSolver::DGLAPSolver()", "r1 array: {}", to_string(_r1));
 		log(LOG_DEBUG, "DGLAPSolver::DGLAPSolver()", "b  array: {}", to_string(_b));
 		log(LOG_DEBUG, "DGLAPSolver::DGLAPSolver()", "c  array: {}", to_string(_c));
-	    
-		setInitialConditions(initial_dist);
-		log(LOG_DEBUG, "DGLAPSolver::DGLAPSolver()", "Successfully filled coefficients with initial conditions.");
 	}
 
 	DGLAPSolver::~DGLAPSolver()
@@ -356,6 +350,12 @@ namespace Candia2
 				buildKernel(static_cast<ExprName>(i));
 			else
 				_kernels[i] = ConvolutionKernel{};
+		}
+
+		if (options.try_qed) {
+			auto starts = static_cast<uint>(ExprName::P0ff);
+			for (uint i=starts; i<static_cast<uint>(ExprName::Count); ++i)
+				buildKernel(static_cast<ExprName>(i));
 		}
 	}
 
@@ -609,7 +609,6 @@ namespace Candia2
 		std::vector<ArrayGrid> resum_singlet(num_dists, ArrayGrid(_grid.size()));
 		std::vector<ArrayGrid> resum(num_dists, ArrayGrid(_grid.size()));
 		
-		bool performed_evolution = false;
 		for (_nf=_alpha_s.nfi(); _nf<=_alpha_s.nff(); _nf++) {
 			log(LOG_DEBUG, "DGLAP", "Setting nf={}", _nf);
 			bool last_loop = _nf == _alpha_s.nff();
@@ -626,16 +625,18 @@ namespace Candia2
 				break;
 			}
 
-			// update all values
+		    // update all values
 			_alpha_s.update(_nf);
 			alphaqed.update(_nf, _nl);
 			log(LOG_DEBUG, "DGLAP", "Loading relevant splitting function / OME values into cache");
-			SplittingFunction::update(_nf, _alpha_s.beta0(), _log_muf2_mur2);
-			SplitFuncQED::update(_nf, _alpha_s.beta0(), _log_muf2_mur2, _nl);
-			OpMatElem::update(_log_muf2_mur2, _nf);
 			for (auto& expr : _expressions) {
-				if (expr)
-					expr->preCalc();
+				if (!expr)
+					continue;
+				if (auto* sf = dynamic_cast<SplittingFunction*>(expr.get()))
+					sf->update(_nf, _alpha_s.beta0(), _log_muf2_mur2);
+				else if (auto* ome = dynamic_cast<OpMatElem*>(expr.get()))
+					ome->update(_log_muf2_mur2, _nf);
+				expr->preCalc();
 			}
 			
 			log(LOG_DEBUG, "DGLAP", "Retrieving values of alpha_s, and calculating all logarithm factors");
@@ -668,8 +669,12 @@ namespace Candia2
 			// only do evolution if alphas are different
 			// (i.e. energy scales are different)
 			if (_alpha0 != _alpha1) {
-				performed_evolution = true;
+				log(LOG_DEBUG, "DGLAP", "Precomputing the convolutions with the splitting functions...");
+				buildKernels();
+				log(LOG_DEBUG, "DGLAP", "Starting QED evolution and resummation...");
 				evolveQED(resum_singlet, resum_ns, L0QED, L0QCD);
+				log(LOG_DEBUG, "DGLAP", "Finished QED evolution and resummation.");
+				log(LOG_DEBUG, "DGLAP", "Fixing distributions...");
 				fixQEDDistributions(resum_ns, resum_singlet, resum);
 				// if we just resummed to a tabulated value,
 				// _F contains our final distributions
@@ -693,7 +698,7 @@ namespace Candia2
 				// if we've done no evolutions or anything,
 				// we want to make sure we return correctly
 				// the initial distributions
-				if (last_loop && !performed_evolution) {
+				if (last_loop) {
 					fixDistributionsForce(resum);
 					_F = std::move(resum);
 					break;

@@ -33,7 +33,7 @@ int main(int argc, char *argv[])
 	fs::path filepath_base(argv[1]);
 	if (!fs::exists(filepath_base))
 		log(LOG_ERROR, "ratio.cpp", "base file doesn't exist ({})", filepath_base.string());
-	ReadCandiaFileResult basefile_data = read_candia_file(filepath_base, 37);
+	ReadCandiaFileResult basefile_data = read_candia_file(filepath_base);
 	
 	
 	std::vector<fs::path> filepaths{};
@@ -44,7 +44,7 @@ int main(int argc, char *argv[])
 		if (!fs::exists(filepaths.back()))
 			log(LOG_ERROR, "ratio.cpp", "additional file doesn't exist ({})", filepaths.back().string());
 		titles.emplace_back(argv[i+1]);
-		addfiles_results.emplace_back(read_candia_file(filepaths.back(), 37));
+		addfiles_results.emplace_back(read_candia_file(filepaths.back()));
 	}
 
 	if (

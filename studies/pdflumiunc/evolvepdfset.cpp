@@ -14,6 +14,7 @@ int main()
 	double log_q0 = std::log10(q0);
 	double log_qf = std::log10(qf);
 	uint num = 30;
+	double dnum = num;
     auto qvals_view =
 		std::views::iota(uint{0}, num)
 		| std::views::transform([&](uint i){ return std::pow(10.0, log_q0+(log_qf-log_q0)*static_cast<double>(i)/(dnum-1)); });
