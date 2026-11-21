@@ -336,7 +336,7 @@ namespace Candia2
 		double plus,
 		gauleg_type const& X, gauleg_type const& W)
 	{
-		double ak = A[k];
+	    double ak = A[k];
 		double out = 0.0;
 		uint s = X.size();
 		for (uint i=0; i<s; i++) {
@@ -348,7 +348,7 @@ namespace Candia2
 			double interpa = interpolate(A, a);
 
 			double fac1 = w*J * eregy*interpa;
-			double fac2 = w*J * (1.0/(1.0-y))*(E.calcPlus(y)*interpa - plus*ak);
+			double fac2 = w*J * (1.0/(1.0-y))*plus*(interpa - ak);
 			out += fac1;
 			out += fac2;
 		}
@@ -376,7 +376,7 @@ namespace Candia2
 	double Grid::convolution(std::span<double> A, Expression &E, uint k)
 	{
 		double x = _points[k];
-		double plus1 = E.calcPlus(1.0);
+		double plus1 = E.calcPlus();
 		double delta = E.delta();
 		double res = (plus1*std::log1p(-x) + delta) * A[k];
 

@@ -46,16 +46,21 @@ namespace Candia2
 	public:
 		P0ff(double fac=1.0) : _fac{fac} {}
 	private:
-		inline double plus_nofac(double x) const
+		inline double regular_nofac(double x) const
 		{
-			return pqq(x);
+			return -1.0-x;
+		}
+		inline double plus_nofac() const
+		{
+			return 2.0;
 		}
 		inline double delta_nofac() const
 		{
 			return 3.0/2.0;
 		}
 	public:
-		inline double calcPlus(double x) const override { return _fac*plus_nofac(x); }
+		inline double calcRegular(double x) const override { return _fac*regular_nofac(x); }
+		inline double calcPlus() const override { return _fac*plus_nofac(); }
 		inline double calcDelta() const override { return _fac*delta_nofac(); }
 	};
 
@@ -148,12 +153,12 @@ namespace Candia2
 		
 		inline double calcDelta() const override
 		{
-			return _totalchargefac*(-2.0/3.0);
+			return -2.0/3.0;
 		}
 	};
 
 	
-
+	/*
 	class P1ffV : public SplitFuncQED
 	{
 	private:
@@ -500,4 +505,5 @@ namespace Candia2
 	public:
 		P11yd() : P11bq(CF*Q_QUARK[1]*Q_QUARK[1]) {}
 	};
+	*/
 }

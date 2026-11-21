@@ -48,20 +48,20 @@ namespace Candia2
 		std::array ns_dists{
 			std::vector{
 				static_cast<uint>(QEDPartonIndices::UV),
-				// static_cast<uint>(QEDPartonIndices::CV),
-				// static_cast<uint>(QEDPartonIndices::DELTAUC),
+				static_cast<uint>(QEDPartonIndices::CV),
+				static_cast<uint>(QEDPartonIndices::DELTAUC),
 			},
 			std::vector{
 				static_cast<uint>(QEDPartonIndices::DV),
-				// static_cast<uint>(QEDPartonIndices::SV),
-				// static_cast<uint>(QEDPartonIndices::BV),
-				// static_cast<uint>(QEDPartonIndices::DELTADS),
-				// static_cast<uint>(QEDPartonIndices::DELTASB),
+				static_cast<uint>(QEDPartonIndices::SV),
+				static_cast<uint>(QEDPartonIndices::BV),
+				static_cast<uint>(QEDPartonIndices::DELTADS),
+				static_cast<uint>(QEDPartonIndices::DELTASB),
 			},
 			std::vector{
-				// static_cast<uint>(QEDPartonIndices::EV),
-				// static_cast<uint>(QEDPartonIndices::MUV),
-				// static_cast<uint>(QEDPartonIndices::TAUV),
+				static_cast<uint>(QEDPartonIndices::EV),
+				static_cast<uint>(QEDPartonIndices::MUV),
+				static_cast<uint>(QEDPartonIndices::TAUV),
 				static_cast<uint>(QEDPartonIndices::DELTAL2),
 				static_cast<uint>(QEDPartonIndices::DELTAL3),	
 			}
@@ -86,8 +86,6 @@ namespace Candia2
 		constexpr double cm = 0.5*((2./3.)*(2./3.) - (-1./3.)*(-1./3.));
 		double fac_qcd = -2.0/beta0qcd;
 		double fac_qed = -2.0/beta0qed;
-		// fac_qed = 0.0;
-		// L0QED = 0;
 
 		log(LOG_DEBUG, "evolveQED()", "{:>10} = {: }", "deltaNf", deltaNf);
 		log(LOG_DEBUG, "evolveQED()", "{:>10} = {: }", "beta0QED", beta0qed);
@@ -102,14 +100,14 @@ namespace Candia2
 		    for (uint s=1; s<_iterations; s++) {
 				for (uint n=1; n<=s; n++) {
 					auto pows = std::pow(L0QCD,n)*std::pow(L0QED,s-n)/factorial(n)/factorial(s-n);
-					for (uint k=0; k<_grid.size()-1; k++) {
+					for (uint k=0; k<_grid.size(); k++) {
 					    double res1 = fac_qcd*(
 							p0qq.apply(_S_QED(deltaud,0,n-1), k) +
 							0 +
 							deltaNf*p0qg.apply(_S_QED(gluon,0,n-1), k) +
 							0 +
 							0
-						)*0.0;
+						);
 						double res2 = fac_qcd*(
 							0 +
 						    p0qq.apply(_S_QED(sigma,0,n-1), k) +
@@ -139,7 +137,7 @@ namespace Candia2
 				{
 					uint n = 0;
 					auto pows = std::pow(L0QCD,n)*std::pow(L0QED,s-n)/factorial(n)/factorial(s-n);
-					for (uint k=0; k<_grid.size()-1; k++) {
+					for (uint k=0; k<_grid.size(); k++) {
 						double res1 = fac_qed*(
 							cp*p0ff.apply(_S_QED(deltaud,0,n), k) +
 							cm*p0ff.apply(_S_QED(sigma,0,n),   k) +
@@ -197,7 +195,7 @@ namespace Candia2
 					for (uint s=1; s<_iterations; s++) {
 						for (uint n=1; n<=s; n++) {
 							double pows = std::pow(L0QCD,n)*std::pow(L0QED,s-n)/factorial(n)/factorial(s-n);
-							for (uint k=0; k<_grid.size()-1;k++) {
+							for (uint k=0; k<_grid.size();k++) {
 								_A_QED(j,1,n,k) = fac_qcd*p0ns.apply(_A_QED(j,0,n-1), k);
 								arr_ns.get()[j][k] += _A_QED(j,1,n,k)*pows;
 							}
@@ -206,7 +204,7 @@ namespace Candia2
 						{
 							uint n = 0;
 							double pows = std::pow(L0QCD,n)*std::pow(L0QED,s-n)/factorial(n)/factorial(s-n);
-							for (uint k=0; k<_grid.size()-1; k++) {
+							for (uint k=0; k<_grid.size(); k++) {
 								_A_QED(j,1,n,k) = fac_qed*p0ff.apply(_A_QED(j,0,n), k);
 								arr_ns.get()[j][k] += _A_QED(j,1,n,k)*pows;
 							}

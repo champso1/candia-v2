@@ -77,7 +77,7 @@ namespace Candia2
 		virtual void update(uint nf, uint nl)
 		{
 			_nf = nf;
-			_nl = nf;
+			_nl = nl;
 			_beta0 = calcBeta0(nf, nl);
 			_beta1 = calcBeta1(nf, nl);
 			_beta2 = calcBeta2(nf, nl);
@@ -128,26 +128,15 @@ namespace Candia2
 		}
 		inline double calcBeta1([[maybe_unused]] uint nf, [[maybe_unused]] uint nl) const override
 		{
-			throw std::runtime_error("TODO: beta1/2/3 for alphaqed");
+			return 0.0;
 		}
 		inline double calcBeta2([[maybe_unused]] uint nf, [[maybe_unused]] uint nl) const override
 		{
-			throw std::runtime_error("TODO: beta1/2/3 for alphaqed");
+			return 0.0;
 		}
 		inline double calcBeta3([[maybe_unused]] uint nf, [[maybe_unused]] uint nl) const override
 		{
-			throw std::runtime_error("TODO: beta1/2/3 for alphaqed");
-		}
-
-	public:
-		void update(uint nf, uint nl) override
-		{
-			_nf = nf;
-			_nl = nf;
-			_beta0 = calcBeta0(nf, nl);
-			// _beta1 = calcBeta1(nf, nl);
-			// _beta2 = calcBeta2(nf, nl);
-			// _beta3 = calcBeta3(nf, nl);
+			return 0.0;
 		}
 	};
 }

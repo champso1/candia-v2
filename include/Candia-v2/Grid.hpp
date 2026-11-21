@@ -7,6 +7,7 @@
 
 #include "Candia-v2/Common.hpp"
 #include "Candia-v2/Expression.hpp"
+#include "Candia-v2/SplittingFnQED.hpp"
 
 #include <array>
 #include <cstddef>

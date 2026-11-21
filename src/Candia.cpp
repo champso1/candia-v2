@@ -632,10 +632,13 @@ namespace Candia2
 			for (auto& expr : _expressions) {
 				if (!expr)
 					continue;
-				if (auto* sf = dynamic_cast<SplittingFunction*>(expr.get()))
+				if (auto* qedsf = dynamic_cast<SplitFuncQED*>(expr.get()))
+					qedsf->update(_nf, alphaqed.beta0(), _log_muf2_mur2, _nl);
+				else if (auto* sf = dynamic_cast<SplittingFunction*>(expr.get()))
 					sf->update(_nf, _alpha_s.beta0(), _log_muf2_mur2);
 				else if (auto* ome = dynamic_cast<OpMatElem*>(expr.get()))
-					ome->update(_log_muf2_mur2, _nf);
+					ome->update(_log_muf2_mur2, _nf); 
+					
 				expr->preCalc();
 			}
 			
@@ -683,16 +686,7 @@ namespace Candia2
 					log(LOG_DEBUG, "DGLAP", "Moving distributions into output array.");
 					_F = std::move(resum);
 				} else if (resum_threshold) {
-					log(LOG_DEBUG, "DGLAP", "Moving distributions into the initial conditions of the next iteration.");
-					// if we just resummed to a threshold energy,
-					// then we need to recopy the resultant distributions
-					// from the temporary array
-					// back to the n=0 piece
-					for (uint j=0; j<DISTS; ++j) {
-						std::ranges::copy(resum[j], getNonSingletCoeffArray(j).begin());
-					}
-					for (uint j=0; j<=1; ++j)
-						std::ranges::copy(resum[j*31], _S(0,j,0).begin());
+					log(LOG_ERROR, "DGLAP", "Cannot do this yet.");
 				}
 			} else { // if (alpha0 != alpha1)
 				// if we've done no evolutions or anything,
@@ -708,7 +702,7 @@ namespace Candia2
 
 		log(LOG_INFO, "DGLAP", "Done!");
 		return _F;
-	}
+	} // evolveQED()
 
 	std::vector<ArrayGrid> const& DGLAPSolver::_evolve_function(EvolType evol_type)
 	{
